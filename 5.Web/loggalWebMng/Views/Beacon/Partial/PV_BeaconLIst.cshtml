@@ -1,0 +1,24 @@
+﻿@using ALT.VO.loggal;
+@{
+    List<T_BEACON> list = ViewBag.list;
+    string totCnt = (list.Count() == 0 ? "0" : list.First().TOTAL_ROWCOUNT.ToString());
+    <input type="hidden" id="total" value="@totCnt" />
+    foreach (T_BEACON data in list)
+    {
+    <tr>
+        <td>@data.BEACON_CODE</td>
+        <td><img src="@data.LOGO_URL" class="ui mini rounded image"></td>
+        <td><a href="/basic/beaconreg/@data.BEACON_CODE">@data.BEACON_NAME</a></td>
+        
+
+        <td>@data.DEVICE_NUMBER</td>
+
+        <td>@data.ADDRESS1 @data.ADDRESS2</td>
+        <td>@data.ZIP_CODE</td>
+        <td>@data.LATITUDE</td>
+        <td>@data.LONGITUDE</td>
+        <td class="center">@data.UPDATE_NAME</td>
+        <td class="center">@data.UPDATE_DATE</td>
+    </tr>
+    }
+}

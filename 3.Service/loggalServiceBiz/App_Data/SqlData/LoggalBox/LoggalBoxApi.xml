@@ -1,0 +1,1396 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<DBAgentMultiTemplate  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns="http://altsoft.kr/">
+
+  <DBAgentTemplate TemplateID="GetDailyLoggalAdList">
+    <!-- 
+    SqlType : SQL의 형태를 지정합니다.
+      Example 1:<SqlType>FixedSQL</SqlType> 고정적인 SQL을 지원합니다. 
+      Example 2:<SqlType>DynamicSQL</SqlType> 동적인 SQL Type1을 지원합니다.  
+    Description : 해당 SQL의 기능설명을 적습니다.
+    SQLModifier : 해당 SQL의 작성자(수정자)를 적습니다
+    LastModifyDate : 해당 SQL의 마지막 수정일을 적습니다
+    -->
+    <Information>
+      <SqlType>DynamicSQL</SqlType>
+      <Description>로컬박스 광고 가져오기</Description>
+      <SQLModifier>전상훈</SQLModifier>
+      <LastModifyDate>2016-10-05</LastModifyDate>
+    </Information>
+
+    <TemplateSQL>
+      <!-- FixedSQL : 고정된 SQL이 들어가는 곳입니다. -->
+      <FixedSQL>
+        <![CDATA[ 
+   	/********************************************************************/
+    /* 로컬박스 광고 가져오기    GetDailyLoggalAdList                   */
+    /********************************************************************/
+	SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED 
+  DECLARE @DEVICE_NUMBER VARCHAR(100) = '{0}'
+         ,@UTC_DATE      DATETIME = GETUTCDATE()
+         ,@NOW_DATE      VARCHAR(8)
+	       ,@NOW_TIME      VARCHAR(5)
+	       ,@STATUS INT = 5
+	       
+	       ,@MNG_URL      VARCHAR(50)   = '{1}'
+         ,@UPDATE_DATE   DATETIME     = '{2}'
+         ,@DEVICE_CODE   BIGINT       = CASE WHEN ISNUMERIC('{3}') = 1 THEN '{3}' ELSE '-1' END
+         ,@USER_ID       VARCHAR(100) = '{4}'
+         ,@DEVICE_NAME   NVARCHAR(200)
+
+
+  IF @DEVICE_CODE > 0 
+  BEGIN
+        SELECT @DEVICE_NUMBER =DEVICE_NUMBER
+            ,@NOW_DATE    = CONVERT(VARCHAR(8), DATEADD(MINUTE,  A.TIME_ZONE * 60, @UTC_DATE),112)
+            ,@NOW_TIME    = CONVERT(VARCHAR(5), DATEADD(MINUTE,  A.TIME_ZONE * 60, @UTC_DATE),108)
+            ,@DEVICE_NAME = DEVICE_NAME
+        FROM T_DEVICE A
+       WHERE  DEVICE_CODE = @DEVICE_CODE
+  END
+  ELSE
+  BEGIN
+      SELECT @DEVICE_CODE = DEVICE_CODE
+            ,@NOW_DATE    = CONVERT(VARCHAR(8), DATEADD(MINUTE,  A.TIME_ZONE * 60, @UTC_DATE),112)
+            ,@NOW_TIME    = CONVERT(VARCHAR(5), DATEADD(MINUTE,  A.TIME_ZONE * 60, @UTC_DATE),108)
+            ,@DEVICE_NAME = DEVICE_NAME
+        FROM T_DEVICE A
+       WHERE DEVICE_NUMBER = @DEVICE_NUMBER
+  END
+  
+ 
+
+  SELECT DISTINCT
+          A.DEVICE_CODE
+        , @DEVICE_NAME AS DEVICE_NAME
+        , ISNULL(CT.CATEGORY_CODE,6328) AS CATEGORY_CODE
+        ,ISNULL(CT.SEARCH_CATEGORY_CODE,'6328|') AS SEARCH_CATEGORY_CODE
+        ,ISNULL(CT.CATEGORY_NAME,N'기타') AS CATEGORY_NAME
+        , CT.CATEGORY_TYPE
+	      ,ISNULL(CT.ORDER_SEQ,99999999) AS CATEGORY_ORDER_SEQ
+        ,B.AD_CODE, B.TITLE, B.SUB_TITLE, B.LOGO_URL, B.BANNER_TYPE
+	      ,@MNG_URL + '/advertise/contentview/' + CONVERT(VARCHAR(100), B.AD_CODE) CONTENT_URL
+	      ,GETDATE() AS SERVER_DATE
+       -- ,D.KEYWORD_NAME
+        ,M.USER_NAME REG_NAME
+        ,ISNULL(E.UPDATE_DATE, CONVERT(DATETIME ,'1901-01-01')) AS UPDATE_DATE
+		,BC.COMPANY_NAME
+		,Convert(BIT, CASE WHEN MB.BOOKMARK_CODE IS NULL THEN 0 ELSE 1 END) AS BOOKMARK_YN
+   FROM T_AD_DEVICE A
+   INNER JOIN T_AD B
+      ON A.AD_CODE = B.AD_CODE
+   INNER JOIN T_CATEGORY CT
+      ON B.REP_CATEGORY_CODE = CT.CATEGORY_CODE
+   INNER JOIN T_MEMBER M 
+       ON A.INSERT_CODE = M.MEMBER_CODE
+   INNER JOIN T_DEVICE_UPDATE E
+      ON E.TABLE_NAME = 'T_AD' 
+     AND E.DEVICE_NUMBER = @DEVICE_NUMBER
+   INNER JOIN T_COMPANY BC
+      ON B.COMPANY_CODE = BC.COMPANY_CODE
+    LEFT JOIN T_MEMBER_BOOKMARK MB 
+      ON MB.DEVICE_CODE = A.DEVICE_CODE 
+	   AND MB.MEMBER_CODE = (SELECT MEMBER_CODE FROM T_MEMBER WHERE USER_ID = @USER_ID)
+  WHERE A.DEVICE_CODE = @DEVICE_CODE
+    #[AD_CODE]
+    AND B.STATUS IN (5,9) /* 관리화면 만들어질 경우 수정 필요 select * from t_common where main_code = 'A001'*/
+    AND @NOW_DATE BETWEEN A.FR_DATE AND A.TO_DATE
+    AND (A.FR_TIME = '' OR (@NOW_TIME >= A.FR_TIME 
+                            AND @NOW_TIME < A.TO_TIME))
+    --AND A.UPDATE_DATE >= @UPDATE_DATE
+  ORDER BY CATEGORY_ORDER_SEQ, B.AD_CODE DESC
+	SET NOCOUNT OFF 
+      ]]>
+      </FixedSQL>
+      <DynamicBodys>
+        <Key>AD_CODE</Key>
+        <Body>AND A.AD_CODE = {0} </Body>
+      </DynamicBodys>
+    </TemplateSQL>
+  </DBAgentTemplate>
+ <DBAgentTemplate TemplateID="GetloggalBoxMainAPIList">
+    <!-- 
+    SqlType : SQL의 형태를 지정합니다.
+      Example 1:<SqlType>FixedSQL</SqlType> 고정적인 SQL을 지원합니다. 
+      Example 2:<SqlType>DynamicSQL</SqlType> 동적인 SQL Type1을 지원합니다.  
+    Description : 해당 SQL의 기능설명을 적습니다.
+    SQLModifier : 해당 SQL의 작성자(수정자)를 적습니다
+    LastModifyDate : 해당 SQL의 마지막 수정일을 적습니다
+    -->
+    <Information>
+      <SqlType>DynamicSQL</SqlType>
+      <Description>메인광고리스트</Description>
+      <SQLModifier>전상훈</SQLModifier>
+      <LastModifyDate>2016-10-31</LastModifyDate>
+    </Information>
+
+    <TemplateSQL>
+      <!-- FixedSQL : 고정된 SQL이 들어가는 곳입니다. -->
+      <FixedSQL>
+        <![CDATA[ 
+    /*******************************************/
+    /* 메인광고리스트  GetloggalBoxMainAPIList */
+    /*******************************************/
+    SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED 
+    DECLARE @DEVICE_NUMBER VARCHAR(200) = '{0}'
+           ,@UPDATE_DATE DATETIME = '{1}'
+    SELECT 
+          A.DEVICE_CODE 
+        , A.SEQ 
+        , A.TITLE
+	      , A.SUB_TITLE
+		    , A.BANNER_TYPE
+	      , A.CONTENT_TYPE
+          , A.CONTENT
+          ,ISNULL(E.UPDATE_DATE, CONVERT(DATETIME ,'1901-01-01')) AS UPDATE_DATE
+          ,CASE WHEN ISNULL(A.CONTENT_DETAIL,'') = '' THEN ''
+                ELSE '{2}' + '/basic/devicemaindetail?DEVICE_CODE=' + CONVERT(VARCHAR(20), A.DEVICE_CODE) + '&SEQ=' + CONVERT(VARCHAR(20), A.SEQ) 
+                END  AS CONTENT_DETAIL_URL
+    FROM T_DEVICE_MAIN A
+    INNER JOIN T_DEVICE B
+       ON A.DEVICE_CODE = B.DEVICE_CODE
+    INNER JOIN T_DEVICE_AUTH_NUMBER C
+       ON B.DEVICE_CODE = C.DEVICE_CODE
+      AND B.AUTH_NUMBER = C.AUTH_NUMBER
+    INNER JOIN T_DEVICE_UPDATE E
+       ON E.TABLE_NAME = 'T_DEVICE_MAIN' 
+      AND E.DEVICE_NUMBER = B.DEVICE_NUMBER
+
+    WHERE B.DEVICE_NUMBER = @DEVICE_NUMBER
+      AND A.HIDE = 0
+      AND B.HIDE = 0
+      AND C.HIDE = 0
+    ORDER BY A.DEVICE_CODE, A.SEQ
+      ]]>
+      </FixedSQL>
+    
+    </TemplateSQL>
+  </DBAgentTemplate>
+  <DBAgentTemplate TemplateID="GetloggalBoxAuthNumber">
+    <!-- 
+    SqlType : SQL의 형태를 지정합니다.
+      Example 1:<SqlType>FixedSQL</SqlType> 고정적인 SQL을 지원합니다. 
+      Example 2:<SqlType>DynamicSQL</SqlType> 동적인 SQL Type1을 지원합니다.  
+    Description : 해당 SQL의 기능설명을 적습니다.
+    SQLModifier : 해당 SQL의 작성자(수정자)를 적습니다
+    LastModifyDate : 해당 SQL의 마지막 수정일을 적습니다
+    -->
+    <Information>
+      <SqlType>DynamicSQL</SqlType>
+      <Description>기기인증번호가져오기</Description>
+      <SQLModifier>전상훈</SQLModifier>
+      <LastModifyDate>2016-10-31</LastModifyDate>
+    </Information>
+
+    <TemplateSQL>
+      <!-- FixedSQL : 고정된 SQL이 들어가는 곳입니다. -->
+      <FixedSQL>
+        <![CDATA[ 
+    /************************************************/
+    /* 로컬박스인증번호가져오기  GetloggalBoxAuthNumber */
+    /************************************************/
+
+   DECLARE @DEVICE_NUMBER VARCHAR(100) = '{0}'
+         , @AUTH_NUMBER   BIGINT
+         , @AUTH_TYPE INT = '{1}'
+      
+    IF @AUTH_TYPE  = 2
+    BEGIN
+      UPDATE T_DEVICE
+         SET AUTH_NUMBER = NULL
+           ,UPDATE_CODE = 0
+	         ,UPDATE_DATE = GETDATE()
+      WHERE DEVICE_NUMBER = @DEVICE_NUMBER    
+    END 
+    ELSE IF @AUTH_TYPE  = 3
+    BEGIN
+      UPDATE T_SIGNAGE
+         SET AUTH_NUMBER = NULL
+           ,UPDATE_CODE = 0
+	         ,UPDATE_DATE = GETDATE()
+      WHERE DEVICE_NUMBER = @DEVICE_NUMBER    
+    END
+    
+    SELECT @AUTH_NUMBER = AUTH_NUMBER
+     FROM T_DEVICE_AUTH_NUMBER
+    WHERE DEVICE_NUMBER = @DEVICE_NUMBER    
+      --AND ( (AUTH_TYPE = 2 AND DEVICE_CODE IS NULL)  OR (AUTH_TYPE = 3 AND SIGN_CODE IS NULL) ) 
+      AND AUTH_TYPE = @AUTH_TYPE
+      AND DEVICE_CODE IS NULL
+      AND HIDE = 0
+    IF @@ROWCOUNT = 0
+    BEGIN
+      UPDATE T_DEVICE_AUTH_NUMBER
+        SET HIDE = 1
+           ,REMARK = ISNULL(REMARK, '') + ' ' + N'만료업데이트' 
+           ,UPDATE_CODE = 0
+	         ,UPDATE_DATE = GETDATE()
+      WHERE DEVICE_NUMBER = @DEVICE_NUMBER    
+      --  AND ( (@AUTH_TYPE = 2 AND DEVICE_CODE IS NULL)  OR (@AUTH_TYPE = 3 AND SIGN_CODE IS NULL) ) 
+        AND HIDE = 0   
+      
+      
+      INSERT INTO T_DEVICE_AUTH_NUMBER
+      (AUTH_TYPE, DEVICE_NUMBER,  HIDE, INSERT_CODE, INSERT_DATE, UPDATE_CODE, UPDATE_DATE)
+      SELECT @AUTH_TYPE, @DEVICE_NUMBER, 0, 0, GETDATE(), 0, GETDATE()
+
+      SELECT @AUTH_NUMBER = CONVERT(BIGINT, IDENT_CURRENT('T_DEVICE_AUTH_NUMBER')) 
+   END
+   
+   SELECT  @AUTH_NUMBER  AS AUTH_NUMBER
+
+      ]]>
+      </FixedSQL>
+     
+    </TemplateSQL>
+  </DBAgentTemplate>
+
+  <DBAgentTemplate TemplateID="loggalBoxAuthReg">
+    <!-- 
+    SqlType : SQL의 형태를 지정합니다.
+      Example 1:<SqlType>FixedSQL</SqlType> 고정적인 SQL을 지원합니다. 
+      Example 2:<SqlType>DynamicSQL</SqlType> 동적인 SQL Type1을 지원합니다.  
+    Description : 해당 SQL의 기능설명을 적습니다.
+    SQLModifier : 해당 SQL의 작성자(수정자)를 적습니다
+    LastModifyDate : 해당 SQL의 마지막 수정일을 적습니다
+    -->
+    <Information>
+      <SqlType>DynamicSQL</SqlType>
+      <Description>기기인증번호가져오기</Description>
+      <SQLModifier>전상훈</SQLModifier>
+      <LastModifyDate>2016-10-31</LastModifyDate>
+    </Information>
+
+    <TemplateSQL>
+      <!-- FixedSQL : 고정된 SQL이 들어가는 곳입니다. -->
+      <FixedSQL>
+        <![CDATA[ 
+    /************************************************/
+    /* 로컬박스인증번호 등록 loggalBoxAuthReg */
+    /************************************************/
+
+  DECLARE @SAVE_MODE   INT    = {0} /* 0 : 등록 1: 초기화 */
+         , @DEVICE_CODE BIGINT = CASE WHEN ISNUMERIC('{1}') = 1 THEN '{1}' ELSE NULL END
+         , @AUTH_NUMBER BIGINT = {2}
+	       , @REG_CODE    INT    = {3}
+         , @AUTH_TYPE   INT    = {4}
+         , @SIGN_CODE   INT    = CASE WHEN ISNUMERIC('{5}') = 1 THEN '{5}' ELSE NULL END
+	       , @DEVICE_NUMBER VARCHAR(100)
+         
+       IF ISNULL(@DEVICE_CODE ,0) > 0 
+       BEGIN
+          SET @AUTH_TYPE = 2
+       END
+       ELSE IF ISNULL(@SIGN_CODE ,0) > 0 
+       BEGIN
+          SET @AUTH_TYPE = 3
+       END
+       
+      IF @SAVE_MODE = 0
+      BEGIN
+	      IF EXISTS (select * from T_DEVICE_AUTH_NUMBER
+			      where AUTH_NUMBER = @AUTH_NUMBER AND (DEVICE_CODE IS NULL OR SIGN_CODE IS NULL) AND HIDE = 0
+	      )
+	      BEGIN
+		     UPDATE T_DEVICE_AUTH_NUMBER
+		        SET DEVICE_CODE = CASE WHEN AUTH_TYPE = 2 THEN  @DEVICE_CODE ELSE NULL END
+                   ,SIGN_CODE = CASE WHEN AUTH_TYPE = 3 THEN  @SIGN_CODE ELSE NULL END
+		           ,UPDATE_CODE = @REG_CODE
+			       ,UPDATE_DATE = GETDATE()
+		      WHERE AUTH_TYPE = @AUTH_TYPE
+                AND AUTH_NUMBER = @AUTH_NUMBER
+			
+          
+         SELECT @DEVICE_NUMBER = DEVICE_NUMBER 
+           FROM T_DEVICE_AUTH_NUMBER
+          WHERE AUTH_NUMBER = @AUTH_NUMBER
+
+          IF @AUTH_TYPE  = 2
+          BEGIN
+            UPDATE T_DEVICE
+		       SET AUTH_NUMBER = @AUTH_NUMBER
+                  ,DEVICE_NUMBER = @DEVICE_NUMBER
+		          ,UPDATE_CODE = @REG_CODE
+			      ,UPDATE_DATE = GETDATE()
+		     WHERE DEVICE_CODE = @DEVICE_CODE
+          END
+		  ELSE
+          BEGIN
+		    UPDATE T_SIGNAGE
+		       SET AUTH_NUMBER = @AUTH_NUMBER
+                  ,DEVICE_NUMBER = @DEVICE_NUMBER
+		          ,UPDATE_CODE = @REG_CODE
+			      ,UPDATE_DATE = GETDATE()
+		     WHERE SIGN_CODE = @SIGN_CODE
+          END
+          /*기기인증시 메인 , 광고 업데이트 */          
+          UPDATE T_DEVICE_UPDATE
+             SET UPDATE_CODE = @REG_CODE
+               , UPDATE_DATE = GETDATE()
+          WHERE TABLE_NAME = 'T_AD'
+            AND DEVICE_NUMBER = @DEVICE_NUMBER
+          IF @@ROWCOUNT = 0
+          BEGIN
+	          INSERT INTO T_DEVICE_UPDATE
+	          (TABLE_NAME, DEVICE_NUMBER, API_NAME, UPDATE_CODE, UPDATE_DATE)
+	          SELECT 'T_AD', @DEVICE_NUMBER, '',@REG_CODE, GETDATE()
+          END
+
+          UPDATE T_DEVICE_UPDATE
+             SET UPDATE_CODE = @REG_CODE
+               , UPDATE_DATE = GETDATE()
+          WHERE TABLE_NAME = 'T_DEVICE_MAIN'
+            AND DEVICE_NUMBER = @DEVICE_NUMBER
+          IF @@ROWCOUNT = 0
+          BEGIN
+	          INSERT INTO T_DEVICE_UPDATE
+	          (TABLE_NAME, DEVICE_NUMBER, API_NAME, UPDATE_CODE, UPDATE_DATE)
+	          SELECT 'T_DEVICE_MAIN', @DEVICE_NUMBER, '',@REG_CODE, GETDATE()
+          END
+	
+	      END
+	      ELSE
+	      BEGIN
+		      SELECT N'사용할 수 없는 번호입니다.' AS  ERROR_MESSAGE
+          GOTO EXCEPTION
+	      END
+      END
+      ELSE
+      BEGIN
+		      UPDATE 	T_DEVICE_AUTH_NUMBER
+		        SET HIDE = 1
+		           ,UPDATE_CODE = @REG_CODE
+			         ,UPDATE_DATE = GETDATE()
+		      WHERE AUTH_NUMBER = @AUTH_NUMBER
+            AND AUTH_TYPE   = @AUTH_TYPE
+            
+          IF @AUTH_TYPE = 2
+          BEGIN
+		        UPDATE 	T_DEVICE
+		         SET AUTH_NUMBER =  NULL
+                ,DEVICE_NUMBER = NULL
+		            ,UPDATE_CODE = @REG_CODE
+			          ,UPDATE_DATE = GETDATE()
+		        WHERE DEVICE_CODE = @DEVICE_CODE
+          END
+          ELSE IF @AUTH_TYPE = 3
+          BEGIN
+              UPDATE T_SIGNAGE
+		           SET AUTH_NUMBER   = NULL
+                  ,DEVICE_NUMBER = NULL
+		              ,UPDATE_CODE   = @REG_CODE
+			            ,UPDATE_DATE   = GETDATE()
+		          WHERE SIGN_CODE    = @SIGN_CODE
+          END
+          
+		  
+      END
+      SELECT '' AS ERROR_MESSAGE
+  EXCEPTION:
+
+
+      ]]>
+      </FixedSQL>
+    
+    </TemplateSQL>
+  </DBAgentTemplate>
+
+  <DBAgentTemplate TemplateID="checkDeviceAuth">
+    <!-- 
+    SqlType : SQL의 형태를 지정합니다.
+      Example 1:<SqlType>FixedSQL</SqlType> 고정적인 SQL을 지원합니다. 
+      Example 2:<SqlType>DynamicSQL</SqlType> 동적인 SQL Type1을 지원합니다.  
+    Description : 해당 SQL의 기능설명을 적습니다.
+    SQLModifier : 해당 SQL의 작성자(수정자)를 적습니다
+    LastModifyDate : 해당 SQL의 마지막 수정일을 적습니다
+    -->
+    <Information>
+      <SqlType>DynamicSQL</SqlType>
+      <Description>로컬박스리스트</Description>
+      <SQLModifier>전상훈</SQLModifier>
+      <LastModifyDate>2016-11-03</LastModifyDate>
+    </Information>
+
+    <TemplateSQL>
+      <!-- FixedSQL : 고정된 SQL이 들어가는 곳입니다. -->
+      <FixedSQL>
+        <![CDATA[ 
+     SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED 
+      DECLARE @DEVICE_NUMBER VARCHAR(100) = N'{0}'
+             ,@AUTH_NUMBER    BIGINT  =  {1}
+             ,@AUTH_TYPE      INT     =  {2}
+             
+      IF @AUTH_TYPE = 2
+      BEGIN
+        SELECT CONVERT(INT, COUNT(*)) CNT 
+          FROM T_DEVICE A
+        INNER JOIN T_DEVICE_AUTH_NUMBER B
+           ON A.AUTH_NUMBER = B.AUTH_NUMBER
+          AND A.DEVICE_NUMBER = B.DEVICE_NUMBER
+        WHERE A.DEVICE_NUMBER = @DEVICE_NUMBER
+          AND B.AUTH_NUMBER   = @AUTH_NUMBER
+          AND A.HIDE = 0
+          AND B.HIDE = 0
+      END
+      ELSE IF @AUTH_TYPE = 3
+      BEGIN
+        SELECT CONVERT(INT, COUNT(*)) CNT 
+          FROM T_SIGNAGE A
+        INNER JOIN T_DEVICE_AUTH_NUMBER B
+           ON A.AUTH_NUMBER = B.AUTH_NUMBER
+          AND A.DEVICE_NUMBER = B.DEVICE_NUMBER
+        WHERE A.DEVICE_NUMBER = @DEVICE_NUMBER
+          AND B.AUTH_NUMBER   = @AUTH_NUMBER
+          AND A.HIDE = 0
+          AND B.HIDE = 0
+      END
+      
+      
+
+      ]]>
+      </FixedSQL>
+    </TemplateSQL>
+  </DBAgentTemplate>
+  <DBAgentTemplate TemplateID="GetDeviceUpdateInfo">
+    <!-- 
+    SqlType : SQL의 형태를 지정합니다.
+      Example 1:<SqlType>FixedSQL</SqlType> 고정적인 SQL을 지원합니다. 
+      Example 2:<SqlType>DynamicSQL</SqlType> 동적인 SQL Type1을 지원합니다.  
+    Description : 해당 SQL의 기능설명을 적습니다.
+    SQLModifier : 해당 SQL의 작성자(수정자)를 적습니다
+    LastModifyDate : 해당 SQL의 마지막 수정일을 적습니다
+    -->
+    <Information>
+      <SqlType>DynamicSQL</SqlType>
+      <Description>로컬박스리스트</Description>
+      <SQLModifier>전상훈</SQLModifier>
+      <LastModifyDate>2016-11-03</LastModifyDate>
+    </Information>
+
+    <TemplateSQL>
+      <!-- FixedSQL : 고정된 SQL이 들어가는 곳입니다. -->
+      <FixedSQL>
+        <![CDATA[ 
+	SET NOCOUNT ON 
+	/******************************************************/
+	/* 로컬박스별 업데이트상태 테이블 - T_DEVICE_UPDATE 조회  */
+  /* - GetDeviceUpdateInfo SELECT QUERY                 */ 
+	/******************************************************/
+	SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED 
+	SELECT 
+		  A.TABLE_NAME
+		, A.DEVICE_NUMBER
+		, A.API_NAME
+		, A.UPDATE_CODE
+		, A.UPDATE_DATE
+		, A.RECEIVE_DATE
+    , B.DEVICE_CODE
+    , B.DEVICE_NAME
+  FROM T_DEVICE_UPDATE A 
+  INNER JOIN T_DEVICE B
+     ON A.DEVICE_NUMBER = B.DEVICE_NUMBER
+	WHERE 1=1 /* (A.RECEIVE_DATE IS NULL OR A.RECEIVE_DATE < A.UPDATE_DATE) */
+  #[TABLE_NAME]
+  #[DEVICE_NUMBER]
+  
+  UPDATE A
+     SET RECEIVE_DATE = GETDATE()
+    FROM T_DEVICE_UPDATE A
+   WHERE  1=1 /*(A.RECEIVE_DATE IS NULL OR A.RECEIVE_DATE < A.UPDATE_DATE)*/
+    #[TABLE_NAME]
+    #[DEVICE_NUMBER]
+    
+ /* UPDATE A
+     SET WORKING_TIME = GETDATE()
+    FROM T_DEVICE A
+   WHERE 1=1
+     #[DEVICE_NUMBER]
+  */
+  SET NOCOUNT OFF 
+  ]]>
+     
+      </FixedSQL>
+      <DynamicBodys>
+        <Key>TABLE_NAME</Key>
+        <Body>AND A.TABLE_NAME = '{0}' </Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>DEVICE_NUMBER</Key>
+        <Body>AND A.DEVICE_NUMBER = '{0}' </Body>
+      </DynamicBodys>
+
+    </TemplateSQL>
+  </DBAgentTemplate>
+  <DBAgentTemplate TemplateID="AdClickSave">
+    <!-- 
+    SqlType : SQL의 형태를 지정합니다.
+      Example 1:<SqlType>FixedSQL</SqlType> 고정적인 SQL을 지원합니다. 
+      Example 2:<SqlType>DynamicSQL</SqlType> 동적인 SQL Type1을 지원합니다.  
+    Description : 해당 SQL의 기능설명을 적습니다.
+    SQLModifier : 해당 SQL의 작성자(수정자)를 적습니다
+    LastModifyDate : 해당 SQL의 마지막 수정일을 적습니다
+    -->
+    <Information>
+      <SqlType>DynamicSQL</SqlType>
+      <Description>로컬박스 광고 클릭시 저장</Description>
+      <SQLModifier>전상훈</SQLModifier>
+      <LastModifyDate>2016-10-05</LastModifyDate>
+    </Information>
+
+    <TemplateSQL>
+      <!-- FixedSQL : 고정된 SQL이 들어가는 곳입니다. -->
+      <FixedSQL>
+        <![CDATA[ 
+    /****************************************/
+    /* 로컬박스 광고 클릭시  AdClickSave     */
+    /*****************************************/
+    DECLARE @DEVICE_NUMBER VARCHAR(100) = '{0}'
+           ,@AD_CODE BIGINT = {1}
+
+    DECLARE @FR_DATE  VARCHAR(8)
+			    , @TO_DATE  VARCHAR(8)
+			    , @FR_TIME  VARCHAR(5)
+			    , @TO_TIME  VARCHAR(5)
+   
+   DECLARE @TMP_FR_UTC_DATE DATETIME
+         , @TMP_TO_UTC_DATE DATETIME
+  
+    UPDATE T_AD
+       SET CLICK_CNT = ISNULL(CLICK_CNT,0) + 1
+     WHERE AD_CODE = @AD_CODE 
+
+    UPDATE A
+       SET CLICK_CNT = ISNULL(A.CLICK_CNT,0) + 1
+      FROM T_AD_DEVICE A
+     INNER JOIN T_DEVICE B
+        ON A.DEVICE_CODE = B.DEVICE_CODE
+     WHERE A.AD_CODE = @AD_CODE 
+       AND B.DEVICE_NUMBER = @DEVICE_NUMBER
+    IF @@ROWCOUNT = 0
+    BEGIN
+      	  
+
+        SELECT @FR_DATE = FR_DATE, @TO_DATE= TO_DATE
+             , @FR_TIME= FR_TIME,  @TO_TIME =TO_TIME
+        FROM T_AD
+        WHERE AD_CODE = @AD_CODE
+
+         DECLARE  @FR_UTC_DATE                    VARCHAR(8)           = CONVERT(VARCHAR(8), @TMP_FR_UTC_DATE, 112)
+			          , @TO_UTC_DATE                    VARCHAR(8)           = CONVERT(VARCHAR(8), @TMP_TO_UTC_DATE, 112)
+			          , @FR_UTC_TIME                    VARCHAR(5)           = convert(varchar(5), @TMP_FR_UTC_DATE, 108)
+			          , @TO_UTC_TIME                    VARCHAR(5)           = convert(varchar(5), @TMP_TO_UTC_DATE, 108)                                                          
+
+		  INSERT INTO T_AD_DEVICE
+		  (		AD_CODE                       		, DEVICE_CODE                   		, FR_DATE                       		
+			  , TO_DATE                       		, FR_TIME                       		, TO_TIME                       		, FR_UTC_DATE                   		
+			  , TO_UTC_DATE                   		, FR_UTC_TIME                   		, TO_UTC_TIME                   		, CLICK_CNT                     		
+			  , HIDE                          		, REMARK                        		, INSERT_CODE                   		, INSERT_DATE                   		
+			  , UPDATE_CODE                   		, UPDATE_DATE                   		
+		  )
+		  SELECT 	@AD_CODE                       		, DEVICE_CODE                   		, @FR_DATE                       		
+			      , @TO_DATE                       		, @FR_TIME                       		, @TO_TIME                       		, @FR_UTC_DATE                   		
+			      , @TO_UTC_DATE                   		, @FR_UTC_TIME                   		, @TO_UTC_TIME                   		, 1                     		
+			      , 0                          		, N'' REMARK                        		, 0                   		, GETDATE()                 		
+			      , 0                   		, GETDATE()
+		      FROM T_DEVICE 
+		  WHERE DEVICE_NUMBER = @DEVICE_NUMBER
+    END
+       
+	
+      ]]>
+      </FixedSQL>
+      <DynamicBodys>
+        <Key>AD_CODE</Key>
+        <Body>AND A.AD_CODE = {0} </Body>
+      </DynamicBodys>
+    </TemplateSQL>
+  </DBAgentTemplate>
+
+  <DBAgentTemplate TemplateID="GetFavoriteNationalInfoADList">
+    <!-- 
+    SqlType : SQL의 형태를 지정합니다.
+      Example 1:<SqlType>FixedSQL</SqlType> 고정적인 SQL을 지원합니다. 
+      Example 2:<SqlType>DynamicSQL</SqlType> 동적인 SQL Type1을 지원합니다.  
+    Description : 해당 SQL의 기능설명을 적습니다.
+    SQLModifier : 해당 SQL의 작성자(수정자)를 적습니다
+    LastModifyDate : 해당 SQL의 마지막 수정일을 적습니다
+    -->
+    <Information>
+      <SqlType>DynamicSQL</SqlType>
+      <Description>인기 공공정보 가져오기</Description>
+      <SQLModifier>최하늘</SQLModifier>
+      <LastModifyDate>2017-01-12</LastModifyDate>
+    </Information>
+
+    <TemplateSQL>
+      <!-- FixedSQL : 고정된 SQL이 들어가는 곳입니다. -->
+      <FixedSQL>
+        <![CDATA[ 
+   	/********************************************************************/
+    /* 인기 공공정보 가져오기    GetFavoriteNationalInfoADList          */
+    /********************************************************************/
+	SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED 
+  DECLARE @DEVICE_NUMBER VARCHAR(100) = '{0}'
+         ,@UTC_DATE DATETIME = GETUTCDATE()
+         ,@NOW_DATE VARCHAR(8)
+	       ,@NOW_TIME VARCHAR(5)
+	       ,@STATUS INT = 5
+	       ,@DEVICE_CODE BIGINT 
+	       ,@MNG_URL VARCHAR(50) = '{1}'
+         ,@UPDATE_DATE DATETIME = '{2}'
+
+  SELECT @DEVICE_CODE = DEVICE_CODE
+        ,@NOW_DATE    = CONVERT(VARCHAR(8), DATEADD(MINUTE,  A.TIME_ZONE * 60, @UTC_DATE),112)
+        ,@NOW_TIME    = CONVERT(VARCHAR(5), DATEADD(MINUTE,  A.TIME_ZONE * 60, @UTC_DATE),108)
+  FROM T_DEVICE A
+  WHERE DEVICE_NUMBER = @DEVICE_NUMBER
+
+
+  SELECT DISTINCT TOP 5
+         ISNULL(CT.CATEGORY_CODE,6328) AS CATEGORY_CODE
+        ,ISNULL(CT.SEARCH_CATEGORY_CODE,'6328|') AS SEARCH_CATEGORY_CODE
+        ,ISNULL(CT.CATEGORY_NAME,N'기타') AS CATEGORY_NAME
+	      ,ISNULL(CT.ORDER_SEQ,99999999) AS CATEGORY_ORDER_SEQ
+        ,B.AD_CODE, B.TITLE, B.SUB_TITLE, B.LOGO_URL, B.CLICK_CNT
+	      ,@MNG_URL + '/advertise/contentview/' + CONVERT(VARCHAR(100), B.AD_CODE) CONTENT_URL
+	      ,GETDATE() AS SERVER_DATE
+       -- ,D.KEYWORD_NAME
+        ,M.USER_NAME REG_NAME
+        ,ISNULL(E.UPDATE_DATE, CONVERT(DATETIME ,'1901-01-01')) AS UPDATE_DATE
+   FROM T_AD_DEVICE A
+   INNER JOIN T_AD B
+      ON A.AD_CODE = B.AD_CODE
+   INNER JOIN T_CATEGORY CT
+      ON B.REP_CATEGORY_CODE = CT.CATEGORY_CODE
+   INNER JOIN T_MEMBER M 
+       ON A.INSERT_CODE = M.MEMBER_CODE
+   INNER JOIN T_DEVICE_UPDATE E
+      ON E.TABLE_NAME = 'T_AD' 
+     AND E.DEVICE_NUMBER = @DEVICE_NUMBER
+  WHERE A.DEVICE_CODE = @DEVICE_CODE
+    AND B.STATUS IN (5,9) /* 관리화면 만들어질 경우 수정 필요 select * from t_common where main_code = 'A001'*/
+    AND @NOW_DATE BETWEEN A.FR_DATE AND A.TO_DATE
+    AND (A.FR_TIME = '' OR (@NOW_TIME >= A.FR_TIME 
+                            AND @NOW_TIME < A.TO_TIME))
+    AND CT.CATEGORY_CODE = 6329
+  ORDER BY B.CLICK_CNT DESC, CATEGORY_ORDER_SEQ, B.AD_CODE DESC
+	SET NOCOUNT OFF 
+      ]]>
+      </FixedSQL>
+
+    </TemplateSQL>
+  </DBAgentTemplate>
+  <DBAgentTemplate TemplateID="GetDeviceLocationMap">
+    <!-- 
+    SqlType : SQL의 형태를 지정합니다.
+      Example 1:<SqlType>FixedSQL</SqlType> 고정적인 SQL을 지원합니다. 
+      Example 2:<SqlType>DynamicSQL</SqlType> 동적인 SQL Type1을 지원합니다.  
+    Description : 해당 SQL의 기능설명을 적습니다.
+    SQLModifier : 해당 SQL의 작성자(수정자)를 적습니다
+    LastModifyDate : 해당 SQL의 마지막 수정일을 적습니다
+    -->
+    <Information>
+      <SqlType>DynamicSQL</SqlType>
+      <Description>지역별 로컬박스정보 가져오기</Description>
+      <SQLModifier>전상훈</SQLModifier>
+      <RegDate>2017-04-07</RegDate>
+      <LastModifyDate>2018-04-27</LastModifyDate>
+    </Information>
+
+    <TemplateSQL>
+      <!-- FixedSQL : 고정된 SQL이 들어가는 곳입니다. -->
+      <FixedSQL>
+        <![CDATA[ 
+   	/***********************************************************/
+    /* 로컬박스별 위치 정보 가져오기    GetDeviceLocationmap          */
+    /***********************************************************/
+	SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED 
+   DECLARE @LATITUDE     NUMERIC(20,16) =  CASE WHEN ISNUMERIC('{0}') = 1 THEN '{0}' ELSE '37.5653161' END
+	        ,@LONGITUDE    NUMERIC(20,16) = CASE WHEN ISNUMERIC('{1}') = 1 THEN '{1}' ELSE '126.9745883' END
+		      ,@PAGE INT = {2}
+		      ,@PAGE_COUNT INT = {3}
+          ,@MEMBER_CODE INT
+     
+     SELECT @MEMBER_CODE = MEMBER_CODE FROM T_MEMBER
+	    WHERE 1=1
+       #[USER_ID]            
+     SET @MEMBER_CODE  = ISNULL(@MEMBER_CODE ,-1); 
+      WITH T_TABLE
+      AS
+      (
+        SELECT  
+           ROW_NUMBER() OVER(ORDER BY CASE WHEN DISTANCE < MIN_DISTANCE OR MIN_DISTANCE = 0 THEN DISTANCE ELSE MIN_DISTANCE END, DISTANCE, UPDATE_DATE DESC) AS IDX
+         , DEVICE_GUBUN
+         , LOCATION_NAME
+	       , DEVICE_CODE
+	       , DEVICE_NAME
+         , STATION_CODE
+         , SIGN_CODE
+	       , ADDRESS1
+	       , ADDRESS2
+	       , ZIP_CODE
+	       , LATITUDE
+	       , LONGITUDE
+         , AUTH_NUMBER
+         , DEVICE_DESC
+	       , COMPANY_NAME
+	       , USER_NAME
+	       , CONTACT_COMPANY_NAME
+	       , CONTACT_NAME
+	       , DISTANCE
+	       , (CASE WHEN DISTANCE < MIN_DISTANCE  THEN DISTANCE ELSE MIN_DISTANCE END) AS VIRTUAR_DISTANCE
+         , BOOKMARK_YN
+         , LOGO_URL
+         
+	   FROM 
+       (
+        SELECT 1 AS DEVICE_GUBUN
+              , A.ADDRESS1 AS LOCATION_NAME
+              , A.DEVICE_CODE
+              , A.DEVICE_NAME
+              , A.STATION_CODE
+              , NULL AS SIGN_CODE
+              , A.ADDRESS1
+              , A.ADDRESS2
+              , A.ZIP_CODE
+              , A.LATITUDE
+              , A.LONGITUDE
+              , A.AUTH_NUMBER
+              , A.DEVICE_DESC
+              , CASE WHEN B.COMPANY_NAME =  C.STORE_NAME THEN B.COMPANY_NAME ELSE B.COMPANY_NAME + '>' +  C.STORE_NAME END AS COMPANY_NAME
+              , D.USER_NAME   
+              , CASE WHEN E.COMPANY_NAME =  F.STORE_NAME THEN E.COMPANY_NAME ELSE E.COMPANY_NAME + '>' +  F.STORE_NAME END AS CONTACT_COMPANY_NAME
+              , G.USER_NAME   AS CONTACT_NAME
+              , dbo.FN_TO_DISTANCE(@LATITUDE, @LONGITUDE, A.LATITUDE, A.LONGITUDE,'M') AS DISTANCE
+	            , ISNULL(PLACE_DISTANCE,9999999999999999)  AS MIN_DISTANCE
+              , A.UPDATE_DATE
+              , A.COMPANY_CODE
+              , ISNULL(I.BOOKMARK_YN,0) AS BOOKMARK_YN
+              , ISNULL(FF.FILE_URL,'') AS LOGO_URL
+     FROM T_DEVICE A
+     LEFT JOIN (
+                    /* -1 * ( RADIUS ) * 100 - (RADIUS-DISTANCE) 는 반경만으로 비교시 같을 경우 거리가 작은 순으로 조회 하기 위함*/
+	              SELECT DEVICE_CODE, MIN(CASE WHEN DISTANCE - RADIUS <= 0 THEN -1 * ( RADIUS ) * 100 - (RADIUS-DISTANCE)  ELSE DISTANCE - RADIUS END) AS PLACE_DISTANCE
+				         FROM  (
+					           SELECT DEVICE_CODE
+					               , dbo.FN_TO_DISTANCE(@LATITUDE, @LONGITUDE, LATITUDE, LONGITUDE,'M') AS DISTANCE 
+					          	   , RADIUS
+					            FROM T_DEVICE_PLACE
+				         ) AA
+				         GROUP BY AA.DEVICE_CODE 
+	          ) A1 ON A.DEVICE_CODE = A1.DEVICE_CODE  
+     LEFT JOIN T_COMPANY B
+       ON A.COMPANY_CODE = B.COMPANY_CODE
+     LEFT JOIN T_STORE C
+       ON A.STORE_CODE   = C.STORE_CODE
+     LEFT JOIN T_MEMBER D
+       ON A.MEMBER_CODE = D.MEMBER_CODE
+     LEFT JOIN T_COMPANY E
+       ON A.CONTACT_COMPANY_CODE = E.COMPANY_CODE
+     LEFT JOIN T_STORE F
+       ON A.CONTACT_STORE_CODE   = F.STORE_CODE
+     LEFT JOIN T_MEMBER G
+       ON A.CONTACT_CODE = G.MEMBER_CODE
+     LEFT JOIN (SELECT CONVERT(BIT,1) AS BOOKMARK_YN, DEVICE_CODE 
+	              FROM T_MEMBER_BOOKMARK A
+	             WHERE MEMBER_CODE = @MEMBER_CODE
+			   ) I ON A.DEVICE_CODE = I.DEVICE_CODE
+	   LEFT JOIN T_FILE FF
+       ON FF.TABLE_NAME = 'T_DEVICE'
+      AND FF.TABLE_KEY  = CONVERT(VARCHAR(20), A.DEVICE_CODE)
+      AND FF.FILE_SEQ   = 1
+      AND FF.REF_DATA1  = '1'         
+     WHERE A.STATION_CODE IS NULL
+       AND A.AUTH_NUMBER IS NOT NULL
+            AND A.STATUS = 9
+            AND A.HIDE = 0
+     UNION ALL
+     SELECT DISTINCT
+           2 DEVICE_GUBUN
+         , A1.ADDRESS1 AS LOCATION_NAME
+         , A1.STATION_CODE DEVICE_CODE
+         , A1.STATION_NAME AS DEVICE_NAME
+         , A.STATION_CODE
+         , NULL AS SIGN_CODE
+         , A1.ADDRESS1
+         , A1.ADDRESS2
+         , A1.ZIP_CODE
+         , ISNULL(A2.LATITUDE, a1.LATITUDE) AS LATITUDE
+         , ISNULL(A2.LONGITUDE, A1.LONGITUDE) AS LONGITUDE
+         , NULL AUTH_NUMBER
+         , A1.STATION_DESC AS DEVICE_DESC
+         , CASE WHEN TC.COMPANY_NAME =  TS.STORE_NAME THEN TC.COMPANY_NAME ELSE TC.COMPANY_NAME + '>' +  TS.STORE_NAME END COMPANY_NAME
+         , TM.USER_NAME USER_NAME   
+         , CASE WHEN TC.COMPANY_NAME =  TS.STORE_NAME THEN TC.COMPANY_NAME ELSE TC.COMPANY_NAME + '>' +  TS.STORE_NAME END CONTACT_COMPANY_NAME
+         , TM.USER_NAME  AS CONTACT_NAME
+         , dbo.FN_TO_DISTANCE(@LATITUDE, @LONGITUDE, A1.LATITUDE, A1.LONGITUDE,'M') AS DISTANCE
+	     --,  ISNULL(PLACE_DISTANCE,9999999999999999)  AS MIN_DISTANCE
+          ,  0  AS MIN_DISTANCE
+          , A1.UPDATE_DATE
+          , A.COMPANY_CODE
+          , CONVERT(BIT,0) AS BOOKMARK_YN
+          , ISNULL(FF.FILE_URL,'') AS LOGO_URL
+       FROM T_DEVICE A
+       INNER JOIN T_DEVICE_STATION A1
+         ON A.STATION_CODE = A1.STATION_CODE
+       LEFT JOIN T_DEVICE_STATION_PLACE A2
+		  ON A1.STATION_CODE = A2.STATION_CODE 
+		 AND A2.IS_RANGE = 0
+	 /*  LEFT JOIN (
+                        /* -1 * ( RADIUS ) * 100 - (RADIUS-DISTANCE) 는 반경만으로 비교시 같을 경우 거리가 작은 순으로 조회 하기 위함*/
+	              SELECT STATION_CODE, MIN(CASE WHEN DISTANCE - RADIUS <= 0 THEN -1 * ( RADIUS ) * 100 - (RADIUS-DISTANCE) ELSE DISTANCE - RADIUS END) AS PLACE_DISTANCE
+				          FROM (
+				            	 SELECT STATION_CODE
+				            	     , dbo.FN_TO_DISTANCE(@LATITUDE, @LONGITUDE, LATITUDE, LONGITUDE,'M') AS DISTANCE 
+				            		 , RADIUS
+				            	  FROM T_DEVICE_STATION_PLACE
+				          ) AA
+				          GROUP BY AA.STATION_CODE 
+	          ) A2 ON A1.STATION_CODE = A2.STATION_CODE  */
+       LEFT JOIN T_COMPANY B
+         ON A.COMPANY_CODE = B.COMPANY_CODE
+       LEFT JOIN T_STORE C
+         ON A.STORE_CODE   = C.STORE_CODE
+       LEFT JOIN T_MEMBER D
+         ON A.MEMBER_CODE = D.MEMBER_CODE
+       LEFT JOIN T_COMPANY E
+         ON A.CONTACT_COMPANY_CODE = E.COMPANY_CODE
+       LEFT JOIN T_STORE F
+         ON A.CONTACT_STORE_CODE   = F.STORE_CODE
+       LEFT JOIN T_MEMBER G
+         ON A1.UPDATE_CODE = G.MEMBER_CODE
+	   INNER JOIN T_MEMBER TM ON A1.UPDATE_CODE = TM.MEMBER_CODE
+	   INNER JOIN T_MEMBER_EMPLOYEE ME ON TM.MEMBER_CODE = ME.MEMBER_CODE
+	   INNER JOIN T_STORE TS ON TS.STORE_CODE = ME.STORE_CODE
+	   INNER JOIN T_COMPANY TC ON TC.COMPANY_CODE = TS.COMPANY_CODE
+     LEFT JOIN T_FILE FF
+       ON FF.TABLE_NAME = 'T_DEVICE_STATION'
+      AND FF.TABLE_KEY  = CONVERT(VARCHAR(20), A1.STATION_CODE)
+      AND FF.FILE_SEQ   = 1
+      AND FF.REF_DATA1  = '1'
+       WHERE 1=1
+         AND A.STATUS = 9
+         AND A.HIDE = 0
+
+    ) A
+    #[SEARCH_CODE]
+    WHERE 1=1
+    #[STATION_CODE]
+    #[COMPANY_CODE]
+    #[DISTANCE]
+    
+  ) 
+  SELECT * FROM T_TABLE
+ -- WHERE IDX > @PAGE_COUNT * (@PAGE -1)
+ --   AND IDX <= @PAGE_COUNT * @PAGE
+  SET NOCOUNT OFF 
+      ]]>
+      </FixedSQL>
+      <DynamicBodys>
+        <Key>SEARCH_CODE</Key>
+        <Body>
+          /*지역 선택검색시*/
+           INNER JOIN 
+	        ( SELECT A_B.DEVICE_CODE, A_B.STATION_CODE, A_B.SIGN_CODE
+                            FROM T_SEARCH_KEYWORD A_B
+                           INNER JOIN T_CATEGORY_KEYWORD A_C
+                              ON A_B.CK_CODE = A_C.CK_CODE
+                             AND A_C.HIDE = 0
+                           INNER JOIN T_CATEGORY A_D
+                              ON A_C.CATEGORY_CODE = A_D.CATEGORY_CODE
+                             AND A_D.HIDE = 0
+                           WHERE (A_B.DEVICE_CODE IS NOT NULL
+				                  OR A_B.STATION_CODE IS NOT NULL
+						          OR A_B.SIGN_CODE IS NOT NULL
+						          )
+				           AND (A_D.SEARCH_CATEGORY_CODE  LIKE N'%' OR A_B.KEYWORD_CODE = CASE WHEN ISNUMERIC('') = 1 THEN '' ELSE '' END)
+		        ) B ON (A.DEVICE_GUBUN = 1 AND A.DEVICE_CODE = B.DEVICE_CODE)
+		               OR (A.DEVICE_GUBUN = 2 AND A.DEVICE_CODE = B.STATION_CODE)
+			           OR (A.DEVICE_GUBUN = 3 AND A.DEVICE_CODE = B.SIGN_CODE)
+        </Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>DISTANCE</Key>
+        <Body>
+          <![CDATA[
+          /*AND  dbo.FN_TO_DISTANCE(@LATITUDE, @LONGITUDE, A.LATITUDE, A.LONGITUDE,'M') <= {0}*/
+          AND  A.DISTANCE <= {0}
+          ]]>
+        </Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>COMPANY_CODE</Key>
+        <Body>
+          <![CDATA[
+          AND  A.COMPANY_CODE = {0}
+          ]]>
+        </Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>SEARCH_TEXT</Key>
+        <Body>
+          <![CDATA[
+           INNER JOIN    (  SELECT A.DEVICE_CODE ,A.STATION_CODE, A.SIGN_CODE, B.KEYWORD_NAME
+						FROM T_SEARCH_KEYWORD A
+						INNER JOIN T_KEYWORD B
+							ON A.KEYWORD_CODE = B.KEYWORD_CODE
+						WHERE (A.DEVICE_CODE IS NOT NULL
+											  OR A.STATION_CODE IS NOT NULL
+											  OR A.SIGN_CODE IS NOT NULL
+											  )
+						 
+			      )C ON ((A.DEVICE_GUBUN = 1 AND A.DEVICE_CODE = C.DEVICE_CODE)
+		              OR (A.DEVICE_GUBUN = 2 AND A.DEVICE_CODE = C.STATION_CODE)
+			            OR (A.DEVICE_GUBUN = 3 AND A.DEVICE_CODE = C.SIGN_CODE)
+                  ) AND ( C.KEYWORD_NAME LIKE N'%{0}%' OR A.DEVICE_NAME LIKE N'%{0}%')
+          ]]>
+        </Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>STATION_CODE</Key>
+        <Body>
+          <![CDATA[
+          AND  A.STATION_CODE = {0}
+          ]]>
+        </Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>USER_ID</Key>
+        <Body>
+          <![CDATA[
+          AND USER_ID = '{0}'
+          ]]>
+        </Body>
+      </DynamicBodys>
+    </TemplateSQL>
+  </DBAgentTemplate>
+
+  <DBAgentTemplate TemplateID="GetDeviceLocation">
+    <!-- 
+    SqlType : SQL의 형태를 지정합니다.
+      Example 1:<SqlType>FixedSQL</SqlType> 고정적인 SQL을 지원합니다. 
+      Example 2:<SqlType>DynamicSQL</SqlType> 동적인 SQL Type1을 지원합니다.  
+    Description : 해당 SQL의 기능설명을 적습니다.
+    SQLModifier : 해당 SQL의 작성자(수정자)를 적습니다
+    LastModifyDate : 해당 SQL의 마지막 수정일을 적습니다
+    -->
+    <Information>
+      <SqlType>DynamicSQL</SqlType>
+      <Description>지역별 로컬박스정보 가져오기</Description>
+      <SQLModifier>전상훈</SQLModifier>
+      <LastModifyDate>2017-04-07</LastModifyDate>
+    </Information>
+
+    <TemplateSQL>
+      <!-- FixedSQL : 고정된 SQL이 들어가는 곳입니다. -->
+      <FixedSQL>
+        <![CDATA[ 
+  /**************************************************/
+  /* 로컬박스별 위치 정보 가져오기  GetDeviceLocation */
+  /**************************************************/
+	SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED 
+   DECLARE @LATITUDE     NUMERIC(20,16) =  CASE WHEN ISNUMERIC('{0}') = 1 THEN '{0}' ELSE '37.5653161' END
+	        ,@LONGITUDE    NUMERIC(20,16) = CASE WHEN ISNUMERIC('{1}') = 1 THEN '{1}' ELSE '126.9745883' END
+		      ,@PAGE INT = {2}
+		      ,@PAGE_COUNT INT = {3}
+          ,@MEMBER_CODE INT
+    
+    SELECT @MEMBER_CODE = MEMBER_CODE FROM T_MEMBER
+	   WHERE 1=1
+       #[USER_ID]            
+    SET @MEMBER_CODE  = ISNULL(@MEMBER_CODE ,-1); 
+      
+      WITH T_TABLE
+      AS
+      (
+        SELECT  
+          ROW_NUMBER() OVER(ORDER BY CASE WHEN DISTANCE < MIN_DISTANCE OR MIN_DISTANCE = 0 THEN DISTANCE ELSE MIN_DISTANCE END, DISTANCE, DEVICE_CODE DESC) AS IDX,
+          LOCATION_NAME
+	      , DEVICE_CODE
+	      , DEVICE_NAME
+     -- , STATION_CODE
+	      , ADDRESS1
+	      , ADDRESS2
+	      , ZIP_CODE
+	      , LATITUDE
+	      , LONGITUDE
+        , AUTH_NUMBER
+        , DEVICE_DESC
+	      , COMPANY_NAME
+	      , USER_NAME
+	      , CONTACT_COMPANY_NAME
+	      , CONTACT_NAME
+	      , DISTANCE
+	      , (CASE WHEN DISTANCE < MIN_DISTANCE  THEN DISTANCE ELSE MIN_DISTANCE END) AS VIRTUAR_DISTANCE
+        , BOOKMARK_YN
+        , FAVORITE_YN
+        , LOGO_URL
+	   FROM 
+       (
+        SELECT  A.ADDRESS1 AS LOCATION_NAME
+              , A.DEVICE_CODE
+              , A.DEVICE_NAME
+              --, A.STATION_CODE
+              , A.ADDRESS1
+              , A.ADDRESS2
+              , A.ZIP_CODE
+              , A.LATITUDE
+              , A.LONGITUDE
+              , A.AUTH_NUMBER
+              , A.DEVICE_DESC
+              , CASE WHEN B.COMPANY_NAME =  C.STORE_NAME THEN B.COMPANY_NAME ELSE B.COMPANY_NAME + '>' +  C.STORE_NAME END AS COMPANY_NAME
+              , D.USER_NAME   
+              , CASE WHEN E.COMPANY_NAME =  F.STORE_NAME THEN E.COMPANY_NAME ELSE E.COMPANY_NAME + '>' +  F.STORE_NAME END AS CONTACT_COMPANY_NAME
+              , G.USER_NAME   AS CONTACT_NAME
+              , dbo.FN_TO_DISTANCE(@LATITUDE, @LONGITUDE, A.LATITUDE, A.LONGITUDE,'M') AS DISTANCE
+	            , ISNULL(PLACE_DISTANCE,9999999999999999)  AS MIN_DISTANCE
+	            , ISNULL(I.BOOKMARK_YN,0) AS BOOKMARK_YN
+              , ISNULL(I.FAVORITE_YN,0) AS FAVORITE_YN
+              , ISNULL(FF.FILE_URL,'') AS LOGO_URL
+     FROM T_DEVICE A
+     LEFT JOIN (  /* -1 * ( RADIUS ) * 100 - (RADIUS-DISTANCE) 는 반경만으로 비교시 같을 경우 거리가 작은 순으로 조회 하기 위함*/
+	              SELECT DEVICE_CODE, MIN(CASE WHEN DISTANCE - RADIUS <= 0 THEN -1 * ( RADIUS ) * 100 - (RADIUS-DISTANCE)  ELSE DISTANCE - RADIUS END) AS PLACE_DISTANCE
+				  FROM
+	              (
+					 SELECT DEVICE_CODE
+					     , dbo.FN_TO_DISTANCE(@LATITUDE, @LONGITUDE, LATITUDE, LONGITUDE,'M') AS DISTANCE 
+						 , RADIUS
+					  FROM T_DEVICE_PLACE
+				  ) AA
+				  GROUP BY AA.DEVICE_CODE 
+	          ) A1 ON A.DEVICE_CODE = A1.DEVICE_CODE
+     LEFT JOIN T_COMPANY B
+       ON A.COMPANY_CODE = B.COMPANY_CODE
+     LEFT JOIN T_STORE C
+       ON A.STORE_CODE   = C.STORE_CODE
+     LEFT JOIN T_MEMBER D
+       ON A.MEMBER_CODE = D.MEMBER_CODE
+     LEFT JOIN T_COMPANY E
+       ON A.CONTACT_COMPANY_CODE = E.COMPANY_CODE
+     LEFT JOIN T_STORE F
+       ON A.CONTACT_STORE_CODE   = F.STORE_CODE
+     LEFT JOIN T_MEMBER G
+       ON A.CONTACT_CODE = G.MEMBER_CODE
+     LEFT JOIN (SELECT DEVICE_CODE
+                     , CONVERT(BIT, MAX(CASE WHEN BOOKMARK_KIND = 1 THEN 1 ELSE 0 END)) AS BOOKMARK_YN
+		                 , CONVERT(BIT, MAX(CASE WHEN BOOKMARK_KIND = 2 THEN 1 ELSE 0 END)) AS FAVORITE_YN
+	              FROM T_MEMBER_BOOKMARK A
+	             WHERE MEMBER_CODE = @MEMBER_CODE
+               GROUP BY DEVICE_CODE
+			   ) I ON A.DEVICE_CODE = I.DEVICE_CODE
+	   LEFT JOIN T_FILE FF
+         ON FF.TABLE_NAME = 'T_DEVICE'
+        AND FF.TABLE_KEY  = CONVERT(VARCHAR(20), A.DEVICE_CODE)
+        AND FF.FILE_SEQ   = 1
+        AND FF.REF_DATA1  = '1'         
+     WHERE 1=1 
+           #[STATION_CODE]
+           #[COMPANY_CODE]
+           #[SEARCH_CODE]
+           #[DISTANCE]
+           #[SEARCH_TEXT]
+            AND A.STATUS = 9
+            AND A.HIDE = 0
+    ) A
+  ) 
+  SELECT * FROM T_TABLE
+  WHERE IDX > @PAGE_COUNT * (@PAGE -1)
+    AND IDX <= @PAGE_COUNT * @PAGE
+  SET NOCOUNT OFF 
+      ]]>
+      </FixedSQL>
+      <DynamicBodys>
+        <Key>SEARCH_CODE</Key>
+        <Body>
+          AND A.DEVICE_CODE IN ( 
+                      SELECT A_B.DEVICE_CODE
+                        FROM T_SEARCH_KEYWORD A_B
+                       INNER JOIN T_CATEGORY_KEYWORD A_C
+                          ON A_B.CK_CODE = A_C.CK_CODE
+                         AND A_C.HIDE = 0
+                       INNER JOIN T_CATEGORY A_D
+                          ON A_C.CATEGORY_CODE = A_D.CATEGORY_CODE
+                         AND A_D.HIDE = 0
+                       WHERE (A_D.SEARCH_CATEGORY_CODE  LIKE N'{0}%' OR A_B.KEYWORD_CODE = CASE WHEN ISNUMERIC('{0}') = 1 THEN '{0}' ELSE '{0}' END)
+           )
+        </Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>DISTANCE</Key>
+        <Body>
+          <![CDATA[
+          AND  dbo.FN_TO_DISTANCE(@LATITUDE, @LONGITUDE, A.LATITUDE, A.LONGITUDE,'M') <= {0}
+          ]]>
+        </Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>COMPANY_CODE</Key>
+        <Body>
+          <![CDATA[
+          AND  A.COMPANY_CODE = {0}
+          ]]>
+        </Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>SEARCH_TEXT</Key>
+        <Body>
+          <![CDATA[
+          AND  ( A.DEVICE_NAME LIKE N'%{0}%' OR B.COMPANY_CODE LIKE N'%{0}%'
+                 OR A.DEVICE_CODE IN (SELECT A.DEVICE_CODE 
+                                        FROM T_SEARCH_KEYWORD A
+                                       INNER JOIN T_KEYWORD B
+                                          ON A.KEYWORD_CODE = B.KEYWORD_CODE
+                                       WHERE B.KEYWORD_NAME LIKE N'%{0}%'
+                                     )
+
+          )
+          ]]>
+        </Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>STATION_CODE</Key>
+        <Body>
+          <![CDATA[
+          AND  A.STATION_CODE = {0}
+          ]]>
+        </Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>USER_ID</Key>
+        <Body>
+          <![CDATA[
+          AND USER_ID = '{0}'
+          ]]>
+        </Body>
+      </DynamicBodys>
+    </TemplateSQL>
+  </DBAgentTemplate>
+
+  <DBAgentTemplate TemplateID="GetDeviceLocationDetail">
+    <!-- 
+    SqlType : SQL의 형태를 지정합니다.
+      Example 1:<SqlType>FixedSQL</SqlType> 고정적인 SQL을 지원합니다. 
+      Example 2:<SqlType>DynamicSQL</SqlType> 동적인 SQL Type1을 지원합니다.  
+    Description : 해당 SQL의 기능설명을 적습니다.
+    SQLModifier : 해당 SQL의 작성자(수정자)를 적습니다
+    LastModifyDate : 해당 SQL의 마지막 수정일을 적습니다
+    -->
+    <Information>
+      <SqlType>DynamicSQL</SqlType>
+      <Description>지역별 로컬박스정보 가져오기</Description>
+      <SQLModifier>전상훈</SQLModifier>
+      <LastModifyDate>2017-12-04</LastModifyDate>
+    </Information>
+
+    <TemplateSQL>
+      <!-- FixedSQL : 고정된 SQL이 들어가는 곳입니다. -->
+      <FixedSQL>
+        <![CDATA[ 
+   	/****************************************************************/
+    /* 로컬박스별 위치 정보 가져오기    GetDeviceLocationDetail  Detail */
+    /****************************************************************/
+	SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED 
+   DECLARE @LATITUDE     NUMERIC(20,16) = CASE WHEN ISNUMERIC('{0}') = 1 THEN '{0}' ELSE '37.5653161' END
+	        ,@LONGITUDE   NUMERIC(20,16) = CASE WHEN ISNUMERIC('{1}')  = 1 THEN '{1}' ELSE '126.9745883' END
+		      ,@PAGE INT                    = {2}
+		      ,@PAGE_COUNT INT              = {3}
+          ,@STATION_CODE INT            = {4}
+			    ,@IDX  BIGINT  
+          ,@DISTANCE NUMERIC(30,15)
+         ,@MEMBER_CODE INT
+   
+  SELECT @MEMBER_CODE = MEMBER_CODE FROM T_MEMBER
+	 WHERE 1=1
+     #[USER_ID]            
+   SET @MEMBER_CODE  = ISNULL(@MEMBER_CODE ,-1)
+   DECLARE @TABLE TABLE
+	  (
+	    IDX BIGINT
+	  , LATITUDE NUMERIC(20,16)
+	  , LONGITUDE NUMERIC(20,16)
+	  , ADDRESS NVARCHAR(500)
+    , DISTANCE NUMERIC(30,15)
+	  )
+
+	  INSERT INTO @TABLE
+	  SELECT IDX,  LATITUDE , LONGITUDE,JIBUN_ADDRESS, DBO.FN_TO_DISTANCE(@LATITUDE, @LONGITUDE, LATITUDE, LONGITUDE,'M') FROM  T_DEVICE_STATION_PLACE
+			          WHERE STATION_CODE = @STATION_CODE
+			         UNION ALL
+					 SELECT 0 AS IDX,   LATITUDE, LONGITUDE, ADDRESS1 + ' ' + ADDRESS2 , DBO.FN_TO_DISTANCE(@LATITUDE, @LONGITUDE, LATITUDE, LONGITUDE,'M')   FROM  T_DEVICE_STATION
+					  WHERE STATION_CODE = @STATION_CODE
+
+	
+
+
+      SELECT  @IDX = A.IDX
+			     , @LATITUDE = A.LATITUDE 
+				   , @LONGITUDE = A.LONGITUDE
+				   , @DISTANCE = DISTANCE
+			   FROM @TABLE A
+      WHERE DISTANCE
+               IN (SELECT MIN(DISTANCE) FROM @TABLE SUB)
+        ;
+        
+      WITH T_TABLE
+      
+      AS
+      (
+        SELECT  
+            ROW_NUMBER() OVER(ORDER BY {5}) AS IDX
+           , LOCATION_NAME
+	         , DEVICE_CODE
+	         , DEVICE_NAME
+           , STATION_CODE
+	         , ADDRESS1
+	         , ADDRESS2
+	         , ZIP_CODE
+	         , LATITUDE
+	         , LONGITUDE
+           , AUTH_NUMBER
+           , DEVICE_DESC
+	         , COMPANY_NAME
+	         , USER_NAME
+	         , CONTACT_COMPANY_NAME
+	         , CONTACT_NAME
+	         , DISTANCE
+	         , (CASE WHEN DISTANCE < MIN_DISTANCE  THEN DISTANCE ELSE MIN_DISTANCE END) AS VIRTUAR_DISTANCE
+           , BOOKMARK_YN
+           , LOGO_URL
+	     FROM 
+         (
+       SELECT  A.ADDRESS1 AS LOCATION_NAME
+             , A.DEVICE_CODE
+             , A.DEVICE_NAME
+             , A.STATION_CODE
+             , A.ADDRESS1
+             , A.ADDRESS2
+             , A.ZIP_CODE
+             , A.LATITUDE
+             , A.LONGITUDE
+             , A.AUTH_NUMBER
+             , A.DEVICE_DESC
+             , CASE WHEN B.COMPANY_NAME =  C.STORE_NAME THEN B.COMPANY_NAME ELSE B.COMPANY_NAME + '>' +  C.STORE_NAME END AS COMPANY_NAME
+             , D.USER_NAME   
+             , CASE WHEN E.COMPANY_NAME =  F.STORE_NAME THEN E.COMPANY_NAME ELSE E.COMPANY_NAME + '>' +  F.STORE_NAME END AS CONTACT_COMPANY_NAME
+             , G.USER_NAME   AS CONTACT_NAME
+             , dbo.FN_TO_DISTANCE(@LATITUDE, @LONGITUDE, A.LATITUDE, A.LONGITUDE,'M') AS DISTANCE
+	           ,  ISNULL(PLACE_DISTANCE,9999999999999999)  AS MIN_DISTANCE
+             , ISNULL(CASE WHEN DSP.DISTANCE - DSP.RADIUS <= 0 THEN -1 * ( DSP.RADIUS ) * 100 - (DSP.RADIUS-DISTANCE)  ELSE DSP.DISTANCE - DSP.RADIUS END,9999999999999999) AS STATION_DISTANCE 
+           	 , ISNULL(I.BOOKMARK_YN,0) AS BOOKMARK_YN
+             , ISNULL(FF.FILE_URL,'') AS LOGO_URL
+         FROM T_DEVICE A
+         LEFT JOIN (
+                       /* -1 * ( RADIUS ) * 100 - (RADIUS-DISTANCE) 는 반경만으로 비교시 같을 경우 거리가 작은 순으로 조회 하기 위함*/
+	                   SELECT TOP 1 DEVICE_CODE, LATITUDE, LONGITUDE
+		     		             , CASE WHEN DISTANCE - RADIUS <= 0 THEN -1 * ( RADIUS ) * 100 - (RADIUS-DISTANCE)  ELSE DISTANCE - RADIUS END AS PLACE_DISTANCE
+		     		           FROM(
+		     			             SELECT DEVICE_CODE
+		     			                  , LATITUDE
+		     			         	        , LONGITUDE
+		      			                , dbo.FN_TO_DISTANCE(@LATITUDE, @LONGITUDE, LATITUDE, LONGITUDE,'M') AS DISTANCE 
+    		     			         	    , RADIUS
+		     			              FROM T_DEVICE_PLACE
+				                   ) AA
+				   ) A1 ON A.DEVICE_CODE = A1.DEVICE_CODE  
+           LEFT JOIN T_COMPANY B
+             ON A.COMPANY_CODE = B.COMPANY_CODE
+           LEFT JOIN T_STORE C
+             ON A.STORE_CODE   = C.STORE_CODE
+           LEFT JOIN T_MEMBER D
+             ON A.MEMBER_CODE = D.MEMBER_CODE
+           LEFT JOIN T_COMPANY E
+             ON A.CONTACT_COMPANY_CODE = E.COMPANY_CODE
+           LEFT JOIN T_STORE F
+             ON A.CONTACT_STORE_CODE   = F.STORE_CODE
+           LEFT JOIN T_MEMBER G
+             ON A.CONTACT_CODE = G.MEMBER_CODE
+           LEFT JOIN (SELECT CONVERT(BIT,1) AS BOOKMARK_YN, DEVICE_CODE 
+	              FROM T_MEMBER_BOOKMARK A
+	             WHERE MEMBER_CODE = @MEMBER_CODE
+			   ) I ON A.DEVICE_CODE = I.DEVICE_CODE
+          OUTER APPLY (SELECT dbo.FN_TO_DISTANCE( A1.LATITUDE, A1.LONGITUDE,DSP.LATITUDE, DSP.LONGITUDE,'M') AS DISTANCE
+                             ,DSP.RADIUS
+                         FROM T_DEVICE_STATION_PLACE DSP
+                        WHERE A.STATION_CODE = DSP.STATION_CODE 
+			              AND DSP.IS_RANGE = 1
+		        ) DSP
+              
+
+	 LEFT JOIN T_FILE FF
+       ON FF.TABLE_NAME = 'T_DEVICE'
+      AND FF.TABLE_KEY  = CONVERT(VARCHAR(20), A.DEVICE_CODE)
+      AND FF.FILE_SEQ   = 1
+      AND FF.REF_DATA1  = '1'
+           WHERE A.STATION_CODE = @STATION_CODE
+                 #[COMPANY_CODE]
+                 #[SEARCH_CODE]
+                 #[DISTANCE]
+                 #[SEARCH_TEXT]
+                  AND A.STATUS = 9
+                  AND A.HIDE = 0
+    ) A
+  ) 
+  SELECT * FROM T_TABLE
+  WHERE IDX > @PAGE_COUNT * (@PAGE -1)
+    AND IDX <= @PAGE_COUNT * @PAGE
+  SET NOCOUNT OFF 
+      ]]>
+      </FixedSQL>
+      <DynamicBodys>
+        <Key>SEARCH_CODE</Key>
+        <Body>
+          AND A.DEVICE_CODE IN (
+          SELECT A_B.DEVICE_CODE
+          FROM T_SEARCH_KEYWORD A_B
+          INNER JOIN T_CATEGORY_KEYWORD A_C
+          ON A_B.CK_CODE = A_C.CK_CODE
+          AND A_C.HIDE = 0
+          INNER JOIN T_CATEGORY A_D
+          ON A_C.CATEGORY_CODE = A_D.CATEGORY_CODE
+          AND A_D.HIDE = 0
+          WHERE (A_D.SEARCH_CATEGORY_CODE  LIKE N'{0}%' OR A_B.KEYWORD_CODE = CASE WHEN ISNUMERIC('{0}') = 1 THEN '{0}' ELSE '{0}' END)
+          )
+        </Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>DISTANCE</Key>
+        <Body>
+          <![CDATA[
+          AND  dbo.FN_TO_DISTANCE(@LATITUDE, @LONGITUDE, A.LATITUDE, A.LONGITUDE,'M') <= {0}
+          ]]>
+        </Body> 
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>COMPANY_CODE</Key>
+        <Body>
+          <![CDATA[
+          AND  A.COMPANY_CODE = {0}
+          ]]>
+        </Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>SEARCH_TEXT</Key>
+        <Body>
+          <![CDATA[
+          AND  ( A.DEVICE_NAME LIKE N'%{0}%' OR B.COMPANY_CODE LIKE N'%{0}%'
+                 OR A.DEVICE_CODE IN (SELECT A.DEVICE_CODE 
+                                        FROM T_SEARCH_KEYWORD A
+                                       INNER JOIN T_KEYWORD B
+                                          ON A.KEYWORD_CODE = B.KEYWORD_CODE
+                                       WHERE B.KEYWORD_NAME LIKE N'%{0}%'
+                                     )
+            )
+          ]]>
+        </Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>USER_ID</Key>
+        <Body>
+          <![CDATA[
+          AND USER_ID = '{0}'
+          ]]>
+        </Body>
+      </DynamicBodys>
+    </TemplateSQL>
+  </DBAgentTemplate>
+
+</DBAgentMultiTemplate>

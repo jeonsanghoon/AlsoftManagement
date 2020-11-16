@@ -1,0 +1,160 @@
+﻿@{
+
+}
+<!--<script src="http://dmaps.daum.net/map_js_init/postcode.v2.js"></script>-->
+<script src="https://ssl.daumcdn.net/dmaps/map_js_init/postcode.v2.js"></script>
+@section scripts{
+
+    <script type="text/javascript">
+        var PARAM_DATA = {
+            PAGE_SIZE: ($("window").width() < 768 ? 5 : 10)
+            , PAGE_COUNT: 15
+            , PAGE: 1
+            , SORT: "A.STATION_CODE DESC"
+        }
+        $(document).ready(function () {
+            var pageCount = ($(window).height() - $(".cd-main-header").outerHeight() + $(".ui.header").outerHeight() + $(".ui.grid.search").outerHeight() + $(".ui.footer").outerHeight() - 450) / 30;
+
+            PARAM_DATA.PAGE_COUNT = Number(Math.floor(pageCount));
+            doQuery(1);
+            ComponentInit();
+        }); //End document.ready
+
+        function ComponentInit() {
+            $(".ui.form input").keyup(function (e) {
+                var code = (e.keyCode ? e.keyCode : e.which);
+                if (code == 13) {
+                    doQuery();
+                }
+            })
+        }
+        function doQuery(page, sort) {
+            if (page == undefined || page < 1) page = 1;
+            PARAM_DATA.PAGE = page;
+            var params = BaseCommon.FormInfo.serializeJson(".ui.form");
+            params.PAGE_COUNT = PARAM_DATA.PAGE_COUNT;
+            params.PAGE = PARAM_DATA.PAGE;
+            params.HIDE = $("#HIDE").val() == "1" ? true : false;
+            if (sort == undefined) sort = PARAM_DATA.SORT;
+            else PARAM_DATA.SORT = sort;
+
+            params.SORT = sort;
+
+            params = JSON.stringify(params);
+            ajax.GetAjax("/basic/PV_deviceStationList", params, "html", function (result) {
+                $("#dvTable tbody").html(result);
+                $.mrc_table.Init("#tbList", false, sort);
+
+                $("#dvpagination").show();
+
+                $("#dvpagination").pagination({
+                    total: Number($("#total").val()), page: PARAM_DATA.PAGE, pagesize: PARAM_DATA.PAGE_SIZE, perpage: PARAM_DATA.PAGE_COUNT
+                    , onPageClick: function (item, page) {
+                        doQuery(page);
+                    }
+                })
+                $("#dvpagination").css("display", "");
+            });
+        }
+
+
+
+        function btnNewClick() {
+            location.href = "/basic/deviceStationReg";
+        }
+
+        function mrcGrid_Sort(gridName, columnName, orderType) {
+            var sSort = (orderType == undefined || orderType == "") ? "A.UPDATE_DATE DESC" : columnName + " " + orderType;
+            doQuery(1, sSort)
+        }
+
+        function ExcelDown() {
+            var params = BaseCommon.FormInfo.serializeJson(".ui.form");
+            params.DISPLAY_MODE = "Total";
+            var arrData = new Array();
+            $.each(params, function (key, val) {
+                //display the key and value pair
+                arrData.push({ name: key, value: val });
+            });
+            BaseCommon.FormInfo.PostSubmit('/basic/DeviceStationExcelReport', arrData);
+        }
+    </script>
+}
+<style>
+    .ui.checkbox {
+        margin-top: 0.5em;
+    }
+</style>
+@{
+
+    Daum_MapMultiMarker optionmap = new Daum_MapMultiMarker() { ID = "device", bReadOnly = true, MAKER_MAX_COUNT = SessionHelper.LoginInfo.EMPLOYEE.MAKER_MAX_COUNT, bCircle = false };
+}
+@{Html.RenderPartial("/Views/Basic/Partial/PV_AuthNumberApply.cshtml"); }
+
+<div class="ui vertical stripe segment">
+    @Html.TitleNavigation()
+    <form class="ui form" onSubmit="return false;" action="/Base/FileUpload" data-ajax="true" data-ajax-mode="replace" data-ajax-update="#dc_goal_placeholder" enctype="multipart/form-data" id="frmUpload" method="post">
+        @Html.EditorFor(model => new EditTempleateModel().Kakao_MapMakerCircle, new { optionmap = optionmap })
+        @*@Html.TitleHeader()*@
+
+        <div class="ui grid search " style="height:100%;">
+            <div class="eight wide mobile three wide tablet two wide computer column">
+                @Html.Semantic_TextBox("STATION_NAME", "", new { @placeholder = "스테이션명", @class = "medium size180" })
+            </div>
+            <div class="eight wide mobile three wide tablet two wide computer column title">
+                @Html.Semantic_TITLE2("미사용")
+            </div>
+            <div class="eight wide mobile three wide tablet two wide computer column searchbutton">
+                @Html.Semantic_CheckBox("HIDE", "", "0")
+            </div>
+            <div class="sixteen wide mobile seven wide tablet ten wide computer column buttons">
+                @Html.Semantic_Button2("btnOpen", "지도보기", SemanticUIHelper.enButtonType.Normal, new { @onclick = "markerMapPopupOpen();" })
+                <script>
+                    function markerMapPopupOpen() {
+                        var params = new Array();
+                        params.TITLE = $("#STATION_NAME").val();
+
+                        params = JSON.stringify(params);
+                        ajax.GetAjax("/basic/GetDeviceStationMapList", params, "json", function (result) {
+                            //@(optionmap.ID)_DaumMapMaker_Open(result,0,0,"");
+                            @(optionmap.ID)_MapOpen(result);
+                        });
+                    }
+                </script>
+                @Html.Semantic_Button2("btnSearch", "조회", SemanticUIHelper.enButtonType.ToList, SemanticUIHelper.Size.medium, new { @onclick = "doQuery(1);" })
+                @Html.Semantic_Button2("btnExcel", "엑셀", SemanticUIHelper.enButtonType.Excel, SemanticUIHelper.Size.medium, new { @onclick = "ExcelDown();" })
+                @Html.Semantic_Button2("btnNew", "신규", SemanticUIHelper.enButtonType.New, SemanticUIHelper.Size.medium, new { @onclick = "btnNewClick();" })
+            </div>
+
+        </div>
+        <div class="ui grid " style="height:100%;">
+            <div class="one column row">
+                <div class="column" id="dvTable">
+                    <table id="tbList" class="mrc-table">
+                        <thead>
+                            <tr>
+                                <th column_name="HIDE" data-sort="A.HIDE" display_size="pc" class="sort">사용여부</th>
+                                <th column_name="STATION_NAME" data-sort="STATION_NAME" style="min-width:50px;" class="sort">스테이션명</th>
+                                <th column_name="LOGO_URL">썸네일</th>
+                                <th column_name="ADDRESS" data-sort="ADDRESS1, ADDRESS2" display_size="pc" class="sort">주소</th>
+                                <th column_name="ZIP_CODE" display_size="pc" class="sort">우편번호</th>
+                                <th column_name="LATITUDE" display_size="pc" class="sort">위도</th>
+                                <th column_name="LONGITUDE" display_size="pc" class="sort">경도</th>
+                                <th column_name="STATION_DESC" display_size="pc" class="sort">설명</th>
+                                <th column_name="DEVICE_CNT" display_size="pc" class="sort">박스갯수</th>
+                                <th column_name="UPDATE_NAME" data-sort="C.USER_NAME" display_size="tablet" class="sort">수정자</th>
+                                <th column_name="UPDATE_DATE" data-sort="A.UPDATE_DATE" display_size="pc" class="sort">수정시간</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="one column row">
+                <div id="dvpagination" class="ui floated pagination menu"></div>
+            </div>
+        </div>
+    </form>
+</div>
+
+

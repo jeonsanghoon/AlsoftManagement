@@ -1,0 +1,19 @@
+﻿
+@{
+    ViewBag.Title = "KakaoMap2";
+
+    Layout = "~/Views/Shared/_Layout_blank.cshtml";
+    Daum_MapMultiMarker option = new Daum_MapMultiMarker() { ID = "kakaotest", MAKER_MAX_COUNT = 10 };
+}
+
+<h2>KakaoMap</h2>
+
+@Html.EditorFor(model => new EditTempleateModel().Kakao_MapMakerCircle, new { optionmap = option })
+&nbsp;@Html.Semantic_Button2("btnOpen", "장소선택", SemanticUIHelper.enButtonType.Normal, new { @onclick = "markerMapPopupOpen();" }) <b><span style="color:red"> * 총 @(option.MAKER_MAX_COUNT)곳 중 </span><span style="color:blue" id="spRegionPlaceCnt"> </span> </b>
+<script>
+     function markerMapPopupOpen()
+        {
+           
+            @(option.ID)_MapOpen(null);
+        }
+</script>

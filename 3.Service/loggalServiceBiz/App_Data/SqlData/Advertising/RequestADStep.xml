@@ -1,0 +1,517 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<DBAgentMultiTemplate  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns="http://altsoft.kr/">
+  <DBAgentTemplate TemplateID="GetStep4localAddList">
+    <!-- 
+    SqlType : SQL의 형태를 지정합니다.
+      Example 1:<SqlType>FixedSQL</SqlType> 고정적인 SQL을 지원합니다. 
+      Example 2:<SqlType>DynamicSQL</SqlType> 동적인 SQL Type1을 지원합니다.  
+    Description : 해당 SQL의 기능설명을 적습니다.
+    SQLModifier : 해당 SQL의 작성자(수정자)를 적습니다
+    LastModifyDate : 해당 SQL의 마지막 수정일을 적습니다
+    -->
+    <Information>
+      <SqlType>DynamicSQL</SqlType>
+      <Description>광고검색데이터 조회</Description>
+      <SQLModifier>전상훈</SQLModifier>
+      <LastModifyDate>2016-09-26</LastModifyDate>
+    </Information>
+
+    <TemplateSQL>
+      <!-- FixedSQL : 고정된 SQL이 들어가는 곳입니다. -->
+      <FixedSQL>
+        <![CDATA[ 
+ 
+	SET NOCOUNT ON 
+	/****************************************************/
+	/* 광고요청 로컬박스등록 - GetStep4localAddList 조회    */
+  /* - SELECT QUERY                                   */ 
+	/****************************************************/
+	SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED 
+  
+  
+  DECLARE @PAGE_COUNT INT = {0}
+       ,@PAGE INT =  {1}
+	;
+WITH T_TABLE AS
+(
+  SELECT  ROW_NUMBER() OVER(ORDER BY STORE_NAME) AS SEQ
+        , A.DEVICE_CODE
+	      , A.DEVICE_NAME
+	      , ISNULL(B.STORE_NAME,'') AS STORE_NAME
+        , A.ADDRESS1
+        , A.ADDRESS2
+        , B.PHONE
+	      , B.EMAIL
+	   FROM T_DEVICE A
+     LEFT JOIN T_STORE B
+       ON A.STORE_CODE = B.STORE_CODE
+    INNER JOIN T_SEARCH_KEYWORD C
+	   ON A.DEVICE_CODE = C.DEVICE_CODE  
+    INNER JOIN T_CATEGORY_KEYWORD D
+       ON C.CK_CODE = D.CK_CODE
+    INNER JOIN T_CATEGORY E
+       ON D.CATEGORY_CODE = E.CATEGORY_CODE  
+    WHERE A.DEVICE_CODE NOT IN (SELECT DEVICE_CODE FROM T_AD_DEVICE WHERE AD_CODE = {2})
+    #[SEARCH_CODE]     
+    #[STORE_NAME]    
+    GROUP BY A.DEVICE_CODE
+	       , A.DEVICE_NAME
+	       , B.STORE_NAME
+         , A.ADDRESS1
+         , A.ADDRESS2
+         , B.PHONE
+	       , B.EMAIL
+    )
+    SELECT *, (SELECT COUNT(1) FROM T_TABLE) TOTAL_ROWCOUNT FROM T_TABLE  
+     WHERE SEQ BETWEEN  (@PAGE - 1) * (@PAGE_COUNT) + 1 AND @PAGE * @PAGE_COUNT
+    ORDER BY STORE_NAME, DEVICE_NAME
+    
+ 
+	SET NOCOUNT OFF 
+
+
+      ]]>
+      </FixedSQL>
+      <DynamicBodys>
+        <Key>SEARCH_CODE</Key>
+        <Body>
+          <![CDATA[    AND E.SEARCH_CATEGORY_CODE LIKE N'{0}%' ]]>
+        </Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>STORE_NAME</Key>
+        <Body>
+          <![CDATA[    AND (B.STORE_NAME LIKE N'{0}%' OR A.DEVICE_NAME LIKE N'{0}%') ]]>
+        </Body>
+      </DynamicBodys>
+    </TemplateSQL>
+  </DBAgentTemplate>
+  <DBAgentTemplate TemplateID="GetStep4localAddList2">
+    <!-- 
+    SqlType : SQL의 형태를 지정합니다.
+      Example 1:<SqlType>FixedSQL</SqlType> 고정적인 SQL을 지원합니다. 
+      Example 2:<SqlType>DynamicSQL</SqlType> 동적인 SQL Type1을 지원합니다.  
+    Description : 해당 SQL의 기능설명을 적습니다.
+    SQLModifier : 해당 SQL의 작성자(수정자)를 적습니다
+    LastModifyDate : 해당 SQL의 마지막 수정일을 적습니다
+    -->
+    <Information>
+      <SqlType>DynamicSQL</SqlType>
+      <Description>광고요청 등록된 로컬박스 조회(하단)</Description>
+      <SQLModifier>전상훈</SQLModifier>
+      <LastModifyDate>2016-09-27</LastModifyDate>
+    </Information>
+
+    <TemplateSQL>
+      <!-- FixedSQL : 고정된 SQL이 들어가는 곳입니다. -->
+      <FixedSQL>
+        <![CDATA[ 
+ 
+SET NOCOUNT ON 
+/****************************************************************/
+/* 광고요청 등록된 로컬박스 조회- GetStep4localAddList2 조회(하단)  */
+/* - SELECT QUERY                                               */ 
+/****************************************************************/
+SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED 
+  
+  
+DECLARE @PAGE_COUNT INT = {0}
+       ,@PAGE INT =  {1};
+WITH T_TABLE AS
+(
+ SELECT  ROW_NUMBER() OVER(ORDER BY STORE_NAME) AS SEQ
+       ,B.AD_DEVICE_CODE
+       ,ISNULL(D.STORE_NAME,'') AS STORE_NAME
+       ,C.DEVICE_CODE
+	     ,C.DEVICE_NAME
+	     ,C.ADDRESS1
+	     ,C.ADDRESS2
+	     ,D.PHONE
+	     ,D.EMAIL
+  FROM T_AD A
+  INNER JOIN T_AD_DEVICE B
+     ON A.AD_CODE = B.AD_CODE
+  INNER JOIN T_DEVICE C
+     ON B.DEVICE_CODE = C.DEVICE_CODE
+  LEFT JOIN T_STORE D
+     ON C.STORE_CODE = D.STORE_CODE
+  WHERE 1=1
+   #[AD_CODE]
+)
+SELECT *, (SELECT COUNT(1) FROM T_TABLE) TOTAL_ROWCOUNT FROM T_TABLE  
+     WHERE SEQ BETWEEN  (@PAGE - 1) * (@PAGE_COUNT) + 1 AND @PAGE * @PAGE_COUNT
+ORDER BY STORE_NAME, DEVICE_NAME
+
+    
+ 
+	SET NOCOUNT OFF 
+
+
+      ]]>
+      </FixedSQL>
+      <DynamicBodys>
+        <Key>AD_CODE</Key>
+        <Body>
+          <![CDATA[    AND A.AD_CODE = {0} ]]>
+        </Body>
+      </DynamicBodys>
+
+    </TemplateSQL>
+  </DBAgentTemplate>
+  <DBAgentTemplate TemplateID="Step4Save">
+    <!-- 
+    SqlType : SQL의 형태를 지정합니다.
+      Example 1:<SqlType>FixedSQL</SqlType> 고정적인 SQL을 지원합니다. 
+      Example 2:<SqlType>DynamicSQL</SqlType> 동적인 SQL Type1을 지원합니다.  
+    Description : 해당 SQL의 기능설명을 적습니다.
+    SQLModifier : 해당 SQL의 작성자(수정자)를 적습니다
+    LastModifyDate : 해당 SQL의 마지막 수정일을 적습니다
+    -->
+    <Information>
+      <SqlType>DynamicSQL</SqlType>
+      <Description>광고요청 등록된 로컬박스 조회(하단)</Description>
+      <SQLModifier>전상훈</SQLModifier>
+      <LastModifyDate>2016-09-27</LastModifyDate>
+    </Information>
+
+    <TemplateSQL>
+      <!-- FixedSQL : 고정된 SQL이 들어가는 곳입니다. -->
+      <FixedSQL>
+        <![CDATA[ 
+ 
+SET NOCOUNT ON 
+/****************************************************/
+/* 광고요청 광고별 로컬박스등록 -Step4Save -  SAVE QUERY */ 
+/****************************************************/
+	DECLARE  @SAVE_TYPE VARCHAR(5) = '{0}'
+			   , @AD_CODE BIGINT = {1}
+         , @TIMEZONE_OFFSET INT = {4}
+			   , @REG_CODE INT = {5}
+
+	IF @SAVE_TYPE = 'N'
+	BEGIN
+    UPDATE T_AD_DEVICE
+		   SET HIDE = 0
+		      ,UPDATE_CODE = @REG_CODE
+		      ,UPDATE_DATE = GETDATE()
+		WHERE DEVICE_CODE IN ({2})
+    
+		INSERT INTO T_AD_DEVICE
+		(AD_CODE, DEVICE_CODE, FR_DATE,TO_DATE, FR_TIME, TO_TIME, FR_UTC_DATE, TO_UTC_DATE, FR_UTC_TIME, TO_UTC_TIME, CLICK_CNT, HIDE, REMARK
+		 ,INSERT_CODE, INSERT_DATE, UPDATE_CODE, UPDATE_DATE)
+
+		SELECT @AD_CODE AS AD_CODE
+			  ,DEVICE_CODE
+			  , FR_DATE, TO_DATE, FR_TIME, TO_TIME
+			  , CONVERT(VARCHAR(10), UTC_FR_DATE, 112) AS FR_UTC_DATE
+			  , CONVERT(VARCHAR(10), UTC_TO_DATE, 112) AS TO_UTC_DATE
+			  , CONVERT(VARCHAR(5), UTC_FR_DATE, 108) AS FR_UTC_TIME
+			  , CONVERT(VARCHAR(5), UTC_TO_DATE, 108) AS TO_UTC_TIME
+			  , 0, NULL
+			  , 0 HIDE
+			  , @REG_CODE, GETDATE()
+			  , @REG_CODE, GETDATE()
+		FROM (
+		SELECT  A.DEVICE_CODE AS DEVICE_CODE
+			 , C.FR_DATE, C.TO_DATE, C.FR_TIME, C.TO_TIME 
+			 , DATEADD(HOUR, -1 * @TIMEZONE_OFFSET, CASE WHEN ISDATE(C.FR_DATE + ' ' + C.FR_TIME) = 1 THEN C.FR_DATE + ' ' + C.FR_TIME ELSE NULL END) AS UTC_FR_DATE
+			 , DATEADD(HOUR, -1 * @TIMEZONE_OFFSET, CASE WHEN ISDATE(C.TO_DATE + ' ' + C.TO_TIME) = 1 THEN C.TO_DATE + ' ' + C.TO_TIME ELSE NULL END) AS UTC_TO_DATE
+	      FROM T_DEVICE a
+		  LEFT JOIN T_AD_DEVICE b
+		   ON B.AD_CODE = @AD_CODE
+		  AND B.DEVICE_CODE = A.DEVICE_CODE
+      AND B.HIDE = 0
+		INNER JOIN T_AD C
+		   ON C.AD_CODE = @AD_CODE
+		WHERE A.DEVICE_CODE IN ({2})
+		  AND B.AD_DEVICE_CODE IS NULL
+		) A
+	END
+	ELSE IF @SAVE_TYPE = 'D' 
+	BEGIN
+		  DELETE FROM T_AD_DEVICE
+		  WHERE AD_DEVICE_CODE IN ({3})
+		    AND CLICK_CNT = 0
+
+		  UPDATE T_AD_DEVICE
+		  SET HIDE = 1
+		  WHERE AD_DEVICE_CODE IN ({3})
+		    AND CLICK_CNT <> 0
+	END
+  ELSE IF @SAVE_TYPE = 'SAVE' 
+	BEGIN
+    UPDATE T_AD
+    SET STATUS = CASE WHEN STATUS < 4 THEN 4 ELSE STATUS END
+    WHERE AD_CODE =  @AD_CODE
+  END
+ 
+	SET NOCOUNT OFF 
+
+
+      ]]>
+      </FixedSQL>
+    </TemplateSQL>
+  </DBAgentTemplate>
+
+  <DBAgentTemplate TemplateID="AdShareRequest">
+    <!-- 
+    SqlType : SQL의 형태를 지정합니다.
+      Example 1:<SqlType>FixedSQL</SqlType> 고정적인 SQL을 지원합니다. 
+      Example 2:<SqlType>DynamicSQL</SqlType> 동적인 SQL Type1을 지원합니다.  
+    Description : 해당 SQL의 기능설명을 적습니다.
+    SQLModifier : 해당 SQL의 작성자(수정자)를 적습니다
+    LastModifyDate : 해당 SQL의 마지막 수정일을 적습니다
+    -->
+    <Information>
+      <SqlType>DynamicSQL</SqlType>
+      <Description>광고요청 등록된 로컬박스 조회(하단)</Description>
+      <SQLModifier>전상훈</SQLModifier>
+      <LastModifyDate>2017-09-27</LastModifyDate>
+    </Information>
+
+    <TemplateSQL>
+      <!-- FixedSQL : 고정된 SQL이 들어가는 곳입니다. -->
+      <FixedSQL>
+        <![CDATA[ 
+ 
+SET NOCOUNT ON 
+/****************************************************/
+/* 배너 공유 요청 - AdShareRequest -  SAVE QUERY */ 
+/****************************************************/
+	DECLARE  @SAVE_TYPE VARCHAR(5) = '{0}'
+			   , @AD_CODE BIGINT = {1}
+         
+         , @TIMEZONE_OFFSET INT = {4}
+         , @STATUS INT = {5}
+			   , @REG_CODE INT = {6}
+         
+  DECLARE @HIDE BIT =  CASE WHEN @STATUS IN (0,9) THEN 0 ELSE 1 END
+
+	IF @SAVE_TYPE = 'N'
+	BEGIN
+		UPDATE T_AD_DEVICE
+			   SET STATUS = @STATUS
+		      ,HIDE = @HIDE
+			      ,UPDATE_CODE = @REG_CODE
+			      ,UPDATE_DATE = GETDATE()
+			WHERE DEVICE_CODE IN ({2})
+        AND AD_CODE = @AD_CODE
+		
+		UPDATE B
+		     SET FR_DATE = A.FR_DATE
+			  , TO_DATE = A.TO_DATE
+			  , FR_TIME = A.FR_TIME
+			  , TO_TIME = A.TO_TIME
+			  , FR_UTC_DATE = CONVERT(VARCHAR(8),A.UTC_FR_DATE,112)
+			  , TO_UTC_DATE = CONVERT(VARCHAR(8),A.UTC_TO_DATE,112)
+			  , FR_UTC_TIME = CONVERT(VARCHAR(5),A.UTC_FR_DATE,108)
+			  , TO_UTC_TIME = CONVERT(VARCHAR(5),A.UTC_TO_DATE,108)
+			  , INSERT_CODE = @REG_CODE
+			  , INSERT_DATE = GETDATE()
+			  , UPDATE_CODE = @REG_CODE
+			  , UPDATE_DATE = GETDATE()
+		   FROM
+		   (
+				SELECT  A.DEVICE_CODE AS DEVICE_CODE
+					 , C.FR_DATE, C.TO_DATE, C.FR_TIME, C.TO_TIME 
+					 , DATEADD(HOUR, -1 * @TIMEZONE_OFFSET, CASE WHEN ISDATE(C.FR_DATE + ' ' + C.FR_TIME) = 1 THEN C.FR_DATE + ' ' + C.FR_TIME ELSE NULL END) AS UTC_FR_DATE
+					 , DATEADD(HOUR, -1 * @TIMEZONE_OFFSET, CASE WHEN ISDATE(C.TO_DATE + ' ' + C.TO_TIME) = 1 THEN C.TO_DATE + ' ' + C.TO_TIME ELSE NULL END) AS UTC_TO_DATE
+				  FROM T_DEVICE a
+				  LEFT JOIN T_AD_DEVICE b
+					   ON B.AD_CODE = @AD_CODE
+					  AND B.DEVICE_CODE = A.DEVICE_CODE
+				  AND B.HIDE = 0
+				INNER JOIN T_AD C
+				   ON C.AD_CODE = @AD_CODE
+				WHERE A.DEVICE_CODE IN ({2})
+				  AND B.AD_DEVICE_CODE IS NULL
+				) A
+			INNER JOIN T_AD_DEVICE B
+			  ON @AD_CODE = B.AD_CODE
+			 AND A.DEVICE_CODE = B.DEVICE_CODE
+			 
+			 INSERT INTO T_AD_DEVICE
+			(AD_CODE, DEVICE_CODE, FR_DATE,TO_DATE, FR_TIME, TO_TIME, FR_UTC_DATE, TO_UTC_DATE, FR_UTC_TIME, TO_UTC_TIME, CLICK_CNT, HIDE, REMARK, STATUS 
+			 ,INSERT_CODE, INSERT_DATE, UPDATE_CODE, UPDATE_DATE)
+
+			SELECT distinct
+			       @AD_CODE AS AD_CODE
+				  ,A.DEVICE_CODE
+				  , A.FR_DATE, A.TO_DATE, A.FR_TIME, A.TO_TIME
+				  , CONVERT(VARCHAR(10), UTC_FR_DATE, 112) AS FR_UTC_DATE
+				  , CONVERT(VARCHAR(10), UTC_TO_DATE, 112) AS TO_UTC_DATE
+				  , CONVERT(VARCHAR(5), UTC_FR_DATE, 108) AS FR_UTC_TIME
+				  , CONVERT(VARCHAR(5), UTC_TO_DATE, 108) AS TO_UTC_TIME
+				  , 0 AS CLICK_CNT, @HIDE
+				  , '' REMARK
+				  , @STATUS AS STATUS
+				  , @REG_CODE, GETDATE()
+				  , @REG_CODE, GETDATE()
+			FROM (
+				SELECT  A.DEVICE_CODE AS DEVICE_CODE
+					 , C.FR_DATE, C.TO_DATE, C.FR_TIME, C.TO_TIME 
+					 , DATEADD(HOUR, -1 * @TIMEZONE_OFFSET, CASE WHEN ISDATE(C.FR_DATE + ' ' + C.FR_TIME) = 1 THEN C.FR_DATE + ' ' + C.FR_TIME ELSE NULL END) AS UTC_FR_DATE
+					 , DATEADD(HOUR, -1 * @TIMEZONE_OFFSET, CASE WHEN ISDATE(C.TO_DATE + ' ' + C.TO_TIME) = 1 THEN C.TO_DATE + ' ' + C.TO_TIME ELSE NULL END) AS UTC_TO_DATE
+				  FROM T_DEVICE a
+				  LEFT JOIN T_AD_DEVICE b
+					   ON B.AD_CODE = @AD_CODE
+					  AND B.DEVICE_CODE = A.DEVICE_CODE
+				  AND B.HIDE = 0
+				INNER JOIN T_AD C
+				   ON C.AD_CODE = @AD_CODE
+				WHERE A.DEVICE_CODE IN ({2})
+				  AND B.AD_DEVICE_CODE IS NULL
+				) A
+			LEFT JOIN T_AD_DEVICE B
+			  ON @AD_CODE = B.AD_CODE
+			 AND A.DEVICE_CODE = B.DEVICE_CODE
+		  WHERE B.DEVICE_CODE IS NULL
+
+
+   
+
+	END
+	ELSE IF @SAVE_TYPE = 'D' 
+	BEGIN
+		  DELETE FROM T_AD_DEVICE
+		  WHERE AD_DEVICE_CODE IN ({3})
+		    AND CLICK_CNT = 0
+
+		  UPDATE T_AD_DEVICE
+		  SET HIDE = 1
+		  WHERE AD_DEVICE_CODE IN ({3})
+		    AND CLICK_CNT <> 0
+	END
+  ELSE IF @SAVE_TYPE = 'SAVE' 
+	BEGIN
+    UPDATE T_AD
+    SET STATUS = CASE WHEN STATUS < 4 THEN 4 ELSE STATUS END
+    WHERE AD_CODE =  @AD_CODE
+  END
+ 
+	SET NOCOUNT OFF 
+
+
+      ]]>
+      </FixedSQL>
+    </TemplateSQL>
+  </DBAgentTemplate>
+  <DBAgentTemplate TemplateID="Step5Save">
+    <!-- 
+    SqlType : SQL의 형태를 지정합니다.
+      Example 1:<SqlType>FixedSQL</SqlType> 고정적인 SQL을 지원합니다. 
+      Example 2:<SqlType>DynamicSQL</SqlType> 동적인 SQL Type1을 지원합니다.  
+    Description : 해당 SQL의 기능설명을 적습니다.
+    SQLModifier : 해당 SQL의 작성자(수정자)를 적습니다
+    LastModifyDate : 해당 SQL의 마지막 수정일을 적습니다
+    -->
+    <Information>
+      <SqlType>DynamicSQL</SqlType>
+      <Description>광고서비스 요청</Description>
+      <SQLModifier>전상훈</SQLModifier>
+      <LastModifyDate>2016-09-28</LastModifyDate>
+    </Information>
+
+    <TemplateSQL>
+      <!-- FixedSQL : 고정된 SQL이 들어가는 곳입니다. -->
+      <FixedSQL>
+        <![CDATA[ 
+ 
+  SET NOCOUNT ON 
+  /****************************************************/
+  /* 광고서비스 요청 -Step5Save -  SAVE QUERY */ 
+  /****************************************************/
+  
+	DECLARE  @AD_CODE BIGINT = {0}
+         , @REG_CODE INT = {1}
+
+	
+  UPDATE T_AD
+    SET STATUS = 5
+       ,UPDATE_CODE = @REG_CODE
+	   ,UPDATE_DATE = GETDATE()
+
+  WHERE AD_CODE = @AD_CODE
+    AND STATUS < 5
+ 
+	SET NOCOUNT OFF 
+
+
+      ]]>
+      </FixedSQL>
+    </TemplateSQL>
+  </DBAgentTemplate>
+  <DBAgentTemplate TemplateID="GetStepList">
+    <!-- 
+    SqlType : SQL의 형태를 지정합니다.
+      Example 1:<SqlType>FixedSQL</SqlType> 고정적인 SQL을 지원합니다. 
+      Example 2:<SqlType>DynamicSQL</SqlType> 동적인 SQL Type1을 지원합니다.  
+    Description : 해당 SQL의 기능설명을 적습니다.
+    SQLModifier : 해당 SQL의 작성자(수정자)를 적습니다
+    LastModifyDate : 해당 SQL의 마지막 수정일을 적습니다
+    -->
+    <Information>
+      <SqlType>DynamicSQL</SqlType>
+      <Description>광고요청 리스트 조회</Description>
+      <SQLModifier>전상훈</SQLModifier>
+      <LastModifyDate>2016-09-28</LastModifyDate>
+    </Information>
+
+    <TemplateSQL>
+      <!-- FixedSQL : 고정된 SQL이 들어가는 곳입니다. -->
+      <FixedSQL>
+        <![CDATA[ 
+ 
+  SET NOCOUNT ON 
+  /****************************************************/
+  /* 광고서비스 요청 -StepList -  SAVE QUERY          */ 
+  /****************************************************/
+  SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED 
+ 
+ DECLARE @MEMER_CODE INT = {0}
+        ,@PAGE_COUNT INT = {1}
+        ,@PAGE INT =  {2};
+       
+WITH T_TABLE AS
+(
+  SELECT 
+	    ROW_NUMBER() OVER(ORDER BY  A.AD_CODE DESC) AS SEQ
+	  , A.AD_CODE
+	  , A.LOGO_URL
+	  , A.TITLE
+	  , A.FR_DATE
+	  , A.TO_DATE
+	  , [dbo].[fn_GetTimeMeridiem](A.FR_TIME) AS FR_TIME
+	  , [dbo].[fn_GetTimeMeridiem](A.TO_TIME) AS TO_TIME
+	  , A.STATUS
+	  , B.NAME AS STATUS_NAME
+	  , A.BANNER_TYPE
+	  , C.NAME AS BANNER_TYPE_NAME
+	  , dbo.fnSplitColumn( B.REF_DATA1,'|',0) AS STATUS_PAGE
+	  , A.UPDATE_DATE
+   FROM T_AD A
+  INNER JOIN T_COMMON B
+     ON B.MAIN_CODE = 'A001'
+    AND B.SUB_CODE = A.STATUS
+  INNER JOIN T_COMMON C
+     ON C.MAIN_CODE = 'A005'
+	AND C.SUB_CODE = A.BANNER_TYPE
+ WHERE A.MEMBER_CODE =  @MEMER_CODE 
+    #[TITLE]
+)  
+SELECT *, (SELECT COUNT(1) FROM T_TABLE) TOTAL_ROWCOUNT FROM T_TABLE  
+     WHERE SEQ BETWEEN  (@PAGE - 1) * (@PAGE_COUNT) + 1 AND @PAGE * @PAGE_COUNT
+    ORDER BY AD_CODE  DESC
+ 
+	SET NOCOUNT OFF 
+
+
+      ]]>
+      </FixedSQL>
+      <DynamicBodys>
+        <Key>TITLE</Key>
+        <Body> AND A.TITLE LIKE N'%{0}%' </Body>
+      </DynamicBodys>
+    </TemplateSQL>
+  </DBAgentTemplate>
+</DBAgentMultiTemplate>

@@ -1,0 +1,31 @@
+﻿
+@{
+    List<AdPlayBusiTotalList> list = ViewBag.list;
+    string totCnt = (list.Count() == 0 ? "0" : list.First().TOTAL_ROWCOUNT.ToString());
+    <input type="hidden" id="total" value="@totCnt" />
+
+    foreach (AdPlayBusiTotalList data in list)
+    {
+<tr>
+    <td class="center">@data.ROW_IDX</td>
+    <td class="left" style="cursor:pointer" onclick="location.href='/comp/storereg/@data.STORE_CODE'"><a>@data.STORE_NAME</a></td>
+    <td class="right"><a href="javascript:void(0)" onclick="adPlayDetail(this,@data.STORE_CODE.ToString());">@data.DEVICE_CNT</a></td>
+    <td class="left">@data.BANNER_KIND_NAME</td>
+    <td class="right">@data.IMAGE1_PLAY_QTY.ToString("#,##0")</td>
+    <td class="right">@data.IMAGE1_PLAY_TIME.ToString("#,##0.##")</td>
+    <td class="right">@data.IMAGE6_PLAY_QTY.ToString("#,##0")</td>
+    <td class="right">@data.IMAGE6_PLAY_TIME.ToString("#,##0.##")</td>
+    <td class="right">@data.IMAGE12_PLAY_QTY.ToString("#,##0")</td>
+    <td class="right">@data.IMAGE12_PLAY_TIME.ToString("#,##0.##")</td>
+    <td class="right">@data.CLICK_PLAY_QTY.ToString("#,##0")</td>
+    <td class="right">@data.CLICK_PLAY_TIME.ToString("#,##0.##")</td>
+    <td class="right">@data.VIDEO_PLAY_QTY.ToString("#,##0")</td>
+    <td class="right">@data.VIDEO_PLAY_TIME.ToString("#,##0.##")</td>
+    <td class="right">@data.YOUTUBE_PLAY_QTY.ToString("#,##0")</td>
+    <td class="right">@data.YOUTUBE_PLAY_TIME.ToString("#,##0.##")</td>
+    <td class="right">@data.TOT_QTY.ToString("#,##0.##")</td>
+    <td class="right">@data.TOT_PLAY_TIME.ToString("#,##0.##") dd</td>
+</tr>
+    }
+
+}

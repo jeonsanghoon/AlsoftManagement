@@ -1,0 +1,2734 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<DBAgentMultiTemplate  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns="http://altsoft.kr/">
+
+	<DBAgentTemplate TemplateID="GetT_Ad_PageList">
+		<!-- 
+    SqlType : SQL의 형태를 지정합니다.
+      Example 1:<SqlType>FixedSQL</SqlType> 고정적인 SQL을 지원합니다. 
+      Example 2:<SqlType>DynamicSQL</SqlType> 동적인 SQL Type1을 지원합니다.  
+    Description : 해당 SQL의 기능설명을 적습니다.
+    SQLModifier : 해당 SQL의 작성자(수정자)를 적습니다
+    LastModifyDate : 해당 SQL의 마지막 수정일을 적습니다
+    -->
+		<Information>
+			<SqlType>DynamicSQL</SqlType>
+			<Description>광고 조회</Description>
+			<SQLModifier>전상훈</SQLModifier>
+			<LastModifyDate>2016-12-26</LastModifyDate>
+		</Information>
+
+		<TemplateSQL>
+			<!-- FixedSQL : 고정된 SQL이 들어가는 곳입니다. -->
+			<FixedSQL>
+				<![CDATA[ 
+ 
+	SET NOCOUNT ON 
+	/**************************************************************/
+	/* T_AD 광고리스트 조회 -  SELECT QUERY      GetT_Ad_PageList */ 
+	/**************************************************************/
+	SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED 
+	DECLARE @PAGE_COUNT INT = {0}
+        , @PAGE       INT = {1}
+        , @LATITUDE   NUMERIC(20,16) = {4}
+        , @LONGITUDE   NUMERIC(20,16) = {5};
+         
+	WITH T_TABLE AS 
+	(
+		SELECT 
+               ROW_NUMBER() OVER(ORDER BY {3}) AS SEQ
+             , A.AD_CODE
+             , A.GROUP_CODE
+             , SG.GROUP_NAME
+	         , A.AD_FRAME_TYPE
+		     , C2.NAME AS AD_FRAME_TYPE_NAME
+             , A.REG_DATE
+             , A.LOGO_URL
+             , A.TITLE
+             , A.SUB_TITLE
+             , A.BANNER_TYPE
+             , A.AD_TYPE
+             , C1.NAME AS AD_TYPE_NAME
+             , A.AD_TYPE2
+             , CASE WHEN A.BANNER_TYPE2 = 1 THEN I.NAME ELSE I3.NAME END AS BANNER_TYPE_NAME
+             , I2.NAME AS AD_TYPE2_NAME
+             , A.CONTENT
+             , A.FR_DATE
+             , A.TO_DATE
+             , dbo.fn_GetTimeMeridiem(A.FR_TIME) AS FR_TIME
+             , dbo.fn_GetTimeMeridiem(A.TO_TIME) AS TO_TIME
+             , A.CLICK_CNT
+             , A.GRADE_POINT
+             , A.COMPANY_CODE
+             , B.COMPANY_NAME AS COMPANY_NAME
+             , A.STORE_CODE
+             , ST.STORE_NAME STORE_NAME
+             , A.MEMBER_CODE
+             , C.USER_NAME AS MEMBER_NAME
+             , A.REP_CATEGORY_CODE
+             , D.CATEGORY_NAME AS REP_CATEGORY_NAME
+             , A.REMARK
+             , A.STATUS
+             , E.NAME AS STATUS_NAME
+             , A.HIDE
+             , F.REF_DATA2 AS HIDE_NAME
+             , A.INSERT_CODE
+             , G.USER_NAME AS INSERT_NAME
+             , A.INSERT_DATE
+             , A.UPDATE_CODE
+             , H.USER_NAME AS UPDATE_NAME
+             , A.UPDATE_DATE
+             , A1.PLACE_DISTANCE
+             , ISNULL(K.SHARE_CNT,0) AS SHARE_CNT
+             , ISNULL(K.AD_SHARE_CNT,0) AS AD_SHARE_CNT
+             , ISNULL(L.DEVICE_CNT,0) AS DEVICE_CNT
+     FROM T_AD A 
+    INNER JOIN T_COMMON C1
+       ON C1.MAIN_CODE = 'A006'
+      AND C1.SUB_CODE = A.AD_TYPE
+	INNER JOIN T_COMMON C2
+       ON C2.MAIN_CODE = 'H002'
+      AND C2.SUB_CODE = A.AD_FRAME_TYPE
+    LEFT JOIN (/* -1 * ( RADIUS ) * 100 - (RADIUS-DISTANCE) 는 반경만으로 비교시 같을 경우 거리가 작은 순으로 조회 하기 위함*/
+        SELECT AD_CODE, CONVERT(NUMERIC(20,2), MIN(CASE WHEN DISTANCE - RADIUS <= 0 THEN -1 * ( RADIUS ) * 100 - (RADIUS-DISTANCE) ELSE DISTANCE - RADIUS END)) AS PLACE_DISTANCE
+    	FROM
+        (
+    		SELECT AD_CODE
+    			, DBO.FN_TO_DISTANCE(@LATITUDE, @LONGITUDE, LATITUDE, LONGITUDE,'M') AS DISTANCE 
+    			, RADIUS
+    		FROM T_AD_PLACE
+    	) AA
+    	GROUP BY AA.AD_CODE 
+    ) A1 ON A.AD_CODE = A1.AD_CODE
+    LEFT JOIN T_STORE ST
+      ON A.STORE_CODE = ST.STORE_CODE
+    LEFT JOIN T_COMPANY B
+		  ON A.COMPANY_CODE = B.COMPANY_CODE
+	  LEFT JOIN T_MEMBER C
+		  ON A.MEMBER_CODE = C.MEMBER_CODE
+    LEFT JOIN T_MEMBER_EMPLOYEE CE
+	  ON ST.STORE_CODE = CE.STORE_CODE
+	 AND C.MEMBER_CODE = CE.MEMBER_CODE
+    LEFT JOIN T_STORE_DEPT CD
+      ON CE.STORE_CODE = CD.STORE_CODE 
+     AND CE.DEPT_CODE = CD.DEPT_CODE  
+	 INNER JOIN T_CATEGORY D
+	  ON A.REP_CATEGORY_CODE = D.CATEGORY_CODE
+     AND D.CATEGORY_TYPE = 1
+    INNER JOIN T_COMMON E
+       ON E.MAIN_CODE = 'A001'
+      AND E.SUB_CODE = A.STATUS
+    INNER JOIN T_COMMON F
+       ON F.MAIN_CODE = 'B003'
+      AND A.HIDE = F.SUB_CODE   
+    INNER JOIN T_MEMBER G
+       ON A.INSERT_CODE = G.MEMBER_CODE
+    INNER JOIN T_MEMBER H
+       ON A.UPDATE_CODE = H.MEMBER_CODE
+    INNER JOIN T_COMMON I
+       ON I.MAIN_CODE = 'A005'
+      AND I.SUB_CODE  = A.BANNER_TYPE
+    INNER JOIN T_COMMON I2
+       ON I2.MAIN_CODE = 'A011'
+      AND I2.SUB_CODE  = A.AD_TYPE2
+    INNER JOIN T_COMMON I3
+       ON I3.MAIN_CODE = 'A010'
+      AND I3.SUB_CODE  = A.BANNER_TYPE2
+    LEFT JOIN T_STORE_GROUP SG
+      ON A.GROUP_CODE = SG.GROUP_CODE
+    LEFT JOIN (SELECT AD_CODE, MIN(DEVICE_CODE) AS DEVICE_CODE 
+	             FROM T_DEVICE_MAIN DM
+				GROUP BY AD_CODE
+			 ) DM
+      ON A.AD_CODE = DM.AD_CODE
+	   --AND DM.SHARE_STATUS = 0
+    LEFT JOIN T_DEVICE DM1
+      ON DM.DEVICE_CODE = DM1.DEVICE_CODE
+    LEFT JOIN (SELECT A.AD_CODE
+                    , SUM(CASE WHEN B.DEVICE_CODE IS NULL THEN 1 ELSE 0 END) AS AD_SHARE_CNT 
+                    , SUM(CASE WHEN B.DEVICE_CODE IS NULL THEN 0 ELSE 1 END) AS SHARE_CNT 
+	               FROM T_AD_DEVICE A
+	       	       LEFT JOIN T_DEVICE_MAIN B
+	       	         ON A.AD_CODE = B.AD_CODE
+	       	        AND A.DEVICE_CODE = B.DEVICE_CODE
+	              WHERE A.STATUS = 9
+     
+	       GROUP BY A.AD_CODE
+	 ) K ON A.AD_CODE = K.AD_CODE
+   LEFT JOIN ( 
+         SELECT A.AD_CODE , COUNT(DISTINCT B.DEVICE_CODE) AS DEVICE_CNT
+				   FROM T_AD_PLACE A
+				  INNER JOIN T_DEVICE_PLACE B
+					   ON DBO.FN_TO_DISTANCE(A.LATITUDE, A.LONGITUDE, B.LATITUDE, B.LONGITUDE,'M') <= A.RADIUS + B.RADIUS 
+				  GROUP BY A.AD_CODE
+    ) L ON A.AD_CODE = L.AD_CODE
+    WHERE 1=1 
+	    #[AD_CODE]
+      #[GROUP_CODE]
+      #[BANNER_TYPE]
+      #[REP_CATEGORY_CODE]
+      #[TITLE]
+      #[COMPANY_CODE]
+      #[STORE_CODE]
+      #[DEPT_SEARCH]
+      #[DEPT_CODE]
+      #[PARENT_MEMBER_CODE]
+      #[MEMBER_CODE]
+      #[USER_ID]
+      #[USER_NAME]
+      #[GROUP_CODE]
+      #[BASE_DATE]
+      #[STATUS]
+      #[HIDE]
+	  #[AD_FRAME_TYPE]
+	) SELECT TOP {2} *, (SELECT COUNT(*) FROM T_TABLE) AS TOTAL_ROWCOUNT  FROM T_TABLE	  
+	 WHERE SEQ > (@PAGE -1) * @PAGE_COUNT
+	   AND SEQ <= @PAGE * @PAGE_COUNT
+	SET NOCOUNT OFF 
+
+
+      ]]>
+			</FixedSQL>~
+			<DynamicBodys>
+				<Key>AD_CODE</Key>
+				<Body> AND A.AD_CODE = {0}</Body>
+			</DynamicBodys>
+
+			<DynamicBodys>
+				<Key>REP_CATEGORY_CODE</Key>
+				<Body> AND A.REP_CATEGORY_CODE = {0} </Body>
+			</DynamicBodys>
+			<DynamicBodys>
+				<Key>TITLE</Key>
+				<Body> AND A.TITLE LIKE N'%{0}%' </Body>
+			</DynamicBodys>
+			<DynamicBodys>
+				<Key>COMPANY_CODE</Key>
+				<Body> AND A.COMPANY_CODE = {0} </Body>
+			</DynamicBodys>
+			<DynamicBodys>
+				<Key>STORE_CODE</Key>
+				<Body> AND A.STORE_CODE = {0} </Body>
+			</DynamicBodys>
+			<DynamicBodys>
+				<Key>DEPT_SEARCH</Key>
+				<Body> AND CD.DEPT_SEARCH LIKE '{0}%' </Body>
+			</DynamicBodys>
+			<DynamicBodys>
+				<Key>DEPT_CODE</Key>
+				<Body> AND CE.DEPT_CODE = {0} </Body>
+			</DynamicBodys>
+			<DynamicBodys>
+				<Key>PARENT_MEMBER_CODE</Key>
+				<Body> AND (CE.PARENT_MEMBER_CODE = {0} OR A.MEMBER_CODE = {0}) </Body>
+			</DynamicBodys>
+			<DynamicBodys>
+				<Key>MEMBER_CODE</Key>
+				<Body> AND A.MEMBER_CODE = {0} </Body>
+			</DynamicBodys>
+			<DynamicBodys>
+				<Key>GROUP_CODE</Key>
+				<Body> AND A.GROUP_CODE = {0} </Body>
+			</DynamicBodys>
+			<DynamicBodys>
+				<Key>BANNER_TYPE</Key>
+				<Body> AND A.BANNER_TYPE = {0} </Body>
+			</DynamicBodys>
+			<DynamicBodys>
+				<Key>STATUS</Key>
+				<Body>
+					<![CDATA[ AND A.STATUS = {0}
+          ]]>
+				</Body>
+			</DynamicBodys>
+			<DynamicBodys>
+				<Key>BASE_DATE</Key>
+				<Body>
+					<![CDATA[ AND A.FR_DATE <= '{0}' AND A.TO_DATE >= '{0}' 
+          ]]>
+				</Body>
+			</DynamicBodys>
+			<DynamicBodys>
+				<Key>HIDE</Key>
+				<Body>AND A.HIDE = {0} </Body>
+			</DynamicBodys>
+			<DynamicBodys>
+				<Key>USER_ID</Key>
+				<Body>AND C.USER_ID LIKE N'{0}%' </Body>
+			</DynamicBodys>
+			<DynamicBodys>
+				<Key>USER_NAME</Key>
+				<Body>
+					<![CDATA[AND C.USER_NAME LIKE N'%{0}%' ]]>
+				</Body>
+			</DynamicBodys>
+			<DynamicBodys>
+				<Key>AD_FRAME_TYPE</Key>
+				<Body>AND A.AD_FRAME_TYPE = {0} </Body>
+			</DynamicBodys>
+		</TemplateSQL>
+	</DBAgentTemplate>
+	<DBAgentTemplate TemplateID="GetAdList">
+		<!-- 
+    SqlType : SQL의 형태를 지정합니다.
+      Example 1:<SqlType>FixedSQL</SqlType> 고정적인 SQL을 지원합니다. 
+      Example 2:<SqlType>DynamicSQL</SqlType> 동적인 SQL Type1을 지원합니다.  
+    Description : 해당 SQL의 기능설명을 적습니다.
+    SQLModifier : 해당 SQL의 작성자(수정자)를 적습니다
+    LastModifyDate : 해당 SQL의 마지막 수정일을 적습니다
+    -->
+		<Information>
+			<SqlType>DynamicSQL</SqlType>
+			<Description>광고검색데이터 조회</Description>
+			<SQLModifier>전상훈</SQLModifier>
+			<LastModifyDate>2016-11-30</LastModifyDate>
+		</Information>.
+
+		<TemplateSQL>
+			<!-- FixedSQL : 고정된 SQL이 들어가는 곳입니다. -->
+			<FixedSQL>
+				<![CDATA[ 
+ 
+	SET NOCOUNT ON 
+	/*******************************************************************/
+	/* 광고분류테이블 - T_AD 광고리스트 조회 - GetAdList  SELECT QUERY */ 
+	/*******************************************************************/
+	SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED 
+	DECLARE
+        @UTC_DATE    VARCHAR(8) = CONVERT(VARCHAR(8), GETUTCDATE(),112)
+       ,@UTC_TIME    VARCHAR(5) = CONVERT(VARCHAR(5), GETUTCDATE(),108)
+       ,@PAGE_COUNT  INT = {0}
+       ,@PAGE INT    = {1}
+       ,@LATITUDE    NUMERIC(20,16) = {3}
+       ,@LONGITUDE   NUMERIC(20,16) = {4}	   
+       ,@MEMBER_CODE INT
+	SELECT @MEMBER_CODE = MEMBER_CODE FROM T_MEMBER
+	 WHERE 1=1
+     #[USER_ID]
+   SET @MEMBER_CODE  = ISNULL(@MEMBER_CODE ,-1);
+	   
+
+    WITH T_TABLE AS(
+    SELECT TOP {2} ROW_NUMBER() OVER(ORDER BY ISNULL(SIGN_CODE, 999999999999999) /*ISNULL(IS_BEACON,0) DESC,*/,ISNULL(AD_DISTANCE,9999999999999999) , A.AD_CODE DESC ) AS SEQ, * 
+    FROM(
+        SELECT 
+               --ROW_NUMBER() OVER(ORDER BY ORDER BY ISNULL(AB.IS_BEACON,0) DESC, CASE WHEN A2.DISTANCE <  ISNULL(PLACE_DISTANCE,9999999999999999) then A2.DISTANCE else ISNULL(PLACE_DISTANCE,9999999999999999) END , A.AD_CODE DESC ) AS SEQ
+               A.AD_CODE
+              ,A.BANNER_TYPE
+              ,ST.STORE_NAME AS STORE_NAME
+              ,A.TITLE, A.SUB_TITLE
+	            
+              , CASE WHEN A.BANNER_TYPE = 3 THEN ISNULL(N.FILE_URL,A.LOGO_URL) ELSE A.LOGO_URL END LOGO_URL
+              ,A.CLICK_CNT, A.GRADE_POINT
+              ,A.COMPANY_CODE
+              ,A.STORE_CODE
+              ,A.CONTENT_TYPE
+       
+            , J.COMPANY_NAME AS COMPANY_NAME
+	        , A.MEMBER_CODE
+	        , ISNULL(I.USER_NAME,'') AS MEMBER_NAME
+            , PLACE_DISTANCE AS AD_DISTANCE
+            , NULL AS SIGN_CODE
+            , MIN(dbo.FN_TO_DISTANCE(@LATITUDE, @LONGITUDE, C.LATITUDE, C.LONGITUDE,'M')) DEVICE_DISTANCE
+	        , CASE WHEN MIN(dbo.FN_TO_DISTANCE(@LATITUDE, @LONGITUDE, C.LATITUDE, C.LONGITUDE,'M')) <  ISNULL(PLACE_DISTANCE,9999999999999999) THEN MIN(dbo.FN_TO_DISTANCE(@LATITUDE, @LONGITUDE, C.LATITUDE, C.LONGITUDE,'M')) ELSE PLACE_DISTANCE END   AS MIN_DISTANCE
+            , ISNULL(O.BOOKMARK_YN,0) AS BOOKMARK_YN
+            , ISNULL(O.FAVORITE_YN,0) AS FAVORITE_YN
+         FROM T_AD A
+/*	       LEFT JOIN
+	       (
+		      SELECT CONVERT(BIT,1) AS IS_BEACON
+		            ,A.AD_CODE
+		            ,B.DEVICE_NUMBER AS BEACON_DEVICE_NUMBER
+		            ,B.BEACON_NAME
+		      FROM T_AD_BEACON A
+	         INNER JOIN T_BEACON B
+		        ON A.BEACON_CODE = B.BEACON_CODE
+	         WHERE B.DEVICE_NUMBER = '{5}'
+	         GROUP BY A.AD_CODE
+		             ,B.DEVICE_NUMBER
+		             ,B.BEACON_NAME
+	        ) AB ON A.AD_CODE = AB.AD_CODE  */
+	     LEFT JOIN (
+                /* -1 * ( RADIUS ) * 100 - (RADIUS-DISTANCE) 는 반경만으로 비교시 같을 경우 거리가 작은 순으로 조회 하기 위함*/
+	            SELECT AD_CODE, MIN(CASE WHEN DISTANCE - RADIUS <= 0 THEN -1 * ( RADIUS ) * 100 - (RADIUS-DISTANCE) ELSE DISTANCE - RADIUS END) AS PLACE_DISTANCE
+			    FROM
+	            (
+				    SELECT AD_CODE
+					    , dbo.FN_TO_DISTANCE(@LATITUDE, @LONGITUDE, LATITUDE, LONGITUDE,'M') AS DISTANCE 
+					    , RADIUS
+				    FROM T_AD_PLACE
+			    ) AA
+			    GROUP BY AA.AD_CODE 
+	        ) A1 ON A.AD_CODE = A1.AD_CODE
+/*       LEFT JOIN (
+		    SELECT B.AD_CODE 
+		        , MIN(dbo.FN_TO_DISTANCE(@LATITUDE, @LONGITUDE, LATITUDE, LONGITUDE,'M'))   AS DISTANCE
+		    FROM T_SIGNAGE_PLACE A
+		     INNER JOIN T_AD_SIGNINFO_SIGNAGE B
+		        ON A.SIGN_CODE = B.SIGN_CODE
+	      WHERE dbo.FN_TO_DISTANCE(@LATITUDE, @LONGITUDE, LATITUDE, LONGITUDE,'M')  <= RADIUS
+          GROUP BY B.AD_CODE
+	    ) A2 ON A.AD_CODE = A2.AD_CODE  */
+        LEFT JOIN T_AD_DEVICE B
+           ON A.AD_CODE = B.AD_CODE
+        LEFT JOIN T_DEVICE C
+           ON B.DEVICE_CODE = C.DEVICE_CODE
+        LEFT JOIN T_SEARCH_KEYWORD E
+           ON A.AD_CODE = E.AD_CODE OR C.DEVICE_CODE = E.DEVICE_CODE
+        LEFT JOIN T_CATEGORY_KEYWORD F
+           ON E.CK_CODE = F.CK_CODE
+        LEFT JOIN T_CATEGORY G
+           ON F.CATEGORY_CODE = G.CATEGORY_CODE
+        LEFT JOIN T_KEYWORD H
+           ON H.KEYWORD_CODE = F.KEYWORD_CODE
+         LEFT JOIN T_MEMBER I
+           ON A.MEMBER_CODE = I.MEMBER_CODE
+         LEFT JOIN T_COMPANY J
+           ON J.COMPANY_CODE = A.COMPANY_CODE 
+         LEFT JOIN T_STORE ST
+           ON A.STORE_CODE = ST.STORE_CODE
+         LEFT JOIN T_CATEGORY K
+           ON K.CATEGORY_CODE = A.REP_CATEGORY_CODE
+         LEFT JOIN  T_SEARCH_KEYWORD L
+	         ON A.AD_CODE = L.AD_CODE 
+	       LEFT JOIN T_KEYWORD M
+	         ON L.KEYWORD_CODE = M.KEYWORD_CODE  
+         LEFT JOIN T_FILE N
+           ON N.TABLE_NAME = 'T_AD'
+          AND N.TABLE_KEY  = CONVERT(VARCHAR(20), A.AD_CODE)
+          AND N.FILE_SEQ =1
+	       LEFT JOIN (SELECT AD_CODE, CONVERT(BIT, MAX(CASE WHEN BOOKMARK_KIND = 1 THEN 1 ELSE 0 END)) AS BOOKMARK_YN
+		                     , CONVERT(BIT, MAX(CASE WHEN BOOKMARK_KIND = 2 THEN 1 ELSE 0 END)) AS FAVORITE_YN
+	                    FROM T_MEMBER_BOOKMARK A
+	                   WHERE MEMBER_CODE = @MEMBER_CODE
+				             GROUP BY AD_CODE
+			   ) O
+		  ON O.AD_CODE = A.AD_CODE
+        WHERE 1=1
+        /*광고 코드 값이 있을 경우*/
+        #[AD_CODE]
+        #[AD_TYPES]
+        /*현재 타임 기준 광고시간 체크*/
+        AND ((
+		        B.FR_DATE <= DATEADD(HOUR, C.TIME_ZONE, @UTC_DATE)
+		        AND B.TO_DATE >= DATEADD(HOUR, C.TIME_ZONE, @UTC_DATE)
+		        /*나라 마다 기준 시간이 다르기 때문에 서버 시간을 기준으로 등록한 광고 UTC시간을 더하여 24시간 기준 광고 시간을 표시한다.*/
+		        AND B.FR_TIME <=  CASE WHEN ISNULL( B.FR_TIME,'') = '' THEN B.FR_TIME ELSE  CONVERT(VARCHAR(5), DATEADD(HOUR, C.TIME_ZONE, @UTC_DATE + ' ' + @UTC_TIME), 108) END
+		        AND B.TO_TIME >=  CASE WHEN ISNULL( B.FR_TIME,'') = '' THEN B.TO_TIME ELSE  CONVERT(VARCHAR(5), DATEADD(HOUR, C.TIME_ZONE, @UTC_DATE + ' ' + @UTC_TIME), 108) END
+		        ) OR 
+		        (
+		        /*현재 타임 기준 광고시간 체크*/
+		         A.FR_DATE <= DATEADD(HOUR, ISNULL(C.TIME_ZONE,9), @UTC_DATE)
+		        AND A.TO_DATE >= DATEADD(HOUR, ISNULL(C.TIME_ZONE,9), @UTC_DATE)
+		        /*나라 마다 기준 시간이 다르기 때문에 서버 시간을 기준으로 등록한 광고 UTC시간을 더하여 24시간 기준 광고 시간을 표시한다.*/
+		        AND A.FR_TIME <=  CASE WHEN ISNULL( A.FR_TIME,'') = '' THEN A.FR_TIME ELSE  CONVERT(VARCHAR(5), DATEADD(HOUR, ISNULL(C.TIME_ZONE,9), @UTC_DATE + ' ' + @UTC_TIME), 108) END
+		        AND A.TO_TIME >=  CASE WHEN ISNULL( A.FR_TIME,'') = '' THEN A.TO_TIME ELSE  CONVERT(VARCHAR(5), DATEADD(HOUR, ISNULL(C.TIME_ZONE,9), @UTC_DATE + ' ' + @UTC_TIME), 108) END
+		    ))
+    
+        /*카테고리 선택이 값이 있을 경우 추가 CATEGORY_SEARCH_COND 클래스의 CATEGORY_CODE */
+        #[SEARCH_CATEGORY]
+        /*CATEGORY_SEARCH_COND 클래스의 SEARCH_KEYWORD_CODE에 값이 있을 경우 조회 갯수 만큼 IN 조건 추가*/
+        #[SEARCH_KEYWORD]
+        #[RADIUS]
+        /*키워드명이 있을 경우 조회 조건 추가*/
+        #[KEYWORD_NAME]
+        #[CK_CODE]
+        #[COMPANY_CODE]
+        #[STORE_CODE]
+        #[MEMBER_CODE]
+        #[AD_TYPE]
+        #[HIDE]
+      GROUP BY A.AD_CODE
+              ,A.BANNER_TYPE
+              ,A.STORE_CODE
+              ,A.CONTENT_TYPE
+              ,A.LOGO_URL
+              ,A.CLICK_CNT, A.GRADE_POINT
+              ,A.COMPANY_CODE
+              ,A.TITLE, A.SUB_TITLE
+              ,A.REP_CATEGORY_CODE 
+              ,ST.STORE_NAME                                                                                                                                                                                            
+              ,K.CATEGORY_NAME
+	            /* ,A.FR_DATE, A.FR_TIME 
+	            ,A.TO_DATE, A.TO_TIME
+		          ,B.FR_UTC_DATE, B.TO_UTC_DATE*/
+              ,J.COMPANY_NAME 
+	            ,A.MEMBER_CODE
+	            ,I.USER_NAME
+              ,ST.STORE_NAME
+              ,A1.PLACE_DISTANCE
+              ,A1.AD_CODE
+              ,N.FILE_URL
+              ,O.BOOKMARK_YN
+              ,O.FAVORITE_YN
+	) A
+  ) 
+  SELECT * FROM T_TABLE
+  WHERE SEQ BETWEEN (@PAGE_COUNT * (@PAGE -1)) + 1 AND  (@PAGE_COUNT * @PAGE)
+--ORDER BY {6} --
+	SET NOCOUNT OFF 
+
+ 
+      ]]>
+			</FixedSQL>
+			<DynamicBodys>
+				<Key>RADIUS</Key>
+				<Body>
+					<![CDATA[   AND CASE WHEN MIN(dbo.FN_TO_DISTANCE(@LATITUDE, @LONGITUDE, C.LATITUDE, C.LONGITUDE,'M')) <  ISNULL(PLACE_DISTANCE,9999999999999999) 
+                           THEN MIN(dbo.FN_TO_DISTANCE(@LATITUDE, @LONGITUDE, C.LATITUDE, C.LONGITUDE,'M')) ELSE  ISNULL(PLACE_DISTANCE,9999999999999999) END <= {0}
+			              
+              ]]>
+				</Body>
+			</DynamicBodys>
+			<DynamicBodys>
+				<Key>AD_CODE</Key>
+				<Body> AND A.AD_CODE = {0}</Body>
+			</DynamicBodys>
+			<DynamicBodys>
+				<Key>SEARCH_CATEGORY</Key>
+				<Body> {0} </Body>
+			</DynamicBodys>
+			<DynamicBodys>
+				<Key>SEARCH_KEYWORD</Key>
+				<Body>  AND H.BASE_CODE IN( SELECT BASE_CODE FROM T_KEYWORD WHERE KEYWORD_CODE IN ({0}))     </Body>
+			</DynamicBodys>
+			<DynamicBodys>
+				<Key>KEYWORD_NAME</Key>
+				<Body>
+					AND (( H.BASE_CODE IN( SELECT BASE_CODE FROM T_KEYWORD WHERE KEYWORD_NAME LIKE N'%{0}%') AND H.IS_SYNONYM = 0 )
+					OR M.BASE_CODE IN (SELECT BASE_CODE FROM T_KEYWORD WHERE KEYWORD_NAME LIKE N'%{0}%') AND M.IS_SYNONYM = 0 )
+				</Body>
+			</DynamicBodys>
+			<DynamicBodys>
+				<Key>CK_CODE</Key>
+				<Body>AND F.CK_CODE = {0} </Body>
+			</DynamicBodys>
+			<DynamicBodys>
+				<Key>COMPANY_CODE</Key>
+				<Body> AND A.COMPANY_CODE = {0} </Body>
+			</DynamicBodys>
+			<DynamicBodys>
+				<Key>STORE_CODE</Key>
+				<Body> AND A.STORE_CODE = {0} </Body>
+			</DynamicBodys>
+			<DynamicBodys>
+				<Key>MEMBER_CODE</Key>
+				<Body> AND A.MEMBER_CODE = {0} </Body>
+			</DynamicBodys>
+			<DynamicBodys>
+				<Key>HIDE</Key>
+				<Body>AND A.HIDE = {0} </Body>
+
+			</DynamicBodys>
+			<DynamicBodys>
+				<Key>AD_TYPE</Key>
+				<Body>AND A.AD_TYPE = {0} </Body>
+			</DynamicBodys>
+			<DynamicBodys>
+				<Key>USER_ID</Key>
+				<Body>AND USER_ID = '{0}' </Body>
+			</DynamicBodys>
+			<DynamicBodys>
+				<Key>AD_TYPES</Key>
+				<Body>AND A.AD_TYPE IN ({0}) </Body>
+			</DynamicBodys>
+		</TemplateSQL>
+	</DBAgentTemplate>
+
+	<DBAgentTemplate TemplateID="GetCompanyAdList">
+		<!-- 
+    SqlType : SQL의 형태를 지정합니다.
+      Example 1:<SqlType>FixedSQL</SqlType> 고정적인 SQL을 지원합니다. 
+      Example 2:<SqlType>DynamicSQL</SqlType> 동적인 SQL Type1을 지원합니다.  
+    Description : 해당 SQL의 기능설명을 적습니다.
+    SQLModifier : 해당 SQL의 작성자(수정자)를 적습니다
+    LastModifyDate : 해당 SQL의 마지막 수정일을 적습니다
+    -->
+		<Information>
+			<SqlType>DynamicSQL</SqlType>
+			<Description>광고검색데이터 조회</Description>
+			<SQLModifier>전상훈</SQLModifier>
+			<LastModifyDate>2016-11-30</LastModifyDate>
+		</Information>
+
+		<TemplateSQL>
+			<!-- FixedSQL : 고정된 SQL이 들어가는 곳입니다. -->
+			<FixedSQL>
+				<![CDATA[ 
+ 
+	SET NOCOUNT ON 
+	/*******************************************************************/
+	/* 광고분류테이블 - T_AD 업체별 광고리스트 조회 - GetCompanyAdList  SELECT QUERY */ 
+	/*******************************************************************/
+	SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED 
+	DECLARE
+	    @UTC_DATE     VARCHAR(8) = CONVERT(VARCHAR(8), GETUTCDATE(),112)
+	   ,@UTC_TIME     VARCHAR(5) = CONVERT(VARCHAR(5), GETUTCDATE(),108)
+     ,@PAGE_COUNT INT = {0}
+	   ,@PAGE INT = {1}
+     ,@LATITUDE     NUMERIC(20,16) = {3}
+	   ,@LONGITUDE    NUMERIC(20,16) = {4};
+	   
+
+    WITH T_TABLE AS(
+    SELECT TOP {2}
+           ROW_NUMBER() OVER(ORDER BY ISNULL(AB.IS_BEACON,0) DESC, A.AD_CODE DESC ) AS SEQ
+           /*
+           광고장소 디바이스 중 가까운 위체에 있는 광고 우선순
+           ROW_NUMBER() OVER(ORDER BY ORDER BY ISNULL(AB.IS_BEACON,0) DESC, CASE WHEN  ISNULL(MIN(dbo.FN_TO_DISTANCE(@LATITUDE, @LONGITUDE, AP.LATITUDE, AP.LONGITUDE,'M')),999999999999) < ISNULL(MIN(dbo.FN_TO_DISTANCE(@LATITUDE, @LONGITUDE, C.LATITUDE, C.LONGITUDE,'M')),999999999999)
+		         THEN  ISNULL(MIN(dbo.FN_TO_DISTANCE(@LATITUDE, @LONGITUDE, AP.LATITUDE, AP.LONGITUDE,'M')),999999999999) ELSE  ISNULL(MIN(dbo.FN_TO_DISTANCE(@LATITUDE, @LONGITUDE, C.LATITUDE, C.LONGITUDE,'M')),999999999999) END, A.AD_CODE DESC ) AS SEQ
+           
+           */
+          ,A.AD_CODE
+          ,A.BANNER_TYPE
+          ,ST.STORE_NAME AS STORE_NAME
+          ,A.TITLE, A.SUB_TITLE
+	        ,A.LOGO_URL
+          ,A.CLICK_CNT, A.GRADE_POINT
+          ,A.COMPANY_CODE
+          ,A.STORE_CODE
+          ,A.CONTENT_TYPE
+      /*    ,A.FR_DATE, A.FR_TIME 
+	        ,A.TO_DATE, A.TO_TIME
+	        ,B.FR_UTC_DATE, B.TO_UTC_DATE*/
+          ,J.COMPANY_NAME AS COMPANY_NAME
+	        ,A.MEMBER_CODE
+	        ,ISNULL(I.USER_NAME,'') AS MEMBER_NAME
+       --   ,A.REP_CATEGORY_CODE
+       --   ,K.CATEGORY_NAME AS REP_CATEGORY_NAME
+        , MIN(dbo.FN_TO_DISTANCE(@LATITUDE, @LONGITUDE, AP.LATITUDE, AP.LONGITUDE,'M')) AD_DISTANCE
+        , MIN(dbo.FN_TO_DISTANCE(@LATITUDE, @LONGITUDE, C.LATITUDE, C.LONGITUDE,'M')) DEVICE_DISTANCE
+	      , CONVERT(NUMERIC(18,2),0)  DISTANCE
+        , AB.BEACON_DEVICE_NUMBER
+        , AB.BEACON_NAME
+     FROM T_AD A
+	   LEFT JOIN
+	   (
+		  SELECT CONVERT(BIT,1) AS IS_BEACON
+		        ,A.AD_CODE
+		        ,B.DEVICE_NUMBER AS BEACON_DEVICE_NUMBER
+		        ,B.BEACON_NAME
+		  FROM T_AD_BEACON A
+	     INNER JOIN T_BEACON B
+		    ON A.BEACON_CODE = B.BEACON_CODE
+	     WHERE B.DEVICE_NUMBER = '{5}'
+	     GROUP BY A.AD_CODE
+		         ,B.DEVICE_NUMBER 
+		         ,B.BEACON_NAME
+	    ) AB ON A.AD_CODE = AB.AD_CODE
+	      
+    LEFT JOIN T_AD_DEVICE B
+       ON A.AD_CODE = B.AD_CODE
+    LEFT JOIN T_DEVICE C
+       ON B.DEVICE_CODE = C.DEVICE_CODE
+    LEFT JOIN T_SEARCH_KEYWORD E
+       ON A.AD_CODE = E.AD_CODE OR C.DEVICE_CODE = E.DEVICE_CODE
+    LEFT JOIN T_CATEGORY_KEYWORD F
+       ON E.CK_CODE = F.CK_CODE
+    LEFT JOIN T_CATEGORY G
+       ON F.CATEGORY_CODE = G.CATEGORY_CODE
+    LEFT JOIN T_KEYWORD H
+       ON H.KEYWORD_CODE = F.KEYWORD_CODE
+     LEFT JOIN T_MEMBER I
+       ON A.MEMBER_CODE = I.MEMBER_CODE
+     LEFT JOIN T_COMPANY J
+       ON J.COMPANY_CODE = A.COMPANY_CODE 
+     LEFT JOIN T_STORE ST
+       ON A.STORE_CODE = ST.STORE_CODE
+     LEFT JOIN T_CATEGORY K
+       ON K.CATEGORY_CODE = A.REP_CATEGORY_CODE
+     LEFT JOIN  T_SEARCH_KEYWORD L
+	     ON A.AD_CODE = L.AD_CODE 
+	   LEFT JOIN T_KEYWORD M
+	     ON L.KEYWORD_CODE = M.KEYWORD_CODE  
+     LEFT JOIN T_AD_PLACE AP
+	    ON A.AD_CODE = AP.AD_CODE       
+
+    WHERE 1=1
+    /*광고 코드 값이 있을 경우*/
+    #[AD_CODE]
+  --  #[AD_TYPES]
+    /*현재 타임 기준 광고시간 체크*/
+    AND ((
+		  B.FR_DATE <= DATEADD(HOUR, C.TIME_ZONE, @UTC_DATE)
+		  AND B.TO_DATE >= DATEADD(HOUR, C.TIME_ZONE, @UTC_DATE)
+		  /*나라 마다 기준 시간이 다르기 때문에 서버 시간을 기준으로 등록한 광고 UTC시간을 더하여 24시간 기준 광고 시간을 표시한다.*/
+		  AND B.FR_TIME <=  CASE WHEN ISNULL( B.FR_TIME,'') = '' THEN B.FR_TIME ELSE  CONVERT(VARCHAR(5), DATEADD(HOUR, C.TIME_ZONE, @UTC_DATE + ' ' + @UTC_TIME), 108) END
+		  AND B.TO_TIME >=  CASE WHEN ISNULL( B.FR_TIME,'') = '' THEN B.TO_TIME ELSE  CONVERT(VARCHAR(5), DATEADD(HOUR, C.TIME_ZONE, @UTC_DATE + ' ' + @UTC_TIME), 108) END
+		  ) OR 
+		  (
+		  /*현재 타임 기준 광고시간 체크*/
+		   A.FR_DATE <= DATEADD(HOUR, ISNULL(C.TIME_ZONE,9), @UTC_DATE)
+		  AND A.TO_DATE >= DATEADD(HOUR, ISNULL(C.TIME_ZONE,9), @UTC_DATE)
+		  /*나라 마다 기준 시간이 다르기 때문에 서버 시간을 기준으로 등록한 광고 UTC시간을 더하여 24시간 기준 광고 시간을 표시한다.*/
+		  AND A.FR_TIME <=  CASE WHEN ISNULL( A.FR_TIME,'') = '' THEN A.FR_TIME ELSE  CONVERT(VARCHAR(5), DATEADD(HOUR, ISNULL(C.TIME_ZONE,9), @UTC_DATE + ' ' + @UTC_TIME), 108) END
+		  AND A.TO_TIME >=  CASE WHEN ISNULL( A.FR_TIME,'') = '' THEN A.TO_TIME ELSE  CONVERT(VARCHAR(5), DATEADD(HOUR, ISNULL(C.TIME_ZONE,9), @UTC_DATE + ' ' + @UTC_TIME), 108) END
+		))
+    
+    /*카테고리 선택이 값이 있을 경우 추가 CATEGORY_SEARCH_COND 클래스의 CATEGORY_CODE */
+    #[SEARCH_CATEGORY]
+    /*CATEGORY_SEARCH_COND 클래스의 SEARCH_KEYWORD_CODE에 값이 있을 경우 조회 갯수 만큼 IN 조건 추가*/
+    #[SEARCH_KEYWORD]
+    #[RADIUS]
+    /*키워드명이 있을 경우 조회 조건 추가*/
+    #[KEYWORD_NAME]
+    #[CK_CODE]
+    #[COMPANY_CODE]
+    #[STORE_CODE]
+    #[MEMBER_CODE]
+    #[AD_TYPE]
+    #[HIDE]
+  GROUP BY A.AD_CODE
+          ,A.BANNER_TYPE
+          ,A.STORE_CODE
+          ,A.CONTENT_TYPE
+           ,A.LOGO_URL
+          ,A.CLICK_CNT, A.GRADE_POINT
+          ,A.COMPANY_CODE
+          ,A.TITLE, A.SUB_TITLE
+          ,A.REP_CATEGORY_CODE 
+          ,ST.STORE_NAME                                                                                                                                                                                            
+          ,K.CATEGORY_NAME
+	        /* ,A.FR_DATE, A.FR_TIME 
+	        ,A.TO_DATE, A.TO_TIME
+		      ,B.FR_UTC_DATE, B.TO_UTC_DATE*/
+          ,J.COMPANY_NAME 
+	        ,A.MEMBER_CODE
+	        ,I.USER_NAME
+          ,ST.STORE_NAME 
+          ,AB.IS_BEACON
+          ,AB.BEACON_DEVICE_NUMBER
+          ,AB.BEACON_NAME
+   
+  ) 
+  SELECT * FROM T_TABLE
+  WHERE SEQ BETWEEN (@PAGE_COUNT * (@PAGE -1)) + 1 AND  (@PAGE_COUNT * @PAGE)
+--ORDER BY {6} --
+	SET NOCOUNT OFF 
+
+ 
+      ]]>
+			</FixedSQL>
+			<DynamicBodys>
+				<Key>RADIUS</Key>
+				<Body>
+					<![CDATA[   AND (dbo.FN_TO_DISTANCE(@LATITUDE, @LONGITUDE, C.LATITUDE, C.LONGITUDE,'M') <= {0}
+			                 OR
+				             dbo.FN_TO_DISTANCE(@LATITUDE, @LONGITUDE, AP.LATITUDE, AP.LONGITUDE,'M') <= {0}
+				             )
+              ]]>
+				</Body>
+			</DynamicBodys>
+			<DynamicBodys>
+				<Key>AD_CODE</Key>
+				<Body> AND A.AD_CODE = {0}</Body>
+			</DynamicBodys>
+			<DynamicBodys>
+				<Key>SEARCH_CATEGORY</Key>
+				<Body> {0} </Body>
+			</DynamicBodys>
+			<DynamicBodys>
+				<Key>SEARCH_KEYWORD</Key>
+				<Body>  AND H.BASE_CODE IN( SELECT BASE_CODE FROM T_KEYWORD WHERE KEYWORD_CODE IN ({0}))     </Body>
+			</DynamicBodys>
+			<DynamicBodys>
+				<Key>KEYWORD_NAME</Key>
+				<Body>
+					AND (( H.BASE_CODE IN( SELECT BASE_CODE FROM T_KEYWORD WHERE KEYWORD_NAME LIKE N'%{0}%') AND H.IS_SYNONYM = 0 )
+					OR M.BASE_CODE IN (SELECT BASE_CODE FROM T_KEYWORD WHERE KEYWORD_NAME LIKE N'%{0}%') AND M.IS_SYNONYM = 0 )
+				</Body>
+			</DynamicBodys>
+			<DynamicBodys>
+				<Key>CK_CODE</Key>
+				<Body>AND F.CK_CODE = {0} </Body>
+			</DynamicBodys>
+			<DynamicBodys>
+				<Key>COMPANY_CODE</Key>
+				<Body> AND A.COMPANY_CODE = {0} </Body>
+			</DynamicBodys>
+			<DynamicBodys>
+				<Key>STORE_CODE</Key>
+				<Body> AND A.STORE_CODE = {0} </Body>
+			</DynamicBodys>
+			<DynamicBodys>
+				<Key>MEMBER_CODE</Key>
+				<Body> AND A.MEMBER_CODE = {0} </Body>
+			</DynamicBodys>
+			<DynamicBodys>
+				<Key>HIDE</Key>
+				<Body>AND A.HIDE = {0} </Body>
+			</DynamicBodys>
+			<DynamicBodys>
+				<Key>AD_TYPE</Key>
+				<Body>AND A.AD_TYPE = {0} </Body>
+			</DynamicBodys>
+			<DynamicBodys>
+				<Key>USER_ID</Key>
+				<Body>AND USER_ID = '{0}' </Body>
+			</DynamicBodys>
+			<DynamicBodys>
+				<Key>AD_TYPES</Key>
+				<Body>AND A.AD_TYPE IN ({0}) </Body>
+			</DynamicBodys>
+		</TemplateSQL>
+	</DBAgentTemplate>
+
+	<DBAgentTemplate TemplateID="GetMobileAdDeviceM">
+		<!-- 
+    SqlType : SQL의 형태를 지정합니다.
+      Example 1:<SqlType>FixedSQL</SqlType> 고정적인 SQL을 지원합니다. 
+      Example 2:<SqlType>DynamicSQL</SqlType> 동적인 SQL Type1을 지원합니다.  
+    Description : 해당 SQL의 기능설명을 적습니다.
+    SQLModifier : 해당 SQL의 작성자(수정자)를 적습니다
+    LastModifyDate : 해당 SQL의 마지막 수정일을 적습니다
+    -->
+		<Information>
+			<SqlType>DynamicSQL</SqlType>
+			<Description>모바일 로컬박스별 배너리스트 메인</Description>
+			<SQLModifier>전상훈</SQLModifier>
+			<LastModifyDate>2019-06-25</LastModifyDate>
+		</Information>
+
+		<TemplateSQL>
+			<!-- FixedSQL : 고정된 SQL이 들어가는 곳입니다. -->
+			<FixedSQL>
+				<![CDATA[ 
+ 
+SET NOCOUNT ON	
+	/*********************************************************/
+	/* 모바일 로컬박스별 배너리스트 메인 -  SELECT QUERY */ 
+  /* /api/Advertising/GetMobileAdDeviceList                */
+  /* 내배너만 조회로 변경(2017.08.22)               */
+	/*********************************************************/
+	SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED 
+	DECLARE @DEVICE_CODE  BIGINT         = {0}
+	       ,@USER_ID      NVARCHAR(200)  = N'{1}'
+	   
+SELECT  A.DEVICE_CODE
+      , A.DEVICE_NAME 
+	  , ISNULL(B.BOOKMARK_YN,0) AS BOOKMARK_YN
+	  , ISNULL(B.FAVORITE_YN,0) AS FAVORITE_YN
+      , C.COMPANY_CODE AS DEVICE_COMPANY_CODE
+      , C.COMPANY_NAME AS DEVICE_COMPANY_NAME
+  FROM T_DEVICE A
+  LEFT JOIN (SELECT DEVICE_CODE 
+                   , CONVERT(BIT, MAX(CASE WHEN BOOKMARK_KIND = 1 THEN 1 ELSE 0 END)) AS BOOKMARK_YN
+		           , CONVERT(BIT, MAX(CASE WHEN BOOKMARK_KIND = 2 THEN 1 ELSE 0 END)) AS FAVORITE_YN
+               FROM T_MEMBER_BOOKMARK A
+              INNER JOIN T_MEMBER B 
+			    ON A.MEMBER_CODE = b.MEMBER_CODE
+			 WHERE B.USER_ID = @USER_ID
+			 GROUP BY DEVICE_CODE
+			 ) B
+  ON A.DEVICE_CODE = B.DEVICE_CODE
+ INNER JOIN T_COMPANY C
+    ON A.COMPANY_CODE = C.COMPANY_CODE 
+ WHERE A.DEVICE_CODE = @DEVICE_CODE
+
+      ]]>
+			</FixedSQL>
+
+		</TemplateSQL>
+	</DBAgentTemplate>
+	<DBAgentTemplate TemplateID="GetMobileAdDeviceList">
+		<!-- 
+    SqlType : SQL의 형태를 지정합니다.
+      Example 1:<SqlType>FixedSQL</SqlType> 고정적인 SQL을 지원합니다. 
+      Example 2:<SqlType>DynamicSQL</SqlType> 동적인 SQL Type1을 지원합니다.  
+    Description : 해당 SQL의 기능설명을 적습니다.
+    SQLModifier : 해당 SQL의 작성자(수정자)를 적습니다
+    LastModifyDate : 해당 SQL의 마지막 수정일을 적습니다
+    -->
+		<Information>
+			<SqlType>DynamicSQL</SqlType>
+			<Description>모바일 광고검색데이터 조회</Description>
+			<SQLModifier>전상훈</SQLModifier>
+			<LastModifyDate>2017-05-25</LastModifyDate>
+		</Information>
+
+		<TemplateSQL>
+			<!-- FixedSQL : 고정된 SQL이 들어가는 곳입니다. -->
+			<FixedSQL>
+				<![CDATA[ 
+ 
+SET NOCOUNT ON	
+	/*********************************************************/
+	/* 모바일 광고검색데이터 조회 -  SELECT QUERY */ 
+  /* /api/Advertising/GetMobileAdDeviceList                */
+  /* 내배너만 조회로 변경(2017.08.22)               */
+	/*********************************************************/
+	SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED 
+	DECLARE
+	    @UTC_DATE     VARCHAR(8) = CONVERT(VARCHAR(8), GETUTCDATE(),112)
+	   ,@UTC_TIME     VARCHAR(5) = CONVERT(VARCHAR(5), GETUTCDATE(),108)
+     ,@PAGE_COUNT   INT            = {0}
+	   ,@PAGE         INT            = {1}
+     ,@DEVICE_CODE  BIGINT         = {2}
+	   ,@USER_ID      NVARCHAR(200)  = N'{3}'
+	   ,@MEMBER_CODE INT
+
+	   
+	  
+	  SELECT @MEMBER_CODE = MEMBER_CODE FROM T_MEMBER
+	   WHERE USER_ID = @USER_ID
+  ;
+
+    WITH T_TABLE AS(
+    SELECT 
+        ROW_NUMBER() OVER(ORDER BY DM.SEQ ) AS IDX
+        , C.DEVICE_CODE
+        , C.DEVICE_NAME
+        , A.AD_CODE
+        , DM.BANNER_TYPE
+        , A.CONTENT_TYPE /*콘텐츠 유형(T_COMMON : A008, 1:HTML, 2:서브배너)*/
+        , ST.STORE_NAME AS STORE_NAME
+        , A.TITLE
+        , A.SUB_TITLE
+        
+        , CASE WHEN DM.BANNER_TYPE = 3 THEN ISNULL(N.FILE_URL, A.LOGO_URL)  ELSE A.LOGO_URL END LOGO_URL
+        , A.CLICK_CNT
+        , A.GRADE_POINT
+        , A.COMPANY_CODE
+        , A.STORE_CODE
+        , J.COMPANY_NAME AS COMPANY_NAME
+        , C.COMPANY_CODE AS DEVICE_COMPANY_CODE
+        , CC.COMPANY_NAME AS DEVICE_COMPANY_NAME
+        , A.MEMBER_CODE
+        , ISNULL(I.USER_NAME,'') AS MEMBER_NAME
+        , A.REP_CATEGORY_CODE AS CATEGORY_CODE
+        , CASE WHEN DM.DEVICE_CODE IS NOT NULL THEN CC.COMPANY_NAME ELSE K.CATEGORY_NAME END AS CATEGORY_NAME
+        , ISNULL(C1.BOOKMARK_YN,0)  BOOKMARK_YN
+        , ISNULL(C1.FAVORITE_YN,0)  FAVORITE_YN
+        , DM.SHARE_STATUS
+        , ISNULL(O.BOOKMARK_YN,0) AS BANNER_BOOKMARK_YN
+        , ISNULL(O.FAVORITE_YN,0) AS BANNER_FAVORITE_YN
+     FROM T_AD A
+    INNER JOIN T_AD_DEVICE B
+       ON A.AD_CODE = B.AD_CODE
+    INNER JOIN T_DEVICE C
+       ON B.DEVICE_CODE = C.DEVICE_CODE
+    INNER JOIN T_DEVICE_MAIN DM
+       ON C.DEVICE_CODE = DM.DEVICE_CODE
+      AND A.AD_CODE = DM.AD_CODE
+      AND DM.SHARE_STATUS IN (0,9)
+      AND DM.HIDE = 0      
+     LEFT JOIN T_COMPANY CC
+       ON C.COMPANY_CODE = CC.COMPANY_CODE
+	  
+     LEFT JOIN (SELECT DEVICE_CODE, CONVERT(BIT, MAX(CASE WHEN BOOKMARK_KIND = 1 THEN 1 ELSE 0 END)) AS BOOKMARK_YN
+		                     , CONVERT(BIT, MAX(CASE WHEN BOOKMARK_KIND = 2 THEN 1 ELSE 0 END)) AS FAVORITE_YN
+	                    FROM T_MEMBER_BOOKMARK A
+	                   WHERE MEMBER_CODE = @MEMBER_CODE
+				             GROUP BY DEVICE_CODE
+			   ) C1
+		  ON C1.DEVICE_CODE = C.DEVICE_CODE
+     
+     
+   
+	   LEFT JOIN T_SEARCH_KEYWORD E
+       ON A.AD_CODE = E.AD_CODE OR C.DEVICE_CODE = E.DEVICE_CODE
+     LEFT JOIN T_CATEGORY_KEYWORD F
+       ON E.CK_CODE = F.CK_CODE
+     LEFT JOIN T_CATEGORY G
+       ON F.CATEGORY_CODE = G.CATEGORY_CODE
+     LEFT JOIN T_KEYWORD H
+       ON H.KEYWORD_CODE = F.KEYWORD_CODE
+     LEFT JOIN T_MEMBER I
+       ON A.MEMBER_CODE = I.MEMBER_CODE
+     LEFT JOIN T_COMPANY J
+       ON J.COMPANY_CODE = A.COMPANY_CODE 
+     LEFT JOIN T_STORE ST
+       ON A.STORE_CODE = ST.STORE_CODE
+     INNER JOIN T_CATEGORY K
+       ON K.CATEGORY_CODE = A.REP_CATEGORY_CODE
+     LEFT JOIN  T_SEARCH_KEYWORD L
+	     ON A.AD_CODE = L.AD_CODE 
+	   LEFT JOIN T_KEYWORD M
+	     ON L.KEYWORD_CODE = M.KEYWORD_CODE  
+     LEFT JOIN T_FILE N
+       ON N.TABLE_NAME = 'T_AD'
+      AND N.TABLE_KEY  = CONVERT(VARCHAR(20), A.AD_CODE)
+      AND N.FILE_SEQ =1
+     LEFT JOIN (SELECT AD_CODE, CONVERT(BIT, MAX(CASE WHEN BOOKMARK_KIND = 1 THEN 1 ELSE 0 END)) AS BOOKMARK_YN
+		                     , CONVERT(BIT, MAX(CASE WHEN BOOKMARK_KIND = 2 THEN 1 ELSE 0 END)) AS FAVORITE_YN
+	                    FROM T_MEMBER_BOOKMARK A
+	                   WHERE MEMBER_CODE = @MEMBER_CODE
+				             GROUP BY AD_CODE
+			   ) O
+		  ON O.AD_CODE = A.AD_CODE
+  
+    WHERE 1=1
+		AND B.DEVICE_CODE = @DEVICE_CODE
+    --AND DM.PUBLIC_TYPE = 3 /*외부 공개일 경우에만 표시*/
+    AND A.AD_TYPE IN (0,1,3,4)
+    --#[CATEGORY_TYPE]
+    --AND K.CATEGORY_TYPE = 3  /*내배너만 조회로 변경(2017.08.22)*/
+    /*광고 코드 값이 있을 경우*/
+    
+    #[REP_CATEGORY_CODE]
+    #[AD_CODE]
+    #[KEYWORD_NAME]
+    #[CK_CODE]
+    #[HIDE]
+ --   /*현재 타임 기준 광고시간 체크*/
+    AND (B.FR_DATE = ''
+				OR (
+				(
+	
+					 (
+					  B.FR_DATE <= DATEADD(HOUR, C.TIME_ZONE, @UTC_DATE)
+					  AND B.TO_DATE >= DATEADD(HOUR, C.TIME_ZONE, @UTC_DATE)
+					  /*나라 마다 기준 시간이 다르기 때문에 서버 시간을 기준으로 등록한 광고 UTC시간을 더하여 24시간 기준 광고 시간을 표시한다.*/
+					  AND B.FR_TIME <=  CASE WHEN ISNULL( B.FR_TIME,'') = '' THEN B.FR_TIME ELSE  CONVERT(VARCHAR(5), DATEADD(HOUR, C.TIME_ZONE, @UTC_DATE + ' ' + @UTC_TIME), 108) END
+					  AND B.TO_TIME >=  CASE WHEN ISNULL( B.FR_TIME,'') = '' THEN B.TO_TIME ELSE  CONVERT(VARCHAR(5), DATEADD(HOUR, C.TIME_ZONE, @UTC_DATE + ' ' + @UTC_TIME), 108) END
+					  ) OR 
+					  (
+					  /*현재 타임 기준 광고시간 체크*/
+					   A.FR_DATE <= DATEADD(HOUR, ISNULL(C.TIME_ZONE,9), @UTC_DATE)
+					  AND A.TO_DATE >= DATEADD(HOUR, ISNULL(C.TIME_ZONE,9), @UTC_DATE)
+					  /*나라 마다 기준 시간이 다르기 때문에 서버 시간을 기준으로 등록한 광고 UTC시간을 더하여 24시간 기준 광고 시간을 표시한다.*/
+					  AND A.FR_TIME <=  CASE WHEN ISNULL( A.FR_TIME,'') = '' THEN A.FR_TIME ELSE  CONVERT(VARCHAR(5), DATEADD(HOUR, ISNULL(C.TIME_ZONE,9), @UTC_DATE + ' ' + @UTC_TIME), 108) END
+					  AND A.TO_TIME >=  CASE WHEN ISNULL( A.FR_TIME,'') = '' THEN A.TO_TIME ELSE  CONVERT(VARCHAR(5), DATEADD(HOUR, ISNULL(C.TIME_ZONE,9), @UTC_DATE + ' ' + @UTC_TIME), 108) END
+					)
+				 )
+			)
+		)
+     
+              
+        
+    /*키워드명이 있을 경우 조회 조건 추가*/
+    --AND A.HIDE = 0 
+  GROUP BY
+          C.DEVICE_CODE
+        , C.DEVICE_NAME
+        , DM.SEQ
+        , A.AD_CODE
+        , DM.BANNER_TYPE
+        ,A.CONTENT_TYPE 
+        , ST.STORE_NAME                                                                                                                                                                                            
+        , A.TITLE, A.SUB_TITLE
+        , A.REP_CATEGORY_CODE
+        , K.CATEGORY_NAME
+        , A.LOGO_URL
+        , A.CLICK_CNT, A.GRADE_POINT
+        , A.COMPANY_CODE
+        , A.STORE_CODE
+        , J.COMPANY_NAME 
+        , A.MEMBER_CODE
+        , I.USER_NAME
+        , ST.STORE_NAME
+        , K.ORDER_SEQ
+        , K.CATEGORY_TYPE 
+        , C.COMPANY_CODE
+        , CC.COMPANY_NAME
+        , DM.DEVICE_CODE
+        , DM.SHARE_STATUS
+        , N.FILE_URL
+        , C1.BOOKMARK_YN
+        , C1.FAVORITE_YN
+        , O.BOOKMARK_YN
+        , O.FAVORITE_YN
+        
+  ) 
+  SELECT *  FROM T_TABLE
+   WHERE IDX BETWEEN (@PAGE_COUNT * (@PAGE -1)) + 1 AND  (@PAGE_COUNT * @PAGE)
+
+
+      ]]>
+			</FixedSQL>
+			<DynamicBodys>
+				<Key>CATEGORY_TYPE</Key>
+				<Body>AND K.CATEGORY_TYPE = {0} </Body>
+			</DynamicBodys>
+			<DynamicBodys>
+				<Key>AD_CODE</Key>
+				<Body> AND A.AD_CODE = {0}</Body>
+			</DynamicBodys>
+			<DynamicBodys>
+				<Key>REP_CATEGORY_CODE</Key>
+				<Body> AND A.REP_CATEGORY_CODE = {0} </Body>
+			</DynamicBodys>
+
+			<DynamicBodys>
+				<Key>KEYWORD_NAME</Key>
+				<Body>
+					AND (( H.BASE_CODE IN( SELECT BASE_CODE FROM T_KEYWORD WHERE KEYWORD_NAME LIKE N'%{0}%') AND H.IS_SYNONYM = 0 )
+					OR M.BASE_CODE IN (SELECT BASE_CODE FROM T_KEYWORD WHERE KEYWORD_NAME LIKE N'%{0}%') AND M.IS_SYNONYM = 0
+					OR A.TITLE LIKE '%{0}%'
+					OR A.SUB_TITLE LIKE '%{0}%'
+					)
+				</Body>
+			</DynamicBodys>
+			<DynamicBodys>
+				<Key>CK_CODE</Key>
+				<Body>AND F.CK_CODE = {0} </Body>
+			</DynamicBodys>
+
+			<DynamicBodys>
+				<Key>HIDE</Key>
+				<Body>AND DM.HIDE = {0} </Body>
+			</DynamicBodys>
+		</TemplateSQL>
+	</DBAgentTemplate>
+
+	<DBAgentTemplate TemplateID="T_AD_Save">
+		<!-- 
+    SqlType : SQL의 형태를 지정합니다.
+      Example 1:<SqlType>FixedSQL</SqlType> 고정적인 SQL을 지원합니다. 
+      Example 2:<SqlType>DynamicSQL</SqlType> 동적인 SQL Type1을 지원합니다.  
+    Description : 해당 SQL의 기능설명을 적습니다.
+    SQLModifier : 해당 SQL의 작성자(수정자)를 적습니다
+    LastModifyDate : 해당 SQL의 마지막 수정일을 적습니다
+    -->
+		<Information>
+			<SqlType>DynamicSQL</SqlType>
+			<Description>광고저장</Description>
+			<SQLModifier>전상훈</SQLModifier>
+			<LastModifyDate>2016-09-01</LastModifyDate>
+		</Information>
+
+		<TemplateSQL>
+			<!-- FixedSQL : 고정된 SQL이 들어가는 곳입니다. -->
+			<FixedSQL>
+				<![CDATA[ 
+	SET NOCOUNT ON 
+	/****************************************/
+	/* 광고테이블 - T_AD 저장 -  SAVE QUERY */ 
+	/****************************************/
+	DECLARE @AD_CODE              BIGINT        = N'{0}'
+		  , @REG_DATE             VARCHAR(8)    = N'{1}'
+          , @LOGO_URL             NVARCHAR(200) = N'{2}'
+		  , @TITLE                NVARCHAR(200) = N'{3}'
+		  , @SUB_TITLE            NVARCHAR(200) = N'{4}'
+          , @BANNER_TYPE          INT           = CASE WHEN ISNUMERIC('{5}') = 1 THEN '{5}' ELSE '1' END
+          , @CONTENT              NVARCHAR(MAX) = N'{6}'
+		  , @FR_DATE              VARCHAR(8)    = N'{7}'
+		  , @TO_DATE              VARCHAR(8)    = N'{8}'
+		  , @FR_TIME              VARCHAR(5)    = N'{9}'
+		  , @TO_TIME              VARCHAR(5)    = N'{10}'
+		  , @CLICK_CNT            INT           = CONVERT(INT, CASE WHEN ISNUMERIC('{11}') = 1 THEN '{11}' ELSE '0' END )
+		  , @GRADE_POINT          NUMERIC(5,2)  = CONVERT(NUMERIC(5,2), CASE WHEN ISNUMERIC('{12}') = 1 THEN '{12}' ELSE '0' END )
+		  , @COMPANY_CODE         INT           = CONVERT(INT, CASE WHEN ISNUMERIC('{13}') = 1 THEN '{13}' ELSE NULL END )
+		  , @STORE_CODE           INT           = CONVERT(INT, CASE WHEN ISNUMERIC('{14}') = 1 THEN '{14}' ELSE NULL END )
+		  , @MEMBER_CODE          INT           = CONVERT(INT, CASE WHEN ISNUMERIC('{15}') = 1 THEN '{15}' ELSE NULL END )
+		  , @REP_CATEGORY_CODE    INT           = CONVERT(INT, CASE WHEN ISNUMERIC('{16}') = 1 THEN '{16}' ELSE NULL END )
+		  , @REMARK               NVARCHAR(200) = N'{17}'
+		  , @STATUS               INT           = CONVERT(INT, CASE WHEN ISNUMERIC('{18}') = 1 THEN '{18}' ELSE NULL END )
+		  , @HIDE                 BIT           = CONVERT(BIT, CASE WHEN ISNUMERIC('{19}') = 1 THEN '{19}' ELSE '0' END )
+		  , @INSERT_CODE          INT           = CONVERT(INT, CASE WHEN ISNUMERIC('{{20}') = 1 THEN '{20}' ELSE '0' END )
+		  , @INSERT_DATE          DATETIME      = GETDATE() 
+		  , @UPDATE_CODE          INT           = CONVERT(INT, CASE WHEN ISNUMERIC('{{20}') = 1 THEN '{20}' ELSE '0' END )
+		  , @UPDATE_DATE          DATETIME      = GETDATE() 
+          , @TIMEZONE_OFFSET      INT           = 9
+          , @CONTACT_STORE_CODE   INT           = CONVERT(INT, CASE WHEN ISNUMERIC('{21}') = 1 THEN '{21}' ELSE NULL END )
+          , @DEVICE_CODE          INT           = CONVERT(INT, CASE WHEN ISNUMERIC('{22}') = 1 THEN '{22}' ELSE '0' END )
+          , @DEVICE_SEQ           INT           = CONVERT(INT, CASE WHEN ISNUMERIC('{23}') = 1 THEN '{23}' ELSE '0' END )
+          , @GROUP_CODE           INT           = CONVERT(INT, CASE WHEN ISNUMERIC('{24}') = 1 THEN '{24}' ELSE NULL END )
+          , @MEMBER_NAME          NVARCHAR(50)  = N'{25}'
+          , @MOBILE               NVARCHAR(50)  = N'{26}'
+          , @CONTACT_COMPANY_CODE INT           = CONVERT(INT, CASE WHEN ISNUMERIC('{27}') = 1 THEN '{27}' ELSE NULL END )
+	      , @CONTACT_CODE         INT           = CONVERT(INT, CASE WHEN ISNUMERIC('{28}') = 1 THEN '{28}' ELSE NULL END )
+          , @CONTACT_NAME         NVARCHAR(50)  = N'{29}'
+          , @CONTACT_MOBILE       NVARCHAR(50)  = N'{30}'
+      	  
+          , @AD_TYPE              INT            =  CASE WHEN ISNUMERIC('{31}') = 1 THEN ' {31}' ELSE '1' END 
+          , @CONTENT_TYPE         INT            =  CASE WHEN ISNUMERIC('{32}') = 1 THEN ' {32}' ELSE '1' END 
+          
+          , @AD_TYPE2             INT            =  CASE WHEN ISNUMERIC('{33}') = 1 THEN ' {33}' ELSE '1' END 
+          , @BANNER_TYPE2         INT            = CASE WHEN ISNUMERIC('{34}') = 1 THEN '{34}' ELSE '1' END
+          , @FILE_URL             NVARCHAR(200)  = N'{35}'
+		  , @AD_FRAME_TYPE        INT            =  CASE WHEN ISNUMERIC('{36}') = 1 THEN ' {36}' ELSE '6' END 
+  DECLARE @UTC_FR_DATE DATETIME =  DATEADD(HOUR, -1 * @TIMEZONE_OFFSET, CASE WHEN ISDATE(@FR_DATE + ' ' + @FR_TIME ) = 1 THEN @FR_DATE + ' ' + @FR_TIME ELSE NULL END)        
+  DECLARE @UTC_TO_DATE DATETIME =  DATEADD(HOUR, -1 * @TIMEZONE_OFFSET, CASE WHEN ISDATE(@TO_DATE + ' ' + @TO_TIME ) = 1 THEN @TO_DATE + ' ' + @TO_TIME ELSE NULL END)        
+  IF  @TO_TIME = ''
+  BEGIN
+    SET @UTC_TO_DATE =  DATEADD(DAY, 1 , @UTC_TO_DATE)        
+  END
+	UPDATE A 
+	SET  	  GROUP_CODE                     = @GROUP_CODE                    
+			 ,  REG_DATE                       = @REG_DATE                      		 ,  AD_TYPE                        = @AD_TYPE      
+             ,  AD_TYPE2                       = @AD_TYPE2                               ,  AD_FRAME_TYPE                  = @AD_FRAME_TYPE
+             ,  CONTENT_TYPE                   = @CONTENT_TYPE
+			 ,  LOGO_URL                       = @LOGO_URL                      		 ,  TITLE                          = @TITLE                         
+			 ,  SUB_TITLE                      = @SUB_TITLE                     		 ,  BANNER_TYPE                    = @BANNER_TYPE 
+             ,  BANNER_TYPE2                   = @BANNER_TYPE2 
+			 ,  CONTENT                        = @CONTENT                       		 ,  FR_DATE                        = @FR_DATE                       
+			 ,  TO_DATE                        = @TO_DATE                       		 ,  FR_TIME                        = @FR_TIME                       
+			 ,  TO_TIME                        = @TO_TIME                       		 ,  CLICK_CNT                      = @CLICK_CNT                     
+			 ,  GRADE_POINT                    = @GRADE_POINT                   		 ,  COMPANY_CODE           = @COMPANY_CODE          
+			 ,  STORE_CODE             = @STORE_CODE            		 ,  MEMBER_CODE              = @MEMBER_CODE             
+			 ,  MEMBER_NAME              = @MEMBER_NAME             		 ,  MOBILE                 = @MOBILE                
+			 ,  CONTACT_COMPANY_CODE           = @CONTACT_COMPANY_CODE          		 ,  CONTACT_STORE_CODE             = @CONTACT_STORE_CODE            
+			 ,  CONTACT_CODE              = @CONTACT_CODE             		 ,  CONTACT_NAME              = @CONTACT_NAME             
+			 ,  CONTACT_MOBILE                 = @CONTACT_MOBILE                		 ,  REP_CATEGORY_CODE              = @REP_CATEGORY_CODE             
+			 ,  REMARK                         = @REMARK                        		 ,  STATUS                         = @STATUS                        
+		   ,  HIDE                           = @HIDE                          
+			 ,  UPDATE_CODE                    = @UPDATE_CODE                   		 ,  UPDATE_DATE                    = @UPDATE_DATE                   
+	
+	FROM T_AD A 
+	WHERE AD_CODE= @AD_CODE
+	IF @@ROWCOUNT = 0
+	BEGIN
+  
+    IF @MEMBER_CODE IS NULL
+    BEGIN
+       SET @MEMBER_CODE = @INSERT_CODE
+    END
+    
+    SELECT @COMPANY_CODE = B.COMPANY_CODE
+          ,@STORE_CODE   = B.STORE_CODE
+      FROM T_MEMBER_EMPLOYEE A
+     INNER JOIN T_STORE B
+        ON A.STORE_CODE = B.STORE_CODE
+    WHERE A.MEMBER_CODE =  @MEMBER_CODE 
+    
+		INSERT INTO T_AD
+		(	  GROUP_CODE                    		, REG_DATE               , AD_TYPE                     , AD_TYPE2                   		
+			, AD_FRAME_TYPE                         , LOGO_URL               , TITLE                       , SUB_TITLE                   
+			, BANNER_TYPE                   		, BANNER_TYPE2           , CONTENT                     , CONTENT_TYPE
+            , FR_DATE                       		, TO_DATE                , FR_TIME                       		
+			, TO_TIME                       		, CLICK_CNT              , GRADE_POINT                 , COMPANY_CODE          		
+			, STORE_CODE            		        , MEMBER_CODE            , MEMBER_NAME             	   , MOBILE                		
+			, CONTACT_COMPANY_CODE          		, CONTACT_STORE_CODE     , CONTACT_CODE                , CONTACT_NAME             		
+			, CONTACT_MOBILE                		, REP_CATEGORY_CODE      , REMARK                      , STATUS                        		
+            , HIDE                                  , INSERT_CODE            , INSERT_DATE                   		
+			, UPDATE_CODE                   		, UPDATE_DATE                   		
+		)
+		SELECT @GROUP_CODE                   		, @REG_DATE            
+			 , @AD_TYPE                      		, @AD_TYPE2               , @AD_FRAME_TYPE
+             , @LOGO_URL                            , @TITLE                        	
+			 , @SUB_TITLE                    		, @BANNER_TYPE         , @BANNER_TYPE2 
+             , @CONTENT                             , @CONTENT_TYPE          	
+			 , @FR_DATE                      		, @TO_DATE             , @FR_TIME                      	
+			 , @TO_TIME                      		, @CLICK_CNT           , @GRADE_POINT                  	
+			 , @COMPANY_CODE         		        , @STORE_CODE          , @MEMBER_CODE            	
+			 , @MEMBER_NAME            		        , @MOBILE              , @CONTACT_COMPANY_CODE         	
+			 , @CONTACT_STORE_CODE           		, @CONTACT_CODE        , @CONTACT_NAME            	
+			 , @CONTACT_MOBILE               		, @REP_CATEGORY_CODE   , @REMARK                       	
+			 , @STATUS                       		              	
+			 , @HIDE                         		, @INSERT_CODE         , @INSERT_DATE                  	
+			 , @UPDATE_CODE                  		, @UPDATE_DATE    
+	    
+      SET @AD_CODE = CONVERT(BIGINT,IDENT_CURRENT('T_AD')) 
+			
+	 END
+
+    IF ISNULL(@FILE_URL,'') = '-1'
+    BEGIN
+      DELETE T_FILE
+       WHERE TABLE_NAME = 'T_AD'
+         AND TABLE_KEY =   CONVERT(VARCHAR(20),@AD_CODE) AND FILE_SEQ = 1 AND REF_DATA1 = '1'
+    END
+    
+    ELSE IF ISNULL(@FILE_URL,'') <> ''
+    BEGIN
+            UPDATE T_FILE
+               SET FILE_URL = @FILE_URL
+		              ,INSERT_CODE = @UPDATE_CODE
+			            ,INSERT_DATE = @UPDATE_DATE
+             WHERE TABLE_NAME = 'T_AD'
+               AND TABLE_KEY =   CONVERT(VARCHAR(20),@AD_CODE) AND FILE_SEQ = 1 AND  REF_DATA1 = '1'
+             IF @@ROWCOUNT = 0
+             BEGIN
+                INSERT INTO T_FILE 
+                (TABLE_NAME, TABLE_KEY, FILE_SEQ,FILE_TYPE, FILE_NAME,FILE_URL, REF_DATA1, INSERT_CODE, INSERT_DATE)
+                SELECT 'T_AD', CONVERT(VARCHAR(20),@AD_CODE), 1, @BANNER_TYPE2,'', @FILE_URL,'1', @UPDATE_CODE , GETDATE();
+            END
+    END
+    
+    
+      
+    UPDATE T_AD_DEVICE
+    SET FR_DATE = @FR_DATE
+        ,TO_DATE = @TO_DATE
+        ,FR_TIME = @FR_TIME
+        ,TO_TIME = @TO_TIME
+        ,FR_UTC_DATE = CONVERT(VARCHAR(10), @UTC_FR_DATE, 112)
+        ,TO_UTC_DATE = CONVERT(VARCHAR(10), @UTC_TO_DATE, 112)
+        ,FR_UTC_TIME = CASE WHEN ISNULL(@FR_TIME,'') = '' THEN '' ELSE CONVERT(VARCHAR(5), @UTC_FR_DATE, 108) END
+        ,TO_UTC_TIME = CASE WHEN ISNULL(@TO_TIME,'') = '' THEN '' ELSE CONVERT(VARCHAR(5), @UTC_TO_DATE, 108) END
+        ,REMARK  = CONVERT(NVARCHAR(200), CASE WHEN REMARK LIKE N'%광고 시간 수정시 동시 적용' THEN REMARK ELSE   ISNULL(REMARK,'') + N' | 광고 시간 수정시 동시 적용'  END)
+        ,UPDATE_CODE = @UPDATE_CODE 
+        ,UPDATE_DATE = @UPDATE_DATE
+    WHERE AD_CODE = @AD_CODE
+    
+    
+
+ UPDATE T_AD_SIGNINFO_SIGNAGE
+    SET  FR_DATE = @FR_DATE
+        ,TO_DATE = @TO_DATE
+        ,FR_TIME = @FR_TIME
+        ,TO_TIME = @TO_TIME
+        
+        ,REMARK  = CONVERT(NVARCHAR(200), CASE WHEN REMARK LIKE N'%광고 시간 수정시 동시 적용' THEN REMARK ELSE   ISNULL(REMARK,'') + N' | 광고 시간 수정시 동시 적용'  END)
+        ,UPDATE_CODE = @UPDATE_CODE 
+        ,UPDATE_DATE = @UPDATE_DATE
+    WHERE AD_CODE = @AD_CODE
+    
+ UPDATE T_AD_SIGNINFO
+    SET  FR_DATE = @FR_DATE
+        ,TO_DATE = @TO_DATE
+        ,FR_TIME = @FR_TIME
+        ,TO_TIME = @TO_TIME
+        ,REMARK  = CONVERT(NVARCHAR(200), CASE WHEN REMARK LIKE N'%광고 시간 수정시 동시 적용' THEN REMARK ELSE   ISNULL(REMARK,'') + N' | 광고 시간 수정시 동시 적용'  END)
+        ,UPDATE_CODE = @UPDATE_CODE 
+        ,UPDATE_DATE = @UPDATE_DATE
+    WHERE AD_CODE = @AD_CODE
+    
+   IF @DEVICE_CODE > 0 AND @DEVICE_SEQ > 0
+   BEGIN
+      UPDATE T_DEVICE_MAIN
+         SET AD_CODE = @AD_CODE
+       WHERE DEVICE_CODE = @DEVICE_CODE
+         AND SEQ  = @DEVICE_SEQ
+   END
+
+   SELECT @AD_CODE
+SET NOCOUNT OFF
+
+  ]]>
+			</FixedSQL>
+		</TemplateSQL>
+	</DBAgentTemplate>
+
+	<DBAgentTemplate TemplateID="GetAdStatusList">
+		<!-- 
+    SqlType : SQL의 형태를 지정합니다.
+      Example 1:<SqlType>FixedSQL</SqlType> 고정적인 SQL을 지원합니다. 
+      Example 2:<SqlType>DynamicSQL</SqlType> 동적인 SQL Type1을 지원합니다.  
+    Description : 해당 SQL의 기능설명을 적습니다.
+    SQLModifier : 해당 SQL의 작성자(수정자)를 적습니다
+    LastModifyDate : 해당 SQL의 마지막 수정일을 적습니다
+    -->
+		<Information>
+			<SqlType>DynamicSQL</SqlType>
+			<Description>광고진행상태조회</Description>
+			<SQLModifier>전상훈</SQLModifier>
+			<LastModifyDate>2016-09-02</LastModifyDate>
+		</Information>
+
+		<TemplateSQL>
+			<!-- FixedSQL : 고정된 SQL이 들어가는 곳입니다. -->
+			<FixedSQL>
+				<![CDATA[ 
+	SET NOCOUNT ON 
+  SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED
+	/****************************************/
+	/* 광고진행상태조회 -  GetAdStatusList  */ 
+	/****************************************/
+  DECLARE @TABLE TABLE
+  (
+	  AD_CODE BIGINT
+     ,TITLE          NVARCHAR(200)
+     ,STATUS         INT
+     ,NEXT_PAGE_URL  NVARCHAR(200)
+     ,NEXT_PAGE_NAME NVARCHAR(200)
+     ,USER_ID        NVARCHAR(50)
+     ,USER_NAME      NVARCHAR(100)
+     ,REG_DATE       DATETIME
+  )
+  INSERT INTO @TABLE
+  SELECT {1} B.AD_CODE AS AD_CODE
+       , B.TITLE
+       , CONVERT(INT, ISNULL(STATUS,1)) AS STATUS
+	   ,CASE WHEN ISNULL(C.REF_DATA1,'') = '' THEN '/ADVSTEP/STEP2/' ELSE [dbo].[fnSplitColumn](C.REF_DATA1,'|',1) END AS NEXT_PAGE
+	   ,CASE WHEN ISNULL(C.REF_DATA1,'') = '' THEN '광고작성' ELSE C.REF_DATA2 END AS NEXT_PAGE_NAME
+	   ,A.USER_ID
+	   ,A.USER_NAME
+	   ,B.INSERT_DATE AS REG_DATE
+    FROM T_MEMBER A
+    LEFT JOIN T_AD B
+      ON A.MEMBER_CODE = B.MEMBER_CODE
+    
+    LEFT JOIN T_COMMON C
+      ON C.MAIN_CODE = 'A001'
+     AND C.SUB_CODE = B.STATUS
+  WHERE A.USER_ID = N'{0}'
+  IF @@ROWCOUNT = 0
+  BEGIN
+	  INSERT INTO @TABLE
+	  SELECT NULL, NULL, 0, '/ADVSTEP/STEP1/', N'회원가입', NULL, NULL, NULL
+  END
+  SELECT * FROM @TABLE
+
+   
+
+SET NOCOUNT OFF
+
+  ]]>
+			</FixedSQL>
+			<DynamicBodys>
+				<Key>AD_COND_STRING</Key>
+				<Body>{0}</Body>
+			</DynamicBodys>
+		</TemplateSQL>
+	</DBAgentTemplate>
+
+
+	<DBAgentTemplate TemplateID="Get_T_AD_List">
+		<!-- 
+    SqlType : SQL의 형태를 지정합니다.
+      Example 1:<SqlType>FixedSQL</SqlType> 고정적인 SQL을 지원합니다. 
+      Example 2:<SqlType>DynamicSQL</SqlType> 동적인 SQL Type1을 지원합니다.  
+    Description : 해당 SQL의 기능설명을 적습니다.
+    SQLModifier : 해당 SQL의 작성자(수정자)를 적습니다
+    LastModifyDate : 해당 SQL의 마지막 수정일을 적습니다
+    -->
+		<Information>
+			<SqlType>DynamicSQL</SqlType>
+			<Description>광고테이블 - T_AD 조회</Description>
+			<SQLModifier>전상훈</SQLModifier>
+			<LastModifyDate>2016-09-05</LastModifyDate>
+		</Information>
+
+		<TemplateSQL>
+			<!-- FixedSQL : 고정된 SQL이 들어가는 곳입니다. -->
+			<FixedSQL>
+				<![CDATA[ 
+SET NOCOUNT ON 
+	/*******************************************/
+	/* 광고테이블 - T_AD 조회 -  SELECT QUERY Get_T_AD_List */ 
+	/*******************************************/
+	SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED
+
+		SELECT 
+              A.AD_CODE
+            , A.GROUP_CODE
+            , A.REG_DATE
+            , A.LOGO_URL
+            , A.TITLE
+            , A.SUB_TITLE
+            , A.AD_TYPE
+	        , A.AD_TYPE2
+            , A.AD_FRAME_TYPE
+            , A.BANNER_TYPE
+            , I.NAME AS BANNER_TYPE_NAME
+            , A.BANNER_TYPE2
+            , A.CONTENT_TYPE
+            , A.CONTENT
+            , A.FR_DATE
+            , A.TO_DATE
+            , A.FR_TIME AS FR_TIME
+            , A.TO_TIME AS TO_TIME
+            , A.CLICK_CNT
+            , A.GRADE_POINT
+            , A.COMPANY_CODE
+            , B.COMPANY_NAME AS COMPANY_NAME
+            , A.STORE_CODE
+            , ST.STORE_NAME AS STORE_NAME
+            , A.MEMBER_CODE
+            , A.MEMBER_NAME
+            , A.MOBILE
+            , A.CONTACT_COMPANY_CODE
+	        , CON1.COMPANY_NAME AS CONTACT_COMPANY_NAME
+	        , A.CONTACT_STORE_CODE
+	        , CON2.STORE_NAME AS CONTACT_STORE_NAME
+	        , A.CONTACT_CODE
+	        , A.CONTACT_NAME
+	        , A.CONTACT_MOBILE
+	        , A.REP_CATEGORY_CODE
+	        , D.CATEGORY_NAME AS REP_CATEGORY_NAME
+            , A.REMARK
+            , A.STATUS
+            , E.NAME AS STATUS_NAME
+   	        , A.HIDE
+	        , F.REF_DATA1 AS HIDE_NAME
+            , A.INSERT_CODE
+            , G.USER_NAME AS INSERT_NAME
+            , A.INSERT_DATE
+            , A.UPDATE_CODE
+            , H.USER_NAME AS UPDATE_NAME
+            , A.UPDATE_DATE
+            , TF.FILE_URL
+			, A.ITEM_TYPE
+  FROM T_AD A 
+  LEFT JOIN T_STORE ST
+    ON A.STORE_CODE = ST.STORE_CODE
+  LEFT JOIN T_COMPANY B
+    ON A.COMPANY_CODE = B.COMPANY_CODE
+  LEFT JOIN T_MEMBER C
+    ON A.MEMBER_CODE = C.MEMBER_CODE
+  LEFT JOIN T_CATEGORY D
+    ON A.REP_CATEGORY_CODE = D.CATEGORY_CODE
+ INNER JOIN T_COMMON E
+    ON E.MAIN_CODE = 'A001'
+   AND E.SUB_CODE = A.STATUS
+ INNER JOIN T_COMMON F
+    ON F.MAIN_CODE = 'B003'
+   AND A.HIDE = F.SUB_CODE   
+ INNER JOIN T_MEMBER G
+    ON A.INSERT_CODE = G.MEMBER_CODE
+ INNER JOIN T_MEMBER H
+    ON A.UPDATE_CODE = H.MEMBER_CODE
+ INNER JOIN T_COMMON I
+    ON I.MAIN_CODE = 'A005'
+   AND I.SUB_CODE  = A.BANNER_TYPE
+ LEFT JOIN T_COMPANY CON1
+   ON A.CONTACT_COMPANY_CODE = CON1.COMPANY_CODE
+ LEFT JOIN T_STORE CON2
+   ON A.CONTACT_STORE_CODE = CON2.STORE_CODE
+ LEFT JOIN T_FILE TF
+   ON TF.TABLE_NAME = 'T_AD'
+  AND TF.TABLE_KEY  = CONVERT(VARCHAR(20), A.AD_CODE)
+  AND TF.FILE_SEQ   = 1
+  AND TF.FILE_TYPE  = A.BANNER_TYPE2
+  AND TF.REF_DATA1  = '1'
+ WHERE 1=1 
+ 
+   #[AD_CODE]
+	
+  SET NOCOUNT OFF 
+
+  ]]>
+			</FixedSQL>
+			<DynamicBodys>
+				<Key>AD_CODE</Key>
+				<Body>AND A.AD_CODE = {0}</Body>
+			</DynamicBodys>
+
+		</TemplateSQL>
+	</DBAgentTemplate>
+
+
+	<DBAgentTemplate TemplateID="AdDelete">
+		<!-- 
+    SqlType : SQL의 형태를 지정합니다.
+      Example 1:<SqlType>FixedSQL</SqlType> 고정적인 SQL을 지원합니다. 
+      Example 2:<SqlType>DynamicSQL</SqlType> 동적인 SQL Type1을 지원합니다.  
+    Description : 해당 SQL의 기능설명을 적습니다.
+    SQLModifier : 해당 SQL의 작성자(수정자)를 적습니다
+    LastModifyDate : 해당 SQL의 마지막 수정일을 적습니다
+    -->
+		<Information>
+			<SqlType>DynamicSQL</SqlType>
+			<Description>광고테이블 - T_AD 삭제 </Description>
+			<SQLModifier>전상훈</SQLModifier>
+			<LastModifyDate>2016-10-04</LastModifyDate>
+		</Information>
+
+		<TemplateSQL>
+			<!-- FixedSQL : 고정된 SQL이 들어가는 곳입니다. -->
+			<FixedSQL>
+				<![CDATA[ 
+SET NOCOUNT ON 
+	/*******************************************/
+	/* 광고테이블 - T_AD 삭제 -  AdDelete      */ 
+	/*******************************************/
+  DECLARE @AD_STATUS_SEQ INT, @STATUS_NAME NVARCHAR(200), @TITLE NVARCHAR(200) , @CHECK_SEQ INT, @RTN_MSG NVARCHAR(400) = N''
+        , @AD_CODE			BIGINT		= {0}
+		, @IDX				BIGINT		= 0
+		, @USE_CNT			INT         = 0
+	    , @PURCHASE_CNT		INT			= 0
+		, @PURCHASE_TYPE	INT			= 0
+		, @UPDATE_CODE		INT         = {1}
+		, @UPDATE_DATE		DATETIME	= GETDATE()
+		, @MAX_IDX			INT			= 1
+		, @MIN_IDX			INT			= 1	
+
+  SELECT  @AD_STATUS_SEQ = B.ORDER_SEQ 
+         ,@STATUS_NAME = B.NAME
+         ,@TITLE = A.TITLE
+    FROM T_AD A
+	INNER JOIN T_COMMON B
+	   ON B.MAIN_CODE = 'A001' AND A.STATUS = B.SUB_CODE
+	WHERE AD_CODE = @AD_CODE
+
+
+  SELECT @CHECK_SEQ = ORDER_SEQ FROM T_COMMON 
+   WHERE MAIN_CODE = 'A001' AND SUB_CODE = 5 /*요청완료 상태 보다 작거나 같을 때만 삭제*/
+
+  if( @AD_STATUS_SEQ > @CHECK_SEQ)
+  BEGIN
+    SET @RTN_MSG = N'현재상태가 ' + @STATUS_NAME +N' 이기 때문에 삭제 할수 없습니다. </br>제목 :' + @TITLE
+    GOTO EXCEPTION
+  END
+  
+  /*
+  IF EXISTS ( SELECT * FROM T_AD_DEVICE
+               WHERE AD_CODE = @AD_CODE
+            )
+   BEGIN
+      SET @RTN_MSG = N'해당광고는 로컬박스에 등록되어 있어 삭제를 할 수 없습니다.'
+      GOTO EXCEPTION
+   END
+  */
+  
+   DELETE FROM T_DEVICE_MAIN
+   WHERE AD_CODE = @AD_CODE
+   
+  DELETE FROM T_AD_DEVICE
+   WHERE AD_CODE = @AD_CODE
+
+	  DELETE T_SEARCH_KEYWORD
+     WHERE AD_CODE = @AD_CODE
+
+    DELETE FROM T_AD_PLACE
+	   WHERE AD_CODE = @AD_CODE
+	
+	DELETE FROM  T_AD_DEVICE_LOG
+	WHERE AD_CODE = @AD_CODE
+	
+	DECLARE @PLACE_ITEM_USE TABLE 
+	(	
+		  ROW_IDX INT IDENTITY(1,1)
+		, IDX BIGINT NOT NULL
+		, USE_CNT INT NOT NULL
+		, PURCHASE_TYPE INT NOT NULL
+		, PURCHASE_CNT INT NOT NULL
+	)
+	
+	INSERT INTO @PLACE_ITEM_USE
+	     SELECT MPIU.MEMBER_ITEM_IDX
+		      , MPIU.USE_CNT
+			  , MPI.PURCHASE_TYPE
+			  , MPI.ITEM_PURCHASE_CNT
+	       FROM T_MEMBER_PLACE_ITEM_USE AS MPIU
+	  LEFT JOIN T_MEMBER_PLACE_ITEM AS MPI
+	         ON MPI.IDX = MPIU.MEMBER_ITEM_IDX
+	      WHERE MPIU.AD_CODE = @AD_CODE
+	        SET @MAX_IDX = @@ROWCOUNT
+	
+	DELETE FROM T_MEMBER_PLACE_ITEM_USE 
+		  WHERE AD_CODE = @AD_CODE
+
+	WHILE @MIN_IDX <= @MAX_IDX
+	BEGIN
+		 SELECT @IDX = IDX
+		      , @USE_CNT = USE_CNT
+			  , @PURCHASE_TYPE = PURCHASE_TYPE
+			  , @PURCHASE_CNT = PURCHASE_CNT
+		   FROM @PLACE_ITEM_USE
+		  WHERE ROW_IDX = @MIN_IDX
+		 
+		 -- 무료
+		 IF @PURCHASE_TYPE = 1
+	     BEGIN
+			  -- 전체 개수 차감
+			  UPDATE T_MEMBER_PLACE_ITEM 
+	               SET ITEM_PURCHASE_CNT -= 1
+	                 , UPDATE_CODE = @UPDATE_CODE
+	                 , UPDATE_DATE = @UPDATE_DATE
+	             WHERE IDX = @IDX
+
+			  -- 아이템을 사용한 경우
+			  IF @USE_CNT > 0
+			  BEGIN
+				   UPDATE T_MEMBER_PLACE_ITEM 
+					  SET ITEM_USE_CNT -= 1
+					    , UPDATE_CODE = @UPDATE_CODE
+					    , UPDATE_DATE = @UPDATE_DATE
+				    WHERE IDX = @IDX
+			  END
+			  -- 아이템을 사용하지 않은 경우
+			  ELSE
+			  BEGIN
+				   UPDATE T_MEMBER_PLACE_ITEM 
+					  SET ITEM_CNT -= 1
+					    , UPDATE_CODE = @UPDATE_CODE
+					    , UPDATE_DATE = @UPDATE_DATE
+				    WHERE IDX = @IDX
+			  END
+
+			  IF @PURCHASE_CNT - 1 <= 0
+			  BEGIN
+				   DELETE FROM T_MEMBER_PLACE_ITEM WHERE IDX = @IDX
+			  END	
+		 END
+		 -- 유료
+		 ELSE
+		 BEGIN
+			  -- 아이템을 사용한 경우
+			  IF @USE_CNT > 0
+			  BEGIN									 
+				   UPDATE T_MEMBER_PLACE_ITEM 
+					  SET ITEM_USE_CNT -= @USE_CNT
+					    , ITEM_CNT += @USE_CNT
+					    , UPDATE_CODE = @UPDATE_CODE
+					    , UPDATE_DATE = @UPDATE_DATE
+				    WHERE IDX = @IDX
+			  END
+			  -- 아이템을 사용하지 않은 경우							  
+		 END
+		 											 							  
+		 SET @MIN_IDX = @MIN_IDX + 1
+	END	
+
+    DELETE T_AD
+    WHERE AD_CODE = @AD_CODE
+  
+  EXCEPTION:
+  
+  SELECT @RTN_MSG AS RTN_MSG
+SET NOCOUNT OFF
+  ]]>
+			</FixedSQL>
+			<DynamicBodys>
+				<Key>AD_CODE</Key>
+				<Body>AND A.AD_CODE = {0}</Body>
+			</DynamicBodys>
+		</TemplateSQL>
+	</DBAgentTemplate>
+
+	<DBAgentTemplate TemplateID="GetActivedAd">
+		<!-- 
+    SqlType : SQL의 형태를 지정합니다.
+      Example 1:<SqlType>FixedSQL</SqlType> 고정적인 SQL을 지원합니다. 
+      Example 2:<SqlType>DynamicSQL</SqlType> 동적인 SQL Type1을 지원합니다.  
+    Description : 해당 SQL의 기능설명을 적습니다.
+    SQLModifier : 해당 SQL의 작성자(수정자)를 적습니다
+    LastModifyDate : 해당 SQL의 마지막 수정일을 적습니다
+    -->
+		<Information>
+			<SqlType>DynamicSQL</SqlType>
+			<Description>광고 상세 페이지 조회(단일)</Description>
+			<SQLModifier>최하늘</SQLModifier>
+			<LastModifyDate>2016-12-06</LastModifyDate>
+		</Information>
+
+		<TemplateSQL>
+			<!-- FixedSQL : 고정된 SQL이 들어가는 곳입니다. -->
+			<FixedSQL>
+				<![CDATA[ 
+SET NOCOUNT ON 
+	/*******************************************/
+	/* 광고 상세 페이지 조회(단일) GetActivedAd */ 
+	/*******************************************/
+  SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED
+DECLARE
+	    @UTC_DATE     VARCHAR(8) = CONVERT(VARCHAR(8), GETUTCDATE(),112)
+	   ,@UTC_TIME     VARCHAR(5) = CONVERT(VARCHAR(5), GETUTCDATE(),108)
+	   ,@MNG_URL VARCHAR(50) = ''
+
+select	A.AD_CODE, A.TITLE, A.SUB_TITLE, A.LOGO_URL,
+		A.CLICK_CNT, A.GRADE_POINT, A.COMPANY_CODE, A.STORE_CODE,
+		J.COMPANY_NAME AS COMPANY_NAME,
+	    ISNULL(M.USER_NAME,'') AS MEMBER_NAME,
+		@MNG_URL + '/advertise/contentview/' + CONVERT(VARCHAR(100), A.AD_CODE) CONTENT_URL
+
+FROM T_AD A
+    INNER JOIN T_AD_DEVICE B
+       ON A.AD_CODE = B.AD_CODE
+	INNER JOIN T_DEVICE C
+       ON B.DEVICE_CODE = C.DEVICE_CODE
+	LEFT JOIN T_MEMBER M
+       ON A.MEMBER_CODE = M.MEMBER_CODE
+	LEFT JOIN T_COMPANY J
+       ON J.COMPANY_CODE = A.COMPANY_CODE 
+
+WHERE 1=1 
+    #[AD_CODE]
+	  /*현재 타임 기준 광고시간 체크*/
+    AND B.FR_DATE <= DATEADD(HOUR, C.TIME_ZONE, @UTC_DATE)
+    AND B.TO_DATE >= DATEADD(HOUR, C.TIME_ZONE, @UTC_DATE)
+    /*나라 마다 기준 시간이 다르기 때문에 서버 시간을 기준으로 등록한 광고 UTC시간을 더하여 24시간 기준 광고 시간을 표시한다.*/
+    AND B.FR_TIME <=  CASE WHEN ISNULL( B.FR_TIME,'') = '' THEN B.FR_TIME ELSE  CONVERT(VARCHAR(5), DATEADD(HOUR, C.TIME_ZONE, @UTC_DATE + ' ' + @UTC_TIME), 108) END
+    AND B.TO_TIME >=  CASE WHEN ISNULL( B.FR_TIME,'') = '' THEN B.TO_TIME ELSE  CONVERT(VARCHAR(5), DATEADD(HOUR, C.TIME_ZONE, @UTC_DATE + ' ' + @UTC_TIME), 108) END
+
+GROUP BY A.AD_CODE, A.TITLE, A.SUB_TITLE, A.LOGO_URL, 
+		 A.CLICK_CNT, A.GRADE_POINT, A.COMPANY_CODE, A.STORE_CODE, 
+		 COMPANY_NAME, A.MEMBER_CODE, m.USER_NAME
+
+  SET NOCOUNT OFF 
+
+  ]]>
+			</FixedSQL>
+			<DynamicBodys>
+				<Key>AD_CODE</Key>
+				<Body>AND A.AD_CODE = {0}</Body>
+			</DynamicBodys>
+		</TemplateSQL>
+	</DBAgentTemplate>
+
+	<DBAgentTemplate TemplateID="AdClickSave">
+		<!-- 
+    SqlType : SQL의 형태를 지정합니다.
+      Example 1:<SqlType>FixedSQL</SqlType> 고정적인 SQL을 지원합니다. 
+      Example 2:<SqlType>DynamicSQL</SqlType> 동적인 SQL Type1을 지원합니다.  
+    Description : 해당 SQL의 기능설명을 적습니다.
+    SQLModifier : 해당 SQL의 작성자(수정자)를 적습니다
+    LastModifyDate : 해당 SQL의 마지막 수정일을 적습니다
+    -->
+		<Information>
+			<SqlType>DynamicSQL</SqlType>
+			<Description>loggal 모바일 광고 클릭시 저장</Description>
+			<SQLModifier>최하늘</SQLModifier>
+			<LastModifyDate>2016-12-06</LastModifyDate>
+		</Information>
+
+		<TemplateSQL>
+			<!-- FixedSQL : 고정된 SQL이 들어가는 곳입니다. -->
+			<FixedSQL>
+				<![CDATA[ 
+    /****************************************/
+    /* loggal 모바일 광고 클릭시  AdClickSave     */
+    /*****************************************/
+    DECLARE @AD_CODE BIGINT = {0}
+
+
+    UPDATE T_AD
+       SET CLICK_CNT = ISNULL(CLICK_CNT,0) + 1
+     WHERE AD_CODE = @AD_CODE 
+
+/*
+    UPDATE A
+       SET CLICK_CNT = ISNULL(A.CLICK_CNT,0) + 1
+     FROM T_AD_DEVICE A
+     INNER JOIN T_DEVICE B
+        ON A.DEVICE_CODE = B.DEVICE_CODE
+     WHERE A.AD_CODE = @AD_CODE 
+       AND B.DEVICE_NUMBER = @DEVICE_NUMBER
+*/
+      ]]>
+			</FixedSQL>
+			<DynamicBodys>
+				<Key>AD_CODE</Key>
+				<Body>AND A.AD_CODE = {0} </Body>
+			</DynamicBodys>
+		</TemplateSQL>
+	</DBAgentTemplate>
+
+	<DBAgentTemplate TemplateID="GetAdDeviceShareList">
+		<!-- 
+    SqlType : SQL의 형태를 지정합니다.
+      Example 1:<SqlType>FixedSQL</SqlType> 고정적인 SQL을 지원합니다. 
+      Example 2:<SqlType>DynamicSQL</SqlType> 동적인 SQL Type1을 지원합니다.  
+    Description : 해당 SQL의 기능설명을 적습니다.
+    SQLModifier : 해당 SQL의 작성자(수정자)를 적습니다
+    LastModifyDate : 해당 SQL의 마지막 수정일을 적습니다
+    -->
+		<Information>
+			<SqlType>DynamicSQL</SqlType>
+			<Description>로컬박스별 모바일배너 공유정보</Description>
+			<SQLModifier>전상훈</SQLModifier>
+			<LastModifyDate>2018-09-12</LastModifyDate>
+		</Information>
+
+		<TemplateSQL>
+			<!-- FixedSQL : 고정된 SQL이 들어가는 곳입니다. -->
+			<FixedSQL>
+				<![CDATA[ 
+      /**********************************/
+      /* 로컬박스별 모바일배너 공유정보 */
+      /* GetAdDeviceShareList           */
+      /**********************************/
+      SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED 
+      DECLARE @DEVICE_CODE BIGINT = {0}
+      SELECT C.AD_CODE, C.TITLE
+           , CONVERT(VARCHAR(10), CONVERT(DATETIME, CASE WHEN ISDATE(C.FR_DATE) = 1 THEN C.FR_DATE ELSE NULL END),102) AS FR_DATE
+           , CONVERT(VARCHAR(10), CONVERT(DATETIME, CASE WHEN ISDATE(C.TO_DATE) = 1 THEN C.TO_DATE ELSE NULL END),102) AS TO_DATE
+           , C.FR_TIME, C.TO_TIME
+	       , B.STATUS,  BC.NAME AS STSTUS_NAME
+        FROM T_DEVICE A
+       INNER JOIN T_AD_DEVICE B
+          ON A.DEVICE_CODE = B.DEVICE_CODE
+         AND B.STATUS = 9
+       INNER JOIN T_COMMON BC
+          ON BC.MAIN_CODE = 'A009'
+         AND BC.SUB_CODE  = B.STATUS
+       INNER JOIN T_AD C
+          ON B.AD_CODE = C.AD_CODE
+         AND C.HIDE = 0
+        LEFT JOIN T_DEVICE_MAIN D
+          ON D.DEVICE_CODE = B.DEVICE_CODE
+         AND D.AD_CODE = B.AD_CODE
+       WHERE A.DEVICE_CODE = @DEVICE_CODE
+         AND D.DEVICE_CODE IS NULL
+      ]]>
+			</FixedSQL>
+
+		</TemplateSQL>
+	</DBAgentTemplate>
+
+	<DBAgentTemplate TemplateID="AdContentClickSave">
+		<!-- 
+    SqlType : SQL의 형태를 지정합니다.
+      Example 1:<SqlType>FixedSQL</SqlType> 고정적인 SQL을 지원합니다. 
+      Example 2:<SqlType>DynamicSQL</SqlType> 동적인 SQL Type1을 지원합니다.  
+    Description : 해당 SQL의 기능설명을 적습니다.
+    SQLModifier : 해당 SQL의 작성자(수정자)를 적습니다
+    LastModifyDate : 해당 SQL의 마지막 수정일을 적습니다
+    -->
+		<Information>
+			<SqlType>FixedSQL</SqlType>
+			<Description>로컬박스별 모바일배너 공유정보</Description>
+			<SQLModifier>전상훈</SQLModifier>
+			<LastModifyDate>2018-11-23</LastModifyDate>
+		</Information>
+
+		<TemplateSQL>
+			<!-- FixedSQL : 고정된 SQL이 들어가는 곳입니다. -->
+			<FixedSQL>
+				<![CDATA[ 
+      /**********************************/
+      /* 로컬박스별 모바일배너 공유정보  */
+      /* AdContentClickSave            */
+      /**********************************/
+      	DECLARE @AD_CODE BIGINT = CASE WHEN ISNUMERIC('{0}') = 1 THEN '{0}' ELSE null END
+	             ,@DEVICE_CODE BIGINT =  CASE WHEN ISNUMERIC('{1}') = 1 THEN '{1}' ELSE null END
+	             ,@TIMEZONE_OFFSET INT = 9
+	    IF EXISTS (SELECT * FROM T_DEVICE
+		           WHERE DEVICE_CODE = @DEVICE_CODE
+				   )
+        BEGIN
+		     INSERT INTO T_AD_DEVICE
+		     (AD_CODE, DEVICE_CODE, FR_DATE, TO_DATE, FR_TIME, TO_TIME, FR_UTC_DATE, TO_UTC_DATE, FR_UTC_TIME, TO_UTC_TIME, CLICK_CNT, HIDE
+		     	, REMARK, INSERT_CODE, INSERT_DATE, UPDATE_CODE, UPDATE_DATE, STATUS
+		     )
+         
+		     SELECT   A1.AD_CODE, A.DEVICE_CODE 
+		     		    , A1.FR_DATE, A1.TO_DATE
+		     		    , CONVERT(VARCHAR(5), DATEADD(HOUR, -1 * @TIMEZONE_OFFSET, CASE WHEN ISDATE(A1.FR_DATE + ' ' + A1.FR_TIME) = 1 THEN A1.FR_DATE + ' ' + A1.FR_TIME ELSE NULL END),108) AS FR_TIME
+		     		    , CONVERT(VARCHAR(5), DATEADD(HOUR, -1 * @TIMEZONE_OFFSET, CASE WHEN ISDATE(A1.TO_DATE + ' ' + A1.TO_TIME) = 1 THEN A1.TO_DATE + ' ' + A1.TO_TIME ELSE NULL END), 108) AS TO_TIME
+		     		    ,'' ,'','',''
+		     		    , 0
+		     		    , 0 HIDE
+		     		    ,'' REMARK
+		     		    , A.INSERT_CODE
+		     		    , A.INSERT_DATE, A.UPDATE_CODE
+		     		    , A.UPDATE_DATE, 9 SHARE_STATUS
+		     		FROM T_DEVICE A
+		     		INNER JOIN T_AD A1
+		     		   ON A.DEVICE_CODE = @DEVICE_CODE
+		     	    AND A1.AD_CODE = @AD_CODE
+		     		LEFT JOIN T_AD_DEVICE B
+		     		  ON A.DEVICE_CODE = B.DEVICE_CODE
+		     		 AND A1.AD_CODE = B.AD_CODE
+		     		LEFT JOIN T_DEVICE_MAIN C
+		     	      ON A.DEVICE_CODE =	C.DEVICE_CODE
+		     		 AND A1.AD_CODE = C.AD_CODE
+		     	   WHERE B.AD_CODE IS NULL
+		     	     AND A1.AD_CODE IS NOT NULL
+		    
+		       UPDATE T_AD_DEVICE
+		        	SET CLICK_CNT = ISNULL(CLICK_CNT,0) + 1
+  		     	WHERE AD_CODE = @AD_CODE 
+		     	    AND DEVICE_CODE = @DEVICE_CODE
+	   END
+	   
+			UPDATE T_AD
+		      SET CLICK_CNT = ISNULL(CLICK_CNT,0) + 1
+		    WHERE AD_CODE = @AD_CODE 
+	   
+
+
+      ]]>
+			</FixedSQL>
+
+		</TemplateSQL>
+	</DBAgentTemplate>
+
+
+	<DBAgentTemplate TemplateID="AdStatusSave">
+		<!-- 
+    SqlType : SQL의 형태를 지정합니다.
+      Example 1:<SqlType>FixedSQL</SqlType> 고정적인 SQL을 지원합니다. 
+      Example 2:<SqlType>DynamicSQL</SqlType> 동적인 SQL Type1을 지원합니다.  
+    Description : 해당 SQL의 기능설명을 적습니다.
+    SQLModifier : 해당 SQL의 작성자(수정자)를 적습니다
+    LastModifyDate : 해당 SQL의 마지막 수정일을 적습니다
+    -->
+		<Information>
+			<SqlType>FixedSQL</SqlType>
+			<Description>광고승인상태업데이트</Description>
+			<SQLModifier>전상훈</SQLModifier>
+			<LastModifyDate>2018-12-03</LastModifyDate>
+		</Information>
+
+		<TemplateSQL>
+			<!-- FixedSQL : 고정된 SQL이 들어가는 곳입니다. -->
+			<FixedSQL>
+				<![CDATA[ 
+      /**********************************/
+      /* 광고승인상태 업데이트          */
+      /* AdStatusSave                   */
+      /**********************************/
+    DECLARE @AD_CODE BIGINT = {0}
+           ,@STATUS  INT    = {1}
+	         ,@REG_CODE INT   = {2}
+    UPDATE T_AD
+       SET STATUS = @STATUS
+         , HIDE = CASE WHEN @STATUS = 9 THEN 0 ELSE 1 END
+         , UPDATE_CODE = @REG_CODE
+	       , UPDATE_DATE = GETDATE()
+     WHERE AD_CODE = @AD_CODE
+
+      ]]>
+			</FixedSQL>
+
+		</TemplateSQL>
+	</DBAgentTemplate>
+
+	<DBAgentTemplate TemplateID="myBannerToDeviceSave">
+		<!-- 
+    SqlType : SQL의 형태를 지정합니다.
+      Example 1:<SqlType>FixedSQL</SqlType> 고정적인 SQL을 지원합니다. 
+      Example 2:<SqlType>DynamicSQL</SqlType> 동적인 SQL Type1을 지원합니다.  
+    Description : 해당 SQL의 기능설명을 적습니다.
+    SQLModifier : 해당 SQL의 작성자(수정자)를 적습니다
+    LastModifyDate : 해당 SQL의 마지막 수정일을 적습니다
+    -->
+		<Information>
+			<SqlType>FixedSQL</SqlType>
+			<Description>내로컬박스에 내배너등록</Description>
+			<SQLModifier>전상훈</SQLModifier>
+			<LastModifyDate>2019-09-17</LastModifyDate>
+		</Information>
+
+		<TemplateSQL>
+			<!-- FixedSQL : 고정된 SQL이 들어가는 곳입니다. -->
+			<FixedSQL>
+				<![CDATA[ 
+      /**********************************/
+      /* 내로컬박스에 내배너등록        */
+      /* MyBannerToDeviceSave           */
+      /**********************************/
+		SET NOCOUNT ON
+		DECLARE @AD_CODE  BIGINT = {0}
+			   ,@REG_CODE INT = {2}
+	   
+
+	
+        UPDATE B
+		  SET FR_DATE = A1.FR_DATE
+		     ,TO_DATE = A1.TO_DATE
+			 ,FR_TIME = A1.FR_TIME
+			 ,TO_TIME = A1.TO_TIME
+			 ,FR_UTC_DATE = CONVERT(VARCHAR(8),  DATEADD(HOUR, -1 * a.TIME_ZONE, CASE WHEN ISDATE(A1.FR_DATE + ' ' + A1.FR_TIME ) = 1 THEN A1.FR_DATE  + ' ' + A1.FR_TIME ELSE NULL END),112)
+			 ,TO_UTC_DATE = CONVERT(VARCHAR(8),  DATEADD(HOUR, -1 * a.TIME_ZONE, CASE WHEN ISDATE(A1.TO_DATE + ' ' + A1.TO_TIME ) = 1 THEN A1.TO_DATE  + ' ' + A1.TO_TIME ELSE NULL END),112)
+			 ,FR_UTC_TIME = CONVERT(VARCHAR(5),  DATEADD(HOUR, -1 * a.TIME_ZONE, CASE WHEN ISDATE(A1.FR_DATE + ' ' + A1.FR_TIME ) = 1 THEN A1.FR_DATE  + ' ' + A1.FR_TIME ELSE NULL END),114)
+			 ,TO_UTC_TIME = CONVERT(VARCHAR(5),  DATEADD(HOUR, -1 * a.TIME_ZONE, CASE WHEN ISDATE(A1.TO_DATE + ' ' + A1.TO_TIME ) = 1 THEN A1.TO_DATE  + ' ' + A1.TO_TIME ELSE NULL END),114)
+			 ,HIDE = A1.HIDE
+			 ,STATUS = 0
+			 ,UPDATE_CODE = @REG_CODE
+			 ,UPDATE_DATE = GETDATE() 
+         FROM T_DEVICE A
+		INNER JOIN T_AD A1
+		   ON A.DEVICE_CODE IN  ({1})
+	    AND A1.AD_CODE = @AD_CODE
+	    INNER JOIN T_AD_DEVICE B
+		   ON A.DEVICE_CODE = B.DEVICE_CODE
+  		  AND A1.AD_CODE = B.AD_CODE
+			
+        INSERT INTO T_AD_DEVICE
+		(AD_CODE, DEVICE_CODE, FR_DATE, TO_DATE, FR_TIME, TO_TIME, FR_UTC_DATE, TO_UTC_DATE, FR_UTC_TIME, TO_UTC_TIME, CLICK_CNT, HIDE
+		, REMARK, INSERT_CODE, INSERT_DATE, UPDATE_CODE, UPDATE_DATE, STATUS
+		)
+        SELECT   A1.AD_CODE, A.DEVICE_CODE 
+			    , A1.FR_DATE, A1.TO_DATE
+				, A1.FR_TIME, A1.TO_TIME
+			    , CONVERT(VARCHAR(8), DATEADD(HOUR, -1 * A.TIME_ZONE, CASE WHEN ISDATE(A1.FR_DATE + ' ' + A1.FR_TIME ) = 1 THEN A1.FR_DATE  + ' ' + A1.FR_TIME ELSE NULL END),112) AS FR_UTC_DATE
+				, CONVERT(VARCHAR(8), DATEADD(HOUR, -1 * A.TIME_ZONE, CASE WHEN ISDATE(A1.TO_DATE + ' ' + A1.TO_TIME ) = 1 THEN A1.TO_DATE  + ' ' + A1.TO_TIME ELSE NULL END),112) AS TO_UTC_DATE
+				, CONVERT(VARCHAR(5), DATEADD(HOUR, -1 * A.TIME_ZONE, CASE WHEN ISDATE(A1.FR_DATE + ' ' + A1.FR_TIME ) = 1 THEN A1.FR_DATE  + ' ' + A1.FR_TIME ELSE NULL END),114) AS FR_UTC_TIME
+				, CONVERT(VARCHAR(5), DATEADD(HOUR, -1 * A.TIME_ZONE, CASE WHEN ISDATE(A1.TO_DATE + ' ' + A1.TO_TIME ) = 1 THEN A1.TO_DATE  + ' ' + A1.TO_TIME ELSE NULL END),114) AS TO_UTC_TIME
+			    , 0
+			    , 0 HIDE
+			    ,'' REMARK
+			    , @REG_CODE AS INSERT_CODE
+			    , A.INSERT_DATE, @REG_CODE AS UPDATE_CODE
+			    , A.UPDATE_DATE
+				, 0 STATUS
+			FROM T_DEVICE A
+			INNER JOIN T_AD A1
+			   ON A.DEVICE_CODE IN  ({1})
+		    AND A1.AD_CODE = @AD_CODE
+			LEFT JOIN T_AD_DEVICE B
+			  ON A.DEVICE_CODE = B.DEVICE_CODE
+			 AND A1.AD_CODE = B.AD_CODE
+		
+		   WHERE B.AD_CODE IS NULL
+	
+
+	UPDATE C
+	   SET TITLE = A1.TITLE     
+	     , SUB_TITLE =  A1.SUB_TITLE  
+		 , BANNER_TYPE =  A1.BANNER_TYPE
+         , CONTENT_TYPE = A1.BANNER_TYPE2 
+         , FR_DATE      = A1.FR_DATE      
+		 , TO_DATE      = A1.TO_DATE 
+		 , FR_TIME      = A1.FR_TIME 
+		 , TO_TIME      = A1.TO_TIME
+         , PUBLIC_TYPE  = CASE WHEN A1.AD_TYPE IN (3,5,7) THEN 3 ELSE 2 END  
+		 , CONTENT        =  A1.LOGO_URL
+		 , CONTENT_DETAIL = A1.CONTENT      
+		 , REF_DATA1      = F.FILE_URL  
+		 , HIDE           = A1.HIDE          
+		 , UPDATE_CODE    = @REG_CODE
+		 , UPDATE_DATE    = GETDATE()
+		FROM T_DEVICE A
+		INNER JOIN T_AD A1
+		   ON A.DEVICE_CODE IN  ({1})
+	      AND A1.AD_CODE = @AD_CODE
+		LEFT JOIN T_FILE F
+		  ON F.TABLE_NAME ='T_AD'
+		 AND F.TABLE_KEY = CONVERT(VARCHAR(20), A1.AD_CODE)
+	   INNER JOIN T_DEVICE_MAIN C
+	      ON A.DEVICE_CODE =	C.DEVICE_CODE
+		 AND A1.AD_CODE = C.AD_CODE
+	   WHERE C.AD_CODE IS NULL
+
+
+      INSERT INTO T_DEVICE_MAIN
+	  (   GROUP_SEQ      ,TITLE         , SUB_TITLE    , BANNER_TYPE
+         , DEVICE_CODE   , SEQ          , CONTENT_TYPE  
+         , FR_DATE       , TO_DATE      , FR_TIME       , TO_TIME
+         , PUBLIC_TYPE   , CONTENT      , CONTENT_DETAIL    
+         , REF_DATA1     , REF_DATA2    , REF_DATA3     , REF_DATA4         
+         , AD_CODE       , REMARK       , HIDE                            		
+	     , INSERT_CODE   , INSERT_DATE  , UPDATE_CODE  , UPDATE_DATE   
+		)
+   SELECT  1 AS GROUP_SEQ, A1.TITLE     , A1.SUB_TITLE  , A1.BANNER_TYPE
+		 , A.DEVICE_CODE
+		 , (SELECT ISNULL(MAX(SEQ),0) + 1 FROM T_DEVICE_MAIN
+		     WHERE DEVICE_CODE = A.DEVICE_CODE) AS SEQ
+	     , A1.BANNER_TYPE2 AS CONTENT_TYPE   
+		 , A1.FR_DATE   , A1.TO_DATE     , A1.FR_TIME     , A1.TO_TIME
+         , CASE WHEN A1.AD_TYPE IN (3,5,7) THEN 3 ELSE 2 END PUBLIC_TYPE
+	     , A1.LOGO_URL AS CONTENT        
+		 , A1.CONTENT  AS CONTENT_DETAIL
+		 , F.FILE_URL  AS REF_DATA1 , '','',''
+		 , A1.AD_CODE, '' AS REMARK,    A1.HIDE
+         , A.INSERT_CODE,  A.INSERT_DATE, A.UPDATE_CODE, A.UPDATE_DATE
+		FROM T_DEVICE A
+		INNER JOIN T_AD A1
+		   ON A.DEVICE_CODE IN  ({1})
+	    AND A1.AD_CODE = @AD_CODE
+		LEFT JOIN T_FILE F
+		  ON F.TABLE_NAME ='T_AD'
+		 AND F.TABLE_KEY = CONVERT(VARCHAR(20), A1.AD_CODE)
+		LEFT JOIN T_DEVICE_MAIN C
+	      ON A.DEVICE_CODE =	C.DEVICE_CODE
+		 AND A1.AD_CODE = C.AD_CODE
+	   WHERE C.AD_CODE IS NULL
+SET NOCOUNT OFF
+
+      ]]>
+			</FixedSQL>
+
+		</TemplateSQL>
+	</DBAgentTemplate>
+
+	<DBAgentTemplate TemplateID="myBannerToDeviceDelete">
+		<!-- 
+    SqlType : SQL의 형태를 지정합니다.
+      Example 1:<SqlType>FixedSQL</SqlType> 고정적인 SQL을 지원합니다. 
+      Example 2:<SqlType>DynamicSQL</SqlType> 동적인 SQL Type1을 지원합니다.  
+    Description : 해당 SQL의 기능설명을 적습니다.
+    SQLModifier : 해당 SQL의 작성자(수정자)를 적습니다
+    LastModifyDate : 해당 SQL의 마지막 수정일을 적습니다
+    -->
+		<Information>
+			<SqlType>FixedSQL</SqlType>
+			<Description>내로컬박스에 내배너삭제</Description>
+			<SQLModifier>전상훈</SQLModifier>
+			<LastModifyDate>2019-09-18</LastModifyDate>
+		</Information>
+
+		<TemplateSQL>
+			<!-- FixedSQL : 고정된 SQL이 들어가는 곳입니다. -->
+			<FixedSQL>
+				<![CDATA[ 
+      /**********************************/
+      /* 내로컬박스에 내배너삭제        */
+      /* myBannerToDeviceDelete           */
+      /**********************************/
+		SET NOCOUNT ON
+		DECLARE @AD_CODE  BIGINT = {0}
+			   ,@REG_CODE INT = {2}
+	   
+	   DELETE FROM T_DEVICE_MAIN
+	    WHERE AD_CODE = @AD_CODE
+		  AND DEVICE_CODE IN ({1})
+		  
+	   DELETE FROM T_AD_DEVICE
+	    WHERE AD_CODE = @AD_CODE
+		  AND DEVICE_CODE IN ({1})
+
+	
+SET NOCOUNT OFF
+
+      ]]>
+			</FixedSQL>
+
+		</TemplateSQL>
+	</DBAgentTemplate>
+	<DBAgentTemplate TemplateID="AdCopy">
+		<!-- 
+    SqlType : SQL의 형태를 지정합니다.
+      Example 1:<SqlType>FixedSQL</SqlType> 고정적인 SQL을 지원합니다. 
+      Example 2:<SqlType>DynamicSQL</SqlType> 동적인 SQL Type1을 지원합니다.  
+    Description : 해당 SQL의 기능설명을 적습니다.
+    SQLModifier : 해당 SQL의 작성자(수정자)를 적습니다
+    LastModifyDate : 해당 SQL의 마지막 수정일을 적습니다
+    -->
+		<Information>
+			<SqlType>FixedSQL</SqlType>
+			<Description>배너복사</Description>
+			<SQLModifier>전상훈</SQLModifier>
+			<LastModifyDate>2019-10-11</LastModifyDate>
+		</Information>
+
+		<TemplateSQL>
+			<!-- FixedSQL : 고정된 SQL이 들어가는 곳입니다. -->
+			<FixedSQL>
+				<![CDATA[ 
+      /******************/
+      /* 배너복사       */
+      /*AdCopy T_AD     */
+      /******************/
+		SET NOCOUNT ON
+		DECLARE @AD_CODE  BIGINT = {0}
+			   ,@REG_CODE INT = {1}
+			   ,@NEW_AD_CODE BIGINT 
+	   
+
+ 
+ 
+     INSERT INTO T_AD
+	 (  GROUP_CODE,  REG_DATE,     AD_TYPE,            AD_TYPE2,     AD_FRAME_TYPE, LOGO_URL, TITLE , SUB_TITLE
+	  , BANNER_TYPE, BANNER_TYPE2, CONTENT_TYPE,       CONTENT,      FR_DATE, TO_DATE, FR_TIME, TO_TIME
+	  , CLICK_CNT, GRADE_POINT,   COMPANY_CODE,       STORE_CODE,   MEMBER_CODE, MEMBER_NAME, MOBILE
+	  , CONTACT_COMPANY_CODE,     CONTACT_STORE_CODE, CONTACT_CODE, CONTACT_NAME, CONTACT_MOBILE, REP_CATEGORY_CODE
+	  , REMARK, STATUS, HIDE,  INSERT_CODE, INSERT_DATE, UPDATE_CODE, UPDATE_DATE
+	 )
+	 
+	 SELECT GROUP_CODE,  REG_DATE,     AD_TYPE,       AD_TYPE2,     AD_FRAME_TYPE, LOGO_URL, TITLE + '(복사)', SUB_TITLE
+	  ,BANNER_TYPE, BANNER_TYPE2, CONTENT_TYPE,       CONTENT,      FR_DATE, TO_DATE, FR_TIME, TO_TIME
+	  , CLICK_CNT, GRADE_POINT,   COMPANY_CODE,       STORE_CODE,   MEMBER_CODE, MEMBER_NAME, MOBILE
+	  , CONTACT_COMPANY_CODE,     CONTACT_STORE_CODE, CONTACT_CODE, CONTACT_NAME, CONTACT_MOBILE, REP_CATEGORY_CODE
+	  , (ISNULL(REMARK,'') + CASE WHEN ISNULL(REMARK,'') <> '' THEN ' ,' ELSE '' END + '배너(' + CONVERT(VARCHAR(20), AD_CODE) + ' : ' + TITLE + ')복사됨')  
+	  , 5 STATUS, HIDE,  @REG_CODE INSERT_CODE, GETDATE() INSERT_DATE, @REG_CODE UPDATE_CODE, GETDATE() UPDATE_DATE
+	 FROM T_AD
+	 WHERE AD_CODE = @AD_CODE
+	
+	
+	 SELECT @NEW_AD_CODE = IDENT_CURRENT('T_AD')
+	 
+	INSERT INTO T_SEARCH_KEYWORD
+	(AD_CODE ,CK_CODE,KEYWORD_CODE,REMARK,INSERT_CODE,INSERT_DATE,UPDATE_CODE,UPDATE_DATE)
+	SELECT @NEW_AD_CODE,CK_CODE,KEYWORD_CODE,REMARK,@REG_CODE INSERT_CODE,GETDATE() INSERT_DATE, @REG_CODE UPDATE_CODE,GETDATE() UPDATE_DATE 
+	 FROM T_SEARCH_KEYWORD
+	WHERE AD_CODE = @AD_CODE
+	
+	 SELECT CONVERT(VARCHAR(20),@NEW_AD_CODE) DATA
+		SET NOCOUNT OFF
+
+      ]]>
+			</FixedSQL>
+
+		</TemplateSQL>
+	</DBAgentTemplate>
+
+	<DBAgentTemplate TemplateID="initPlaceItem">
+		<!-- 
+    SqlType : SQL의 형태를 지정합니다.
+      Example 1:<SqlType>FixedSQL</SqlType> 고정적인 SQL을 지원합니다. 
+      Example 2:<SqlType>DynamicSQL</SqlType> 동적인 SQL Type1을 지원합니다.  
+    Description : 해당 SQL의 기능설명을 적습니다.
+    SQLModifier : 해당 SQL의 작성자(수정자)를 적습니다
+    LastModifyDate : 해당 SQL의 마지막 수정일을 적습니다
+    -->
+		<Information>
+			<SqlType>FixedSQL</SqlType>
+			<Description>가상영역 변경시 초기화</Description>
+			<SQLModifier>권용현</SQLModifier>
+			<LastModifyDate>2019-11-18</LastModifyDate>
+		</Information>
+
+		<TemplateSQL>
+			<!-- FixedSQL : 고정된 SQL이 들어가는 곳입니다. -->
+			<FixedSQL>
+				<![CDATA[ 
+				
+		 SET NOCOUNT ON
+
+						 DECLARE @AD_CODE			BIGINT			= {0}
+							   , @MEMBER_CODE		INT				= {1}
+							   , @FR_DATE			VARCHAR(8)		= '{2}'
+							   , @TO_DATE			VARCHAR(8)		= '{3}'
+							   , @ITEM_TYPE			INT				= {4}
+							   , @IDX				BIGINT			= 0
+							   , @USE_CNT			INT				= 0
+							   , @PURCHASE_CNT		INT				= 0
+							   , @PURCHASE_TYPE		INT				= 0
+							   , @INSERT_CODE		INT				= {6}
+							   , @INSERT_DATE		DATETIME		= GETDATE()
+							   , @UPDATE_CODE		INT				= {6}
+							   , @UPDATE_DATE		DATETIME		= GETDATE()
+							   , @MAX_IDX			INT				= 1
+							   , @MIN_IDX			INT				= 1
+							   , @RTN_MSG			NVARCHAR(400)   = N''
+						
+						IF EXISTS (SELECT AD_CODE FROM T_AD WHERE AD_CODE = @AD_CODE AND ITEM_TYPE = @ITEM_TYPE)
+					    BEGIN
+					    	  SET @RTN_MSG = N'다른 가상영역유형을 선택하십시오.';
+					    	  GOTO EXCEPTION
+					    END
+
+						DECLARE @PLACE_ITEM_USE TABLE 
+						(	
+							  ROW_IDX INT IDENTITY(1,1)
+							, IDX BIGINT NOT NULL
+							, USE_CNT INT NOT NULL
+							, PURCHASE_TYPE INT NOT NULL
+							, PURCHASE_CNT INT NOT NULL
+						)
+						
+						INSERT INTO @PLACE_ITEM_USE
+						     SELECT MPIU.MEMBER_ITEM_IDX
+							      , MPIU.USE_CNT
+								  , MPI.PURCHASE_TYPE
+								  , MPI.ITEM_PURCHASE_CNT
+						       FROM T_MEMBER_PLACE_ITEM_USE AS MPIU
+						  LEFT JOIN T_MEMBER_PLACE_ITEM AS MPI
+						         ON MPI.IDX = MPIU.MEMBER_ITEM_IDX
+						      WHERE MPIU.AD_CODE = @AD_CODE
+						        SET @MAX_IDX = @@ROWCOUNT
+						
+						DELETE FROM T_MEMBER_PLACE_ITEM_USE 
+							  WHERE AD_CODE = @AD_CODE
+
+						DELETE FROM T_AD_PLACE
+							  WHERE AD_CODE = @AD_CODE
+
+						WHILE @MIN_IDX <= @MAX_IDX
+						BEGIN
+							 SELECT @IDX = IDX
+							      , @USE_CNT = USE_CNT
+								  , @PURCHASE_TYPE = PURCHASE_TYPE
+								  , @PURCHASE_CNT = PURCHASE_CNT
+							   FROM @PLACE_ITEM_USE
+							  WHERE ROW_IDX = @MIN_IDX
+							 
+							 -- 무료
+							 IF @PURCHASE_TYPE = 1
+						     BEGIN
+								  -- 전체 개수 차감
+								  UPDATE T_MEMBER_PLACE_ITEM 
+						               SET ITEM_PURCHASE_CNT -= 1
+						                 , UPDATE_CODE = @UPDATE_CODE
+						                 , UPDATE_DATE = @UPDATE_DATE
+						             WHERE IDX = @IDX
+
+								  -- 아이템을 사용한 경우
+								  IF @USE_CNT > 0
+								  BEGIN
+									   UPDATE T_MEMBER_PLACE_ITEM 
+										  SET ITEM_USE_CNT -= 1
+										    , UPDATE_CODE = @UPDATE_CODE
+										    , UPDATE_DATE = @UPDATE_DATE
+									    WHERE IDX = @IDX
+								  END
+								  -- 아이템을 사용하지 않은 경우
+								  ELSE
+								  BEGIN
+									   UPDATE T_MEMBER_PLACE_ITEM 
+										  SET ITEM_CNT -= 1
+										    , UPDATE_CODE = @UPDATE_CODE
+										    , UPDATE_DATE = @UPDATE_DATE
+									    WHERE IDX = @IDX
+								  END
+
+								  IF @PURCHASE_CNT - 1 <= 0
+								  BEGIN
+									   DELETE FROM T_MEMBER_PLACE_ITEM WHERE IDX = @IDX
+								  END	
+							 END
+							 -- 유료
+							 ELSE
+							 BEGIN
+								  -- 아이템을 사용한 경우
+								  IF @USE_CNT > 0
+								  BEGIN									 
+									   UPDATE T_MEMBER_PLACE_ITEM 
+										  SET ITEM_USE_CNT -= @USE_CNT
+										    , ITEM_CNT += @USE_CNT
+										    , UPDATE_CODE = @UPDATE_CODE
+										    , UPDATE_DATE = @UPDATE_DATE
+									    WHERE IDX = @IDX
+								  END
+								  -- 아이템을 사용하지 않은 경우							  
+							 END
+							 											 							  
+							 SET @MIN_IDX = @MIN_IDX + 1
+						END						
+						
+						-- 무료 아이템 등록
+						DECLARE @ITEM_CODE				INT				= 0
+							  , @SALE_TYPE				INT				= 1
+						      , @ITEM_PURCHASE_TYPE		INT             = 2
+							  , @ITEM_PURCHASE_CNT		INT				= 1 -- 구매 품목 개수
+						      , @ITEM_USE_CNT			INT				= 0 -- 사용 품목 개수
+							  , @ITEM_CNT				INT				= 1 -- 품목 개수
+							  , @MEMBER_ITEM_IDX		BIGINT			= 0
+							  , @GROUP_TYPE				INT				= {5}
+
+				         SELECT @ITEM_CODE = ITEM_CODE
+						   FROM T_PLACE_ITEM_GROUP AS PIG 
+						  INNER JOIN T_PLACE_ITEM AS PI
+						     ON PIG.GROUP_CODE = PI.GROUP_CODE
+						  WHERE 1=1
+						    AND PIG.SALE_TYPE = @SALE_TYPE
+						    AND PI.ITEM_TYPE = @ITEM_TYPE
+							AND PIG.GROUP_TYPE = @GROUP_TYPE
+						 
+						 UPDATE T_MEMBER_PLACE_ITEM 
+ 							  SET ITEM_PURCHASE_CNT = ITEM_PURCHASE_CNT + 1
+ 							    , ITEM_CNT = ITEM_CNT + 1
+ 							 	, UPDATE_CODE = @UPDATE_CODE
+ 							 	, UPDATE_DATE = @UPDATE_DATE 
+ 							WHERE 1=1
+ 							  AND MEMBER_CODE = @MEMBER_CODE
+ 							  AND ITEM_CODE = @ITEM_CODE
+ 							  AND PURCHASE_TYPE = @SALE_TYPE
+						  IF @@ROWCOUNT = 0
+						  BEGIN
+						  	    INSERT INTO T_MEMBER_PLACE_ITEM 
+						  	    VALUES ( 
+						  				   @MEMBER_CODE
+						  		         , @ITEM_CODE 
+						  		         , @SALE_TYPE
+						  		         , @ITEM_PURCHASE_CNT
+						  		         , @ITEM_USE_CNT
+						  		         , @ITEM_CNT
+						  		         , ''
+						  		         , 0
+						  		         , @INSERT_CODE
+						  		         , @INSERT_DATE
+						  		         , @UPDATE_CODE
+						  		         , @UPDATE_DATE
+						  		       )
+						  END
+
+						  SELECT @MEMBER_ITEM_IDX=IDX 
+						    FROM T_MEMBER_PLACE_ITEM 
+						   WHERE ITEM_CODE = @ITEM_CODE
+						 
+						  INSERT T_MEMBER_PLACE_ITEM_USE 
+						  VALUES (
+						 			@MEMBER_ITEM_IDX
+						 		  , @AD_CODE
+						 		  , NULL
+						 		  , @FR_DATE
+						 	      , @TO_DATE
+						 		  , 0
+						 		  , 0
+						 		  , ''
+						 		  , @INSERT_CODE
+						 		  , @INSERT_DATE
+						 		  , @UPDATE_CODE
+						 		  , @UPDATE_DATE	  
+						 	    )
+						
+						 UPDATE T_AD 
+						    SET ITEM_TYPE = @ITEM_TYPE
+						  WHERE AD_CODE = @AD_CODE
+
+						 SELECT @AD_CODE
+
+						 EXCEPTION:
+  
+						 SELECT @RTN_MSG AS ERROR_MESSAGE
+
+		 SET NOCOUNT OFF
+      ]]>
+			</FixedSQL>
+
+		</TemplateSQL>
+	</DBAgentTemplate>
+
+	<DBAgentTemplate TemplateID="getAllPlaceItem">
+		<!-- 
+    SqlType : SQL의 형태를 지정합니다.
+      Example 1:<SqlType>FixedSQL</SqlType> 고정적인 SQL을 지원합니다. 
+      Example 2:<SqlType>DynamicSQL</SqlType> 동적인 SQL Type1을 지원합니다.  
+    Description : 해당 SQL의 기능설명을 적습니다.
+    SQLModifier : 해당 SQL의 작성자(수정자)를 적습니다
+    LastModifyDate : 해당 SQL의 마지막 수정일을 적습니다
+    -->
+		<Information>
+			<SqlType>FixedSQL</SqlType>
+			<Description>가상영역 아이템 가져오기</Description>
+			<SQLModifier>권용현</SQLModifier>
+			<LastModifyDate>2019-11-11</LastModifyDate>
+		</Information>
+
+		<TemplateSQL>
+			<!-- FixedSQL : 고정된 SQL이 들어가는 곳입니다. -->
+			<FixedSQL>
+				<![CDATA[ 
+				
+		 SET NOCOUNT ON
+
+		 DECLARE @MEMBER_CODE		INT		= {0}
+		       , @AD_CODE			BIGINT	= {1}
+		       , @ITEM_TYPE			INT		= {2}
+			   , @ITEM_TYPE_LIMIT	INT		= {3}
+
+		SELECT PURCHASE_TYPE			 
+			 , CASE WHEN MPI.PURCHASE_TYPE = 1 
+			   THEN 1 
+			   ELSE (
+						SELECT SUM(MPI.ITEM_PURCHASE_CNT)
+						  FROM T_PLACE_ITEM AS PI
+						 INNER JOIN T_PLACE_ITEM_GROUP AS PIG
+						 ON PI.GROUP_CODE = PIG.GROUP_CODE
+						 INNER JOIN T_MEMBER_PLACE_ITEM AS MPI
+						 ON PI.ITEM_CODE = MPI.ITEM_CODE
+						 WHERE MPI.MEMBER_CODE = @MEMBER_CODE 
+						   AND MPI.PURCHASE_TYPE = 2
+						   AND PIG.GROUP_TYPE = 1
+				    ) END AS ITEM_PURCHASE_CNT
+		     , CASE WHEN MPI.PURCHASE_TYPE = 1 
+			   THEN (
+						SELECT ISNULL(SUM(USE_CNT), 0) 
+			              FROM T_MEMBER_PLACE_ITEM_USE AS MPIU 
+					     INNER JOIN T_MEMBER_PLACE_ITEM AS MPI 
+						    ON MPIU.MEMBER_ITEM_IDX = MPI.IDX 
+					     WHERE AD_CODE = @AD_CODE 
+						   AND MPI.PURCHASE_TYPE = 1
+					)
+			   ELSE (
+					    SELECT ISNULL(SUM(USE_CNT), 0) 
+			              FROM T_MEMBER_PLACE_ITEM_USE AS MPIU
+					     INNER JOIN T_MEMBER_PLACE_ITEM AS MPI 
+						    ON MPIU.MEMBER_ITEM_IDX = MPI.IDX 
+					     WHERE AD_CODE = @AD_CODE 
+						   AND MPI.PURCHASE_TYPE = 2
+					)
+			   END AS ITEM_USE_CNT 
+		  FROM T_MEMBER_PLACE_ITEM AS MPI
+		 INNER JOIN T_PLACE_ITEM AS PI
+		    ON PI.ITEM_CODE = MPI.ITEM_CODE
+		 WHERE 1=1
+		   AND MPI.MEMBER_CODE = @MEMBER_CODE
+		   AND PI.ITEM_TYPE BETWEEN @ITEM_TYPE AND @ITEM_TYPE_LIMIT
+	     GROUP BY PURCHASE_TYPE
+
+		 SET NOCOUNT OFF
+      ]]>
+			</FixedSQL>
+
+		</TemplateSQL>
+	</DBAgentTemplate>
+
+	<DBAgentTemplate TemplateID="getPlaceItem">
+		<!-- 
+    SqlType : SQL의 형태를 지정합니다.
+      Example 1:<SqlType>FixedSQL</SqlType> 고정적인 SQL을 지원합니다. 
+      Example 2:<SqlType>DynamicSQL</SqlType> 동적인 SQL Type1을 지원합니다.  
+    Description : 해당 SQL의 기능설명을 적습니다.
+    SQLModifier : 해당 SQL의 작성자(수정자)를 적습니다
+    LastModifyDate : 해당 SQL의 마지막 수정일을 적습니다
+    -->
+		<Information>
+			<SqlType>FixedSQL</SqlType>
+			<Description>배너 가상 영역 아이템 가져오기</Description>
+			<SQLModifier>권용현</SQLModifier>
+			<LastModifyDate>2019-11-12</LastModifyDate>
+		</Information>
+
+		<TemplateSQL>
+			<!-- FixedSQL : 고정된 SQL이 들어가는 곳입니다. -->
+			<FixedSQL>
+				<![CDATA[ 
+				
+	SET NOCOUNT ON
+
+		 DECLARE @MEMBER_CODE		INT		= {0}
+			   , @AD_CODE			BIGINT	= {1} 
+		       , @ITEM_TYPE			INT		= {2}
+			   , @ITEM_TYPE_LIMIT	INT		= {3}
+			   , @GROUP_TYPE		INT		= {4}
+
+		SELECT IDX AS MEMBER_ITEM_IDX
+		     , ITEM_TYPE
+			 , ITEM_NAME
+			 , MAX(ITEM_PURCHASE_CNT) AS ITEM_PURCHASE_CNT
+			 , MAX(ITEM_USE_CNT) AS ITEM_USE_CNT
+		FROM(
+				SELECT MPI.IDX
+		             , ITEM_TYPE
+		 	         , ITEM_NAME
+		             , CASE WHEN MPI.PURCHASE_TYPE = 1 
+						    THEN 1 
+							ELSE MPI.ITEM_CNT + MPIU.USE_CNT 
+						END AS ITEM_PURCHASE_CNT
+		             , MPIU.USE_CNT AS ITEM_USE_CNT
+		          FROM T_MEMBER_PLACE_ITEM AS MPI
+		         INNER JOIN T_PLACE_ITEM AS PI
+		            ON PI.ITEM_CODE = MPI.ITEM_CODE
+		         INNER JOIN T_MEMBER_PLACE_ITEM_USE AS MPIU 
+		 	        ON MPIU.MEMBER_ITEM_IDX = MPI.IDX
+		         WHERE 1=1
+		           AND MPI.MEMBER_CODE = @MEMBER_CODE
+		 	       AND PI.ITEM_TYPE BETWEEN @ITEM_TYPE AND @ITEM_TYPE_LIMIT
+			       AND MPIU.AD_CODE = @AD_CODE
+			
+		         UNION
+
+			    SELECT MPI.IDX
+				     , ITEM_TYPE
+					 , ITEM_NAME
+					 , CASE WHEN MPI.PURCHASE_TYPE = 1 
+					        THEN 1
+							ELSE ITEM_CNT 
+					    END AS ITEM_PURCHASAE_CNT
+					 , 0 AS ITEM_USE_CNT 
+				  FROM T_PLACE_ITEM AS PI
+				 INNER JOIN T_PLACE_ITEM_GROUP AS PIG
+			        ON PI.GROUP_CODE = PIG.GROUP_CODE
+				 INNER JOIN T_MEMBER_PLACE_ITEM AS MPI
+				    ON PI.ITEM_CODE = MPI.ITEM_CODE
+				 WHERE MPI.MEMBER_CODE = @MEMBER_CODE
+				   AND PIG.GROUP_TYPE = @GROUP_TYPE
+				   AND PI.ITEM_TYPE BETWEEN @ITEM_TYPE AND @ITEM_TYPE_LIMIT
+		    ) AS MPI
+		GROUP BY IDX, ITEM_TYPE, ITEM_NAME
+		ORDER BY ITEM_TYPE
+
+	SET NOCOUNT OFF
+      ]]>
+			</FixedSQL>
+
+		</TemplateSQL>
+	</DBAgentTemplate>
+
+	<DBAgentTemplate TemplateID="PlaceItemUseSave">
+		<!-- 
+    SqlType : SQL의 형태를 지정합니다.
+      Example 1:<SqlType>FixedSQL</SqlType> 고정적인 SQL을 지원합니다. 
+      Example 2:<SqlType>DynamicSQL</SqlType> 동적인 SQL Type1을 지원합니다.  
+    Description : 해당 SQL의 기능설명을 적습니다.
+    SQLModifier : 해당 SQL의 작성자(수정자)를 적습니다
+    LastModifyDate : 해당 SQL의 마지막 수정일을 적습니다
+    -->
+		<Information>
+			<SqlType>FixedSQL</SqlType>
+			<Description>배너 가상 영역 아이템 사용 데이터 저장</Description>
+			<SQLModifier>권용현</SQLModifier>
+			<LastModifyDate>2019-11-15</LastModifyDate>
+		</Information>
+
+		<TemplateSQL>
+			<!-- FixedSQL : 고정된 SQL이 들어가는 곳입니다. -->
+			<FixedSQL>
+				<![CDATA[  
+				
+		 SET NOCOUNT ON
+				DECLARE @MEMBER_ITEM_IDX	BIGINT			= {0}
+					  , @AD_CODE			BIGINT			= {1}
+					  , @ITEM_USE_CNT		INT				= {2}
+					  , @FR_DATE			VARCHAR(8)		= N'{3}'
+					  , @TO_DATE			VARCHAR(8)		= N'{4}'
+					  , @INSERT_CODE		INT				= {5}
+					  , @INSERT_DATE		DATETIME		= GETDATE()
+					  , @UPDATE_CODE		INT				= {5}
+					  , @UPDATE_DATE		DATETIME		= GETDATE()
+					  , @TOTAL_USE_CNT		INT				= 0
+					  , @ITEM_CNT			INT				= 0
+					  , @ITEM_PURCHASE_CNT  INT				= 0
+					  , @RTN_MSG			NVARCHAR(400)   = N''
+
+				IF EXISTS (SELECT 1 FROM T_MEMBER_PLACE_ITEM WHERE IDX = @MEMBER_ITEM_IDX AND PURCHASE_TYPE = 1)
+				BEGIN
+					 -- 무료 최대 소지 개수는 1개
+					 SELECT @ITEM_CNT = ISNULL(MAX(USE_CNT), 0) 
+					   FROM T_MEMBER_PLACE_ITEM_USE 
+					  WHERE MEMBER_ITEM_IDX = @MEMBER_ITEM_IDX 
+					    AND AD_CODE = @AD_CODE
+
+					 IF (@ITEM_USE_CNT = @ITEM_CNT)
+					 BEGIN
+						  SET @RTN_MSG = N'아이템 개수가 일치하지 않습니다. 다시 시도하십시오.';
+						  GOTO EXCEPTION
+					 END
+					 ELSE
+					 BEGIN
+						  UPDATE T_MEMBER_PLACE_ITEM_USE
+						     SET USE_CNT = @ITEM_USE_CNT
+							   , UPDATE_CODE = @UPDATE_CODE
+					           , UPDATE_DATE = @UPDATE_DATE
+						   WHERE MEMBER_ITEM_IDX = @MEMBER_ITEM_IDX 
+					         AND AD_CODE = @AD_CODE
+
+						  -- 아이템 취소
+						  IF (@ITEM_CNT > 0)
+						  BEGIN
+							   UPDATE T_MEMBER_PLACE_ITEM 
+							      SET ITEM_USE_CNT -= 1
+								    , ITEM_CNT += 1
+							        , UPDATE_CODE = @UPDATE_CODE
+					                , UPDATE_DATE = @UPDATE_DATE
+								WHERE IDX = @MEMBER_ITEM_IDX
+						  END
+						  -- 아이템 사용
+						  ELSE
+						  BEGIN
+						       UPDATE T_MEMBER_PLACE_ITEM 
+							      SET ITEM_USE_CNT += 1
+								    , ITEM_CNT -= 1
+									, UPDATE_CODE = @UPDATE_CODE
+					                , UPDATE_DATE = @UPDATE_DATE
+								WHERE IDX = @MEMBER_ITEM_IDX
+						  END
+					 END
+					 
+				END
+				ELSE
+				BEGIN
+					 DELETE FROM T_MEMBER_PLACE_ITEM_USE 
+					       WHERE MEMBER_ITEM_IDX = @MEMBER_ITEM_IDX
+						     AND AD_CODE = @AD_CODE
+							 
+					 IF (0 <> @ITEM_USE_CNT)
+					 BEGIN
+						  INSERT INTO T_MEMBER_PLACE_ITEM_USE 
+						  	   SELECT
+						  	 		    @MEMBER_ITEM_IDX
+						  	 		  , @AD_CODE
+						  	 		  , NULL
+						  	 		  , @FR_DATE
+						  	 		  , @TO_DATE
+						  	 		  , @ITEM_USE_CNT
+						  	 		  , 0 
+						  	 		  , ''
+						  	 		  , @INSERT_CODE
+						  	 		  , @INSERT_DATE
+						  	 		  , @UPDATE_CODE
+						  	 		  , @UPDATE_DATE
+					 END
+
+					 SELECT @TOTAL_USE_CNT = ISNULL(SUM(USE_CNT), 0)
+					   FROM T_MEMBER_PLACE_ITEM_USE
+					  WHERE MEMBER_ITEM_IDX = @MEMBER_ITEM_IDX
+
+					 SELECT @ITEM_PURCHASE_CNT = ITEM_PURCHASE_CNT
+					      , @ITEM_CNT = ITEM_CNT 
+					   FROM T_MEMBER_PLACE_ITEM 
+					  WHERE IDX = @MEMBER_ITEM_IDX
+					 
+					 IF ( @ITEM_PURCHASE_CNT < @TOTAL_USE_CNT )
+					 BEGIN
+					 	  SET @RTN_MSG = N'아이템 개수가 일치하지 않습니다. 다시 시도하십시오.';
+					 	  GOTO EXCEPTION
+					 END
+					 
+					 UPDATE T_MEMBER_PLACE_ITEM 
+					    SET ITEM_USE_CNT = @TOTAL_USE_CNT
+					      , ITEM_CNT = @ITEM_PURCHASE_CNT - @TOTAL_USE_CNT
+						  , UPDATE_CODE	= @UPDATE_CODE
+					      , UPDATE_DATE	= @UPDATE_DATE
+					  WHERE IDX = @MEMBER_ITEM_IDX
+				END
+
+				SELECT 'COMPLETE' AS DATA
+
+				EXCEPTION:
+  
+				SELECT @RTN_MSG AS ERROR_MESSAGE
+		 SET NOCOUNT OFF
+      ]]>
+			</FixedSQL>
+
+		</TemplateSQL>
+	</DBAgentTemplate>
+</DBAgentMultiTemplate>

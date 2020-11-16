@@ -1,0 +1,689 @@
+﻿
+
+@{
+
+    Daum_MapMultiMarker option = (ViewData["optionmap"] == null) ? new Daum_MapMultiMarker() { ID = "MapDrawing" } : (Daum_MapMultiMarker)ViewData["optionmap"];
+
+    if (ViewData[Global.ConfigInfo.KakaoMapScript] == null || (bool)ViewData[Global.ConfigInfo.KakaoMapScript] == false)
+    {
+        <script type="text/javascript" src="//dapi.kakao.com/v2/maps/sdk.js?appkey=@Global.ConfigInfo.KakaoAppKey&libraries=services,clusterer,drawing"></script>
+        ViewData[Global.ConfigInfo.KakaoMapScript] = true;
+    }
+    var sOption = Json.Encode(option);
+}
+  <style>
+    .info {
+        position: relative;
+        top: 30px;
+        left: 5px;
+        border-radius: 6px;
+        border: 1px solid #ccc;
+        border-bottom: 2px solid #ddd;
+        font-size: 12px;
+        padding: 5px;
+        background: #fff;
+        list-style: none;
+        margin: 0;
+    }
+
+        .info:nth-of-type(n) {
+            border: 0;
+            box-shadow: 0px 1px 2px #888;
+        }
+
+        .info .label {
+            display: inline-block;
+            width: 50px;
+        }
+
+    .number {
+        font-weight: bold;
+        color: #00a0e9;
+    }
+
+    .popKakaoMapMaker .map_wrap {
+        position: relative;
+        width: 100%;
+    }
+
+    .popKakaoMapMaker  .title {
+        font-weight: bold;
+        display: block;
+        color:blue;
+        text-align:left;
+    }
+
+    .popKakaoMapMaker  .hAddr {
+        position: absolute;
+        left: 10px;
+        top: 40px;
+        border-radius: 2px;
+        background: #fff;
+        background: rgba(255,255,255,0.8);
+        z-index: 1;
+        padding: 5px;
+    }
+
+      .popKakaoMapMaker .centerAddr {
+          display: block;
+          margin-top: 2px;
+          font-weight: normal;
+      }
+
+    .popKakaoMapMaker  .bAddr {
+
+        text-overflow: ellipsis;
+        overflow: hidden;
+        white-space: nowrap;
+        z-index:999999;
+    }
+</style>
+
+
+
+<div class="ui large modal form popKakaoMapMaker" id="@(option.ID)_popKakaoMap" style="height:70%;max-height:800px;z-index:99999">
+    <div class="header">@(string.IsNullOrEmpty(option.TITLE) ? "지도 등록" : option.TITLE) </div>
+    <div class="content" style="height:100%;min-height:240px;max-height:700px;">
+
+        <div class="map_wrap" style="height:100%;min-height:230px;">
+            <div>
+                @{ 
+                                var list = new ALT.BizService.CommonService().GetCommon(new T_COMMON_COND { MAIN_CODE = "M002",HIDE = false }).Select(s=>new SelectListItem { Value = s.REF_DATA1, Text= s.NAME  }).ToList() ;
+
+                            }
+                            @Html.Semantic_ButtonList2("btnRadius_" + option.ID, list,"",true)
+            </div>
+            <div id="@(option.ID)_map" style="width:100%;height:90%;position:relative;overflow:hidden;"></div>
+            <div class="hAddr">
+                <span class="title">지도중심기준 행정동 주소정보</span>
+                <span class="centerAddr" id="@(option.ID)_centerAddr"></span>
+            </div>
+        </div>
+
+    </div>
+    <div class="actions">
+        @{
+            if (!option.bReadOnly)
+            {
+                <span style="font-size:1em;color:red;float:left;"> 상단에 원을 클릭 하면 추가 하실 수 있습니다</span>
+                    }
+        }
+        @*
+            <button onclick=" @(option.ID)_showMarkers()">보이기</button>
+            <button onclick="hideMarkers()">숨기기</button>
+            <button onclick=" @(option.ID)_SetMarkerInfo()">모두 저장</button>
+            <button onclick="@(option.ID)_AlldeleteMarkerInfo()">모두 삭제</button>
+        *@
+
+
+        @Html.Semantic_Button2("btnpop" + option.ID + "Confirm", "가져오기", SemanticUIHelper.enButtonType.Normal, new { @onclick = (option.ID) + "_getDataFromDrawingMap();" })
+        @Html.Semantic_Button2("btnpop" + option.ID + "Confirm", "확인", SemanticUIHelper.enButtonType.Save, new { @onclick = (option.ID) + "_btnPopKakaoMapConfirm();" })
+        @Html.Semantic_Button2("btnpop" + option.ID + "Close", "닫기", SemanticUIHelper.enButtonType.Normal, new { @onclick = (option.ID) + "_btnPopKakoMap_Close();" })
+    </div>
+</div>
+
+<script type="text/javascript">
+
+    var figureStyle= {
+        strokeColor: '#39f',
+            fillColor: '#cce6ff',
+                fillOpacity: 0.5,
+                    hintStrokeStyle: 'dash'
+    }
+    var optiondata;
+    var @(option.ID)_map = {
+        geocoder : new kakao.maps.services.Geocoder(),
+        map: null,
+        markers: [],
+        makerIndex :0,
+        markerInfo: [],
+        circles: [],
+        mapContainer: null
+        ,mapOption : null
+        ,options : {
+            map:null,
+            drawingMode: [
+
+                //kakao.maps.Drawing.OverlayType.CIRCLE,
+                kakao.maps.Drawing.OverlayType.MARKER
+                //,kakao.maps.Drawing.OverlayType.ARROW,
+                //kakao.maps.Drawing.OverlayType.POLYLINE,
+                //kakao.maps.Drawing.OverlayType.RECTANGLE,
+                //kakao.maps.Drawing.OverlayType.ELLIPSE,
+                //kakao.maps.Drawing.OverlayType.POLYGON
+            ],
+            // 사용자에게 제공할 그리기 가이드 툴팁입니다
+            // 사용자에게 도형을 그릴때, 드래그할때, 수정할때 가이드 툴팁을 표시하도록 설정합니다
+            guideTooltip: ['draw', 'drag', 'edit'],
+            markerOptions: {
+                draggable: true,
+                removable: true,
+                clickable : true
+            },
+            arrowOptions: {
+                draggable: true,
+                removable: true,
+                strokeColor: figureStyle.strokeColor,
+                hintStrokeStyle: figureStyle.hintStrokeStyle
+            },
+            polylineOptions: {
+                draggable: true,
+                removable: true,
+                strokeColor: figureStyle.strokeColor,
+                hintStrokeStyle: figureStyle.hintStrokeStyle
+            },
+            rectangleOptions: {
+                draggable: true,
+                removable: true,
+                editable: true,
+                strokeColor: figureStyle.strokeColor,
+                fillColor: figureStyle.fillColor,
+                fillOpacity: figureStyle.fillOpacity
+            },
+            circleOptions: {
+                draggable: true,
+                removable: true,
+                editable:true,
+                strokeColor: figureStyle.strokeColor,
+                fillColor: figureStyle.fillColor,
+                fillOpacity: figureStyle.fillOpacity
+            },
+            ellipseOptions: {
+                draggable: true,
+                removable: true,
+                strokeColor: figureStyle.strokeColor,
+                fillColor: figureStyle.fillColor,
+                fillOpacity: figureStyle.fillOpacity
+            },
+            polygonOptions: {
+                draggable: true,
+                removable: true,
+                strokeColor: figureStyle.strokeColor,
+                fillColor: figureStyle.fillColor,
+                fillOpacity: figureStyle.fillOpacity
+            }
+        }, manager : null
+        , toolbox: null
+        , infowindow: null
+    };
+
+    $("document").ready(function () {
+        optiondata = JSON.parse('@Html.Raw(sOption)');
+        @(option.ID)_MapOpen(null, null)
+    })
+
+    function btnRadius_@(option.ID)_Callback(result)
+    {
+        @(option.ID)_map.manager.cancel();
+        @(option.ID)_map.manager.select(kakao.maps.drawing.OverlayType['MARKER']);
+    }
+    // #region  LatLng ( LatLng.lat, LatLng.lng)
+
+    function @(option.ID)_MapOpen(list, LatLng) {
+
+        @(option.ID)_map.markerInfo = [];
+        @(option.ID)_map.makerIndex = 0;
+        if (LatLng == undefined || LatLng == null)
+        {
+            LatLng = new Object();
+            LatLng.lat = @option.default_LATITUDE, LatLng.lng = @option.default_longitude;
+        }
+        @(option.ID)_map.mapContainer = document.getElementById('@(option.ID)_map'), // 지도를 표시할 div
+        @(option.ID)_map.mapOption = {
+                center: new kakao.maps.LatLng(LatLng.lat, LatLng.lng), // 지도의 중심좌표
+                level: @(option.default_LEVEL) // 지도의 확대 레벨
+            };
+         // 지도를 표시할 div와  지도 옵션으로  지도를 생성합니다
+        @(option.ID)_map.map = new kakao.maps.Map(@(option.ID)_map.mapContainer, @(option.ID)_map.mapOption);
+        @(option.ID)_map.options.map = @(option.ID)_map.map;
+        // 위에 작성한 옵션으로 Drawing Manager를 생성합니다
+        @(option.ID)_map.manager = new kakao.maps.Drawing.DrawingManager(@(option.ID)_map.options);
+        @(option.ID)_map.manager.select(kakao.maps.drawing.OverlayType['MARKER']);
+        // Toolbox를 생성합니다.
+        // Toolbox 생성 시 위에서 생성한 DrawingManager 객체를 설정합니다.
+        // DrawingManager 객체를 꼭 설정해야만 그리기 모드와 매니저의 상태를 툴박스에 설정할 수 있습니다.
+        @(option.ID)_map.toolbox = new kakao.maps.Drawing.Toolbox({ drawingManager: @(option.ID)_map.manager });
+        // 지도 위에 Toolbox를 표시합니다
+        // kakao.maps.ControlPosition은 컨트롤이 표시될 위치를 정의하는데 TOP은 위 가운데를 의미합니다.
+        @(option.ID)_map.map.addControl(@(option.ID)_map.toolbox.getElement(), kakao.maps.ControlPosition.TOP);
+
+
+         @(option.ID)_map.infowindow = new kakao.maps.InfoWindow({ zindex: 1 })
+        //@(option.ID)_mapEventInit();
+
+        $("#@(option.ID)_popKakaoMap").modal({ detachable: false }).modal('show');
+        SemanticUI.Popup.ContentResize("#@(option.ID)_popKakaoMap");
+
+
+
+          @(option.ID)_map.manager.addListener('state_changed', function () {
+            // do something...
+
+            @(option.ID)_map.infowindow.close();
+            var beforeMarkers = @(option.ID)_map.markers;
+            var preMarkers = kakaotest_map.manager.getData().marker;
+
+            if (beforeMarkers.length == preMarkers.length) {
+                for (var i = 0; i < beforeMarkers.length; i++) {
+                    if (beforeMarkers[i].x != preMarkers[i].x
+                        || beforeMarkers[i].y != preMarkers[i].y
+                    ) {
+                        @(option.ID)_map.markers[i].x = preMarkers[i].x;
+                        @(option.ID)_map.markers[i].y = preMarkers[i].y;
+                        @(option.ID)_getDataFromDrawingMap(i, "U");
+                        @(option.ID)_map.makerIndex = i;
+
+                         @(option.ID)_searchDetailAddrFromCoords(@(option.ID)_map.markers[i], function (result, status ) {
+
+                             if (status === kakao.maps.services.Status.OK) {
+                                 
+                                    @(option.ID)_setContentMarker(result[0], @(option.ID)_map.markers[@(option.ID)_map.makerIndex], preMarkers[@(option.ID)_map.makerIndex]);
+                                }
+                            })
+                    }
+                }
+            } else if (beforeMarkers.length > preMarkers.length) {
+
+                var rtn = new Array();
+                var bChk = false;
+                var j = 0;
+                for (var i = 0; i < beforeMarkers.length; i++) {
+                    if (!bChk && (beforeMarkers[i].x != preMarkers[j].x
+                        || beforeMarkers[i].y != preMarkers[j].y)
+                    ) {
+                        @(option.ID)_map.makerIndex = i;
+                        removeCircleAll(i);
+                        bChk = true;
+                        @(option.ID)_getDataFromDrawingMap(i, "D");
+
+                        continue;
+                    }
+                    rtn.push(beforeMarkers[i]);
+                }
+                @(option.ID)_map.markers = rtn;
+
+
+            } else if (beforeMarkers.length < preMarkers.length) {
+
+                var obj = preMarkers[preMarkers.length - 1];
+                obj.IDX = (beforeMarkers.length > 0 ? beforeMarkers[beforeMarkers.length-1].IDX + 1 : 0);
+                obj.RADIUS = Number($("#btnRadius_@(option.ID)").val());
+                @(option.ID)_map.markers.push(obj);
+                @(option.ID)_map.makerIndex = obj.IDX;
+                
+                @(option.ID)_getDataFromDrawingMap(preMarkers.length-1, "N");
+            }
+
+        });
+         @(option.ID)_map.manager.addListener('drawstart', function (data) {
+            // data.target 에 그려진 오버레이 객체가 넘어온다.
+             //removeCircleAll();
+             //drawCircle(data);
+             //@(option.ID)_map.manager.remove(data.target);
+             @(option.ID)_map.infowindow.close();
+        });
+         @(option.ID)_map.manager.addListener('drawend', function (data) {
+            // data.target 에 그려진 오버레이 객체가 넘어온다.
+
+
+             var marker = data.target
+
+             kakao.maps.event.addListener(marker, 'click', function () {
+
+                  @(option.ID)_searchDetailAddrFromCoords(marker.getPosition(), function (result, status ) {
+                    if (status === kakao.maps.services.Status.OK) {
+                            @(option.ID)_setContentMarker(result[0], marker.getPosition(), marker);
+                        }
+                 })
+                 @(option.ID)_map.infowindow.close();
+            });
+             kakao.maps.event.addListener(marker, 'rightclick', function () {
+                 @(option.ID)_map.manager.remove(maker);
+                 marker.setMap(null);
+
+                 @(option.ID)_map.infowindow.close();
+             });
+
+             // 마커에 커서가 오버됐을 때 마커 위에 표시할 인포윈도우를 생성합니다
+             var iwContent = '<div style="padding:5px;">Hello World!</div>'; // 인포윈도우에 표출될 내용으로 HTML 문자열이나 document element가 가능합니다
+             //@(option.ID)_setContentMarker(
+             // 인포윈도우를 생성합니다
+             @(option.ID)_searchDetailAddrFromCoords(marker.getPosition(), function (result, status) {
+                 if (status === kakao.maps.services.Status.OK) {
+                            @(option.ID)_setContentMarker(result[0], marker.getPosition(), marker);
+                 }
+             })
+
+             // 마커에 마우스오버 이벤트를 등록합니다
+             kakao.maps.event.addListener(marker, 'mouseover', function () {
+                 // 마커에 마우스오버 이벤트가 발생하면 인포윈도우를 마커위에 표시합니다
+
+                 @(option.ID)_searchDetailAddrFromCoords(marker.getPosition(), function (result, status ) {
+
+                        if (status === kakao.maps.services.Status.OK) {
+                            @(option.ID)_setContentMarker(result[0], marker.getPosition(), marker);
+                        }
+                    })
+
+                 //drawMarkerCircle(marker);
+             });
+
+             // 마커에 마우스아웃 이벤트를 등록합니다
+             kakao.maps.event.addListener(marker, 'mouseout', function () {
+                 // 마커에 마우스아웃 이벤트가 발생하면 인포윈도우를 제거합니다
+                 @(option.ID)_map.infowindow.close();
+             });
+             //@(option.ID)_map.manager.remove(data.target);
+        });
+
+
+
+         kakaotest_map.manager.addListener('click', function (data) {
+             // data.target 에 그려진 오버레이 객체가 넘어온다.
+
+        });
+
+        @*kakao.maps.event.addListener(@(option.ID)_map.map, 'click', function (mouseEvent) {
+
+            var latlng = mouseEvent.latLng;
+            console.log(latlng.toString());
+        });*@
+    }
+
+    function removeCircleAll(idx) {
+        var rtn = [];
+        if (idx == undefined) {
+            $.each(@(option.ID)_map.circles, function (index, value) {
+                @(option.ID)_map.circles[index].setMap(null);
+            });
+            @(option.ID)_map.circles = [];
+        }
+        else {
+            for (var i = 0; i < @(option.ID)_map.circles.length; i++) {
+                if (idx == i) {
+                     @(option.ID)_map.circles[idx].setMap(null)
+                    continue;
+                }
+                rtn.push(@(option.ID)_map.circles)
+            }
+        }
+    }
+
+    function @(option.ID)_searchDetailAddrFromCoords(position, callback) {
+
+        // 좌표로 법정동 상세 주소 정보를 요청합니다
+        if (position.x == undefined) { @(option.ID)_map.geocoder.coord2Address(position.getLng(), position.getLat(),callback);}
+        else
+            @(option.ID)_map.geocoder.coord2Address(position.x, position.y, callback);
+    }
+
+    var _objParamInfo;
+    var _inforMaker;
+    function @(option.ID)_setContentMarker(objContent, objPosition, marker, objParam) {
+        _objParamInfo = (objParam == undefined) ? null : objParam;
+        _inforMaker = marker;
+
+        var idx = 0;
+        try { idx = @(option.ID)_map.makerIndex; } catch (e) { idx = marker.getIndex(); }
+
+
+        try {
+            var objParam = _objParamInfo;
+            var maker = _inforMaker;
+            if (objParam == null) {
+                objParam = new Object();
+                objParam.TITLE = "";
+                objParam.CONTENT = "";
+
+            }
+            var radius = 500;
+            try {
+                radius = @(option.ID)_map.markerInfo[marker.getIndex()].RADIUS;
+            } catch (e) { radius = Number($("#btnRadius_@(option.ID)").val()); }
+
+            var detailAddr = ""
+            if (objContent.roadAddress != undefined) {
+                detailAddr += !!objContent.roadAddress.name ? '<div>도로명주소 : ' + objContent.roadAddress.name + (objContent.roadAddress.building == "" ? "" : "(" + objContent.roadAddress.building + ")") + '</div>' : '';
+            }
+            detailAddr += '<div>지번 주소 : ' + objContent.address.address_name + '</div>';
+
+            var content = '<div class="bAddr">';
+
+            content += '<span class="title">' + ((objParam.TITLE != null && objParam.TITLE != "") ? objParam.TITLE : "법정동 주소정보") + '</span>';
+            content += (objParam.CONTENT == "" ? "" : "[" + objParam.CONTENT + "]") + detailAddr + '</div>';
+            content += "<div>반경 : " + String(Math.round(radius,1) / 1000)  + "km</div>";
+            content += "<div>위도 : " + String(objPosition.getLat()) + "</div>";
+            content += "<div>경도 : " + String(objPosition.getLng()) + "</div>";
+            marker.setPosition(objPosition);
+            marker.setMap(@(option.ID)_map.map);
+
+
+            @(option.ID)_map.infowindow.setContent("<div style='padding:10px;'>" + content + "</div>");
+            @(option.ID)_map.infowindow.open(@(option.ID)_map.map, marker);
+        } catch (e) { }
+    }
+    function drawMarkerCircle(marker) {
+
+       // removeCircleAll();
+        var position = marker.getPosition();
+        var data = new Object();
+        if (@(option.ID)_map.markers.length == marker.getIndex()) {
+            data.x = position.getLng();
+            data.y = position.getLat();
+            data.RADIUS = Number($("#btnRadius_@(option.ID)").val());
+        }
+        else data = @(option.ID)_map.markers[marker.getIndex()];
+
+       // var arrData = kakaotest_map.manager.getData().marker;
+
+            var circle = new kakao.maps.Circle({
+                map: @(option.ID)_map.map,
+                center: new kakao.maps.LatLng(data.y, data.x),
+                radius: data.RADIUS,
+                draggable: true,
+                editable: true,
+                strokeColor: @(option.ID)_map.options.circleOptions.strokeColor,
+                fillColor: @(option.ID)_map.options.circleOptions.fillColor,
+                fillOpacity: @(option.ID)_map.options.circleOptions.fillOpacity
+            });
+            //circle.setMap(null);
+            @(option.ID)_map.circles.push(circle);
+            //overlays.push(circle);
+
+    }
+
+
+    function drawCircle(data) {
+
+
+
+
+       // var arrData = kakaotest_map.manager.getData().marker;
+
+            var circle = new kakao.maps.Circle({
+                map: @(option.ID)_map.map,
+                center: new kakao.maps.LatLng(data.y, data.x),
+                radius: 500,
+                draggable: true,
+                editable: true,
+                strokeColor: @(option.ID)_map.options.circleOptions.strokeColor,
+                fillColor: @(option.ID)_map.options.circleOptions.fillColor,
+                fillOpacity: @(option.ID)_map.options.circleOptions.fillOpacity
+            });
+            //circle.setMap(null);
+            @(option.ID)_map.circles.push(circle);
+            //overlays.push(circle);
+
+    }
+
+    // #endregion
+
+
+
+
+    // 지도에 표시되어 있는 모든 원과 반경정보를 표시하는 선, 커스텀 오버레이를 지도에서 제거합니다
+    function removeCircles() {
+        for (var i = 0; i < @(option.ID)_map.circles.length; i++) {
+            @(option.ID)_map.circles[i].circle.setMap(null);
+            @(option.ID)_map.circles[i].polyline.setMap(null);
+            @(option.ID)_map.circles[i].overlay.setMap(null);
+        }
+        @(option.ID)_map.circles = [];
+    }
+
+
+    // 가져오기 버튼을 클릭하면 호출되는 핸들러 함수입니다
+    // Drawing Manager로 그려진 객체 데이터를 가져와 아래 지도에 표시합니다
+    var @(option.ID)_mode;
+    var @(option.ID)_idx;
+    function @(option.ID)_getDataFromDrawingMap(idx, mode ) {
+        // Drawing Manager에서 그려진 데이터 정보를 가져옵니다
+        var data = @(option.ID)_map.manager.getData();
+        @(option.ID)_mode = (mode == undefined ? null : mode);
+        @(option.ID)_idx = (idx == undefined ? null : idx);
+
+
+        // 아래 지도에 그려진 도형이 있다면 모두 지웁니다
+        //removeOverlays();
+
+        // 지도에 가져온 데이터로 도형들을 그립니다
+        var markerDatas = data[kakao.maps.drawing.OverlayType.MARKER];
+
+        @*try {
+            @(option.ID)_CirCleDataCallback(circleDatas);
+
+
+        } catch (e) { }*@
+            //circleDatas[0].center.x,  circleDatas[0].center.y, circleDatas[0].radius;
+
+        @(option.ID)_map.manager.cancel();
+
+        var lastCount = @(option.ID)_map.markers.length, startIdx = 0;
+
+
+            var callback = function (result, status) {
+                if (status === kakao.maps.services.Status.OK) {
+
+                    //console.log('그런 너를 마주칠까 ' + result[0].address.address_name + '을 못가');
+                    try {
+
+                        /*{"road_address":{"address_name":"서울특별시 강동구 성내로 80","region_1depth_name":"서울","region_2depth_name":"강동구","region_3depth_name":"","road_name":"성내로","underground_yn":"N","main_building_no":"80","sub_building_no":"","building_name":"","zone_no":"05401"}
+     ,"address":{"address_name":"서울 강동구 성내동 547-1","region_1depth_name":"서울","region_2depth_name":"강동구","region_3depth_name":"성내동","mountain_yn":"N","main_address_no":"547","sub_address_no":"1","zip_code":"134030"}}
+                        */
+
+                        if (@(option.ID)_mode == "U") {
+
+                            var obj = new Object();
+
+                            obj.INDEX = @(option.ID)_map.markers[@(option.ID)_idx].IDX;
+                            obj.LATITUDE =  @(option.ID)_map.markers[@(option.ID)_idx].y;
+                            obj.LONGITUDE =  @(option.ID)_map.markers[@(option.ID)_idx].x;
+                            obj.ZIP_CODE = result[0].address.zip_code;
+                            obj.JIBUN_ADDRESS = result[0].address.address_name;
+                            obj.REGION = result[0].address.region_1depth_name + " " + result[0].address.region_2depth_name + " " + result[0].address.region_3depth_name;
+                            obj.ROAD_ADDRESS = (result[0].roadAddress == undefined ? "" : (result[0].roadAddress.address_name == "" ? "" : result[0].roadAddress.address_name + (result[0].roadAddress.sub_building_no == "" ? "" : "-" + result[0].roadAddress.sub_building_no + "")));
+                            obj.BUILDING = (result[0].roadAddress == undefined ? "" : result[0].roadAddress.main_building_no == "" ? "" : result[0].roadAddress.main_building_no + + (result[0].roadAddress.sub_building_no == "" ? "" : "-" + result[0].roadAddress.sub_building_no + ""));
+                            obj.RADIUS = @(option.ID)_map.markers[@(option.ID)_idx].RADIUS;
+                            @(option.ID)_map.markerInfo[@(option.ID)_idx] = obj;
+                        }
+                        else if (@(option.ID)_mode == "N") {
+                             var obj = new Object();
+
+                            obj.INDEX = @(option.ID)_map.markers[@(option.ID)_idx].IDX;
+                            obj.LATITUDE =  @(option.ID)_map.markers[@(option.ID)_idx].y;
+                            obj.LONGITUDE =  @(option.ID)_map.markers[@(option.ID)_idx].x;
+                            obj.ZIP_CODE = result[0].address.zip_code;
+                            obj.JIBUN_ADDRESS = result[0].address.address_name;
+                            obj.REGION = result[0].address.region_1depth_name + " " + result[0].address.region_2depth_name + " " + result[0].address.region_3depth_name;
+                            obj.ROAD_ADDRESS = (result[0].roadAddress == undefined ? "" : (result[0].roadAddress.address_name == "" ? "" : result[0].roadAddress.address_name + (result[0].roadAddress.sub_building_no == "" ? "" : "-" + result[0].roadAddress.sub_building_no + "")));
+                            obj.BUILDING = (result[0].roadAddress == undefined ? "" : result[0].roadAddress.main_building_no == "" ? "" : result[0].roadAddress.main_building_no + + (result[0].roadAddress.sub_building_no == "" ? "" : "-" + result[0].roadAddress.sub_building_no + ""));
+                            obj.RADIUS = @(option.ID)_map.markers[@(option.ID)_idx].RADIUS;
+                             @(option.ID)_map.markerInfo.push(obj);
+                        }
+
+                    } catch (e) { }
+
+                }
+        };
+
+            if (kakaotest_mode == "D") {
+
+                kakaotest_map.markerInfo = BaseCommon.ArrayInfo.Remove(kakaotest_map.markerInfo, kakaotest_idx);
+
+                //for (var i = 0; i < kakaotest_map.markerInfo.length; i++) {
+                //    kakaotest_map.markerInfo[i].INDEX = i;
+                //}
+            }else @(option.ID)_map.geocoder.coord2Address(markerDatas[idx].x, markerDatas[idx].y, callback);
+
+
+
+    }
+
+
+
+
+    function @(option.ID)_SetMarkerInfo() {
+
+
+         @(option.ID)_map.markerInfo = new Array();
+
+        var tmpMarker = new Array();
+
+        for (var i = 0; i <  @(option.ID)_markers.length; i++) {
+
+            if ((extPosition == undefined || extPosition == null) || !(extPosition.getLng() ==  @(option.ID)_markers[i].getPosition().getLng() && extPosition.getLng() ==  @(option.ID)_markers[i].getPosition().getLng())) {
+
+
+                if(optiondata.bReadOnly == false)
+                {
+                    @(option.ID)_searchDetailAddrFromCoords( @(option.ID)_markers[i].getPosition(), function (result, status ) {
+                        try{
+                            @(option.ID)_markerInfo[@(option.ID)_nCnt] = new Object();
+                            @(option.ID)_markerInfo[@(option.ID)_nCnt].INDEX = @(option.ID)_nCnt;
+                            @(option.ID)_markerInfo[@(option.ID)_nCnt].LATITUDE =  result[0].y;
+                            @(option.ID)_markerInfo[@(option.ID)_nCnt].LONGITUDE =  result[0].x;
+                            @(option.ID)_markerInfo[@(option.ID)_nCnt].ZIP_CODE = result[0].jibunAddress.zipcode;
+                            @(option.ID)_markerInfo[@(option.ID)_nCnt].JIBUN_ADDRESS = result[0].jibunAddress.name;
+                            @(option.ID)_markerInfo[@(option.ID)_nCnt].REGION = result[0].region;
+                            @(option.ID)_markerInfo[@(option.ID)_nCnt].ROAD_ADDRESS = (result[0].roadAddress.name == "" ? "" : result[0].roadAddress.name + (result[0].roadAddress.building == "" ? "" : "(" + result[0].roadAddress.building + ")"));
+                            @(option.ID)_markerInfo[@(option.ID)_nCnt].BUILDING  = result[0].roadAddress.building == "" ? "" : result[0].roadAddress.building;
+                        }catch(e){}
+                        @(option.ID)_nCnt++;
+                    });
+
+                }
+
+                tmpMarker.push( @(option.ID)_markers[i])
+                  /*이벤트*/
+
+            }
+
+            //marker1.setMap(@(option.ID)_map);
+            if ( @(option.ID)_markers.length > 1) {
+            @(option.ID)_bounds.extend( @(option.ID)_markers[i].getPosition());
+            }
+        }
+
+
+        @(option.ID)_markers = tmpMarker;
+
+    }
+
+
+    function @(option.ID)_btnPopKakaoMapConfirm()
+    {
+         try {
+
+            @(option.ID)_PopKakaoMap_Callback(@(option.ID)_map.circles);
+
+        } catch (e) { }
+        @(option.ID)_btnPopKakoMap_Close()
+    }
+
+    function @(option.ID)_btnPopKakoMap_Close()
+    {
+        $("#@(option.ID)_popKakaoMap").modal("hide");
+    }
+
+</script>
+

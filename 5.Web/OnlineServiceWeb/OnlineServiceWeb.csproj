@@ -1,0 +1,469 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="12.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="..\..\packages\Microsoft.CodeDom.Providers.DotNetCompilerPlatform.2.0.0\build\net46\Microsoft.CodeDom.Providers.DotNetCompilerPlatform.props" Condition="Exists('..\..\packages\Microsoft.CodeDom.Providers.DotNetCompilerPlatform.2.0.0\build\net46\Microsoft.CodeDom.Providers.DotNetCompilerPlatform.props')" />
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProductVersion>
+    </ProductVersion>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectGuid>{5F793D41-A62B-4EE7-A555-E5B50B1F3FFD}</ProjectGuid>
+    <ProjectTypeGuids>{349c5851-65df-11da-9384-00065b846f21};{fae04ec0-301f-11d3-bf4b-00c04f79efbc}</ProjectTypeGuids>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>OnlineServiceWeb</RootNamespace>
+    <AssemblyName>OnlineServiceWeb</AssemblyName>
+    <TargetFrameworkVersion>v4.7.2</TargetFrameworkVersion>
+    <UseIISExpress>true</UseIISExpress>
+    <IISExpressSSLPort />
+    <IISExpressAnonymousAuthentication />
+    <IISExpressWindowsAuthentication />
+    <IISExpressUseClassicPipelineMode />
+    <UseGlobalApplicationHostFile />
+    <NuGetPackageImportStamp>
+    </NuGetPackageImportStamp>
+    <Use64BitIISExpress />
+    <TargetFrameworkProfile />
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="Antlr3.Runtime, Version=3.5.0.2, Culture=neutral, PublicKeyToken=eb42632606e9261f, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\Antlr.3.5.0.2\lib\Antlr3.Runtime.dll</HintPath>
+    </Reference>
+    <Reference Include="AutoMapper, Version=9.0.0.0, Culture=neutral, PublicKeyToken=be96cd2c38ef1005, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\AutoMapper.9.0.0\lib\net461\AutoMapper.dll</HintPath>
+    </Reference>
+    <Reference Include="log4net, Version=2.0.8.0, Culture=neutral, PublicKeyToken=669e0ddf0bb1aa2a, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\log4net.2.0.8\lib\net45-full\log4net.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.AI.Agent.Intercept, Version=2.4.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\Microsoft.ApplicationInsights.Agent.Intercept.2.4.0\lib\net45\Microsoft.AI.Agent.Intercept.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.AI.DependencyCollector, Version=2.10.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\Microsoft.ApplicationInsights.DependencyCollector.2.10.0\lib\net45\Microsoft.AI.DependencyCollector.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.AI.PerfCounterCollector, Version=2.10.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\Microsoft.ApplicationInsights.PerfCounterCollector.2.10.0\lib\net45\Microsoft.AI.PerfCounterCollector.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.AI.ServerTelemetryChannel, Version=2.10.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\Microsoft.ApplicationInsights.WindowsServer.TelemetryChannel.2.10.0\lib\net45\Microsoft.AI.ServerTelemetryChannel.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.AI.Web, Version=2.10.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\Microsoft.ApplicationInsights.Web.2.10.0\lib\net45\Microsoft.AI.Web.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.AI.WindowsServer, Version=2.10.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\Microsoft.ApplicationInsights.WindowsServer.2.10.0\lib\net45\Microsoft.AI.WindowsServer.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.ApplicationInsights, Version=2.10.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\Microsoft.ApplicationInsights.2.10.0\lib\net46\Microsoft.ApplicationInsights.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.AspNet.TelemetryCorrelation, Version=1.0.5.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\Microsoft.AspNet.TelemetryCorrelation.1.0.5\lib\net45\Microsoft.AspNet.TelemetryCorrelation.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.CodeDom.Providers.DotNetCompilerPlatform, Version=2.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\Microsoft.CodeDom.Providers.DotNetCompilerPlatform.2.0.0\lib\net45\Microsoft.CodeDom.Providers.DotNetCompilerPlatform.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="Newtonsoft.Json, Version=11.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\Newtonsoft.Json.11.0.1\lib\net45\Newtonsoft.Json.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="System.Diagnostics.DiagnosticSource, Version=4.0.3.1, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\System.Diagnostics.DiagnosticSource.4.5.1\lib\net46\System.Diagnostics.DiagnosticSource.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Management" />
+    <Reference Include="System.Net.Http" />
+    <Reference Include="System.Runtime" />
+    <Reference Include="System.Runtime.Caching" />
+    <Reference Include="System.Runtime.InteropServices" />
+    <Reference Include="System.Threading.Thread" />
+    <Reference Include="System.Web.DynamicData" />
+    <Reference Include="System.Web.Entity" />
+    <Reference Include="System.Web.ApplicationServices" />
+    <Reference Include="System.ComponentModel.DataAnnotations" />
+    <Reference Include="System" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Web.Extensions" />
+    <Reference Include="System.Web.Helpers, Version=3.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\Microsoft.AspNet.WebPages.3.2.7\lib\net45\System.Web.Helpers.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Web.Mvc, Version=5.2.7.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\Microsoft.AspNet.Mvc.5.2.7\lib\net45\System.Web.Mvc.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Web.Optimization, Version=1.1.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\Microsoft.AspNet.Web.Optimization.1.1.3\lib\net40\System.Web.Optimization.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="System.Drawing" />
+    <Reference Include="System.Web" />
+    <Reference Include="System.Web.Razor, Version=3.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\Microsoft.AspNet.Razor.3.2.7\lib\net45\System.Web.Razor.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Web.WebPages, Version=3.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\Microsoft.AspNet.WebPages.3.2.7\lib\net45\System.Web.WebPages.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Web.WebPages.Deployment, Version=3.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\Microsoft.AspNet.WebPages.3.2.7\lib\net45\System.Web.WebPages.Deployment.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Web.WebPages.Razor, Version=3.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\Microsoft.AspNet.WebPages.3.2.7\lib\net45\System.Web.WebPages.Razor.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Xml" />
+    <Reference Include="System.Configuration" />
+    <Reference Include="System.Web.Services" />
+    <Reference Include="System.EnterpriseServices" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="WebGrease, Version=1.6.5135.21930, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\WebGrease.1.6.0\lib\WebGrease.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+  <ItemGroup>
+    <Reference Include="Microsoft.Web.Infrastructure">
+      <HintPath>..\..\packages\Microsoft.Web.Infrastructure.1.0.0.0\lib\net40\Microsoft.Web.Infrastructure.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="Common\css\bootstrap-datetimepicker\bootstrap-datetimepicker.min.css" />
+    <Content Include="Common\css\bootstrap-social\bootstrap-social.css" />
+    <Content Include="Common\css\bootstrap-Validator\bootstrapValidator.min.css" />
+    <Content Include="Common\css\bootstrap.css" />
+    <Content Include="Common\css\bootstrap.min.css" />
+    <Content Include="Common\css\jquery.bootstrap-touchspin\jquery.bootstrap-touchspin.css" />
+    <Content Include="Common\css\Jquery.modal\jquery.modal.css" />
+    <Content Include="Common\css\Jquery.modal\jquery.modal.theme-atlant.css" />
+    <Content Include="Common\css\Jquery.modal\jquery.modal.theme-xenon.css" />
+    <Content Include="Common\css\simplemodal.css" />
+    <Content Include="Common\css\Site.css" />
+    <Content Include="Common\js\bootstrap-datetimepicker\bootstrap-datetimepicker.min.js" />
+    <Content Include="Common\js\bootstrap-datetimepicker\locales\bootstrap-datetimepicker.ar.js" />
+    <Content Include="Common\js\bootstrap-datetimepicker\locales\bootstrap-datetimepicker.az.js" />
+    <Content Include="Common\js\bootstrap-datetimepicker\locales\bootstrap-datetimepicker.bg.js" />
+    <Content Include="Common\js\bootstrap-datetimepicker\locales\bootstrap-datetimepicker.bn.js" />
+    <Content Include="Common\js\bootstrap-datetimepicker\locales\bootstrap-datetimepicker.ca.js" />
+    <Content Include="Common\js\bootstrap-datetimepicker\locales\bootstrap-datetimepicker.cs.js" />
+    <Content Include="Common\js\bootstrap-datetimepicker\locales\bootstrap-datetimepicker.da.js" />
+    <Content Include="Common\js\bootstrap-datetimepicker\locales\bootstrap-datetimepicker.de.js" />
+    <Content Include="Common\js\bootstrap-datetimepicker\locales\bootstrap-datetimepicker.ee.js" />
+    <Content Include="Common\js\bootstrap-datetimepicker\locales\bootstrap-datetimepicker.el.js" />
+    <Content Include="Common\js\bootstrap-datetimepicker\locales\bootstrap-datetimepicker.es.js" />
+    <Content Include="Common\js\bootstrap-datetimepicker\locales\bootstrap-datetimepicker.fi.js" />
+    <Content Include="Common\js\bootstrap-datetimepicker\locales\bootstrap-datetimepicker.fr.js" />
+    <Content Include="Common\js\bootstrap-datetimepicker\locales\bootstrap-datetimepicker.he.js" />
+    <Content Include="Common\js\bootstrap-datetimepicker\locales\bootstrap-datetimepicker.hr.js" />
+    <Content Include="Common\js\bootstrap-datetimepicker\locales\bootstrap-datetimepicker.hu.js" />
+    <Content Include="Common\js\bootstrap-datetimepicker\locales\bootstrap-datetimepicker.hy.js" />
+    <Content Include="Common\js\bootstrap-datetimepicker\locales\bootstrap-datetimepicker.id.js" />
+    <Content Include="Common\js\bootstrap-datetimepicker\locales\bootstrap-datetimepicker.is.js" />
+    <Content Include="Common\js\bootstrap-datetimepicker\locales\bootstrap-datetimepicker.it.js" />
+    <Content Include="Common\js\bootstrap-datetimepicker\locales\bootstrap-datetimepicker.ja.js" />
+    <Content Include="Common\js\bootstrap-datetimepicker\locales\bootstrap-datetimepicker.ka.js" />
+    <Content Include="Common\js\bootstrap-datetimepicker\locales\bootstrap-datetimepicker.ko.js" />
+    <Content Include="Common\js\bootstrap-datetimepicker\locales\bootstrap-datetimepicker.lt.js" />
+    <Content Include="Common\js\bootstrap-datetimepicker\locales\bootstrap-datetimepicker.lv.js" />
+    <Content Include="Common\js\bootstrap-datetimepicker\locales\bootstrap-datetimepicker.ms.js" />
+    <Content Include="Common\js\bootstrap-datetimepicker\locales\bootstrap-datetimepicker.nb.js" />
+    <Content Include="Common\js\bootstrap-datetimepicker\locales\bootstrap-datetimepicker.nl.js" />
+    <Content Include="Common\js\bootstrap-datetimepicker\locales\bootstrap-datetimepicker.no.js" />
+    <Content Include="Common\js\bootstrap-datetimepicker\locales\bootstrap-datetimepicker.pl.js" />
+    <Content Include="Common\js\bootstrap-datetimepicker\locales\bootstrap-datetimepicker.pt-BR.js" />
+    <Content Include="Common\js\bootstrap-datetimepicker\locales\bootstrap-datetimepicker.pt.js" />
+    <Content Include="Common\js\bootstrap-datetimepicker\locales\bootstrap-datetimepicker.ro.js" />
+    <Content Include="Common\js\bootstrap-datetimepicker\locales\bootstrap-datetimepicker.rs-latin.js" />
+    <Content Include="Common\js\bootstrap-datetimepicker\locales\bootstrap-datetimepicker.rs.js" />
+    <Content Include="Common\js\bootstrap-datetimepicker\locales\bootstrap-datetimepicker.ru.js" />
+    <Content Include="Common\js\bootstrap-datetimepicker\locales\bootstrap-datetimepicker.sk.js" />
+    <Content Include="Common\js\bootstrap-datetimepicker\locales\bootstrap-datetimepicker.sl.js" />
+    <Content Include="Common\js\bootstrap-datetimepicker\locales\bootstrap-datetimepicker.sv.js" />
+    <Content Include="Common\js\bootstrap-datetimepicker\locales\bootstrap-datetimepicker.sw.js" />
+    <Content Include="Common\js\bootstrap-datetimepicker\locales\bootstrap-datetimepicker.th.js" />
+    <Content Include="Common\js\bootstrap-datetimepicker\locales\bootstrap-datetimepicker.tr.js" />
+    <Content Include="Common\js\bootstrap-datetimepicker\locales\bootstrap-datetimepicker.ua.js" />
+    <Content Include="Common\js\bootstrap-datetimepicker\locales\bootstrap-datetimepicker.uk.js" />
+    <Content Include="Common\js\bootstrap-datetimepicker\locales\bootstrap-datetimepicker.zh-CN.js" />
+    <Content Include="Common\js\bootstrap-datetimepicker\locales\bootstrap-datetimepicker.zh-TW.js" />
+    <Content Include="Common\js\bootstrap-Validator\bootstrapValidator.min.js" />
+    <Content Include="Common\js\Jquery.number\jquery.number.min.js" />
+    <Content Include="Common\js\moment\moment.min.js" />
+    <Content Include="Global.asax" />
+    <Content Include="Common\js\ai.0.22.9-build00167.js" />
+    <Content Include="Common\js\ai.0.22.9-build00167.min.js" />
+    <Content Include="Common\js\bootstrap.js" />
+    <Content Include="Common\js\bootstrap.min.js" />
+    <Content Include="log4net.config" />
+    <Content Include="Common\js\Jquery.ExtentionMethod.js" />
+    <None Include="Properties\PublishProfiles\게시.pubxml" />
+    <None Include="Common\js\jquery-1.10.2.intellisense.js" />
+    <Content Include="Common\js\Common.js" />
+    <Content Include="Common\js\jquery-1.10.2.js" />
+    <Content Include="Common\js\jquery-1.10.2.min.js" />
+    <Content Include="Common\js\jquery.bootstrap-touchspin\jquery.bootstrap-touchspin.js" />
+    <Content Include="Common\js\Jquery.modal\Jquery.modal.Common.js" />
+    <Content Include="Common\js\Jquery.modal\jquery.modal.js" />
+    <Content Include="Common\js\Jquery.modal\jquery.modal.min.js" />
+    <Content Include="Common\js\modernizr-2.6.2.js" />
+    <Content Include="Common\Theme\SpicyX\css\bootstrap-datepicker.css" />
+    <Content Include="Common\Theme\SpicyX\css\bootstrap.css" />
+    <Content Include="Common\Theme\SpicyX\css\bootstrap_Common.css" />
+    <Content Include="Common\Theme\SpicyX\css\font-awesome.css" />
+    <Content Include="Common\Theme\SpicyX\css\jquery.fancybox.css" />
+    <Content Include="Common\Theme\SpicyX\css\slick.css" />
+    <Content Include="Common\Theme\SpicyX\css\style.css" />
+    <Content Include="Common\Theme\SpicyX\css\theme-color\blue-theme.css" />
+    <Content Include="Common\Theme\SpicyX\css\theme-color\dark-red-theme.css" />
+    <Content Include="Common\Theme\SpicyX\css\theme-color\default-theme.css" />
+    <Content Include="Common\Theme\SpicyX\css\theme-color\green-theme.css" />
+    <Content Include="Common\Theme\SpicyX\css\theme-color\orange-theme.css" />
+    <Content Include="Common\Theme\SpicyX\css\theme-color\pink-theme.css" />
+    <Content Include="Common\Theme\SpicyX\css\theme-color\purple-theme.css" />
+    <Content Include="Common\Theme\SpicyX\css\theme-color\red-theme.css" />
+    <Content Include="Common\Theme\SpicyX\css\theme-color\violet-theme.css" />
+    <Content Include="Common\Theme\SpicyX\css\theme-color\yellow-theme.css" />
+    <Content Include="Common\Theme\SpicyX\fonts\fontawesome-webfont.svg" />
+    <Content Include="Common\Theme\SpicyX\fonts\glyphicons-halflings-regular.svg" />
+    <Content Include="Common\Theme\SpicyX\img\about-us\abtus-img-1.png" />
+    <Content Include="Common\Theme\SpicyX\img\about-us\abtus-img-2.png" />
+    <Content Include="Common\Theme\SpicyX\img\about-us\abtus-img-3.png" />
+    <Content Include="Common\Theme\SpicyX\img\about-us\abtus-img-4.png" />
+    <Content Include="Common\Theme\SpicyX\img\about-us\abtus-img-5.png" />
+    <Content Include="Common\Theme\SpicyX\img\about-us\abtus-img-6.png" />
+    <Content Include="Common\Theme\SpicyX\img\banner-ads.jpg" />
+    <Content Include="Common\Theme\SpicyX\img\blog-banner.jpg" />
+    <Content Include="Common\Theme\SpicyX\img\chef\chef-1.jpg" />
+    <Content Include="Common\Theme\SpicyX\img\chef\chef-2.jpg" />
+    <Content Include="Common\Theme\SpicyX\img\chef\chef-3.jpg" />
+    <Content Include="Common\Theme\SpicyX\img\chef\chef-4.jpg" />
+    <Content Include="Common\Theme\SpicyX\img\chef\chef-5.jpg" />
+    <Content Include="Common\Theme\SpicyX\img\chef\chef-6.jpg" />
+    <Content Include="Common\Theme\SpicyX\img\counter-bg.jpg" />
+    <Content Include="Common\Theme\SpicyX\img\favicon.ico" />
+    <Content Include="Common\Theme\SpicyX\img\gallery\big\1.jpg" />
+    <Content Include="Common\Theme\SpicyX\img\gallery\big\2.jpg" />
+    <Content Include="Common\Theme\SpicyX\img\gallery\big\3.jpg" />
+    <Content Include="Common\Theme\SpicyX\img\gallery\big\4.jpg" />
+    <Content Include="Common\Theme\SpicyX\img\gallery\big\5.jpg" />
+    <Content Include="Common\Theme\SpicyX\img\gallery\big\6.jpg" />
+    <Content Include="Common\Theme\SpicyX\img\gallery\big\7.jpg" />
+    <Content Include="Common\Theme\SpicyX\img\gallery\big\8.jpg" />
+    <Content Include="Common\Theme\SpicyX\img\gallery\big\9.jpg" />
+    <Content Include="Common\Theme\SpicyX\img\gallery\fancybox_buttons.png" />
+    <Content Include="Common\Theme\SpicyX\img\gallery\fancybox_loading%402x.gif" />
+    <Content Include="Common\Theme\SpicyX\img\gallery\fancybox_loading.gif" />
+    <Content Include="Common\Theme\SpicyX\img\gallery\fancybox_overlay.png" />
+    <Content Include="Common\Theme\SpicyX\img\gallery\fancybox_sprite%402x.png" />
+    <Content Include="Common\Theme\SpicyX\img\gallery\fancybox_sprite.png" />
+    <Content Include="Common\Theme\SpicyX\img\gallery\small\1.jpg" />
+    <Content Include="Common\Theme\SpicyX\img\gallery\small\2.jpg" />
+    <Content Include="Common\Theme\SpicyX\img\gallery\small\3.jpg" />
+    <Content Include="Common\Theme\SpicyX\img\gallery\small\4.jpg" />
+    <Content Include="Common\Theme\SpicyX\img\gallery\small\5.jpg" />
+    <Content Include="Common\Theme\SpicyX\img\gallery\small\6.jpg" />
+    <Content Include="Common\Theme\SpicyX\img\gallery\small\7.jpg" />
+    <Content Include="Common\Theme\SpicyX\img\gallery\small\8.jpg" />
+    <Content Include="Common\Theme\SpicyX\img\gallery\small\9.jpg" />
+    <Content Include="Common\Theme\SpicyX\img\logo.png" />
+    <Content Include="Common\Theme\SpicyX\img\menu\item-1.jpg" />
+    <Content Include="Common\Theme\SpicyX\img\menu\item-10.jpg" />
+    <Content Include="Common\Theme\SpicyX\img\menu\item-2.jpg" />
+    <Content Include="Common\Theme\SpicyX\img\menu\item-3.jpg" />
+    <Content Include="Common\Theme\SpicyX\img\menu\item-4.jpg" />
+    <Content Include="Common\Theme\SpicyX\img\menu\item-5.jpg" />
+    <Content Include="Common\Theme\SpicyX\img\menu\item-6.jpg" />
+    <Content Include="Common\Theme\SpicyX\img\menu\item-7.jpg" />
+    <Content Include="Common\Theme\SpicyX\img\menu\item-8.jpg" />
+    <Content Include="Common\Theme\SpicyX\img\menu\item-9.jpg" />
+    <Content Include="Common\Theme\SpicyX\img\news\1.jpg" />
+    <Content Include="Common\Theme\SpicyX\img\news\2.jpg" />
+    <Content Include="Common\Theme\SpicyX\img\news\3.jpg" />
+    <Content Include="Common\Theme\SpicyX\img\news\4.jpg" />
+    <Content Include="Common\Theme\SpicyX\img\plus.png" />
+    <Content Include="Common\Theme\SpicyX\img\preloader.gif" />
+    <Content Include="Common\Theme\SpicyX\img\slider\1.jpg" />
+    <Content Include="Common\Theme\SpicyX\img\slider\2.jpg" />
+    <Content Include="Common\Theme\SpicyX\img\slider\3.jpg" />
+    <Content Include="Common\Theme\SpicyX\img\testimonial-1.png" />
+    <Content Include="Common\Theme\SpicyX\img\testimonial-2.png" />
+    <Content Include="Common\Theme\SpicyX\img\testimonial-3.png" />
+    <Content Include="Common\Theme\SpicyX\img\testimonial-bg.jpg" />
+    <Content Include="Common\Theme\SpicyX\js\bootstrap-datepicker.js" />
+    <Content Include="Common\Theme\SpicyX\js\bootstrap-datepicker.kr.js" />
+    <Content Include="Common\Theme\SpicyX\js\bootstrap.js" />
+    <Content Include="Common\Theme\SpicyX\js\custom.js" />
+    <Content Include="Common\Theme\SpicyX\js\jquery.counterup.js" />
+    <Content Include="Common\Theme\SpicyX\js\jquery.fancybox.pack.js" />
+    <Content Include="Common\Theme\SpicyX\js\jquery.min.js" />
+    <Content Include="Common\Theme\SpicyX\js\jquery.mixitup.js" />
+    <Content Include="Common\Theme\SpicyX\js\slick.js" />
+    <Content Include="Common\Theme\SpicyX\js\waypoints.js" />
+    <None Include="Scripts\jquery-3.4.1.intellisense.js" />
+    <Content Include="Scripts\jquery-3.4.1.js" />
+    <Content Include="Scripts\jquery-3.4.1.min.js" />
+    <Content Include="Scripts\jquery-3.4.1.slim.js" />
+    <Content Include="Scripts\jquery-3.4.1.slim.min.js" />
+    <Content Include="Scripts\modernizr-2.8.3.js" />
+    <Content Include="Web.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="App_Start\RouteConfig.cs" />
+    <Compile Include="CommonCS\SessionHelper.cs" />
+    <Compile Include="Controllers\AccountController.cs" />
+    <Compile Include="Controllers\BaseController.cs" />
+    <Compile Include="Controllers\ErrorController.cs" />
+    <Compile Include="Controllers\HomeController.cs" />
+    <Compile Include="Controllers\OrderController.cs" />
+    <Compile Include="Global.asax.cs">
+      <DependentUpon>Global.asax</DependentUpon>
+    </Compile>
+    <Compile Include="Properties\AssemblyInfo.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="Views\web.config" />
+    <Content Include="packages.config" />
+    <Content Include="ApplicationInsights.config">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Views\_ViewStart.cshtml" />
+    <Content Include="Views\Shared\_Layout.cshtml" />
+    <Content Include="Views\Home\Index.cshtml" />
+    <Content Include="Common\js\jquery-1.10.2.min.map" />
+    <Content Include="Views\Theme\SpicyX.cshtml" />
+    <Content Include="Views\Theme\SpicyX\Shared\Partial\Head.cshtml" />
+    <Content Include="Views\Theme\SpicyX\01.Topmenu.cshtml" />
+    <Content Include="Views\Theme\SpicyX\02.Home.cshtml" />
+    <Content Include="Views\Theme\SpicyX\03.About.cshtml" />
+    <Content Include="Views\Theme\SpicyX\04.Counter.cshtml" />
+    <Content Include="Views\Theme\SpicyX\05.menu.cshtml" />
+    <Content Include="Views\Theme\SpicyX\06.Reservation.cshtml" />
+    <Content Include="Views\Theme\SpicyX\07.Gallery.cshtml" />
+    <Content Include="Views\Theme\SpicyX\08.CustomerSay.cshtml" />
+    <Content Include="Views\Theme\SpicyX\09.Subscription.cshtml" />
+    <Content Include="Views\Theme\SpicyX\10.Chef.cshtml" />
+    <Content Include="Views\Theme\SpicyX\11.Blog.cshtml" />
+    <Content Include="Views\Theme\SpicyX\12.Contact.cshtml" />
+    <Content Include="Views\Theme\SpicyX\13.Map.cshtml" />
+    <Content Include="Views\Theme\SpicyX\14.Footer.cshtml" />
+    <Content Include="Views\Theme\SpicyX\99.Scripts.cshtml" />
+    <Content Include="Views\Theme\SpicyX\Index.cshtml" />
+    <Content Include="Views\Shared\_Layout_blank.cshtml" />
+    <Content Include="Common\Theme\SpicyX\fonts\fontawesome-webfont.eot" />
+    <Content Include="Common\Theme\SpicyX\fonts\fontawesome-webfont.ttf" />
+    <Content Include="Common\Theme\SpicyX\fonts\fontawesome-webfont.woff" />
+    <Content Include="Common\Theme\SpicyX\fonts\fontawesome-webfont.woff2" />
+    <Content Include="Common\Theme\SpicyX\fonts\FontAwesome.otf" />
+    <Content Include="Common\Theme\SpicyX\fonts\glyphicons-halflings-regular.eot" />
+    <Content Include="Common\Theme\SpicyX\fonts\glyphicons-halflings-regular.ttf" />
+    <Content Include="Common\Theme\SpicyX\fonts\glyphicons-halflings-regular.woff" />
+    <Content Include="Common\Theme\SpicyX\fonts\glyphicons-halflings-regular.woff2" />
+    <Content Include="Views\Theme\SpicyX\Order\cart.cshtml" />
+    <Content Include="Views\Theme\SpicyX\Shared\_Layout.cshtml" />
+    <Content Include="Views\Theme\SpicyX\Error404.cshtml" />
+    <Content Include="Common\ErrorPage\Error.htm" />
+    <Content Include="Views\Theme\SpicyX\Order\PatialView\pv_CartList.cshtml" />
+    <Content Include="Views\Theme\SpicyX\Account\Login.cshtml" />
+    <Content Include="Views\Theme\SpicyX\Shared\_Layout_blank.cshtml" />
+    <Content Include="Views\Theme\SpicyX\Shared\Partial\Head_blank.cshtml" />
+    <Content Include="Views\Theme\SpicyX\Shared\Partial\Scripts.cshtml" />
+    <Content Include="Views\Theme\SpicyX\Shared\Partial\Scripts_blank.cshtml" />
+    <Content Include="Views\Theme\SpicyX\Account\memberjoin.cshtml" />
+    <Content Include="Views\Theme\SpicyX\Order\purchaselist.cshtml" />
+    <Content Include="Scripts\jquery-3.4.1.slim.min.map" />
+    <Content Include="Scripts\jquery-3.4.1.min.map" />
+    <None Include="Web.Debug.config">
+      <DependentUpon>Web.config</DependentUpon>
+    </None>
+    <None Include="Web.Release.config">
+      <DependentUpon>Web.config</DependentUpon>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Common\image\" />
+    <Folder Include="Upload\ALTSOFT\" />
+    <Folder Include="Views\Account\" />
+    <Folder Include="Views\Base\" />
+    <Folder Include="Views\Order\" />
+    <Folder Include="Views\Theme\SpicyX\language\" />
+    <Folder Include="Views\Theme\SpicyX\Page\" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\2.Framework\ALT.Framework.MVC\ALT.Framework.MVC.csproj">
+      <Project>{a33c1ff2-8fa9-4b01-8f64-36e5263b34b8}</Project>
+      <Name>ALT.Framework.MVC</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\2.Framework\ALT.Framework\ALT.Framework.csproj">
+      <Project>{b09020b4-4077-428b-bd75-2ab5838d9eaa}</Project>
+      <Name>ALT.Framework</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\3.Service\OnlineServiceBiz\OnlineServiceBiz.csproj">
+      <Project>{4877d44d-5c0f-4771-84d1-3a060397c34a}</Project>
+      <Name>OnlineServiceBiz</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\4.Vo\ALT.VO.Common\ALT.VO.Common.csproj">
+      <Project>{54388f82-34d2-4fab-9a40-0eeec151df66}</Project>
+      <Name>ALT.VO.Common</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <PropertyGroup>
+    <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">10.0</VisualStudioVersion>
+    <VSToolsPath Condition="'$(VSToolsPath)' == ''">$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)</VSToolsPath>
+  </PropertyGroup>
+  <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
+  <Import Project="$(VSToolsPath)\WebApplications\Microsoft.WebApplication.targets" Condition="'$(VSToolsPath)' != ''" />
+  <Import Project="$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v10.0\WebApplications\Microsoft.WebApplication.targets" Condition="false" />
+  <ProjectExtensions>
+    <VisualStudio>
+      <FlavorProperties GUID="{349c5851-65df-11da-9384-00065b846f21}">
+        <WebProjectProperties>
+          <UseIIS>True</UseIIS>
+          <AutoAssignPort>True</AutoAssignPort>
+          <DevelopmentServerPort>50875</DevelopmentServerPort>
+          <DevelopmentServerVPath>/</DevelopmentServerVPath>
+          <IISUrl>http://localhost:61645/</IISUrl>
+          <NTLMAuthentication>False</NTLMAuthentication>
+          <UseCustomServer>False</UseCustomServer>
+          <CustomServerUrl>
+          </CustomServerUrl>
+          <SaveServerSettingsInUserFile>False</SaveServerSettingsInUserFile>
+        </WebProjectProperties>
+      </FlavorProperties>
+    </VisualStudio>
+  </ProjectExtensions>
+  <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
+    <PropertyGroup>
+      <ErrorText>이 프로젝트는 이 컴퓨터에 없는 NuGet 패키지를 참조합니다. 해당 패키지를 다운로드하려면 NuGet 패키지 복원을 사용하십시오. 자세한 내용은 http://go.microsoft.com/fwlink/?LinkID=322105를 참조하십시오. 누락된 파일은 {0}입니다.</ErrorText>
+    </PropertyGroup>
+    <Error Condition="!Exists('..\..\packages\Microsoft.ApplicationInsights.DependencyCollector.2.10.0\build\Microsoft.ApplicationInsights.DependencyCollector.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\..\packages\Microsoft.ApplicationInsights.DependencyCollector.2.10.0\build\Microsoft.ApplicationInsights.DependencyCollector.targets'))" />
+    <Error Condition="!Exists('..\..\packages\Microsoft.ApplicationInsights.PerfCounterCollector.2.10.0\build\Microsoft.ApplicationInsights.PerfCounterCollector.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\..\packages\Microsoft.ApplicationInsights.PerfCounterCollector.2.10.0\build\Microsoft.ApplicationInsights.PerfCounterCollector.targets'))" />
+    <Error Condition="!Exists('..\..\packages\Microsoft.ApplicationInsights.WindowsServer.TelemetryChannel.2.10.0\build\Microsoft.ApplicationInsights.WindowsServer.TelemetryChannel.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\..\packages\Microsoft.ApplicationInsights.WindowsServer.TelemetryChannel.2.10.0\build\Microsoft.ApplicationInsights.WindowsServer.TelemetryChannel.targets'))" />
+    <Error Condition="!Exists('..\..\packages\Microsoft.ApplicationInsights.WindowsServer.2.10.0\build\Microsoft.ApplicationInsights.WindowsServer.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\..\packages\Microsoft.ApplicationInsights.WindowsServer.2.10.0\build\Microsoft.ApplicationInsights.WindowsServer.targets'))" />
+    <Error Condition="!Exists('..\..\packages\Microsoft.ApplicationInsights.Web.2.10.0\build\Microsoft.ApplicationInsights.Web.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\..\packages\Microsoft.ApplicationInsights.Web.2.10.0\build\Microsoft.ApplicationInsights.Web.targets'))" />
+    <Error Condition="!Exists('..\..\packages\Microsoft.CodeDom.Providers.DotNetCompilerPlatform.2.0.0\build\net46\Microsoft.CodeDom.Providers.DotNetCompilerPlatform.props')" Text="$([System.String]::Format('$(ErrorText)', '..\..\packages\Microsoft.CodeDom.Providers.DotNetCompilerPlatform.2.0.0\build\net46\Microsoft.CodeDom.Providers.DotNetCompilerPlatform.props'))" />
+  </Target>
+  <Import Project="..\..\packages\Microsoft.ApplicationInsights.DependencyCollector.2.10.0\build\Microsoft.ApplicationInsights.DependencyCollector.targets" Condition="Exists('..\..\packages\Microsoft.ApplicationInsights.DependencyCollector.2.10.0\build\Microsoft.ApplicationInsights.DependencyCollector.targets')" />
+  <Import Project="..\..\packages\Microsoft.ApplicationInsights.PerfCounterCollector.2.10.0\build\Microsoft.ApplicationInsights.PerfCounterCollector.targets" Condition="Exists('..\..\packages\Microsoft.ApplicationInsights.PerfCounterCollector.2.10.0\build\Microsoft.ApplicationInsights.PerfCounterCollector.targets')" />
+  <Import Project="..\..\packages\Microsoft.ApplicationInsights.WindowsServer.TelemetryChannel.2.10.0\build\Microsoft.ApplicationInsights.WindowsServer.TelemetryChannel.targets" Condition="Exists('..\..\packages\Microsoft.ApplicationInsights.WindowsServer.TelemetryChannel.2.10.0\build\Microsoft.ApplicationInsights.WindowsServer.TelemetryChannel.targets')" />
+  <Import Project="..\..\packages\Microsoft.ApplicationInsights.WindowsServer.2.10.0\build\Microsoft.ApplicationInsights.WindowsServer.targets" Condition="Exists('..\..\packages\Microsoft.ApplicationInsights.WindowsServer.2.10.0\build\Microsoft.ApplicationInsights.WindowsServer.targets')" />
+  <Import Project="..\..\packages\Microsoft.ApplicationInsights.Web.2.10.0\build\Microsoft.ApplicationInsights.Web.targets" Condition="Exists('..\..\packages\Microsoft.ApplicationInsights.Web.2.10.0\build\Microsoft.ApplicationInsights.Web.targets')" />
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+       Other similar extension points exist, see Microsoft.Common.targets.
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+  -->
+</Project>

@@ -1,0 +1,295 @@
+﻿@{
+    DEVICE_MAIN_SHARE_COND Cond = (ViewBag.Cond == null ? new DEVICE_MAIN_SHARE_COND() { GUBUN = "1" } : ViewBag.Cond);
+    Cond.GUBUN = string.IsNullOrEmpty(Cond.GUBUN) ? "2" : Cond.GUBUN;
+    Cond.SHARE_STATUS = Cond.id;
+}
+@section scripts{
+
+    <script type="text/javascript">
+        var PARAM_DATA = {
+            PAGE_SIZE: ($("window").width() < 768 ? 5 : 10)
+          , PAGE_COUNT: 15
+          , PAGE: 1
+          , SORT: "B.STATUS, B.UPDATE_DATE DESC"
+          , DEVICE_CODE: ""
+          , AD_CODE : ""
+        }
+        $(document).ready(function () {
+            var pageCount = ($(window).height() - $(".cd-main-header").outerHeight() + $(".ui.header").outerHeight() + $(".ui.grid.search").outerHeight() + $(".ui.footer").outerHeight() - 450) / 30;
+
+            PARAM_DATA.PAGE_COUNT = Number(Math.floor(pageCount));
+            gubunChange();
+            PARAM_DATA.DEVICE_CODE = "@Cond.DEVICE_CODE.ToString("")";
+            PARAM_DATA.AD_CODE = "@Cond.AD_CODE.ToString("")";
+            doQuery(1, "", "@Cond.DEVICE_CODE.ToString("")", "@Cond.AD_CODE.ToString("")");
+            ComponentInit();
+        }); //End document.ready
+        function ComponentInit() {
+
+            $(".ui.form .search input").keyup(function (e) {
+                var code = (e.keyCode ? e.keyCode : e.which);
+                if (code == 13) {
+                    doQuery();
+                }
+            })
+        }
+
+        function doQuery(page, sort,deviceCode, adCode) {
+            if (page == undefined || page < 1) page = 1;
+
+            PARAM_DATA.PAGE = page;
+            var params = BaseCommon.FormInfo.serializeJson(".ui.form");
+
+            if (!(deviceCode == undefined || deviceCode == null || deviceCode == "") && deviceCode > 0) {
+                params.DEVICE_CODE = deviceCode;
+            }
+            else {
+                PARAM_DATA.DEVICE_CODE = "";
+            }
+            if (!(adCode == undefined || adCode == null || adCode == "") && adCode > 0) {
+                params.AD_CODE = adCode;
+            } else {
+                PARAM_DATA.AD_CODE = "";
+            }
+            params.PAGE_COUNT = PARAM_DATA.PAGE_COUNT;
+            params.PAGE = PARAM_DATA.PAGE;
+            params.GUBUN = "2";
+            params.SORT =  ((sort == undefined || sort =="") ? PARAM_DATA.SORT : sort);
+            PARAM_DATA.SORT = params.SORT;
+            params = JSON.stringify(params);
+            ajax.GetAjax("/basic/PV_DeviceMainShareApprovalList", params, "html", function (result) {
+                $("#dvTable tbody").html(result);
+                $.mrc_table.Init("#tbList", true, sort);
+
+                $("#dvpagination").show();
+
+                $("#dvpagination").pagination({
+                    total: Number($("#total").val()), page: PARAM_DATA.PAGE, pagesize: PARAM_DATA.PAGE_SIZE, perpage: PARAM_DATA.PAGE_COUNT
+                    , onPageClick: function (item, page) {
+                        doQuery(page, PARAM_DATA.SORT, PARAM_DATA.DEVICE_CODE, PARAM_DATA.AD_CODE);
+                    }
+                })
+                $("#dvpagination").css("display", "");
+            });
+        }
+
+
+        function SemanticUI_ComboChange(obj) {
+
+            if ($(obj)[0].id == "STORE_CODE") {
+                SetStoreGroupCombo();
+            }
+
+        }
+
+        function SetStoreGroupCombo() {
+
+            var params = new Object();
+            var htmlattribute = new Object();
+            htmlattribute.class = "mini size200";
+            params.name = "GROUP_CODE";
+            params.STORE_CODE = $("#STORE_CODE").val();
+            params.GROUP_TYPE = 2;
+            params.selectedValue = $("#GROUP_CODE").val();
+            params.optionLabel = "-선택-";
+            params.htmlAttributes = JSON.stringify(htmlattribute);
+            params = JSON.stringify(params);
+            ajax.GetAjax("/common/StoreGroupCombo", params, "html", function (result) {
+                $("#dvGroupCode").html(result);
+                SemanticUI.ComponentInit($("#dvGroupCode"));
+            })
+
+        }
+
+        //function mrc_table_trClick(objName, param) {
+
+        //    if (objName == "#tbList")
+        //        popAutoNumberApplyShow(param);
+        //}
+        function btnDMApproval() {
+
+            var list = $.mrc_table.GetCheckedData("#dvTable table");
+
+            var shareStatus = $("#SHARE_STATUS").val();
+
+            if (list.length == 0) {
+                $.MessageBox("저장할 데이터가 없습니다. 승인처리할 데이터를 선택하여 주시기 바랍니다.");
+                return;
+            }
+            popDeviceMainApprovalOpen(shareStatus,list)
+        }
+
+        function mrcGrid_Sort(gridName, columnName, orderType) {
+            var sSort = (orderType == undefined || orderType == "") ? "A.UPDATE_DATE DESC" : columnName + " " + orderType;
+            doQuery(1, sSort)
+        }
+
+        function btnGubun_Callback(result)
+        {
+            doQuery(1);
+            gubunChange();
+
+        }
+        function gubunChange()
+        {
+            if( $(".btnGubun.active").attr("value") == "1")
+            {
+                $("#btnNew").hide();
+            }
+            else{
+                $("#btnNew").show();
+            }
+        }
+        var _objtr;
+        function fnReqCencel(obj)
+        {
+
+            $("#tbList tr").removeClass("active");
+            $("#tbList td").removeClass("active");
+            $(obj).closest("tr").addClass("active");
+            _objtr = $(obj).closest("tr");
+            // Confirm
+            $.MessageBox({
+                buttonDone: "예",
+                buttonFail: "아니오",
+                message: "선택된 데이터를 취소하시겠습니까?"
+            }).done(function () {
+                try {
+                    var list = $.mrc_table.GetActiveRowData("#tbList");
+                    var params = new Object();
+                    params.SHARE_STATUS = 11;
+                    params.list = list;
+                    params = JSON.stringify(params);
+                    ajax.GetAjax("/Basic/DeviceMainApprovalSave/", params, "json", function (result) {
+                        if (result.ERROR_MESSAGE != "") {
+                            $.MessageBox(result.ERROR_MESSAGE);
+                        } else {
+                            SemanticUI.ComboBox.SetVal("#SHARE_STATUS","11");
+                            doQuery(1);
+                        }
+                    });
+                } catch (e) { }
+
+            });
+
+        }
+    </script>
+}
+<style>
+    .ui.checkbox {
+        margin-top: 0.5em;
+    }
+</style>
+
+@{Html.RenderPartial("/Views/Basic/Partial/PV_DeviceMainApproval.cshtml"); }
+
+<div class="ui vertical stripe segment">
+    @Html.TitleNavigation()
+    <form class="ui form">
+        @*@Html.TitleHeader()*@
+
+        <div class="ui grid search " style="height:100%;">
+            @{
+                bool bMode = (SessionHelper.LoginInfo.COMPANY_CODE == 1) ? false : true;
+
+
+                <div class="sixteen wide mobile eight wide tablet four wide computer column" @((!bMode) ? "style=display:none" : "")>
+
+                </div>
+                if (SessionHelper.LoginInfo.COMPANY_CODE == 1)
+                {
+                    <div class="eight wide mobile four wide tablet two wide computer column">
+
+
+                    </div>
+                }
+            }
+
+            <div class="eight wide mobile four wide tablet two wide computer column">
+
+            </div>
+            <div class="eight wide mobile four wide tablet two wide computer column">
+
+            </div>
+            <div class="eight wide mobile four wide tablet two wide computer column">
+
+            </div>
+            <div class="eight wide mobile four wide tablet two wide computer column">
+
+            </div>
+
+
+            <div class="sixteen wide mobile @(bMode ? "eight" : "sixteen") wide tablet @(bMode ? "four" : "six") wide computer column buttons">
+
+            </div>
+
+        </div>
+        <div class="ui grid " style="height:100%;">
+            <div class="one column row">
+                <div class="column">
+
+                    <table class="ui table search">
+                        <tr>
+                            <td class="title">@Html.Semantic_TITLE2("승인업체")</td>
+                            <td class="content">  @Html.StoreCombo("DEVICE_STORE_CODE", new T_STORE_COND {}, SessionHelper.LoginInfo.STORE_CODE.ToString(""), "-승인업체-", new { @class = "medium size180" })</td>
+                            <td class="title">@Html.Semantic_TITLE2("요청업체")</td>
+
+                            <td class="content">
+                                @Html.StoreCombo("AD_STORE_CODE", new T_STORE_COND { enDisplay = enDisplayMode.Total }, "", "-요청업체-", new { @class = "medium size180" })
+                            </td>
+
+                            <td class="title">@Html.Semantic_TITLE2("요청업체")</td>
+                            <td class="content" colspan="2">@Html.Semantic_TextBox("COMPANY_NAME", "", new { @placeholder = "업체명(요청/승인)", @class = "medium size180" })</td>
+                        </tr>
+                        <tr>
+
+                            <td class="title">@Html.Semantic_TITLE2("로컬박스명")</td>
+                            <td class="content">@Html.Semantic_TextBox("DEVICE_NAME", Cond.DEVICE_NAME, new { @placeholder = "로컬박스명(요청/원본)", @class = "medium size180" })</td>
+                            <td class="title">@Html.Semantic_TITLE2("배너제목")</td>
+                            <td class="content">@Html.Semantic_TextBox("TITLE", Cond.TITLE, new { @placeholder = "배너제목", @class = "medium size180" })</td>
+                            <td class="title">@Html.Semantic_TITLE2("상태")</td>
+                            <td class="content">
+                                @Html.CommonCombo("SHARE_STATUS", new T_COMMON_COND { MAIN_CODE = "A009", ADD_COND = "AND A.SUB_CODE > 0" }, (Cond.SHARE_STATUS == null ? "" : Cond.SHARE_STATUS.ToString()), null, new { @class = "size180", @onchange = "doQuery(1);" })
+                            </td>
+                            <td class="content buttons">
+                                @Html.Semantic_Button2("btnSearch", "조회", SemanticUIHelper.enButtonType.ToList, SemanticUIHelper.Size.medium, new { @onclick = "doQuery(1);" })
+                                @Html.Semantic_Button2("btnNew", "승인", SemanticUIHelper.enButtonType.New, SemanticUIHelper.Size.medium, new { @onclick = "btnDMApproval();" }, null, "label exchange icon")
+                            </td>
+                        </tr>
+
+                    </table>
+                </div>
+            </div>
+            <div class="one column row">
+                <div class="column" id="dvTable">
+                    <table id="tbList" class="mrc-table">
+                        <thead>
+							<tr>
+								<th column_name="SHARE_STATUS_NAME" data-sort="BC.NAME" class="sort" style="width:5em;">상태</th>
+								<th class="sort hide" column_name="DEVICE_CODE" data-sort="C.DEVICE_CODE">로컬박스코드</th>
+								<th column_name="DEVICE_NAME" display_size="tablet" data-sort="C.DEVICE_NAME" class="sort">로컬박스명</th>
+								<th column_name="SEQ" class="hide"></th>
+								<th column_name="BANNER_TYPE_NAME" display_size="pc" data-sort="C.NAME" class="sort">배너유형</th>
+								<th column_name="AD_CODE" display_size="pc" data-sort="B.AD_CODE" class="sort" style="width:4em;">코드</th>
+								<th column_name="LOGO_URL" display_size="tablet" style="width:5em;">썸네일</th>
+								<th column_name="COMPANY_NAME" display_size="pc" data-sort="DC.COMPANY_NAME" class="sort">요청업체</th>
+								<th column_name="TITLE" data-sort="A.TITLE" class="sort">제목</th>
+								<th column_name="MNG_COMPANY_NAME" display_size="pc" data-sort="A1.COMPANY_NAME" class="sort">승인업체</th>
+								<th column_name="MNG_DEVICE_NAME" display_size="pc" data-sort="DMD.DEVICE_NAME" class="sort">원본로컬박스</th>
+								<th column_name="REMARK2" display_size="detail" data-sort="B.REMARK2" class="sort">메모</th>
+								<th column_name="UPDATE_NAME" display_size="pc" data-sort="E.USER_NAME" class="sort">등록자</th>
+								<th column_name="UPDATE_DATE" display_size="pc" data-sort="B.UPDATE_DATE" class="sort">등록일</th>
+							</tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="one column row">
+                <div id="dvpagination" class="ui floated pagination menu"></div>
+            </div>
+        </div>
+    </form>
+</div>
+
+

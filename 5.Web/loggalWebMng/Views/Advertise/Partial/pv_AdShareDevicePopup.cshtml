@@ -1,0 +1,133 @@
+﻿@{
+
+}
+<style>
+    #popShareDevice .column.row {
+        padding: 0.25em;
+    }
+</style>
+<div class="ui tiny modal form" id="popShareDevice">
+    <div class="header popSharetitle">공유 로컬박스</div>
+    <div class="content">
+        <div class="ui grid">
+            <div class="one column row">
+                <div class="column buttons">
+                    @Html.Semantic_TextBox("DEVICE_SHARE_NAME_POP", "", new { @placeholder = "로컬박스명" })
+                    @Html.Semantic_Button2("btnDeviceSelectQuery", "조회", SemanticUIHelper.enButtonType.Normal, SemanticUIHelper.Size.mini, new { onclick = "doQuery_DeviceSharePop();" })
+                </div>
+            </div>
+            <div class="one column row">
+                <div class="column">
+                    <div id="dvDeviceSharePop">
+                        <table id="tbDeviceSharePopList" class="mrc-table">
+                            <thead>
+                                <tr>
+                                    <th column_name="DEVICE_CODE" data-sort="B.DEVICE_NAME" style="min-width:50px;" class="sort">로컬박스명</th>
+                                    <th column_name="COMPANY_NAME" data-sort="C.COMPANY_NAME" class="sort">소유자</th>
+                                    <th id="thStatus" column_name="COMPANY_NAME" data-sort="A.SHARE_STATUS" class="sort">구분</th>
+                                </tr>
+                            </thead>
+                            <tbody style="min-height:4em"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <div class="one column row">
+                <div id="dvpagination_deviceSharePop" class="ui floated pagination menu"></div>
+            </div>
+        </div>
+        <div class="ui error message deviceSharePopup" style="display:none;"><ul></ul></div>
+    </div>
+    <div class="actions">
+        
+        @Html.Semantic_Button2("btnPopDeviceShareClose", "닫기", SemanticUIHelper.enButtonType.Normal, new { @onclick = "PopDeviceShareClose();" })
+    </div>
+</div>
+<script type="text/javascript">
+    var PARAM_DEVICE_SHARE_POP = {
+        PAGE_SIZE: 10
+         , PAGE_COUNT: 15
+         , PAGE: 1
+    }
+    var _pop_adCode = 0;
+    var _pop_gubun = 0;
+    function DeviceSharePopOpen(adCode,gubun) {
+        _pop_adCode = adCode;
+        if (gubun == undefined) gubun = 0;
+        _pop_gubun = gubun;
+
+        if (_pop_gubun == 0) {
+            $("#popShareDevice .popSharetitle").text("공유 로컬박스(내배너)");
+            $("#tbDeviceSharePopList #thStatus").attr("data-sort", "A.SHARE_STATUS");
+        }
+        else {
+            $("#popShareDevice .popSharetitle").text("공유 로컬박스(모바일배너)");
+            $("#tbDeviceSharePopList #thStatus").attr("data-sort", "A.STATUS");
+        }
+        $('#popShareDevice').modal("show");
+
+
+        doQuery_DeviceSharePop();
+    }
+    function PopDeviceShareClose() {
+        $('#popShareDevice').modal("hide");
+    }
+    function errormessageClear() {
+        $(".ui.error.message.deviceSharePopup").hide();
+        $(".ui.error.message.deviceSharePopup ul").html("");
+    }
+
+
+
+    function doQuery_DeviceSharePop(page, sort) {
+        $("#DEVICE_SHARE_NAME_POP").unbind("click");
+        $("#DEVICE_SHARE_NAME_POP").keyup(function (e) {
+            if (e.keyCode == 13) {
+                doQuery_DeviceSharePop();
+            }
+        })
+
+        if (page == undefined || page < 1) page = 1;
+        PARAM_DEVICE_SHARE_POP.PAGE = page;
+        var params = new Object();
+        params.GUBUN = _pop_gubun;
+        params.DEVICE_NAME = $("#DEVICE_SHARE_NAME_POP").val();
+        params.PAGE_COUNT = PARAM_DEVICE_SHARE_POP.PAGE_COUNT;
+        params.PAGE = PARAM_DEVICE_SHARE_POP.PAGE;
+        params.AD_CODE = _pop_adCode;
+        params.SORT = sort;
+        params.DISPLAY_MODE = "Popup";
+        params.NOT_DEVICE_CODE = _pop_adCode;
+        params = JSON.stringify(params);
+        ajax.GetAjax("/advertise/pv_AdShareDevicelist", params, "html", function (result) {
+            $("#dvDeviceSharePop tbody").html(result);
+            $.mrc_table.Init("#dvDeviceSharePop #tbDeviceSharePopList", false, sort);
+
+            $("#dvpagination_deviceSharePop").show();
+
+            $("#dvpagination_deviceSharePop").pagination({
+                total: Number($("#dvDeviceSharePop #tbDeviceSharePopList #total").val()), page: PARAM_DEVICE_SHARE_POP.PAGE, pagesize: PARAM_DEVICE_SHARE_POP.PAGE_SIZE, perpage: PARAM_DEVICE_SHARE_POP.PAGE_COUNT
+                , onPageClick: function (item, page) {
+                    doQuery_DeviceSharePop(page);
+                }
+            })
+            $("#dvpagination_deviceSharePop").css("display", "");
+            //SemanticUI.Modal.CenterShow("#popShareDevice");
+        });
+     }
+    function mrcGrid_Sort(objName, datasort, orderType) {
+        mrcGrid_Sort_DeviceShare(objName, datasort, orderType);
+    }
+
+    function mrcGrid_Sort_DeviceShare(objName, datasort, orderType) {
+        if (objName == "#dvDeviceSharePop #tbDeviceSharePopList") {
+            if (datasort == "" || orderType == "") doQuery_DeviceSharePop(1, "");
+            else doQuery_DeviceSharePop(1, datasort + " " + orderType);
+        }
+    }
+
+    function PopDeviceShareSelect() {
+        // Confirm
+        //$.mrc_table.GetCheckedData("#dvDeviceSharePop table")
+    }
+</script>

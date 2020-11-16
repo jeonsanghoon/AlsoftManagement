@@ -1,0 +1,214 @@
+﻿@{
+    
+    T_STORE data = (T_STORE)ViewBag.data;
+
+}
+@section scripts{
+    <style>
+        .dvSearchArea {
+            overflow: overlay;
+        }
+
+            .dvSearchArea .dvSearchSet .ui.input {
+                min-height: 25px;
+                min-width: 130px;
+                margin-bottom: 0px;
+                font-size: 1.03rem;
+            }
+    </style>
+    <script type="text/javascript">
+
+        $(document).ready(function () {
+
+
+            $("#frmSearch").submit(function (event) {
+                _page = 1;
+                doQuery();
+                event.preventDefault();
+            });
+            ComponentInit();
+            doQuery();
+
+            $("#btnClear").click(function () {
+                $("#frmSearch input[type=text]").val("");
+            });
+
+            $("#btnAdd").click(function () {
+                location.href = "/basic/signagereg";
+            });
+
+        }); //End document.ready
+
+
+        var PARAM_DATA = {
+            PAGE_SIZE: 10
+            , PAGE_COUNT: 10
+            , PAGE: 1
+            , SORT: null
+        }
+        function ComponentInit() {
+
+        }   //End ComponentInit
+
+        function doQuery(page, order) {//, sortCol, sortOrd
+
+            if (page == undefined || page == null || page < 1) page = 1;
+            PARAM_DATA.PAGE = page;
+
+            var param = BaseCommon.FormInfo.serializeJson(".ui.form");
+            
+            
+            param.PAGE_COUNT = PARAM_DATA.PAGE_COUNT;
+            param.PAGE = PARAM_DATA.PAGE;
+            
+            if (order != undefined) {
+                PARAM_DATA.SORT = order;
+                param.SORT_ORDER = order;
+            }
+            else if (order == undefined) {
+                param.SORT_ORDER = PARAM_DATA.SORT;
+            }
+
+            ajax.GetAjax("/Basic/pv_SignageControlList", JSON.stringify(param), "html", function (result) {
+
+                $("#pvSignageList table tbody").html(result);
+                $.mrc_table.Init(".mrc-table", false, order);
+
+                $("#pagination").pagination({
+                    total: Number($("#total").val()), page: PARAM_DATA.PAGE, pagesize: PARAM_DATA.PAGE_SIZE, perpage: PARAM_DATA.PAGE_COUNT
+                    , onPageClick: function (item, page) {
+                        doQuery(page);
+                    }
+                });
+            });
+        }   //End doQuery
+        function MessageBoxConfirm(message) {
+            return $.MessageBox({
+                buttonDone: "예",
+                buttonFail: "아니오",
+                message: message
+            });
+        }
+        function doNew() {
+            MessageBoxConfirm("사이니지 조회로 이동하여 등록이 가능합니다.<br/>이동하시겠습니까?").done(function () {
+                location.href = "/basic/signagelist";
+            }).fail(function () {
+                // Do something in response to No
+            });
+        }
+        function mrcGrid_Sort(objName, datasort, orderType) {
+            if (datasort == "" || orderType == "") doQuery(1, "");
+            else doQuery(1, datasort + " " + orderType);
+        }
+
+
+        function mrc_table_trClick(objName, param) {
+            if (objName == ".mrc-table")
+                popAutoNumberApplyShow(param);
+        }
+
+        
+        function ExcelDown() {
+            var params = BaseCommon.FormInfo.serializeJson(".ui.form");
+            if ($("#IS_COMPLEATED").val() == "1") params.IS_COMPLEATED = true;
+            else if ($("#IS_COMPLEATED").val() == "0") params.IS_COMPLEATED = false;
+            var arrData = new Array();
+            $.each(params, function (key, val) {
+                //display the key and value pair
+
+                arrData.push({ name: key, value: val });
+            });
+            BaseCommon.FormInfo.PostSubmit('/basic/SignageControlExcelReport', arrData);
+        }
+    </script>
+}
+<style>
+    .ui.checkbox {
+        margin-top: 0.5em;
+    }
+
+    @@media only screen and (max-width: 767px) {
+        .ui.table:not(.unstackable) tr {
+            padding-top: 0em;
+            padding-bottom: 0em;
+            box-shadow: 0 0px 0 0 rgba(0,0,0,.1) inset !important;
+        }
+
+        .ui.grid > .column:not(.row), .ui.grid > .row > .column {
+            padding: 0em;
+        }
+    }
+</style>
+<div class="ui vertical stripe segment">
+    @Html.TitleNavigation()
+    <form class="ui form">
+        <div class="one column row search">
+            <div class="column">
+                <table class="ui table search">
+                    <tbody>
+                        <tr>
+                            <td class="title">
+                                @Html.Semantic_TITLE2("요청일자")
+                            </td>
+                            <td class="content frtodate">
+                                @Html.Semantic_TextBox("FR_PLAY_REQ_TIME", DateTime.Now.AddMonths(-1).ToString("yyyy.MM.dd"), SemanticUIHelper.Size.mini, new { @style = "text-align:center;", @class = "date size100", @placeholder = "시작일자" })@Html.Semantic_TextBox("TO_PLAY_REQ_TIME", DateTime.Now.ToString("yyyy.MM.dd"), SemanticUIHelper.Size.mini, new { @style = "text-align:center;", @class = "date size100", @placeholder = "종료일자" })
+                            </td>
+                            <td class="title">
+                                @Html.Semantic_TITLE2("사이니지")
+                            </td>
+                            <td class="content">
+                                @Html.Semantic_TextBox("SIGN_NAME", "", SemanticUIHelper.Size.mini, new { @placeholder = "사이니지명을 입력하세요" })
+                            </td>
+                            <td class="title">
+                                @Html.Semantic_TITLE2("완료여부")
+
+                            </td>
+                            <td class="content">
+                                @Html.CommonCombo("IS_COMPLEATED", new T_COMMON_COND { MAIN_CODE = "B003", HIDE = false }, null, null, new { @class = "boolean  size100" })
+                            </td>
+                        </tr>
+                        <tr class="tablerow">
+                            <td class="conetent buttons" colspan="6">
+                                @Html.Semantic_Button2("btnExcel", "엑셀", SemanticUIHelper.enButtonType.Excel, SemanticUIHelper.Size.medium, new { @onclick = "ExcelDown();" })
+                                @Html.Semantic_Button2("btnSearch", "조회", SemanticUIHelper.enButtonType.ToList, SemanticUIHelper.Size.medium, new { onclick = "doQuery();" })
+                                @Html.Semantic_Button2("btnNew", "신규", SemanticUIHelper.enButtonType.New, SemanticUIHelper.Size.medium, new { @onclick = "doNew();" })
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="one column row">
+            <div class="column" id="pvSignageList">
+                <table class="mrc-table search" id="tblist">
+                    <thead>
+                        <tr>
+                            <th class="sort" column_name="IDX" data-sort="A.IDX">순번</th>
+                            <th display_size="tablet" class="sort" column_name="REQUEST_EMAIL" data-sort="A.REQUEST_EMAIL" style="width:50px;">메일</th>
+                            <th display_size="tablet" class="sort" column_name="REQUEST_NAME" data-sort="A.REQUEST_NAME">요청자</th>
+                            <th column_name="CONTENT_URL" data-sort="A.CONTENT_URL">콘텐츠</th>
+                            <th class="sort" column_name="SIGN_NAME" data-sort="B.SIGN_NAME">사이니지</th>
+                            <th class="sort" column_name="PLAY_REQ_TIME " data-sort="A.PLAY_REQ_TIME">요청일자</th>
+
+                            <th column_name="PLAY_FR_TIME" display_size="detail" class="sort">시작시간</th>
+                            <th column_name="PLAY_TO_TIME" display_size="detail" class="sort">종료시간</th>
+                            <th column_name="COMPLEATED_DATE" display_size="tablet" data-sort="A.COMPLEATED_DATE" class="sort">완료일자</th>
+                            <th column_name="CONTENT" display_size="detail" class="sort">내용</th>
+                            <th class="sort" column_name="UPDATE_NAME" data-sort="UPDATE_NAME" display_size="pc">수정자</th>
+                            <th column_name="UPDATE_DATE" data-sort="UPDATE_DATE" display_size="pc">수정시간</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+        <div class="one column row" style="padding:1em;">
+            <div id="pagination" class="ui pagination menu"></div>
+        </div>
+    </form>
+</div>
+    
+
+
+

@@ -1,0 +1,247 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<DBAgentMultiTemplate  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns="http://altsoft.kr/">
+  <DBAgentTemplate TemplateID="GetAdFavoriteList">
+    <!-- 
+    SqlType : SQL의 형태를 지정합니다.
+      Example 1:<SqlType>FixedSQL</SqlType> 고정적인 SQL을 지원합니다. 
+      Example 2:<SqlType>DynamicSQL</SqlType> 동적인 SQL Type1을 지원합니다.  
+    Description : 해당 SQL의 기능설명을 적습니다.
+    SQLModifier : 해당 SQL의 작성자(수정자)를 적습니다
+    LastModifyDate : 해당 SQL의 마지막 수정일을 적습니다
+    -->
+    <Information>
+      <SqlType>DynamicSQL</SqlType>
+      <Description>광고즐겨찾기 조회</Description>
+      <SQLModifier>전상훈</SQLModifier>
+      <LastModifyDate>2016-12-07</LastModifyDate>
+    </Information>
+
+    <TemplateSQL>
+      <!-- FixedSQL : 고정된 SQL이 들어가는 곳입니다. -->
+      <FixedSQL>
+        <![CDATA[ 
+ 
+		SET NOCOUNT ON 
+	/************************************************************************/
+	/* 광고즐겨찾기테이블 - T_AD_FAVORITE 조회 -  GetAdFavoriteList SELECT QUERY */ 
+	/************************************************************************/
+	SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED 
+  
+  
+ DECLARE @PAGE    INT = {0}, @PAGE_COUNT INT = {1}
+	   ,@FR_DATE DATETIME = '{2} 00:00:00', @TO_DATE DATETIME = '{3} 23:59:59.999'
+	;
+  WITH T_TABLE AS
+  ( 	
+    SELECT ROW_NUMBER() OVER(ORDER BY A.IDX DESC) AS SEQ
+          , A.IDX
+		      , A.FAV_TYPE
+		      , B.NAME AS FAV_TYPE_NAME
+		      , A.AD_CODE
+			    , ISNULL(D.TITLE,'') AS AD_TITLE
+		      , A.DEVICE_CODE
+			    , ISNULL(E.DEVICE_NAME,'') AS DEVICE_NAME
+          , A.DEVICE_SEQ
+		      , A.MOBILE
+		      , A.SNS_TYPE
+		      , C.NAME AS SNS_TYPE_NAME
+		      , A.EMAIL
+		      , A.REMARK
+          , A.USER_IP
+		      , A.UPDATE_DATE
+          , A.CNT
+	    FROM T_AD_FAVORITE A 
+	    INNER JOIN T_COMMON B
+	       ON B.MAIN_CODE = 'L003'
+	      AND B.SUB_CODE = A.FAV_TYPE
+         LEFT JOIN T_COMMON C
+	       ON C.MAIN_CODE = 'L004'
+	      AND C.SUB_CODE = A.SNS_TYPE 
+	     LEFT JOIN T_AD D
+	       ON A.AD_CODE = D.AD_CODE
+	     LEFT JOIN T_DEVICE E
+	       ON A.DEVICE_CODE = E.DEVICE_CODE
+      WHERE A.UPDATE_DATE >= @FR_DATE 
+	      AND B.UPDATE_DATE <= @TO_DATE 
+        #[IDX]
+        #[FAV_TYPE]
+        #[AD_CODE]
+        #[DEVICE_CODE]
+        #[DEVICE_SEQ]
+        #[MOBILE]
+        #[SNS_TYPE]
+        #[EMAIL]
+        #[USER_IP]
+        #[AD_TITLE]
+        #[DEVICE_NAME]
+	)
+	SELECT  * , (SELECT COUNT(1) FROM T_TABLE) TOTAL_ROWCOUNT FROM T_TABLE
+	WHERE SEQ > ((@PAGE - 1) * @PAGE_COUNT)
+    AND SEQ <= (@PAGE * @PAGE_COUNT)
+	
+  SET NOCOUNT OFF 
+  ]]>
+      </FixedSQL>
+      <DynamicBodys>
+        <Key>IDX</Key>
+        <Body>
+          <![CDATA[ AND A.IDX = {0}]]>
+        </Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>FAV_TYPE</Key>
+        <Body>
+          <![CDATA[ AND A.FAV_TYPE = {0}]]>
+        </Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>AD_CODE</Key>
+        <Body>
+          <![CDATA[ AND A.AD_CODE = {0}]]>
+        </Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>DEVICE_CODE</Key>
+        <Body>
+          <![CDATA[ AND A.DEVICE_CODE = {0}]]>
+        </Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>DEVICE_SEQ</Key>
+        <Body>
+          <![CDATA[ AND A.DEVICE_SEQ = {0}]]>
+        </Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>MOBILE</Key>
+        <Body>
+          <![CDATA[ AND A.MOBILE = REPLACE('{0}','-','')]]>
+        </Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>SNS_TYPE</Key>
+        <Body>
+          <![CDATA[ AND A.SNS_TYPE = {0}]]>
+        </Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>EMAIL</Key>
+        <Body>
+          <![CDATA[ AND A.EMAIL = '{0}']]>
+        </Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>USER_IP</Key>
+        <Body>
+          <![CDATA[ AND A.USER_IP = '{0}']]>
+        </Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>AD_TITLE</Key>
+        <Body>
+          <![CDATA[ AND D.TITLE LIKE N'%{0}%']]>
+        </Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>DEVICE_NAME</Key>
+        <Body>
+          <![CDATA[ AND E.DEVICE_NAME LIKE N'%{0}%']]>
+        </Body>
+      </DynamicBodys>
+    </TemplateSQL>
+  </DBAgentTemplate>
+
+  <DBAgentTemplate TemplateID="AdFavoriteSave">
+    <!-- 
+    SqlType : SQL의 형태를 지정합니다.
+      Example 1:<SqlType>FixedSQL</SqlType> 고정적인 SQL을 지원합니다. 
+      Example 2:<SqlType>DynamicSQL</SqlType> 동적인 SQL Type1을 지원합니다.  
+    Description : 해당 SQL의 기능설명을 적습니다.
+    SQLModifier : 해당 SQL의 작성자(수정자)를 적습니다
+    LastModifyDate : 해당 SQL의 마지막 수정일을 적습니다
+    -->
+    <Information>
+      <SqlType>DynamicSQL</SqlType>
+      <Description>광고즐겨찾기테이블 저장</Description>
+      <SQLModifier>전상훈</SQLModifier>
+      <LastModifyDate>2016-12-06</LastModifyDate>
+    </Information>
+
+    <TemplateSQL>
+      <!-- FixedSQL : 고정된 SQL이 들어가는 곳입니다. -->
+      <FixedSQL>
+        <![CDATA[ 
+ 
+	SET NOCOUNT ON 
+	/********************************************************/
+	/* 광고즐겨찾기테이블 - T_AD_FAVORITE 저장 -  SAVE QUERY */ 
+	/********************************************************/
+	DECLARE @IDX                            BIGINT               = N'{0}'
+			  , @FAV_TYPE                       INT                  = CONVERT(INT, CASE WHEN ISNUMERIC('{1}') = 1 THEN '{1}' ELSE '0' END )
+			  , @AD_CODE                        BIGINT               = CONVERT(BIGINT, CASE WHEN ISNUMERIC('{2}') = 1 THEN '{2}' ELSE NULL END )
+			  , @DEVICE_CODE                    BIGINT               = CONVERT(BIGINT, CASE WHEN ISNUMERIC('{3}') = 1 THEN '{3}' ELSE NULL END )
+        , @DEVICE_SEQ                     INT                  = CONVERT(BIGINT, CASE WHEN ISNUMERIC('{4}') = 1 THEN '{4}' ELSE NULL END )
+			  , @MOBILE                         VARCHAR(20)          = N'{5}'
+			  , @SNS_TYPE                       INT                  = CONVERT(INT, CASE WHEN ISNUMERIC('{6}') = 1 THEN '{6}' ELSE NULL END )
+			  , @EMAIL                           VARCHAR(30)          = N'{7}'
+			  , @USER_IP                        VARCHAR(50)          = N'{8}'
+			  , @REMARK                         NVARCHAR(200)        = N'{9}'
+			  , @UPDATE_DATE                    DATETIME             = GETDATE() 
+
+  SET @MOBILE = REPLACE(@MOBILE, '-','')
+  IF EXISTS (SELECT * FROM T_AD_FAVORITE
+                                         WHERE MOBILE = @MOBILE 
+                                           AND EMAIL = @EMAIL 
+                                           AND ISNULL(AD_CODE,0) = ISNULL(@AD_CODE,0)
+                                           AND ISNULL(DEVICE_CODE,0) = ISNULL(@DEVICE_CODE,0) 
+                                           AND ISNULL(DEVICE_SEQ,0) = ISNULL(@DEVICE_SEQ,0)
+                                           AND USER_IP  = @USER_IP
+                                           AND ISNULL(SNS_TYPE,0) = ISNULL(@SNS_TYPE,0)
+                                           )
+  BEGIN
+  
+      UPDATE T_AD_FAVORITE
+         SET CNT = ISNULL(CNT,1) + 1
+      WHERE MOBILE = @MOBILE 
+        AND EMAIL = @EMAIL 
+        AND ISNULL(AD_CODE,0) = ISNULL(@AD_CODE,0)
+        AND ISNULL(DEVICE_CODE,0) = ISNULL(@DEVICE_CODE,0) 
+        AND ISNULL(DEVICE_SEQ,0) = ISNULL(@DEVICE_SEQ,0)
+        AND USER_IP  = @USER_IP
+        AND ISNULL(SNS_TYPE,0) = ISNULL(@SNS_TYPE,0)
+        
+        GOTO EXCEPTION
+  END
+ 
+  
+	UPDATE A 
+	SET  	  FAV_TYPE                       = @FAV_TYPE                      
+			 ,  AD_CODE                        = @AD_CODE                       		 ,  DEVICE_CODE                    = @DEVICE_CODE                   
+			 ,  DEVICE_SEQ                     = @DEVICE_SEQ                    		 ,  MOBILE                         = @MOBILE                        
+			 ,  SNS_TYPE                       = @SNS_TYPE                      		 ,  EMAIL                          = @EMAIL                         
+			 ,  USER_IP                        = @USER_IP                       		 ,  REMARK                         = @REMARK                        
+			 ,  UPDATE_DATE                    = @UPDATE_DATE                   
+	FROM T_AD_FAVORITE A 
+	WHERE IDX= @IDX
+	IF @@ROWCOUNT = 0
+  BEGIN
+		  INSERT INTO T_AD_FAVORITE
+		  (		FAV_TYPE                      		, AD_CODE                       		, DEVICE_CODE                   		
+			  , DEVICE_SEQ                    		, MOBILE                        		, SNS_TYPE                      		, EMAIL                         		
+			  , USER_IP                       		, REMARK                        		, UPDATE_DATE                   		
+		  )
+		  SELECT @FAV_TYPE                     		, @AD_CODE                      	
+	  			 , @DEVICE_CODE                  		, @DEVICE_SEQ                   		, @MOBILE                       	
+				   , @SNS_TYPE                     		, @EMAIL                        		, @USER_IP                      	
+				   , @REMARK                       		, @UPDATE_DATE                  	
+	 END
+   
+EXCEPTION:   
+SET NOCOUNT OFF
+
+
+  ]]>
+      </FixedSQL>
+    </TemplateSQL>
+  </DBAgentTemplate>
+</DBAgentMultiTemplate>

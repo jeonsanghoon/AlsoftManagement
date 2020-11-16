@@ -1,0 +1,26 @@
+﻿
+@{
+    List<DEVICE_MAIN_SHARE_LIST> list = ViewBag.list;
+
+    string totCnt = (list.Count() == 0 ? "0" : list.First().TOTAL_ROWCOUNT.ToString());
+
+    <input type="hidden" id="total2" value="@totCnt" />
+    foreach (DEVICE_MAIN_SHARE_LIST data in list)
+    {
+    <tr>
+        <td class="center">@data.SHARE_STATUS_NAME</td>
+        <td class="hide">@data.DEVICE_CODE</td>
+        <td>@data.DEVICE_NAME</td>
+        <td class="hide">@data.SEQ</td>
+        <td>@data.AD_CODE</td>
+        <td><img src="@data.LOGO_URL" class="ui mini rounded image"></td>
+        <td class="hide"><img src="@data.COMPANY_CODE"></td>
+        <td>@data.COMPANY_NAME</td>
+        <td><a href="@Global.ConfigInfo.MANAGEMENT_SITE/advertise/Contentview/@data.AD_CODE" target="_blank">@(string.IsNullOrEmpty(data.TITLE) ? "상세보기" : data.TITLE)</a></td>
+        <td class="center">@data.FR_DATE.ToFormatDate()</td>
+        <td class="center">@data.TO_DATE.ToFormatDate()</td>
+        <td class="hide">@data.UPDATE_CODE</td>
+        <td>@data.UPDATE_NAME</td>
+    </tr>
+    }
+}

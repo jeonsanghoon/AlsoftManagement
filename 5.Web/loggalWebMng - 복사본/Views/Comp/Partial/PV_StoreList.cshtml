@@ -1,0 +1,31 @@
+﻿@using ALT.Framework;
+@using ALT.VO.Common;
+@{
+    List<T_STORE> list = ViewBag.list;
+    string totCnt = (list.Count() == 0 ? "0" : list.First().TOTAL_ROWCOUNT.ToString());
+    string classComp = SessionHelper.LoginInfo.STORE.STORE_CODE == 1 ? "hide" : "";
+    <input type="hidden" id="total" value="@totCnt" />
+    foreach (T_STORE data in list)
+    {
+    <tr>
+
+        <td class="@classComp"><a href="/comp/compreg/@data.COMPANY_CODE">@data.COMPANY_NAME</a></td>
+        <td>@data.STORE_ID</td>
+        <td class="center"><a href="/comp/storereg/@data.STORE_CODE">@data.STORE_NAME</a></td>
+        <td class="center">@data.PHONE</td>
+        <td class="center">@data.STORE_TYPE_NAME</td>
+        <td class="center">@data.STATUS_NAME</td>
+        <td class="center">@data.OWNER_NAME</td>
+        <td class="center">@data.EMPLOYEE_CNT1/@data.EMPLOYEE_CNT2</td>
+        <td>@data.ADDRESS1 @data.ADDRESS2</td>
+        <td class="center">@data.AD_CNT0/@data.AD_CNT1/@data.AD_CNT2</td>
+        <td class="center">@data.DEVICE_CNT0/@data.DEVICE_CNT1/@data.DEVICE_CNT2</td>
+        <td class="center">@data.UPDATE_NAME</td>
+        <td class="center">@data.UPDATE_DATE</td>
+
+        <td class="center">@Html.Semantic_Button2("btnEmployeeList", "보기", SemanticUIHelper.enButtonType.Normal, new { @onclick = "fnEmployeeList(" + data.STORE_CODE + ");" }) </td>
+    </tr>
+    }
+}
+
+

@@ -1,0 +1,54 @@
+﻿@using ALT.VO.loggal;
+@using ALT.Framework;
+@using ALT.Framework.Data;
+
+@{
+	LOGGAL_BOX_COND2 Cond = ViewBag.cond;
+	List<LOGGAL_BOX_DATA2> list = (List<LOGGAL_BOX_DATA2>)ViewBag.list;
+	string totCnt = (list.Count() == 0 ? "0" : list.First().TOTAL_ROWCOUNT.ToString());
+
+    <input type="hidden" id="total@(Cond.GUBUN + 1)" value="@totCnt" />
+	foreach (LOGGAL_BOX_DATA2 data in list)
+	{
+		data.FR_DATE = data.FR_DATE.ToFormatDate();
+		data.TO_DATE = data.TO_DATE.ToFormatDate();
+
+<tr>
+
+	<td class="center">
+		<input type="checkbox" name="chkUse" />
+	</td>
+	
+	<td>@data.AD_FRAME_TYPE_NAME</td>
+	<td class="hide">@data.AD_FRAME_TYPE</td>
+	
+		@if (Cond.GUBUN == 3)
+		{
+		<td class="center">@(data.AD_KIND_NAME)</td>
+		}
+
+
+	<td id="adCode" class="hide">@data.AD_CODE</td>
+	<td id="deviceCode" class="hide">@data.DEVICE_CODE</td>
+	<td id="displaySeq" class="hide">@data.DISPLAY_SEQ</td>
+	<td class="center">
+		@{
+
+			<img src="@data.BANNER_IMAGE" class="ui mini rounded image">
+		}
+	</td>
+	<td class="left">@data.CATEGORY_NAME</td>
+	<td><a href="@Global.ConfigInfo.MANAGEMENT_SITE/advertise/adreg2/@data.AD_CODE" target="_blank">@data.TITLE</a></td>
+
+	<td class="center" column_name="FR_DATE">@data.FR_DATE</td>
+	<td class="center" column_name="TO_DATE">@data.TO_DATE</td>
+	<td class="center" column_name="FR_TIME">@data.FR_TIME</td>
+	<td class="center">@data.TO_TIME</td>
+	<td class="center @(Cond.GUBUN == 3 ? "hide" : "")" style="@(data.STATUS == 1 ? "color:blue;text-decoration:underline;font-weight:bold;cursor:pointer;" : "")" onclick="javascript:location.href='/basic/devicemainshareapprovallist/@data.STATUS?AD_CODE=@(data.AD_CODE)&GUBUN=2'">@data.STATUS_NAME</td>
+	<td class="hide">@(Cond.GUBUN == 3 ? "1" : data.STATUS.ToString("1"))</td>
+	<td id="isMobile" class="center @(Cond.GUBUN == 1 ? "" : "hide")"><input type="checkbox" @(data.IS_MOBILE == true ? "checked" : "") /></td>
+</tr>
+				}
+			}
+
+

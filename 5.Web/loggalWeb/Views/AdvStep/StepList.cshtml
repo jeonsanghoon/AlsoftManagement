@@ -1,0 +1,149 @@
+﻿@{
+    Layout = "~/Views/Shared/_Layout_Step.cshtml";
+    ViewBag.title = "loggal 광고 서비스> 광고요청상태";
+}
+<script type="text/javascript">
+    $("document").ready(function () {
+        doQuery();
+    })
+    var PARAM_DATA1 = {
+        PAGE_SIZE: 10
+           , PAGE_COUNT: 12
+           , PAGE: 1
+           , TITLE: ""
+
+    }
+    function doQuery(page1) {
+
+        PARAM_DATA1.TITLE = $("#TITLE").val();
+        PARAM_DATA1.PAGE = page1;
+        var sParam = JSON.stringify(PARAM_DATA1);
+        ajax.GetAjax("/AdvStep/PV_Steplist/", sParam, "html", function (result) {
+            $("#tbList").html(result);
+            $.mrc_table.Init(".mrc-table");
+            $("#dvpagination").show();
+
+            $("#dvpagination").pagination({
+                total: Number($("#total").val()), page: PARAM_DATA1.PAGE, pagesize: PARAM_DATA1.PAGE_SIZE, perpage: PARAM_DATA1.PAGE_COUNT
+                , onPageClick: function (item, page) {
+                    doQuery(page);
+                }
+            })
+        });
+    }
+
+    function fnCreate() {
+        location.href = "/advstep/step2/0";
+    }
+    function fnAdDelete(obj, adCode) {
+
+        var arrDel = [adCode];
+        var params = JSON.stringify(arrDel);
+        $.MessageBox({
+            buttonDone: "예",
+            buttonFail: "아니오",
+            message: "해당데이터를 삭제하시겠습니까?<br>제목 : " + $(obj).parent().parent().find("td:eq(1)").text()
+        }).done(function () {
+            ajax.GetAjax("/AdvStep/AdDelete/", params, "json", function (result) {
+                if (result.ERROR_MESSAGE != "") {
+                    $.MessageBox(result.ERROR_MESSAGE);
+                }
+                else {
+                    //  location.href = String(result.RETURN_URL).toLowerCase();
+                    doQuery();
+                }
+            });
+        }).fail(function () {
+
+        });
+
+
+    }
+</script>
+<style>
+    .centered {
+        display: table;
+        margin-left: auto !important;
+        margin-right: auto !important;
+    }
+
+    .ui.celled.unstackable.table .mrc-table tr td:first-child, .ui.celled.unstackable.table .mrc-table tr th:first-child {
+        border-left: 1px solid #b2b1b1;
+    }
+
+    .mrc-table th:nth-child(2) {
+        width: 200px;
+    }
+
+    .mrc-table td:nth-child(2) {
+        white-space: nowrap;
+        word-wrap: normal;
+        max-width: 200px;
+        overflow: hidden;
+    }
+
+    @@media only screen and (max-width: 350px) {
+        .ui.table.unstackable tr.search #TITLE {
+            width: 110px;
+        }
+    }
+    .ui.table .search .content div{
+        width:50%;
+    }
+</style>
+
+
+<div class="ui  vertical stripe attached segment wizard centered">
+    @{Html.RenderPartial("/Views/AdvStep/Partial/Top.cshtml"); }
+
+    <form class="ui form" onSubmit="return false;">
+        <h2 class="ui header">광고요청조회</h2>
+
+        <div class="ui structured grid  fields">
+            <div class="one column row">
+                <div class="column">
+                    <table class="ui unstackable table">
+                        <tbody>
+                            <tr class="search">
+                                <td class="title" style="width:120px;">
+                                    @Html.Semantic_TITLE2("제목")
+                                </td>
+                                <td class="content">
+                                    @Html.Semantic_TextBox("TITLE", "", SemanticUIHelper.Size.mini, new { @placeholder = "제목을 입력하세요" })
+                                    @Html.Semantic_Button("btnSearch", "검색", SemanticUIHelper.enButtonType.Normal, SemanticUIHelper.Size.mini, new { @onclick = "doQuery();" })
+                                    @Html.Semantic_Button("btnAdd", "추가", SemanticUIHelper.enButtonType.New, SemanticUIHelper.Size.mini, new { @onclick = "fnCreate();';", @style = "float:right" })
+
+                                </td>
+
+                            </tr>
+                            <tr>
+                                <td colspan="2">
+                                    <table class="mrc-table">
+                                        <thead>
+                                            <tr>
+                                                <th>로고</th>
+                                                <th>제목</th>
+                                                <th display_size="tablet">광고일자</th>
+                                                <th display_size="tablet">광고시간</th>
+                                                <th display_size="pc">상태</th>
+                                                <th display_size="pc">배너유형</th>
+                                                <th display_size="detail">수정일시</th>
+                                                <th display_size="pc">삭제</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="tbList"></tbody>
+                                    </table>
+                                    <center style="padding-top:0.5em;"><div id="dvpagination" class="ui floated pagination menu"></div></center>
+                                </td>
+                            </tr>
+
+
+                        </tbody>
+                    </table>
+
+
+                </div>
+            </div>
+        </div>
+    </form>
+</div>

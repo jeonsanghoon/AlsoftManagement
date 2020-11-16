@@ -1,0 +1,190 @@
+﻿@{
+
+}
+@section scripts{
+
+    <script type="text/javascript">
+
+        $(document).ready(function () {
+
+            doQuery(1);
+
+            
+        }); //End document.ready
+
+    
+        var PARAM_DATA = {
+            PAGE_SIZE: ($("window").width() < 768 ? 5 : 10)
+          , PAGE_COUNT: 15
+          , PAGE: 1
+          , SORT_ORDER: " STATUS DESC, A.BOOKMARK_CODE DESC "
+        }
+        function doQuery(page, order) {
+
+            PARAM_DATA = $.mrc_table.SetPageSize(PARAM_DATA, ".ui.grid .search");
+          /*  var pageCount = ($(window).height() - $(".cd-main-header").outerHeight() + $(".ui.header").outerHeight() + $(".ui.footer").outerHeight() -320)/ 30;
+
+            PARAM_DATA.PAGE_COUNT = Number(Math.floor(pageCount));*/
+            if (page == undefined || page == null || page < 1) page = 1;
+            PARAM_DATA.PAGE = page;
+
+            var param = BaseCommon.FormInfo.serializeJson(".ui.form");
+
+            param.PAGE_COUNT = PARAM_DATA.PAGE_COUNT;
+            param.PAGE = PARAM_DATA.PAGE;
+            param.BOOKMARK_KIND = 1;
+            if (order != undefined) {
+                PARAM_DATA.SORT_ORDER = order;
+                param.SORT_ORDER = order;
+            }
+            else if (order == undefined) {
+                param.SORT_ORDER = PARAM_DATA.SORT_ORDER;
+            }
+            param.USER_NAME = $("#USER_NAME").val();
+
+            param = JSON.stringify(param);
+            ajax.GetAjax("/account/pv_memberbookmark_adlist", param, "html", function (result) {
+                $("#dvTable table tbody").html(result);
+                $.mrc_table.Init("#dvTable table.mrc-table", true, order);
+                $("#dvpagination").show();
+                $("#dvpagination").pagination({
+                    total: Number($("#dvTable #total").val()), page: PARAM_DATA.PAGE, pagesize: PARAM_DATA.PAGE_SIZE, perpage: PARAM_DATA.PAGE_COUNT
+                    , onPageClick:function(item, page) {
+                        doQuery(page);
+                    }
+                })
+                $("#dvpagination").css("display", "");
+                $("#dvTable table tbody").find("tr[disabled=disabled]").find("input[type=checkbox]").attr("disabled", "disabled");
+            });
+        }
+
+        function mrcGrid_Sort(objName, datasort, orderType) {
+            //_sortColumn = datasort;
+            //_sortOrder = orderType;
+            //        _page = 1;
+            if (objName == "#dvTable table.mrc-table") {
+                if (datasort == "" || orderType == "") doQuery(1, "");
+                else doQuery(1, datasort + " " + orderType);
+
+                $("#btnBannerShare").show();
+            }
+            else {
+                if (datasort == "" || orderType == "") doQuery2(1, "");
+                else doQuery2(1, datasort + " " + orderType);
+                $("#btnBannerShare").hide();
+            }
+        }
+
+        function BannerShare() {
+            var list = $.mrc_table.GetCheckedData("#dvTable #tbList");
+            if (list.length == 0) {
+                $.MessageBox("공유할 배너를 선택하여 주시기 바랍니다.");
+                return;
+            }
+            DeviceSelectPopOpen(0);
+        }
+        function PopDeviceCallback(result) {
+            BannerShareSave(result)
+        }
+        function BannerShareSave(list) {
+
+            var param = new Object();
+            var arrDeviceCode = new Array();
+            for(var j=0; j < list.length; j++)
+            {
+                arrDeviceCode.push(list[j].DEVICE_CODE);
+            }
+            var adlist = $.mrc_table.GetCheckedData("#tbList");
+            for (var i = 0; i < adlist.length; i++)
+            {
+                adlist[i].SAVE_TYPE = "N";
+                adlist[i].STATUS = 1;
+                adlist[i].DEVICE_CODE = arrDeviceCode;
+                adlist[i].REG_CODE = @SessionHelper.LoginInfo.MEMBER.MEMBER_CODE;
+            }
+
+
+            param = JSON.stringify(adlist);
+            ajax.GetAjax("/account/AdShareRequestSave/", param, "json", function (result) {
+                if (result.ERROR_MESSAGE != "") {
+                    $.MessageBox(result.ERROR_MESSAGE);
+                } else {
+                    $("#tbList").find("tbody .editableCheck").each(function () {
+                        $(this).find(".chkEditMode").prop("checked", false);
+                    });
+                }
+            });
+        }
+
+        function doDelete() {
+            var params = $.mrc_table.GetCheckedData("#tbList");
+            if (params.length == 0) {
+                $.MessageBox("삭제할 데이터를 선택하세요");
+                return;
+            }
+            $.MessageBox({
+                buttonDone: "예",
+                buttonFail: "아니오",
+                message: "선택한 데이터를 삭제하시겠습니까?"
+            }).done(function () {
+                params = JSON.stringify(params);
+                ajax.GetAjax("/account/MemberBookmarkDelete/", params, "json", function (result) {
+                    if (result.ERROR_MESSAGE != "") {
+                        $.MessageBox(result.ERROR_MESSAGE);
+                    } else {
+                        doQuery(1);
+                    }
+                });
+            });
+        }
+    </script>
+}
+
+@{
+    Html.RenderPartial("/Views/Popup/DeviceListP.cshtml");
+}
+<div class="ui vertical stripe segment">
+    @Html.TitleNavigation()
+    <form class="ui form">
+
+        <div class="ui grid">
+            <div class="one column row search">
+                <div class="column buttons">
+                    <i id="btnBannerShare" class="share2 alternate icon big teal" style="cursor:pointer;margin-right:1em;" onclick="BannerShare()"></i>
+                    @Html.Semantic_Button2("btnDelete","삭제", SemanticUIHelper.enButtonType.Del, SemanticUIHelper.Size.medium, new { @onclick="doDelete();" })
+                    @*@Html.Semantic_Button2("btnSearch", "조회", SemanticUIHelper.enButtonType.ToList, SemanticUIHelper.Size.medium, new { onclick = "doQuery();" })*@
+
+                </div>
+            </div>
+            <div class="one column row">
+                <div class="column" id="dvTable">
+                    <table class="mrc-table search" id="tbList">
+                        <thead>
+                            <tr>
+                                <th class="sort" column_name="AD_CODE" data-sort="A.AD_CODE" style="width:50px;">배너코드</th>
+                                <th class="sort" column_name="TITLE" data-sort="A.TITLE">제목</th>
+                                <th display_size="tablet">썸네일</th>
+                                <th class="sort hide" column_name="BOOKMARK_CODE" data-sort="A.BOOKMARK_CODE">북마크코드</th>
+                                <th display_size="tablet" class="sort" column_name="USER_ID" data-sort="A.USER_ID">아이디</th>
+                                <th display_size="pc" class="sort" column_name="USER_NAME" data-sort="A.USER_NAME">등록자</th>
+                                <th display_size="tablet" class="sort" data-sort="A.AD_TYPE_NAME">광고구분</th>
+                                <th display_size="tablet" class="sort" data-sort="A.BANNER_TYPE_NAME">배너구분</th>
+                                <th display_size="tablet" class="sort" data-sort="A.AD_CNT">북마크수</th>
+                                <th display_size="pc">시작일자</th>
+                                <th display_size="pc">종료일자</th>
+                                <th display_size="detail">시작시간</th>
+                                <th display_size="detail">종료시간</th>
+                                <th display_size="pc" class="sort" data-sort="A.INSERT_DATE">등록시간</th>
+
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="one column row">
+                <div id="dvpagination" class="ui floated pagination menu"></div>
+            </div>
+        </div>
+    </form>
+</div>

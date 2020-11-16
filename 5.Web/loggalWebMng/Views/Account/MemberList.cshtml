@@ -1,0 +1,282 @@
+﻿@{
+
+    T_STORE data = (T_STORE)ViewBag.data;
+    ViewBag.title = "회원조회";
+
+}
+@section scripts{
+    <style>
+        .dvSearchArea {
+            overflow: overlay;
+        }
+
+            .dvSearchArea .dvSearchSet .ui.input {
+                min-height: 25px;
+                min-width: 130px;
+                margin-bottom: 0px;
+                font-size: 1.03rem;
+            }
+    </style>
+    <script type="text/javascript">
+        var PARAM_DATA = {
+            PAGE_SIZE: ($("window").width() < 768 ? 5 : 10)
+            , PAGE_COUNT: 20
+            , PAGE: 1
+            , SORT: "A.UPDATE_DATE DESC"
+        }
+        $(document).ready(function () {
+            var pageCount = ($(window).height() - $(".cd-main-header").outerHeight() + $(".ui.header").outerHeight() + $(".ui.grid.search").outerHeight() + $(".ui.footer").outerHeight() - 450) / 30;
+
+            PARAM_DATA.PAGE_COUNT = Number(Math.floor(pageCount));
+            $("#frmSearch").submit(function (event) {
+                _page = 1;
+                doQuery();
+                event.preventDefault();
+            });
+            ComponentInit();
+
+            doQuery();
+
+            $("#btnClear").click(function () {
+                $("#frmSearch input[type=text]").val("");
+            });
+
+            $("#btnAdd").click(function () {
+                if (!chkStore()) return;
+                location.href = "/account/memberreg";
+            });
+
+        }); //End document.ready
+
+        function chkStore() {
+            if ($("#STORE_CODE").val() == "") {
+                $("#STORE_CODE").closest(".ui.dropdown").addClass("error");
+                return false;
+            }
+            else {
+
+                $("#STORE_CODE").closest(".ui.dropdown").removeClass("error");
+                return true;
+            }
+        }
+
+        function ComponentInit() {
+            $.datetimepicker.setLocale('kr');
+
+            $('#FR_BIRTH').datetimepicker({
+                timepicker: false,
+                format: 'Y.m.d'
+            });
+
+            $('#TO_BIRTH').datetimepicker({
+                timepicker: false,
+                format: 'Y.m.d'
+            });
+
+            $("#dv_detail").accordion();
+        }   //End ComponentInit
+
+        function doQuery(page, order) {//, sortCol, sortOrd
+            if (!chkStore()) return;
+            if (page == undefined || page == null || page < 1) page = 1;
+            PARAM_DATA.PAGE = page;
+
+            var param = BaseCommon.FormInfo.serializeJson(".ui.form");
+
+            param.PAGE_COUNT = PARAM_DATA.PAGE_COUNT;
+            param.PAGE = PARAM_DATA.PAGE;
+
+            if (order != undefined) {
+                PARAM_DATA.SORT = order;
+                param.SORT = order;
+            }
+            else if (order == undefined) {
+                param.SORT = PARAM_DATA.SORT;
+            }
+
+            ajax.GetAjax("/Account/PV_MemberList", JSON.stringify(param), "html", function (result) {
+
+                $("#pvMemberList table tbody").html(result);
+                $.mrc_table.Init("#tbl_memberList", false, order);
+
+                $("#pagination").pagination({
+                    total: Number($("#total").val()), page: PARAM_DATA.PAGE, pagesize: PARAM_DATA.PAGE_SIZE, perpage: PARAM_DATA.PAGE_COUNT
+                    , onPageClick: function (item, page) {
+                        doQuery(page);
+                    }
+                });
+            });
+        }   //End doQuery
+        function mrcGrid_Sort(objName, datasort, orderType) {
+            if (datasort == "" || orderType == "") doQuery(1, "");
+            else doQuery(1, datasort + " " + orderType);
+        }
+
+        function ExcelDown() {
+            if (!chkStore()) return;
+            var params = BaseCommon.FormInfo.serializeJson(".ui.form");
+            var arrData = new Array();
+            $.each(params, function (key, val) {
+                //display the key and value pair
+
+                arrData.push({ name: key, value: val });
+            });
+            BaseCommon.FormInfo.PostSubmit('/Account/MemberExcelReport', arrData);
+        }
+
+        function setMoveData(objVal) {
+            var params;
+            if (objVal == undefined)
+                params = $.mrc_table.GetActiveRowData("#tbl_memberList")[0];
+            else
+                params = objVal;
+            var arrData = new Array();
+            $.each(params, function (key, val) {
+                arrData.push({ name: key, value: val });
+            });
+            return arrData;
+        }
+        function moveAdList() {
+           BaseCommon.FormInfo.PostSubmit('/advertise/index', setMoveData() );
+        }
+        function moveDeviceList() {
+           BaseCommon.FormInfo.PostSubmit('/basic/devicelist',  setMoveData() );
+        }
+
+        function setContactData() {
+            var params = $.mrc_table.GetActiveRowData("#tbl_memberList")[0];
+            params.CONTACT_COMPANY_CODE = params.COMPANY_CODE;
+            params.CONTACT_STORE_CODE = params.STORE_CODE;
+            params.CONTACT_MEMBER_CODE = params.MEMBER_CODE;
+
+            params.COMPANY_CODE = "";
+            params.STORE_CODE = "";
+            params.MEMBER_CODE = "";
+            return params;
+        }
+        function moveContactAdList() {
+            var params = setContactData();
+          
+            BaseCommon.FormInfo.PostSubmit('/advertise/index', setMoveData(params));
+        }
+        function moveContactDeviceList() {
+            var params = setContactData();
+            BaseCommon.FormInfo.PostSubmit('/basic/devicelist', setMoveData(params));
+        }
+    </script>
+}
+<div class="ui vertical stripe segment">
+
+    <form class="ui form search" id="frmSearch">
+        @Html.TitleNavigation()
+
+        <div class="ui grid " style="height:100%;">
+            <div class="one column row">
+                <div class="column">
+                    <table class="ui table search">
+                        <tbody>
+                            <tr>
+                                <td class="title">
+                                    @Html.Semantic_TITLE2("회원명")
+                                </td>
+                                <td class="content">@Html.Semantic_TextBox("USER_NAME", "", SemanticUIHelper.Size.mini, new { @placeholder = "직원명" })</td>
+
+                                <td class="title">
+                                    @Html.Semantic_TITLE2("전화번호")
+                                </td>
+                                <td class="content">
+                                    @Html.Semantic_TextBox("MOBILE", "", SemanticUIHelper.Size.mini, new { @placeholder = "전화번호" })
+                                </td>
+                                <td class="title">
+                                    @Html.Semantic_TITLE2("생년월일")
+                                </td>
+                                <td class="content inline">
+                                    @Html.Semantic_TextBox("FR_BIRTH", "", SemanticUIHelper.Size.mini, new { @placeholder = "시작년월", @style = "text-align:center;", @class = "size80" })&nbsp;~&nbsp;
+                                    @Html.Semantic_TextBox("TO_BIRTH", "", SemanticUIHelper.Size.mini, new { @placeholder = "종료년월", @style = "text-align:center;", @class = "size80" })
+
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="content">
+                                    <span style="color:red">* 모바일배너만 표시합니다.(내배너만 있을 경우 제외)</span>
+                                </td>
+                                <td class="content buttons" colspan="5">
+                                    @Html.Semantic_Button2("btnSearch", "조회", SemanticUIHelper.enButtonType.ToList, SemanticUIHelper.Size.mini, new { @type = "submit" })
+                                    @Html.Semantic_Button2("btnExcel", "엑셀", SemanticUIHelper.enButtonType.Excel, SemanticUIHelper.Size.mini, new { @onclick = "ExcelDown();" })
+                                    @Html.Semantic_Button2("btnAdd", "신규", SemanticUIHelper.enButtonType.New, SemanticUIHelper.Size.mini, new { })
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="one column row">
+                <div class="column" id="pvMemberList">
+                    <table class="mrc-table" id="tbl_memberList">
+                        <thead>
+                            <tr>
+                                @*<th class="center aligned">코드</th>*@
+                                <th class="sort" COLUMN_NAME="USER_NAME" data-sort="A.USER_NAME">이름</th>
+                                <th class="sort" COLUMN_NAME="USER_ID" data-sort="A.USER_ID">아이디</th>
+                                <th class="sort" COLUMN_NAME="MOBILE" data-sort="A.MOBILE" display_size="tablet">핸드폰</th>
+                                <th class="sort" COLUMN_NAME="BIRTH" data-sort="A.BIRTH" display_size="pc">생년월일</th>
+                                <th class="sort" COLUMN_NAME="USER_TYPE_NAME" data-sort="CM.ORDER_SEQ" display_size="tablet">회원권한</th>
+                                <th class="sort" COLUMN_NAME="EMP_AUTH_NAME" data-sort="CM2.ORDER_SEQ" display_size="tablet">권한</th>
+                                <th class="sort" COLUMN_NAME="AD_CNT" data-sort="E.CNT" display_size="tablet">배너수</th>
+                                <th class="sort" COLUMN_NAME="DEVICE_CNT" data-sort="E1.CNT" display_size="tablet">로컬박스수</th>
+                                <th class="sort" COLUMN_NAME="USER_NAME" data-sort="M2.USER_NAME" display_size="pc">수정자</th>
+                                <th class="sort" COLUMN_NAME="UPDATE_DATE" data-sort="A.UPDATE_DATE" display_size="pc">수정일시</th>
+                                <th class="sort hide" COLUMN_NAME="CONTACT_AD_CNT" data-sort="F.CNT" display_size="detail">담당광고수</th>
+                                <th class="sort hide" COLUMN_NAME="CONTACT_DEVICE_CNT" data-sort="F1.CNT" display_size="detail">담당로컬수</th>
+                                <th class="sort hide" COLUMN_NAME="STORE_CODE" data-sort="STORE_CODE">매장코드</th>
+                                <th class="sort hide" COLUMN_NAME="COMPANY_CODE" data-sort="COMPANY_CODE">회사코드</th>
+                                <th class="sort hide" COLUMN_NAME="MEMBER_CODE" data-sort="MEMBER_CODE">회원코드</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="one column row">
+                <div id="pagination" class="ui pagination menu"></div>
+            </div>
+        </div>
+    </form>
+    <div class="ui accordion field">
+        <div class="title">
+            <i class="icon dropdown"></i>
+            화면설명
+        </div>
+        <div class="content field">
+            <div class="ui segment field" style="margin-bottom:3em;position:absolute">
+                <ul class="ui list">
+                    <li>
+                        조회조건
+                        <ul>
+                            <li>생년월일 : 월일만 조회조건에 포함된다</li>
+                        </ul>
+                    </li>
+
+                    <li>
+                        권한
+                        <ul>
+                            <li>관리자 : 등록된 모든 데이터</li>
+
+                            <li>회원 : 자신이 등록한 데이터</li>
+                        </ul>
+                    </li>
+                    <li>
+                        표현
+                        <ul>
+                            <li>배너수 : * 모바일배너만 표시합니다.(내배너만 있을 경우 제외)</li>
+                        </ul>
+                    </li>
+
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+

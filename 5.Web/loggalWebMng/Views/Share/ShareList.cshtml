@@ -1,0 +1,190 @@
+﻿
+@section scripts{
+
+    <script type="text/javascript">
+
+        $(document).ready(function () {
+
+            doQuery(1);
+            
+            $(".ui.form .search input").keyup(function (e) {
+                var code = (e.keyCode ? e.keyCode : e.which);
+                if (code == 13) {
+                    doQuery();
+                }
+            })
+
+        }); //End document.ready
+
+
+        var PARAM_DATA = {
+            PAGE_SIZE: 5
+            , PAGE_COUNT: 10
+            , PAGE: 1
+            , SORT_ORDER: " A.SHARE_CODE DESC "
+        }
+        function doQuery(page, order) {
+
+            PARAM_DATA = $.mrc_table.SetPageSize(PARAM_DATA, ".ui.table.search:eq(1)");
+            var pageCount = ($(window).height() - $(".cd-main-header").outerHeight() + $(".ui.header").outerHeight() + $(".ui.footer").outerHeight()) / 30;
+
+            PARAM_DATA.PAGE_COUNT = Number(Math.floor(pageCount));
+
+            if (page == undefined || page == null || page < 1) page = 1;
+            PARAM_DATA.PAGE = page;
+
+            var param = BaseCommon.FormInfo.serializeJson(".ui.form");
+            param.GUBUN = "@ViewBag.gubun";
+            param.PAGE_COUNT = PARAM_DATA.PAGE_COUNT;
+            param.PAGE = PARAM_DATA.PAGE;
+
+            
+       
+            param = JSON.stringify(param);
+            ajax.GetAjax("/share/pv_sharelist", param, "html", function (result) {
+                $("#dvTable table tbody").html(result);
+                $.mrc_table.Init("#dvTable table.mrc-table", true, order);
+                $("#dvpagination2").show();
+                $("#dvpagination2").pagination({
+                    total: Number($("#dvTable #total").val()), page: PARAM_DATA.PAGE, pagesize: PARAM_DATA.PAGE_SIZE, perpage: PARAM_DATA.PAGE_COUNT
+                    , onPageClick: function (item, page) {
+                        doQuery(page);
+                    }
+                })
+                $("#dvpagination2").css("display", "");
+            });
+        }
+
+        function mrcGrid_Sort(objName, datasort, orderType) {
+            //_sortColumn = datasort;
+            //_sortOrder = orderType;
+            //        _page = 1;
+            if (objName == "#dvTable table.mrc-table") {
+                if (datasort == "" || orderType == "") doQuery(1, "");
+                else doQuery(1, datasort + " " + orderType);
+
+                $("#btnBannerShare").show();
+            }
+            else {
+                if (datasort == "" || orderType == "") doQuery(1, "");
+                else doQuery(1, datasort + " " + orderType);
+                $("#btnBannerShare").hide();
+            }
+        }
+
+        function doDelete() {
+            var params = $.mrc_table.GetCheckedData("#tbList");
+            if (params.length == 0) {
+                $.MessageBox("삭제할 데이터를 선택하세요");
+                return;
+            }
+            $.MessageBox({
+                buttonDone: "예",
+                buttonFail: "아니오",
+                message: "선택한 데이터를 삭제하시겠습니까?"
+            }).done(function () {
+                params = JSON.stringify(params);
+                ajax.GetAjax("/account/MemberBookmarkDelete/", params, "json", function (result) {
+                    if (result.ERROR_MESSAGE != "") {
+                        $.MessageBox(result.ERROR_MESSAGE);
+                    } else {
+                        doQuery(1);
+                    }
+                });
+            });
+        }
+    </script>
+}
+<div class="ui vertical stripe segment">
+    @Html.TitleNavigation()
+    <form class="ui form">
+
+
+        <div class="ui grid">
+            <div class="one column row">
+                <div class="column buttons">
+                    <table class="ui table search">
+                        <tbody>
+                            <tr>
+                                @{
+                                    if (ViewBag.gubun == "banner")
+                                    {
+
+                                        <td class="title">
+                                            @Html.Semantic_TITLE2("배너제목")
+                                        </td>
+                                        <td class="content">
+                                            @Html.Semantic_TextBox("TITLE", "", new { @class = "size150", @placeholder = "배너제목" })
+                                        </td>
+                                    }
+                                    else
+                                    {
+                                        <td class="title">
+                                            @Html.Semantic_TITLE2("로컬박스명")
+                                        </td>
+                                        <td class="content">
+                                            @Html.Semantic_TextBox("DEVICE_NAME", "", new { @class = "size150", @placeholder = "로컬박스명" })
+                                        </td>
+
+                                    }
+                                }
+                                <td class="title">
+                                    @Html.Semantic_TITLE2("보낸사람")
+                                </td>
+                                <td class="content">
+                                    @Html.Semantic_TextBox("SEND_MEMBER_NAME", "", SemanticUIHelper.Size.mini, new { @class = "size150", @placeholder = "보낸사람" })
+                                </td>
+                                <td class="title">
+                                    @Html.Semantic_TITLE2("받은사람")
+                                </td>
+                                <td class="content">
+                                    @Html.Semantic_TextBox("RECEIVE_MEMBER_NAME", "", SemanticUIHelper.Size.mini, new { @class = "size150", @placeholder = "보낸사람" })
+                                </td>
+                                <td class="conetent buttons" colspan="4">  @Html.Semantic_Button2("btnSearch", "조회", SemanticUIHelper.enButtonType.ToList, SemanticUIHelper.Size.medium, new { onclick = "doQuery();" })</td>
+
+</tbody>
+                    </table>
+                  
+                </div>
+            </div>
+            <div class="one column row">
+                <div class="column" id="dvTable">
+                    <table class="mrc-table search" id="tbList">
+                        <thead>
+                            <tr>
+                                <th class="sort" column_name="SHARE_CODE" data-sort="A.SHARE_CODE" style="width:7em;">공유코드</th>
+                                @{
+                                    if (ViewBag.gubun == "banner")
+                                    {
+
+
+                                        <th display_size="mobile" class="sort" data-sort="TITLE">배너제목</th>
+                                    }
+                                    else
+                                    {
+                                        <th display_size="mobile" class="sort" data-sort="DEVICE_NAME">로컬박스명</th>
+                                    }
+                                }
+                                <th display_size="tablet"  class="sort" column_name="SEND_MEMBER_NAME" data-sort="B.USER_NAME">보낸사람</th>
+                                <th display_size="tablet" column_name="RECEVIE_MEMBER_NAMES">받은사람</th>
+
+                                <th display_size="detail" class="sort" data-sort="COMMENT">코멘트</th>
+                                <th display_size="detail" class="sort" data-sort="REMARK">비고</th>
+                                <th display_size="detail" class="sort" data-sort="F.USER_NAME">등록자</th>
+                                <th display_size="detail" class="sort" data-sort="A.INSERT_DATE">등록일</th>
+                                <th display_size="tablet" class="sort" column_name="UPDATE_NAME" data-sort="G.USER_NAME">수정자</th>
+                                <th display_size="tablet" class="sort" column_name="UPDATE_DATE" data-sort="A.USER_DATE">수정일</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="one column row">
+                <div id="dvpagination2" class="ui floated pagination menu"></div>
+            </div>
+        </div>
+
+
+    </form>
+</div>

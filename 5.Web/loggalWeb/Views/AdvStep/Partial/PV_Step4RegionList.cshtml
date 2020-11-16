@@ -1,0 +1,18 @@
+﻿@using ALT.VO.loggal;
+@{
+    List<AD_REGION> list = ViewBag.list;
+    string totCnt = (list.Count() == 0 ? "0" : list.First().TOTAL_ROWCOUNT.ToString());
+    <input type="hidden" id="total3" value="@totCnt" />
+    foreach (AD_REGION data in list)
+    {
+        <tr>
+            <td>@data.CATEGORY_NAME1</td>
+            <td class="hidden">@data.AD_CODE</td>
+            <td class="hidden" >@data.CATEGORY_CODE</td>
+            <td class="hidden">@data.SEARCH_CATEGORY_CODE</td>
+            <td>@data.CATEGORY_NAME2</td>
+            <td>@data.CATEGORY_NAME3</td>
+        </tr>
+    }
+}
+

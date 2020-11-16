@@ -1,0 +1,55 @@
+﻿@using ALT.VO.loggal
+@using ALT.Framework;
+@using ALT.Framework.Data;
+@{
+    List<STEPLIST> list = ViewBag.list;
+    string totCnt = (list.Count() == 0 ? "0" : list.First().TOTAL_ROWCOUNT.ToString());
+    <input type="hidden" id="total" value="@totCnt" />
+    foreach (var data in list)
+    {
+        <tr>
+            <td class="collapsing">
+                <h4 class="ui image header">
+                    <img src="@data.LOGO_URL" class="ui mini rounded image">
+                </h4>
+            </td>
+            <td>
+                <a href="/advstep/step2/@data.AD_CODE">@data.TITLE</a>
+            </td>
+            <td>
+                @data.FR_DATE.ToFormatDate() ~ @data.TO_DATE.ToFormatDate()
+            </td>
+            <td>
+                @{
+                    if (string.IsNullOrEmpty(data.FR_TIME) && string.IsNullOrEmpty(data.TO_TIME))
+                    {
+                        <span>
+                           전일
+                        </span>
+                    }
+                    else
+                    {
+                        <span>
+                            @(data.FR_TIME) ~ @(data.TO_TIME)
+                        </span>
+                    }
+                }
+
+            </td>
+            <td>
+                @data.STATUS_NAME
+            </td>
+            <td>
+                @data.BANNER_TYPE_NAME
+            </td>
+            <td >
+                @data.UPDATE_DATE
+            </td>
+            
+            <td>
+                @Html.Semantic_Button("btnDelete", "삭제", SemanticUIHelper.enButtonType.Del, SemanticUIHelper.Size.mini, new { onclick="fnAdDelete(this," + data.AD_CODE + ")" })
+            </td>
+        </tr>
+    }
+}
+

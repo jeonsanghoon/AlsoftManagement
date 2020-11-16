@@ -1,0 +1,19 @@
+﻿@using ALT.VO.loggal;
+@using ALT.Framework;
+@using ALT.Framework.Data;
+
+@{
+    List<AD_SHARE_SIGNAGE> list = (List<AD_SHARE_SIGNAGE>)ViewBag.list;
+    string totCnt = (list.Count() == 0 ? "0" : list.First().TOTAL_ROWCOUNT.ToString());
+
+    <input type="hidden" id="total" value="@totCnt" />
+    foreach (AD_SHARE_SIGNAGE data in list)
+    {
+        <tr>
+            <td><a href="/basic/signagereg/@data.SIGN_CODE">@(data.SIGN_NAME)</a></td>
+            <td>@(data.COMPANY_NAME)</td>
+
+        </tr>
+    }
+}
+

@@ -1,0 +1,1234 @@
+﻿@{
+    Daum_MapMultiMarker option = new Daum_MapMultiMarker() { ID = "loggalBannermap", MAKER_MAX_COUNT = SessionHelper.LoginInfo.EMPLOYEE.MAKER_MAX_COUNT, bScript = false };
+}
+
+
+<style>
+    /*.ui.fullscreen.modal {
+        width: 96% !important;
+        left: 2.5% !important;
+        margin: 1em auto;
+    }*/
+
+    .tdBannerType .ajax-upload-dragdrop {
+        min-height: 50px;
+    }
+
+    .tdlogo .ajax-upload-dragdrop {
+        min-height: 15em;
+        height: 100%;
+    }
+
+    .ajax-upload-dragdrop {
+        text-align: center;
+        width: 100%;
+        height: 100%;
+        background-repeat: no-repeat;
+        background-position: center center;
+        background-size: contain;
+    }
+
+    div.token-input-dropdown-facebook {
+        position: absolute;
+        width: 400px;
+        background-color: #fff;
+        overflow: hidden;
+        border-left: 1px solid #ccc;
+        border-right: 1px solid #ccc;
+        border-bottom: 1px solid #ccc;
+        cursor: default;
+        font-size: 11px;
+        font-family: Verdana;
+        z-index: 11001;
+    }
+
+    /* Example tokeninput style #2: Facebook style */
+    ul.token-input-list-facebook {
+        overflow: hidden;
+        height: auto !important;
+        height: 1%;
+        width: 100%;
+        border: 1px solid #ccc;
+        cursor: text;
+        font-size: 12px;
+        font-family: Verdana, sans-serif;
+        min-height: 1px;
+        z-index: 0;
+        margin: 0;
+        padding: 0;
+        background-color: #fff;
+        list-style-type: none;
+        clear: left;
+    }
+
+        ul.token-input-list-facebook li input {
+            border: 0;
+            width: 100px;
+            padding: 3px 8px;
+            background-color: white;
+            margin: 2px 0;
+            -webkit-appearance: caret;
+        }
+
+    li.token-input-token-facebook {
+        overflow: hidden;
+        height: auto !important;
+        height: 15px;
+        margin: 3px;
+        padding: 1px 3px;
+        background-color: #eff2f7;
+        color: #000;
+        cursor: default;
+        border: 1px solid #ccd5e4;
+        font-size: 11px;
+        border-radius: 5px;
+        -moz-border-radius: 5px;
+        -webkit-border-radius: 5px;
+        float: left;
+        white-space: nowrap;
+    }
+
+        li.token-input-token-facebook p {
+            display: inline;
+            padding: 0;
+            margin: 0;
+        }
+
+        li.token-input-token-facebook span {
+            color: #a6b3cf;
+            margin-left: 5px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+    li.token-input-selected-token-facebook {
+        background-color: #5670a6;
+        border: 1px solid #3b5998;
+        color: #fff;
+    }
+
+    li.token-input-input-token-facebook {
+        float: left;
+        margin: 0;
+        padding: 0;
+        list-style-type: none;
+    }
+
+    div.token-input-dropdown-facebook {
+        position: absolute;
+        width: 400px;
+        background-color: #fff;
+        overflow: hidden;
+        border-left: 1px solid #ccc;
+        border-right: 1px solid #ccc;
+        border-bottom: 1px solid #ccc;
+        cursor: default;
+        font-size: 11px;
+        font-family: Verdana;
+        z-index: 9999;
+    }
+
+    div.token-input-dropdown-facebook {
+        position: absolute;
+        width: 400px;
+        background-color: #fff;
+    }
+
+        div.token-input-dropdown-facebook p {
+            margin: 0;
+            padding: 5px;
+            font-weight: bold;
+            overflow: hidden;
+            border-left: 1px solid #ccc;
+            border-right: 1px solid #ccc;
+            border-bottom: 1px solid #ccc;
+            cursor: default;
+            font-size: 11px;
+            font-family: Verdana;
+            z-index: 9999;
+            color: #777;
+        }
+
+        div.token-input-dropdown-facebook ul {
+            margin: 0;
+            padding: 0;
+        }
+
+            div.token-input-dropdown-facebook ul li {
+                background-color: #fff;
+                padding: 3px;
+                margin: 0;
+                list-style-type: none;
+            }
+
+                div.token-input-dropdown-facebook ul li.token-input-dropdown-item-facebook {
+                    background-color: #fff;
+                }
+
+                div.token-input-dropdown-facebook ul li.token-input-dropdown-item2-facebook {
+                    background-color: #fff;
+                }
+
+                div.token-input-dropdown-facebook ul li em {
+                    font-weight: bold;
+                    font-style: normal;
+                }
+
+                div.token-input-dropdown-facebook ul li.token-input-selected-dropdown-item-facebook {
+                    background-color: #3b5998;
+                    color: #fff;
+                }
+
+    .popAdplaceList {
+        height: 300px;
+    }
+
+    @@media only screen and (max-width: 767px) {
+        .popAdplaceList {
+            height: 280px;
+        }
+
+        .ui.table:not(.unstackable) tr > td.content.keyword {
+            display: block !important;
+            padding-left: 2em !important;
+        }
+    }
+</style>
+<div class="ui fullscreen modal form popMainInfo" id="popMainInfo" ">
+    <div class="header">배너정보</div>
+    <div class="content">
+        <div class="ui grid">
+            <div class="one column row">
+                <div class="column">
+                    <div id="dvAddMainDetail" class="ui stackable grid">
+                        <div class="ui top attached tabular menu" style="margin-top:1em;" id="tab1">
+                            <a class="item active" data-tab="first">오너박스</a>
+                            <a class="item" data-tab="second">배너전환</a>
+                        </div>
+                        <div class="ui bottom attached tab segment active" data-tab="first">
+                            <div class="sixteen column row dvAddMainContent buttons" style="margin-bottom:1em;">
+                                @Html.Semantic_Button2("btnMainContentDelete", "메인상세삭제", SemanticUIHelper.enButtonType.Del, new { @onclick = "doSaveMainContent(\"D\");" })
+                                @Html.Semantic_Button2("btnMainContentSave", "메인상세저장", SemanticUIHelper.enButtonType.Save, new { @onclick = "doSaveMainContent(\"U\");" })
+                            </div>
+                            <div class="sixteen column row dvAddMainContent maintable">
+                                <table class="ui celled table">
+                                    <tbody>
+                                        <tr>
+                                            <td class="title">
+                                                @Html.Semantic_TITLE2("제목", true)
+                                            </td>
+                                            <td>
+                                                @Html.TextArea("TITLE", "", new { @class = "mini field", @style = "width:100%", @row = "3", @placeholder = "제목을 입력하세요" })
+                                            </td>
+
+                                            <td class="title" rowspan="2">
+
+                                                @Html.Semantic_TITLE2("배너유형", true)
+                                            </td>
+                                            <td class="content tdBannerType" rowspan="2">
+                                                <div class="ui grid" style="width:100%;padding: 1em 1em 1em 0.5em;">
+
+                                                    <div class="eight wide column dvbannerType1">
+                                                        <div class="contentType" style="margin-bottom:0.3em;">
+                                                            @Html.CommonCombo("BANNER_CONTENT_TYPE", new T_COMMON_COND { MAIN_CODE = "A010" }, null, "", new { @class = "size150  field" })
+                                                        </div>
+                                                        <div class="bannerType">
+                                                            @Html.CommonCombo("BANNER_TYPE", new T_COMMON_COND { MAIN_CODE = "A005" }, "1", null, new { @class = "size150 field" })
+                                                        </div>
+                                                    </div>
+                                                    <div class="eight wide column dvbannerType2">
+                                                        <div id="fileuploaderMovie">동영상배너등록</div>
+                                                        <div class="refData1" style="margin-top:0.5em;"><div class="dvMovie"></div> </div>
+                                                    </div>
+                                                    @Html.Semantic_TextBox("REF_DATA1", "", new { @placeholder = "동영상 URL을 등록하세요", @style = "margin-top:0.3em;width:100%;padding-left:0.5rem;" })
+                                                    @Html.Semantic_TextBox("REF_DATA2", "", new { @placeholder = "youtube ID를 등록하세요", @style = "margin-top:0.3em;width:100%;padding-left:0.5rem;" })
+                                                </div>
+                                            </td>
+                                            <td class="title" rowspan="4">@Html.Semantic_TITLE2("썸네일")</td>
+                                            <td rowspan="4" class="tdlogo">
+                                                <div id="fileuploader">파일</div> <!-- Upload -->
+                                                @Html.Hidden("FolderName")
+                                                @Html.Semantic_TextBox("LOGO_URL", "", new { @style = "display:none;width:100%;padding-top:0.5em;" })
+                                            </td>
+                                        </tr>
+                                        <tr>
+
+                                            <td class="title">
+                                                @Html.Semantic_TITLE2("부제목", true)
+                                            </td>
+                                            <td>
+                                                @Html.Semantic_TextBox("SUB_TITLE", "", new { @class = "mini", @row = "3", @placeholder = "부제목을 입력하세요", @style = "width:100%" })
+                                            </td>
+
+                                            <td class="title hide">
+                                                @Html.Semantic_TITLE2("배치순번")
+                                            </td>
+                                            <td class="content hide">
+                                                @Html.Semantic_TextBox("SEQ", "", new { @readonly = "readonly" })
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td class="title">
+                                                @Html.Semantic_TITLE2("일자", true)
+                                            </td>
+                                            <td class="content innertable">
+                                                <table class="ui table ">
+                                                    <tbody>
+                                                        <tr>
+                                                            <td>@Html.Semantic_TextBox("FR_DATE", DateTime.Now.ToString("yyyy.MM.dd"), SemanticUIHelper.Size.mini, new { @placeholder = "시작일", @style = "text-align:center;", @autocomplete = "off", @class = "size100" })</td>
+                                                            <td>@Html.Semantic_TextBox("TO_DATE", "2999.12.31", SemanticUIHelper.Size.mini, new { @placeholder = "종료일", @style = "text-align:center;", @autocomplete = "off", @class = "size100" })</td>
+                                                        </tr>
+                                                    </tbody>
+                                                </table>
+                                            </td>
+                                            <td class="title">
+                                                @Html.Semantic_TITLE2("요청시간대")
+                                            </td>
+                                            <td class="content innertable">
+                                                <table class="ui table">
+                                                    <tbody>
+                                                        <tr>
+                                                            <td>
+                                                                @Html.Semantic_TextBox("FR_TIME", "", SemanticUIHelper.Size.mini, new { @placeholder = "시작시간", @style = "text-align:center;", @class = "size100" })
+                                                            </td>
+                                                            <td>
+                                                                @Html.Semantic_TextBox("TO_TIME", "", SemanticUIHelper.Size.mini, new { @placeholder = "종료시간", @style = "text-align:center;", @class = "size100" })
+                                                            </td>
+                                                            <td style="min-width:50px;">@Html.Semantic_CheckBox("chkAllDay", "전일", "", true)</td>
+                                                        </tr>
+                                                    </tbody>
+                                                </table>
+                                            </td>
+                                        </tr>
+                                        <tr class="hide">
+                                            <td class="title hide">
+                                                @Html.Semantic_TITLE2("배너구분")
+                                            </td>
+                                            <td class="content hide">
+                                                @Html.Hidden("AD_TYPE", "3")
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td class="title">@Html.Semantic_TITLE2("전체공개", true)</td>
+                                            <td class="content">
+                                                @Html.CommonCombo("PUBLIC_TYPE", new T_COMMON_COND { MAIN_CODE = "P003" }, "2", null, new { @class = "size150 field" })
+                                            </td>
+                                            <td class="title">
+                                                @Html.Semantic_TITLE2("화면그룹", true)
+                                            </td>
+                                            <td class="content" id="tdGroupSeq">
+                                                <select id="POP_GROUP_SEQ"></select>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+
+                                <div class="two wide column">
+
+                                </div>
+
+                            </div>
+                            <div class="sixteen column row dvAddMainContent">
+                                @{ TinyMCEOption editor1Option = new TinyMCEOption { MAINFORM_ID = "form1", ID = "CONTENT", CONTENT = "", HEIGHT = "250px", WIDTH = "100%", templeate_Index = new int[] { 0, 2 } };}
+                                @Html.EditorFor(model => new EditTempleateModel().TinyMCE_Editor, new { option = editor1Option })
+                            </div>
+                        </div>
+                        <div class="ui bottom attached tab segment" data-tab="second">
+                            <div class="sixteen column row dvAddAd buttons">
+                                @Html.Hidden("AD_CODE", "0")
+                                @Html.Semantic_Button2("btnAdSave", "저장", SemanticUIHelper.enButtonType.Save, new { @onclick = "doSave_Ad();" })
+                            </div>
+                            <div class="sixteen column row">
+                                <table class="ui celled  table">
+                                    <tbody>
+                                        <tr>
+                                            <td class="title">
+                                                <div class="field">
+                                                    @Html.Semantic_TITLE2("카테고리", true)
+                                                </div>
+                                            </td>
+                                            <td class="content">
+                                                @{
+                                                    var cboCatetgory = new loggalServiceBiz.CategoryService().GetCategoryList(new CATEGORY_COND() { CATEGORY_TYPE = 1 })
+                                                                       .Select(s => new SelectListItem { Value = s.CATEGORY_CODE.ToString(), Text = s.CATEGORY_NAME, Selected = ("" == s.CATEGORY_CODE.ToString() ? true : false) });
+
+                                                }
+                                                @Html.DropDownList("REP_CATEGORY_CODE", cboCatetgory, "-선택-", new { @class = "mini size150 field" })
+                                            </td>
+                                            <td class="title">
+                                                @Html.Semantic_TITLE2("상태", true)
+                                            </td>
+                                            <td class="content">
+                                                @Html.CommonCombo("AD_STATUS", new T_COMMON_COND { MAIN_CODE = "A001" }, "9", null, new { @class = "size150" })
+                                            </td>
+
+                                            <td class="title">
+                                                @Html.Semantic_TITLE2("게시여부")
+                                            </td>
+                                            <td class="content">
+
+                                                @{
+                                                    var cboHide = new List<SelectListItem>();
+                                                    cboHide.Add(new SelectListItem { Value = "0", Text = "예" });
+                                                    cboHide.Add(new SelectListItem { Value = "1", Text = "아니오" });
+
+                                                }
+                                                @Html.Semantic_YesOrNo("AD_HIDE", cboHide, SemanticUIHelper.Size.mini, "1")
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td class="title">
+                                                @Html.Semantic_TITLE2("검색어설정", true)
+                                            </td>
+                                            <td class="content">
+                                                @Html.TextBox("KEYWORDS", "", new { @class = "ui field" })
+                                            </td>
+                                            <td class="title">
+                                                @Html.Semantic_TITLE2("일자", true)
+                                            </td>
+                                            <td class="content innertable">
+                                                <table class="ui table">
+                                                    <tbody>
+                                                        <tr>
+                                                            <td>@Html.Semantic_TextBox("AD_FR_DATE", DateTime.Today.ToString("yyyy.MM.dd"), SemanticUIHelper.Size.mini, new { @placeholder = "시작일", @style = "text-align:center;", @class = "size100" })</td>
+                                                            <td>@Html.Semantic_TextBox("AD_TO_DATE", "29991231", SemanticUIHelper.Size.mini, new { @placeholder = "종료일", @style = "text-align:center;", @class = "size100" })</td>
+                                                        </tr>
+                                                    </tbody>
+                                                </table>
+                                            </td>
+                                            <td class="title">
+                                                @Html.Semantic_TITLE2("요청시간대")
+                                            </td>
+                                            <td class="content innertable">
+                                                <table class="ui table">
+                                                    <tbody>
+                                                        <tr>
+                                                            <td>
+                                                                @Html.Semantic_TextBox("AD_FR_TIME", "", SemanticUIHelper.Size.mini, new { @placeholder = "시작시간", @style = "text-align:center;", @class = "size100" })
+                                                            </td>
+                                                            <td>
+                                                                @Html.Semantic_TextBox("AD_TO_TIME", "", SemanticUIHelper.Size.mini, new { @placeholder = "종료시간", @style = "text-align:center;", @class = "size100" })
+                                                            </td>
+                                                            <td style="min-width:50px;">@Html.Semantic_CheckBox("chkAllAdDay", "전일", "", true)</td>
+                                                        </tr>
+                                                    </tbody>
+                                                </table>
+                                            </td>
+
+
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div class="sixteen column row" style="height:400px;">
+                                <table class="ui unstackable table" id="tbRegionPopup" style="display:none;">
+                                    <tbody>
+                                        <tr>
+                                            <td style="background-color:#f6f5f3" colspan="2"> @Html.Semantic_TITLE2("지역등록")</td>
+                                        </tr>
+                                        <tr class="search">
+
+                                            <td class="content">
+                                                @* @Html.Semantic_TextBox("REGION_SEARCH", "", SemanticUIHelper.Size.mini, new { @placeholder = "지역검색", @style = "min-width:300px;" })*@
+                                                @Html.AutoCompleate(option.ID + "LOCAL_NAME", "/basic/PV_LocalNameList", null, new { @placeholder = "지역을 선택하세요", @style = "max-width:450px" })
+                                            </td>
+                                            <td class="content">
+
+                                                @Html.EditorFor(model => new EditTempleateModel().Kakao_MapMakerCircle_Range, new { optionmap = option })
+                                                @Html.Semantic_Button2("btnOpen", "장소선택", SemanticUIHelper.enButtonType.Normal, new { @onclick = option.ID + "fnDaumMapMultiMaker();" }) <b><span style="color:red"> * 총 @(SessionHelper.LoginInfo.EMPLOYEE.MAKER_MAX_COUNT)곳 중 </span><span style="color:blue" id="spBannerRegionPlaceCnt"> </span> </b>
+                                                @*@Html.Semantic_Button2("btnAdRegionDel", "삭제", SemanticUIHelper.enButtonType.Del, SemanticUIHelper.Size.medium, new { @style = "float:right;padding-bottom:0.5em;", @onclick = "doDelete3();" })*@
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td colspan="2">
+                                                <div class="mrc-fixed-table-container popAdplaceList">
+                                                    <div class="header-bg"></div>
+                                                    <div class="table-wrapper">
+                                                        <table id="tbList3" class="mrc-table">
+                                                            <thead>
+                                                                <tr>
+                                                                    <th column_name="JIBUN_ADDRESS" style="width:300px;">지번주소</th>
+                                                                    <th column_name="AD_CODE" class="center" style="width:300px;" display_size="tablet">위도</th>
+                                                                    <th column_name="LONGITUDE" class="center" style="width:300px;" display_size="tablet">경도</th>
+                                                                    <th column_name="RADIUS" class="center" style="width:300px;" display_size="tablet">반경</th>
+                                                                    <th column_name="ROAD_ADDRESS" display_size="pc" style="width:400px;">도로명주소</th>
+
+                                                                    <th column_name="ZIP_CODE" display_size="pc" class="center" style="width:200px;">우편번호</th>
+                                                                    <th column_name="REGION" display_size="detail">지역</th>
+                                                                    <th column_name="INSERT_NAME" display_size="detail">등록자</th>
+                                                                    <th column_name="INSERT_DATE" display_size="detail">등록일</th>
+                                                                    <th column_name="AD_CODE" class="hide">광고코드</th>
+                                                                    <th column_name="CK_CODE" class="hide">지역카테고리키워드코드</th>
+                                                                    <th column_name="IDX" class="hide">광고장소코드</th>
+                                                                </tr>
+                                                            </thead>
+                                                            <tbody id="tbodyList3"></tbody>
+                                                        </table>
+                                                    </div>
+                                                </div>
+
+                                                @*<center>
+                                                        <div id="dvpagination3" class="ui floated pagination menu" style="margin-top:0.5em;"></div>
+                                                    </center>*@
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="actions">
+        @*@Html.Semantic_Button2("btnpopMainInfoConFirm", "확인", SemanticUIHelper.enButtonType.Save, new { @onclick = "pv_MyBannerSave();" })*@
+        @Html.Semantic_Button2("btnpopMainInfoClose", "닫기", SemanticUIHelper.enButtonType.Normal, new { @onclick = "pv_MyBannerClose();" })
+    </div>
+    <div class="ui error message" style="display:none"></div>
+</div>
+<script type="text/javascript">
+    var _bDeviceMainFirst = true;
+    $("document").ready(function () {
+        FileUpload2();
+    })
+    function FileUpload2() {
+        var params = new Object();
+        params.FolderName = $("#FolderName").val();
+        //uploadfile_Common.js id CHECK_MENU 체크박스 값확인 이벤트있음
+        uploadFile.init("fileuploader", "/Base/FileUpload", params, false, function (result, returntype) {
+            if (returntype == undefined) {
+                if (result.return_msg != undefined && result.return_msg != "") {
+
+                } else {
+                    $("#LOGO_URL").val(result.FULL_URL);
+                    $(".tdlogo .ajax-upload-dragdrop").css("background-image", "url(" + result.FULL_URL + ")");
+                }
+            }
+        });
+
+        uploadFile.init("fileuploaderMovie", "/Base/FileUpload", params, false, function (result, returntype) {
+            if (returntype == undefined) {
+                if (result.return_msg != undefined && result.return_msg != "") {
+
+                } else {
+                    $("#REF_DATA1").val(result.FULL_URL);
+                }
+            }
+        },"movie", false);
+
+
+    }
+    function upLoadFileLoad(id) {
+        if (id == "fileuploaderMovie") {
+            $(".refData1 .ajax-upload-dragdrop span").hide();
+        }
+    }
+    var _deviceCode = 0, _seq = 0;
+    function pv_MyBannerOpen(deviceCode, seq, tblData) {
+
+        _deviceCode = deviceCode;
+        _seq = seq;
+
+       /* if (_seq == -1) {
+            $("#btnMainContentDelete").hide();
+            SemanticUI.Tab.SetActiveTab("#tab1", "first");
+        }
+        else {
+            $("#btnMainContentDelete").show();
+            SemanticUI.Tab.SetActiveTab("#tab1", "second");
+        }*/
+
+
+
+        $("#AD_CODE").val("-1");
+       $(".popMainInfo").modal({
+            detachable: false,
+            onDeny: function () { },
+           onApprove: function () { },
+           onShow: function () {
+
+           }
+
+       }).modal("show");
+
+        $("#SEQ").val(seq);
+        //try {
+        //    if (_seq <= 0) {
+        //        if (tblData != undefined) $("#SEQ").val(Number(tblData[tblData.length - 1].SEQ) + 1);
+        //    }
+        //} catch (e) { }
+
+        //$(".popMainInfo").modal("show");
+
+        popMainInfoInit();
+        doQueryMainContent(deviceCode, seq);
+
+
+        /*if (SemanticUI.Tab.GetActiveTab("#tab1") == "second")
+        {
+            doQuery_Ad();
+        }*/
+        try {
+            setGroupSeqCombo();
+        } catch (e) { }
+    }
+    function setGroupSeqCombo() {
+        try {
+            grouplist = JSON.parse($("#groupListData").val());
+        } catch (e) { }
+        var grouphtml = "<select id='POP_GROUP_SEQ' class='size150'>";
+        $.each(grouplist, function (index, data) {
+            grouphtml += "<option value='" + String(data.GROUP_SEQ) + "'" + ((data.GROUP_SEQ == _groupSeq) ? "selected" : "") + ">" + data.GROUP_NAME + "</option>";
+        });
+        grouphtml += "</select>";
+        $("#tdGroupSeq").html(grouphtml);
+        $("#POP_GROUP_SEQ").dropdown({
+            onChange: function (value, text, obj) {
+                _groupSeq = value;
+            }
+        });
+
+    }
+    function popMainInfoInit() {
+        $('#dvAddMainDetail .ui.tabular.menu  .item').click(function () {
+            if ($(this).attr("data-tab") != undefined) {
+                SemanticUI.Tab.SetActiveTab("#dvAddMainDetail .ui.tabular.menu", $(this).attr("data-tab"));
+
+            }
+        })
+        $('#dvAddMainDetail .ui.tabular.menu .item').tab({
+            onVisible: function (tabPath) {
+                switch (tabPath) {
+                    case "first":
+                        break;
+                    case "second":
+                        doQuery_Ad();
+                        break;
+                    default:
+                        break;
+                }
+
+               // SemanticUI.Tab.SetActiveTab("#dvAddMainDetail .ui.tabular.menu", tabPath);
+            }
+        });
+       // SemanticUI.Tab.SetActiveTab("#dvAddMainDetail .menu .item", "first");
+        $(".tdlogo .ajax-upload-dragdrop").css("background-image", "");
+        $(".ajax-upload-dragdrop").css("background-image", "");
+
+
+        ComponentInit_Date();
+
+        if (!$("#KEYWORDS").prev().hasClass("token-input-list-facebook")) {
+            $("#KEYWORDS").tokenInput("/common/KeywordList?type=2", {
+                tokenValue: "CODE"
+                , propertyToSearch: "NAME"
+            });
+        }
+        $("#REF_DATA1").val("");
+        $("#REF_DATA2").val("");
+        $(".popMainInfo #TITLE").val("");
+
+        $("#SUB_TITLE").val("");
+        $("#LOGO_URL").val("");
+        SemanticUI.ComboBox.SetVal("#BANNER_TYPE", "1");
+        SemanticUI.ComboBox.SetVal("#PUBLIC_TYPE", "2");
+        tinyMCE.SetContent("CONTENT", "");
+        bannerContentTypeChange(SemanticUI.ComboBox.GetVal("#BANNER_CONTENT_TYPE"));
+        $("#BANNER_CONTENT_TYPE").change(function () {
+         bannerContentTypeChange(SemanticUI.ComboBox.GetVal("#BANNER_CONTENT_TYPE"));
+        });
+    }
+    /// 날짜 초기화
+    function ComponentInit_Date() {
+
+        $.datetimepicker.setLocale('kr');
+        $('#AD_FR_DATE').datetimepicker({
+            timepicker: false,
+            format: 'Y.m.d',
+            onShow: function (ct) {
+                if ($('#AD_FR_DATE').val() == "") {
+                    $('#AD_FR_DATE').datetimepicker({ value: null });
+                }
+                this.setOptions({
+                    maxDate: $('#AD_TO_DATE').val() ? jQuery('#AD_TO_DATE').val() : false
+                })
+            }
+        });
+
+
+        $('#AD_TO_DATE').datetimepicker({
+            timepicker: false,
+            format: 'Y.m.d',
+            defaultDate: new Date(),
+            onShow: function (ct) {
+
+                this.setOptions({
+                    minDate: $('#AD_FR_DATE').val() ? jQuery('#AD_FR_DATE').val() : false
+                })
+            }
+        });
+
+        $('#AD_FR_TIME').datetimepicker({
+            datepicker: false,
+            //allowTimes: ['12:00', '13:00', '15:00', '17:00', '17:05', '17:20', '19:00', '20:00'],
+            step: 30,
+            format: 'G:i',
+            onChangeDateTime: function (dp, $input) {
+                if ($('#AD_FR_TIME').val() != "") $('#AD_FR_TIME').parent().removeClass("error");
+                Input.CheckBox.Checked("chkAllAdDay", false);
+            }
+        });
+
+        $('#AD_TO_TIME').datetimepicker({
+            datepicker: false,
+            //allowTimes: ['12:00', '13:00', '15:00', '17:00', '17:05', '17:20', '19:00', '20:00'],
+            step: 30,
+            format: 'G:i',
+            onChangeDateTime: function (dp, $input) {
+                if ($('#AD_TO_TIME').val() != "") $('#AD_TO_TIME').parent().removeClass("error");
+                Input.CheckBox.Checked("chkAllAdDay", false);
+            }
+        });
+
+        $('#AD_FR_DATE').datetimepicker({ value: new Date() });
+        $('#AD_TO_DATE').datetimepicker({ value: new Date() });
+        $("#AD_FR_DATE").val("");
+        $("#AD_TO_DATE").val("");
+
+        $("#AD_FR_TIME").val("");
+        $("#AD_TO_TIME").val("");
+
+        $("#chkAllAdDay").change(function () {
+            if (Input.CheckBox.isChecked("chkAllAdDay")) {
+                $("#AD_FR_TIME").val("");
+                $("#AD_TO_TIME").val("");
+                $("#AD_FR_TIME").parent().removeClass("error")
+                $("#AD_TO_TIME").parent().removeClass("error")
+            }
+
+        })
+
+
+        $('#FR_DATE').datetimepicker({
+            timepicker: false,
+            format: 'Y.m.d',
+
+            onShow: function (ct) {
+                if ($('#FR_DATE').val() == "") {
+                    $('#FR_DATE').datetimepicker({ value: null });
+                }
+                this.setOptions({
+                    maxDate: $('#TO_DATE').val() ? jQuery('#TO_DATE').val() : false
+                })
+            }
+        });
+
+
+        $('#TO_DATE').datetimepicker({
+            timepicker: false,
+            format: 'Y.m.d',
+            defaultDate: new Date(),
+            onShow: function (ct) {
+
+                this.setOptions({
+                    minDate: $('#FR_DATE').val() ? jQuery('#FR_DATE').val() : false
+                })
+            }
+        });
+
+        $('#FR_TIME').datetimepicker({
+            datepicker: false,
+            //allowTimes: ['12:00', '13:00', '15:00', '17:00', '17:05', '17:20', '19:00', '20:00'],
+            step: 30,
+            format: 'G:i',
+            onChangeDateTime: function (dp, $input) {
+                if ($('#FR_TIME').val() != "") $('#FR_TIME').parent().removeClass("error");
+                Input.CheckBox.Checked("chkAllDay", false);
+            }
+        });
+
+        $('#TO_TIME').datetimepicker({
+            datepicker: false,
+            //allowTimes: ['12:00', '13:00', '15:00', '17:00', '17:05', '17:20', '19:00', '20:00'],
+            step: 30,
+            format: 'G:i',
+            onChangeDateTime: function (dp, $input) {
+                if ($('#TO_TIME').val() != "") $('#TO_TIME').parent().removeClass("error");
+                Input.CheckBox.Checked("chkAllDay", false);
+            }
+        });
+
+        $('#FR_DATE').datetimepicker({ value: new Date() });
+        $('#TO_DATE').datetimepicker({ value: new Date() });
+        $("#FR_DATE").val(moment(new Date()).format("YYYY.MM.DD"));
+        $("#TO_DATE").val("2999.12.31");
+
+        $("#FR_TIME").val("");
+        $("#TO_TIME").val("");
+
+        $("#chkAllDay").change(function () {
+            if (Input.CheckBox.isChecked("chkAllDay")) {
+                $("#FR_TIME").val("");
+                $("#TO_TIME").val("");
+                $("#FR_TIME").parent().removeClass("error")
+                $("#TO_TIME").parent().removeClass("error")
+            }
+
+        })
+    }
+
+
+    function doQueryMainContent(deviceCode, seq) {
+
+        var params = new Object();
+        params.DEVICE_CODE = deviceCode;
+        params.SEQ = seq;
+
+        params = JSON.stringify(params);
+        ajax.GetAjax("/Basic/DeviceMainList/", params, "json", function (result) {
+
+            if (result.length == 1) {
+                _bDeviceMainFirst = false;
+
+                $(".popMainInfo #TITLE").val(result[0].TITLE);
+                $("#SUB_TITLE").val(result[0].SUB_TITLE);
+
+                SemanticUI.ComboBox.SetVal("#PUBLIC_TYPE", result[0].PUBLIC_TYPE);
+                $(".tdlogo .ajax-upload-dragdrop").css("background-image", "url(" + result[0].CONTENT + ")");
+                $(".tdlogo .ajax-upload-dragdrop").addClass("logo");
+                $("#AD_CODE").val(result[0].AD_CODE == null ? "" : result[0].AD_CODE);
+                SemanticUI.ComboBox.SetVal("#BANNER_TYPE", result[0].BANNER_TYPE);
+                $("#AD_TYPE").val(result[0].AD_TYPE);
+
+                $("#FR_DATE").val("");
+                $("#TO_DATE").val("");
+                $("#FR_TIME").val("");
+                $("#TO_TIME").val("");
+
+                $('#FR_DATE').datetimepicker({ value: BaseCommon.DateInfo.ConvertDate(result[0].FR_DATE) });
+                $('#TO_DATE').datetimepicker({ value: BaseCommon.DateInfo.ConvertDate(result[0].TO_DATE) });
+                $('#FR_TIME').datetimepicker({ value: BaseCommon.DateInfo.ConvertDateTime(result[0].FR_TIME, result[0].FR_DATE) });
+                $('#TO_TIME').datetimepicker({ value: BaseCommon.DateInfo.ConvertDateTime(result[0].TO_TIME, result[0].TO_DATE) });
+
+                if ($("#FR_TIME").val() == "" && $("#TO_TIME").val() == "") {
+                    Input.CheckBox.Checked("chkAllDay", true);
+                }
+                else {
+                    Input.CheckBox.Checked("chkAllDay", false);
+                }
+
+
+                $("#SEQ").val(result[0].SEQ);
+       
+                $("#popMainInfo #LOGO_URL").val(result[0].CONTENT);
+                if (result[0].CONTENT_DETAIL == null) result[0].CONTENT_DETAIL = "";
+                var sHtml = "";
+                if (result[0].CONTENT_DETAIL.indexOf("id='DEVICE_CODE'") < 0 && result[0].CONTENT_DETAIL.indexOf("id=''DEVICE_CODE''") < 0 && result[0].CONTENT_DETAIL.indexOf('id="DEVICE_CODE"') < 0) {
+
+                    sHtml += "<input id='DEVICE_CODE' name='DEVICE_CODE' type='hidden'  value='" + result[0].DEVICE_CODE + "'/>";
+                }
+                if (result[0].CONTENT_DETAIL.indexOf("id='DEVICE_SEQ'") < 0 && result[0].CONTENT_DETAIL.indexOf("id=''DEVICE_SEQ''") < 0 && result[0].CONTENT_DETAIL.indexOf('id="DEVICE_SEQ"') < 0) {
+                    sHtml += "<input type='hidden' id='DEVICE_SEQ' name='DEVICE_SEQ' value='" + result[0].SEQ + "'/>";
+                }
+                sHtml = result[0].CONTENT_DETAIL + sHtml;
+
+
+                tinyMCE.SetContent("CONTENT", sHtml);
+
+
+
+                SemanticUI.ComboBox.SetVal("#BANNER_CONTENT_TYPE", result[0].CONTENT_TYPE);
+
+                bannerContentTypeChange(result[0].CONTENT_TYPE);
+
+                if (result[0].CONTENT_TYPE == 2) $("#REF_DATA1").val(result[0].REF_DATA1);
+                if(result[0].CONTENT_TYPE == 3) $("#REF_DATA2").val(result[0].REF_DATA1);
+
+
+                doQuery_Ad();
+                doQuery_AD_Place();
+                //  SemanticUI.Tab.isShow("#tab1", "second", true);
+            }
+            else {
+                _bDeviceMainFirst = true;
+            }
+        });
+    }
+    function bannerContentTypeChange(val) {
+        val = Number(val);
+        $("#REF_DATA1").hide();
+        $("#REF_DATA2").hide();
+        $(".bannerType").hide();
+
+        if (val == 2) {
+            $(".dvbannerType2").show();
+            $(".dvbannerType2").removeClass("sixteen").removeClass("wide").removeClass("column");
+            $(".dvbannerType2").addClass("eight").addClass("wide").addClass("column");
+
+            $("#REF_DATA1").show();
+        }
+        else {
+            $(".dvbannerType2").hide();
+            $(".dvbannerType2").removeClass("eight").removeClass("wide").removeClass("column");
+            $(".dvbannerType2").addClass("sixteen").addClass("wide").addClass("column");
+
+            if (val == 3) {
+                  $("#REF_DATA2").show();
+            }
+            else if (val == 1) {
+                //$(".bannerType").show();
+                
+            }
+        }
+    }
+
+    var _deviceMainSaveType = ''
+    //// 메인상세내용 저장
+    function doSaveMainContent(SaveType) {
+
+        _deviceMainSaveType = (_seq > 0 && SaveType == 'D') ? deviceMainSaveType = 'D' : (_seq <= 0) ? "N" : "U";
+
+        if (_deviceMainSaveType == "D") {
+            // Confirm
+            $.MessageBox({
+                buttonDone: "예",
+                buttonFail: "아니오",
+                message: "정말로 삭제하시겠습니까?"
+            }).done(function () {
+                doSaveDeviceMain();
+            }).fail(function () {
+
+            });
+        } else {
+            doSaveDeviceMain();
+        }
+    }
+    function doSaveDeviceMainCheck() {
+        if ($(".popMainInfo #TITLE").val() == "") {
+            $.MessageBox("제목을 입력하여 주시기 바랍니다.").done(function () {
+                $(".popMainInfo #TITLE").focus();
+            });
+            return false;
+        }
+        if ($(".popMainInfo #SUB_TITLE").val() == "") {
+            $.MessageBox("부제목을 입력하여 주시기 바랍니다.").done(function () {
+                $(".popMainInfo #SUB_TITLE").focus();
+            });
+            return false;
+        }
+        if (DatetimePicker.GetVal('#FR_DATE') == "") {
+            $.MessageBox("시작일자를 등록하여 주시기 바랍니다.").done(function () {
+                $('#FR_DATE').focus();
+            });
+            return;
+        }
+        if (DatetimePicker.GetVal('#TO_DATE') == "") {
+            $.MessageBox("종료일자를 등록하여 주시기 바랍니다.").done(function () {
+                $('#TO_DATE').focus();
+            });
+            return;
+        }
+        if ($("#popMainInfo #LOGO_URL").val() == "") {
+            $.MessageBox("썸네일를 등록하여 주시기 바랍니다.").done(function () {
+                try {
+                    $(".ajax-upload-dragdrop.logo input:file").focus();
+                } catch (e) { }
+
+            });
+            return false;
+        }
+
+        if (tinyMCE.GetContent("CONTENT").length < 70) {
+            $.MessageBox("내용을 등록하여 주시기 바랍니다.");
+            return false;
+        }
+        return true;
+    }
+    function doSaveDeviceMain() {
+
+        if (!doSaveDeviceMainCheck()) return;
+        var params = new Object();
+
+        params.DEVICE_CODE = _deviceCode;
+        params.SAVE_TYPE = _deviceMainSaveType;
+        params.SEQ = $("#SEQ").val();
+        //_groupSeq = (_groupSeq == undefined) ? 1 : _groupSeq;
+        params.GROUP_SEQ = SemanticUI.ComboBox.GetVal("#POP_GROUP_SEQ");
+        if (_deviceMainSaveType != "D") {
+            params.CONTENT = $("#popMainInfo #LOGO_URL").val();
+            params.CONTENT_DETAIL = tinyMCE.GetContent("CONTENT");
+            if (params.CONTENT_DETAIL.indexOf("id='DEVICE_CODE'") < 1 && params.CONTENT_DETAIL.indexOf("id=''DEVICE_CODE''") < 1 && params.CONTENT_DETAIL.indexOf('id="DEVICE_CODE"') < 1) {
+                params.CONTENT_DETAIL += "<input id='DEVICE_CODE' name='DEVICE_CODE' type='hidden'  value='" + params.DEVICE_CODE + "'/>";
+            }   
+            if (params.CONTENT_DETAIL.indexOf("id='DEVICE_SEQ'") < 1 && params.CONTENT_DETAIL.indexOf("id=''DEVICE_SEQ''") < 1 && params.CONTENT_DETAIL.indexOf('id="DEVICE_SEQ"') < 1) {
+                params.CONTENT_DETAIL += "<input id='DEVICE_SEQ' name='DEVICE_SEQ' type='hidden'  value='" + params.SEQ + "'/>";
+            }
+            params.FR_DATE = DatetimePicker.GetVal('#AD_FR_DATE');
+            params.TO_DATE = DatetimePicker.GetVal('#AD_TO_DATE');
+             /*광고관련 추가 등록*/
+            params.AD_TYPE = 3; /*T_COMMON A006 : 로컬광고*/
+            params.BANNER_TYPE = 3; /*T_COMMON A005 : 이미지*/
+            params.CONTENT_TYPE = SemanticUI.ComboBox.GetVal("#BANNER_CONTENT_TYPE");
+            if (params.CONTENT_TYPE == "2") { params.REF_DATA1 = $("#REF_DATA1").val(); }
+            else if (params.CONTENT_TYPE == "3") { params.REF_DATA1 = $("#REF_DATA2").val(); }
+            var arrAdInfo = BaseCommon.FormInfo.serializeJson(".maintable *");
+
+            $.extend(params, BaseCommon.FormInfo.serializeJson(".maintable *"));
+
+            _bDeviceMainFirst = false;
+        }
+        params = JSON.stringify(params);
+        ajax.GetAjax("/Basic/DeviceMainSave/", params, "json", function (result) {
+            if (result.ERROR_MESSAGE != "") {
+                $.MessageBox(result.ERROR_MESSAGE);
+            } else {
+                if (_deviceMainSaveType == "D") tinyMCE.SetContent("CONTENT", "");
+                else {
+                    $("#SEQ").val(result.DATA);
+                    _seq = result.DATA;
+                    //
+                    if (!(result.DATA2 == undefined || result.DATA2 == null)) {
+                        $("#AD_CODE").val(result.DATA2);
+                        doQuery_Ad();
+
+                    }
+                }
+                if (_deviceMainSaveType == "D") pv_MyBannerClose();
+
+                bannerView(_groupSeq);
+
+                //SemanticUI.Tab.SetActiveTab("#tab1", "second", true);
+                //if (_deviceMainSaveType == "N") SemanticUI.Tab.SetActiveTab("#dvAddMainDetail .menu .item", "second");
+                $.MessageBox("저장되었습니다.");
+            }
+        });
+    }
+
+
+    function pv_MyBannerClose() {
+        if (!_bDeviceMainFirst) {
+            if ($("#AD_HIDE").val() == "0") {
+                if (!doSave_Ad_Check()) return;
+
+                doSave_Ad();
+            }
+            try {
+                //SemanticUI.Tab.SetActiveTab(".dvAddMain .menu", "second");
+                doQueryMain(_groupSeq);
+            } catch (e) { }
+        }
+        $(".popMainInfo").modal("hide");
+    }
+
+    function doQuery_Ad() {
+
+        if (Number($("#AD_CODE").val()) > 0) {
+            $("#tbRegionPopup").each(function () { $(this).show(); });
+        }
+        else{
+            $("#tbRegionPopup").each(function(){ $(this).hide();});
+        }
+        var params = new Object();
+        params.id = $("#AD_CODE").val();
+
+        var param = JSON.stringify(params);
+        ajax.GetAjax("/advertise/GetAdData", param, "json", function (result) {
+            $("#AD_TYPE").val("3");
+            doQuery_AD_Place();
+            setTimeout('$("#dvAddMainDetail #btnAdSave").focus()', 100);
+            SemanticUI.ComboBox.SetVal( "#AD_STATUS", result.AD_DATA.STATUS );
+            SemanticUI.ComboBox.SetVal( "#REP_CATEGORY_CODE", result.AD_DATA.REP_CATEGORY_CODE );
+
+            tokeninput.ClearData("KEYWORDS");
+            for (var i = 0; i < result.KEYWORD_DATA.length; i++)
+            {
+                tokeninput.AddData("KEYWORDS", result.KEYWORD_DATA[i]);
+            }
+
+            dv_AD_HIDE_Click((result.AD_DATA.HIDE == false ? 0 : 1));
+
+            $("#AD_FR_DATE").val("");
+            $("#AD_TO_DATE").val("");
+            $("#AD_FR_TIME").val("");
+            $("#AD_TO_TIME").val("");
+
+            $('#AD_FR_DATE').datetimepicker({ value: BaseCommon.DateInfo.ConvertDate(result.AD_DATA.FR_DATE) });
+            $('#AD_TO_DATE').datetimepicker({ value: BaseCommon.DateInfo.ConvertDate(result.AD_DATA.TO_DATE) });
+            $('#AD_FR_TIME').datetimepicker({ value: BaseCommon.DateInfo.ConvertDateTime(result.AD_DATA.FR_TIME, result.AD_DATA.FR_DATE) });
+            $('#AD_TO_TIME').datetimepicker({ value: BaseCommon.DateInfo.ConvertDateTime(result.AD_DATA.TO_TIME, result.AD_DATA.TO_DATE) });
+
+            if($("#AD_FR_TIME").val() == "" && $("#AD_TO_TIME").val() == "")
+            {
+                Input.CheckBox.Checked("chkAllAdDay", true);
+            }
+            else{
+                Input.CheckBox.Checked("chkAllAdDay", false);
+            }
+
+        });
+    }
+
+    /* 배너 장소 조회 */
+    function doQuery_AD_Place() {
+
+        if (Number($("#AD_CODE").val()) > 0) {
+            $("#tbRegionPopup").show();
+        }
+
+        var param = new Object();
+        param.AD_CODE = $("#AD_CODE").val() == "" ? "-1" :  $("#AD_CODE").val() ;
+        param = JSON.stringify(param);
+        ajax.GetAjax("/advertise/PV_AdplaceList", param, "html", function (result) {
+            $("#tbList3 tbody#tbodyList3").html(result);
+            $.mrc_table.Init("#tbList3");
+            $.mrc_table.fixedHeder("#tbList3");
+            $("#spBannerRegionPlaceCnt").text(String($.mrc_table.GetData("#tbList3").length) + "곳 선택");
+        });
+    }
+    function doSave_Ad_Check()
+    {
+        if (SemanticUI.ComboBox.GetVal("#REP_CATEGORY_CODE") == "") {
+            $.MessageBox("카테고리를 선택하여 주시기 바랍니다.").done(function () {
+                //$("#REP_CATEGORY_CODE").focus();
+            });
+            return;
+        }
+        if (SemanticUI.ComboBox.GetVal("#AD_STATUS") == "") {
+            $.MessageBox("상태를 선택하여 주시기 바랍니다.");
+            return;
+        }
+
+        if (DatetimePicker.GetVal('#AD_FR_DATE') == "") {
+            $.MessageBox("시작일자를 등록하여 주시기 바랍니다.").done(function () {
+                $('#AD_FR_DATE').focus();
+            });
+            return;
+        }
+        if (DatetimePicker.GetVal('#AD_TO_DATE') == "") {
+            $.MessageBox("종료일자를 등록하여 주시기 바랍니다.").done(function () {
+                $('#AD_TO_DATE').focus();
+            });
+            return;
+        }
+        if (tokeninput.GetData("KEYWORDS").length == 0) {
+            $.MessageBox("검색어를 등록하여 주시기 바랍니다.");
+            return;
+        }
+        return true;
+    }
+    /*배너전환 저장*/
+    function doSave_Ad()
+    {
+        if ($("#AD_HIDE").val() == "0") {
+            if (!doSave_Ad_Check()) return;
+        }
+
+        //
+        var params = BaseCommon.FormInfo.serializeJson(".ui.form");
+        params.CONTENT = tinymce.get('CONTENT').getContent();
+        params.AD_CODE = $("#AD_CODE").val();
+
+        params.FR_DATE = DatetimePicker.GetVal('#AD_FR_DATE');
+        params.TO_DATE = DatetimePicker.GetVal('#AD_TO_DATE');
+        params.FR_TIME = DatetimePicker.GetVal('#AD_FR_TIME', "HH:mm");
+        params.TO_TIME = DatetimePicker.GetVal('#AD_TO_TIME', "HH:mm");
+
+        params.HIDE     = $("#AD_HIDE").val() == "1" ? true : false;
+        params.STATUS   = SemanticUI.ComboBox.GetVal("#AD_STATUS");
+        params.LOGO_URL = $("#LOGO_URL").val()
+
+        params.COMPANY_CODE   = $("#COMPANY_CODE").val();
+        params.STORE_CODE     = $("#STORE_CODE").val();
+        params.MEMBER_CODE    = $("#MEMBER_CODE").val();
+        params.MEMBER_NAME    = $("#MEMBER_NAME").val();
+        params.MOBILE         = $("#MOBILE").val();
+
+        params.DEVICE_CODE = _deviceCode;
+        params.SEQ = _seq;
+
+        params.AD_TYPE = $("#AD_TYPE").val();
+
+        params.REP_CATEGORY_CODE = SemanticUI.ComboBox.GetVal("#REP_CATEGORY_CODE");
+
+        params.KEYWORDS = tokeninput.GetData("KEYWORDS");
+        params = JSON.stringify(params);
+        ajax.GetAjax("/advertise/adSave/", params, "json", function (result) {
+            if (result.ERROR_MESSAGE != "") {
+                $.MessageBox(result.ERROR_MESSAGE);
+            }
+            else {
+                $("#AD_CODE").val(result.DATA);
+               // $.MessageBox("저장되었습니다.").done(function () {
+                    $("#tbRegionPopup").show();
+                    if (_oriAddress != "") {
+                        setAddressAfterAutoRegion(_oriAddress);
+                    }
+               // });
+                doQuery_Ad();
+            }
+        })
+    }
+    var localName = "";
+    function @(option.ID)fnDaumMapMultiMaker()
+    {
+
+        localName = "";
+        var lat=0,lng=0;
+
+        if($("#@(option.ID)LOCAL_NAME").val() != "")
+        {
+            localName = $("#@(option.ID)LOCAL_NAME").val();
+        }
+
+       if (localName != "") {
+            DaumApi.Map.addr2coord((localName == "" ? "서울시" : localName), function (result) {
+                @(option.ID)markerMapPopupOpen(result.lat, result.lng);
+            }, function (result) {
+                @(option.ID)markerMapPopupOpen(0, 0);
+            });
+        }
+        else
+            @(option.ID)markerMapPopupOpen(0, 0);
+    }
+    function @(option.ID)_DaumMapMarker_Callback(rtnList) {
+        doSave_AdPlace(rtnList);
+
+    }
+
+    var grouplist;
+    function @(option.ID)markerMapPopupOpen(lat, lng) {
+        var makerlist = new Array();
+        try {
+            makerlist = JSON.parse($("#tbList3 #markerlist").val());
+        } catch (e) { }
+        var position = { lat: lat, lng: lng };
+        @(option.ID)_MapRangeOpen(makerlist, position);
+//      @(option.ID)_MapOpen(makerlist, lat, lng, localName);
+
+
+    }
+
+
+
+
+    function doSave_AdPlace(rtnList) {
+        var param = new Object();
+        param.AD_CODE = $("#AD_CODE").val() == "" ? "-1" : $("#AD_CODE").val();
+        //
+
+        param.list = rtnList;
+        var param = JSON.stringify(param);
+        ajax.GetAjax("/Advertise/AdPlaceSave/", param, "json", function (result) {
+            if (result.ERROR_MESSAGE != "") {
+                $.MessageBox(result.ERROR_MESSAGE);
+            } else {
+                doQuery_AD_Place(1);
+            }
+        });
+    }
+
+    function doModify_Main(deviceCode, seq) {
+        pv_MyBannerOpen(deviceCode, seq);
+    }
+</script>

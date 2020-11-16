@@ -1,0 +1,13 @@
+구글주소로 좌표 가져오기
+http://maps.googleapis.com/maps/api/geocode/json?address=%EC%84%9C%EC%9A%B8%ED%8A%B9%EB%B3%84%EC%8B%9C%20%EA%B0%95%EB%82%A8%EA%B5%AC%20%EC%82%BC%EC%84%B1%EB%8F%99&language=ko&sensor=false
+ 자바스크립트
+ - http://rimsoft.co.kr/bbs/board.php?bo_table=download&wr_id=25
+
+
+ http://map.naver.com/?menu=route&mapMode=0&lat=37.4832667&lng=126.891032&dlevel=12&slng=126.8881590&slat=37.4810916&elng=126.8936899&elat=37.4846865&pathType=0&dtPathType=2&sText=7ISc7Jq47Yq567OE7IucIOq1rOuhnOq1rCDsmrDrp4jquLggMTYtNQ%3D%3D&eText=7JeQ7J207Iqk7YWM7YGs64W47YOA7JuMMuywqA%3D%3D&enc=b64
+
+
+http://map.naver.com/?menu=route&mapMode=0&query=%EC%84%9C%EC%9A%B8%EC%8B%9C%20%EA%B5%AC%EB%A1%9C%EA%B5%AC%20%EC%9A%B0%EB%A7%88%EA%B8%B8%2016-5&dlevel=12&slng=126.8881590&slat=37.4810916&elng=126.8936899&elat=37.4846865&pathType=0&dtPathType=2
+
+
+https://www.google.co.kr/maps/dir/우마길 16-5/알트소프트

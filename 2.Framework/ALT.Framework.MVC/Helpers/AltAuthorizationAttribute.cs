@@ -1,0 +1,39 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using System.Web;
+using System.Web.Mvc;
+using System.Web.Routing;
+
+namespace ALT.Framework.Mvc.Helpers
+{
+	
+	public class AltAuthorizationAttribute : AuthorizeAttribute
+	{
+		protected override void HandleUnauthorizedRequest(AuthorizationContext context)
+		{
+			if (context.HttpContext.Request.IsAjaxRequest())
+			{
+				var urlHelper = new UrlHelper(context.RequestContext);
+				context.HttpContext.Response.StatusCode = 403;
+				context.Result = new JsonResult
+				{
+					Data = new
+					{
+						Error = "NotAuthorized",
+						LogOnUrl = urlHelper.Action("LogOn", "Account")
+					},
+					JsonRequestBehavior = JsonRequestBehavior.AllowGet
+				};
+			}
+			else
+			{
+				base.HandleUnauthorizedRequest(context);
+			}
+		}
+		
+	}
+	
+}

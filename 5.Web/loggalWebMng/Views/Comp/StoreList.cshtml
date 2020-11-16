@@ -1,0 +1,233 @@
+﻿@{
+	T_STORE_COND data = (T_STORE_COND)ViewBag.data;
+}
+@section scripts{
+
+	<script type="text/javascript">
+
+		$(document).ready(function () {
+			PARAM_DATA = $.mrc_table.SetPageSizeObject({ pageParam: PARAM_DATA, searchObjName: ".ui.table.search" });
+			ComponentInit();
+		}); //End document.ready
+
+		function ComponentInit() {
+			$("input").keyup(function (e) {
+				if (e.keyCode == 13) {
+					doQuery(1);
+				}
+			});
+			doQuery();
+		}
+		var PARAM_DATA = {
+			PAGE_SIZE: 10
+			, PAGE_COUNT: 10
+			, PAGE: 1
+			, SORT: ""
+		}
+
+
+
+		function doQuery(page, order) {
+			if (page == undefined || page == null || page < 1) page = 1;
+			PARAM_DATA.PAGE = page;
+
+			var param = BaseCommon.FormInfo.serializeJson(".ui.form");
+
+			param.PAGE_COUNT = PARAM_DATA.PAGE_COUNT;
+			param.PAGE = PARAM_DATA.PAGE;
+
+			if (order != undefined) {
+				PARAM_DATA.SORT = order;
+				param.SORT = order;
+			}
+			else if (order == undefined) {
+				param.SORT = PARAM_DATA.SORT;
+			}
+
+			param = JSON.stringify(param);
+			ajax.GetAjax("/comp/pv_storelist", param, "html", function (result) {
+				$("#dvTable table tbody").html(result);
+				$.mrc_table.Init(".mrc-table", false, order);
+				$("#dvpagination").show();
+				$("#dvpagination").pagination({
+					total: Number($("#total").val()), page: PARAM_DATA.PAGE, pagesize: PARAM_DATA.PAGE_SIZE, perpage: PARAM_DATA.PAGE_COUNT
+					, onPageClick: function (item, page) {
+						doQuery(page);
+					}
+				})
+				$("#dvpagination").css("display", "");
+
+			});
+		}
+
+		function mrcGrid_Sort(objName, datasort, orderType) {
+			//_sortColumn = datasort;
+			//_sortOrder = orderType;
+
+			//        _page = 1;
+
+			if (datasort == "" || orderType == "") doQuery(1, "");
+			else doQuery(1, datasort + " " + orderType);
+		}
+		function btnNewClick() {
+			location.href = "/comp/storereg?COMPANY_CODE=" + $("#COMPANY_CODE").val();
+		}
+
+		function ExcelDown() {
+			var params = BaseCommon.FormInfo.serializeJson(".ui.form");
+
+			params.SORT = PARAM_DATA.SORT;
+			var arrData = new Array();
+			$.each(params, function (key, val) {
+				//display the key and value pair
+
+				arrData.push({ name: key, value: val });
+			});
+			BaseCommon.FormInfo.PostSubmit('/comp/StoreExcelReport', arrData);
+		}
+		function fnEmployeeList(storeCode) {
+			location.href = "/employee/EmployeeList?STORE_CODE=" + storeCode;
+		}
+	</script>
+}
+<style>
+	.ui.checkbox {
+		margin-top: 0.5em;
+	}
+
+	#dvpagination {
+		margin-top: 1em;
+	}
+</style>
+<div class="ui vertical stripe segment">
+	@Html.TitleNavigation()
+	<form class="ui form">
+		<div class="ui grid " style="height:100%;">
+			@{
+
+				string classComp = SessionHelper.LoginInfo.STORE.STORE_CODE == 1 ? "hide" : "";
+			}
+
+			<div class="one column row">
+				<div class="column">
+					<table class="ui table search">
+						<tbody>
+							<tr>
+								<td class="title" style="width:11%">
+									@Html.Semantic_TITLE2("회사명")
+								</td>
+								<td class="content">
+
+									@Html.CompCombo("COMPANY_CODE", new T_COMPANY_COND(), "", "-회사-", new { @class = "size150 field" })
+								</td>
+								<td class="title" style="width:11%">
+									@Html.Semantic_TITLE2("유형")
+								</td>
+								<td class="content" style="width:22%">
+									@Html.CommonCombo("STORE_TYPE", new T_COMMON_COND { MAIN_CODE = "C004" }, "", "-유형-", new { @class = "size150 field" })
+								</td>
+								<td class="title" style="width:11%">
+									@Html.Semantic_TITLE2("지점명")
+								</td>
+								<td class="content" style="width:22%">
+									@Html.Semantic_TextBox("STORE_NAME", "", SemanticUIHelper.Size.mini, new { @placeholder = "지점명", @class = "field" })
+								</td>
+							</tr>
+							<tr>
+								<td class="title">
+									@Html.Semantic_TITLE2("등록자")
+								</td>
+								<td class="content">
+									@Html.Semantic_TextBox("INSERT_NAME", "", SemanticUIHelper.Size.mini, new { @placeholder = "등록자" })
+								</td>
+
+								<td class="content buttons" colspan="4">
+									@{
+										Daum_MapMultiMarker optionmap = new Daum_MapMultiMarker() { ID = "store", bReadOnly = true, MAKER_MAX_COUNT = SessionHelper.LoginInfo.EMPLOYEE.MAKER_MAX_COUNT, bCircle = false };
+										@Html.EditorFor(model => new EditTempleateModel().Kakao_MapMakerCircle, new { optionmap = optionmap })
+									}
+									@Html.Semantic_Button2("btnOpen", "지도보기", SemanticUIHelper.enButtonType.Normal, new { @onclick = "markerMapPopupOpen();" })
+
+									<script>
+                    function markerMapPopupOpen() {
+                        var params = BaseCommon.FormInfo.serializeJson(".ui.form");
+
+                        params.PAGE_COUNT = 100000;
+                        params = JSON.stringify(params);
+                        ajax.GetAjax("/comp/GetStoreMapList", params, "json", function (result) {
+
+                            //@(optionmap.ID)_DaumMapMaker_Open(result, 0, 0, "", 1, true);
+                            @(optionmap.ID)_MapOpen(result);
+                        });
+
+                    }
+									</script>
+									@Html.Semantic_Button2("btnExcel", "엑셀", SemanticUIHelper.enButtonType.Excel, SemanticUIHelper.Size.medium, new { @onclick = "ExcelDown();" })
+									@Html.Semantic_Button2("btnNew", "신규", SemanticUIHelper.enButtonType.New, SemanticUIHelper.Size.medium, new { @onclick = "btnNewClick();" })
+									@Html.Semantic_Button2("btnSearch", "조회", SemanticUIHelper.enButtonType.ToList, SemanticUIHelper.Size.medium, new { onclick = "doQuery();" })
+
+								</td>
+							</tr>
+						</tbody>
+					</table>
+				</div>
+			</div>
+			<div class="one column row">
+				<div class="column" id="dvTable">
+					<table class="mrc-table" id="tbList">
+						<thead>
+							<tr>
+								<th class="sort center @classComp" column_name="COMPANY_NAME" style="min-width:50px;" data-sort="B.COMPANY_NAME">회사명</th>
+								<th class="sort" column_name="STORE_ID" data-sort="A.STORE_ID">아이디</th>
+								<th class="sort" column_name="STORE_NAME" data-sort="A.STORE_NAME">지점명</th>
+								<th class="sort" column_name="PHONE" display_size="tablet" data-sort="A.PHONE">대표전화</th>
+								<th class="sort" column_name="COMPANY_TYPE_NAME" display_size="tablet" data-sort="B.NAME">유형</th>
+								<th class="sort" display_size="pc" data-sort="C.NAME">상태</th>
+								<th class="sort" display_size="pc" data-sort="A.OWNER_NAME">대표자</th>
+								<th display_size="pc" style="min-width:4em;">근무/비근무</th>
+								<th class="sort" display_size="detail" data-sort="A.ADDRESS1">주소</th>
+								<th display_size="pc">배너</th>
+								<th display_size="pc">로컬박스</th>
+								<th class="sort" display_size="pc" data-sort="E.USER_NAME">수정자</th>
+								<th class="sort" display_size="pc" data-sort="A.UPDATE_DATE">수정일자</th>
+								<th display_size="pc">직원</th>
+							</tr>
+						</thead>
+						<tbody></tbody>
+					</table>
+				</div>
+			</div>
+			<div class="one column row">
+				<div id="dvpagination" class="ui floated pagination menu"></div>
+			</div>
+			<div class="ui accordion field" style="padding-left:1em;">
+				<div class="title">
+					<i class="icon dropdown"></i>
+					화면설명
+				</div>
+				<div class="content field">
+					<div class="ui segment field" style="margin-bottom:3em;position:absolute">
+						<ul class="ui list">
+							<li>
+								<b>배너</b>
+								<ul>
+									<li>내소유(직접관리)/내소유(대행의뢰)/대행</li>
+								</ul>
+							</li>
+
+							<li>
+								<b>로컬박스</b>
+								<ul>
+									<li>내소유(직접관리)/내소유(대행의뢰)/대행</li>
+								</ul>
+							</li>
+
+						</ul>
+					</div>
+				</div>
+			</div>
+
+		</div>
+	</form>
+
+</div>

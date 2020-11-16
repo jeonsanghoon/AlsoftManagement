@@ -1,0 +1,243 @@
+﻿@{
+    STORE_STATISTICS_COND data = (STORE_STATISTICS_COND)ViewBag.data;
+    var comboList = Service.commoneService.GetCommon(new T_COMMON_COND { ADD_COND = "AND MAIN_CODE IN('D003','H002','A006')", HIDE = false });
+}
+@section scripts{
+
+    <script type="text/javascript">
+
+
+        $(document).ready(function () {
+            doQuery();
+            ComponentInit();
+        }); //End document.ready
+
+        function ComponentInit() {
+            $("input").keyup(function (e) {
+                if (e.keyCode == 13) {
+                    doQuery(1);
+                }
+            });
+            $(".mrc-fixed-table-container").css("height", "auto");
+        }
+        var PARAM_DATA = {
+            PAGE_SIZE: 10
+            , PAGE_COUNT: 15
+            , PAGE: 1
+            , SORT: ""
+        }
+
+
+
+        function doQuery(page, order) {
+            if (page == undefined || page == null || page < 1) page = 1;
+            PARAM_DATA.PAGE = page;
+
+            var param = BaseCommon.FormInfo.serializeJson(".ui.form");
+
+            param.PAGE_COUNT = PARAM_DATA.PAGE_COUNT;
+            param.PAGE = PARAM_DATA.PAGE;
+            param.combolist = '@Html.Raw(Json.Encode(comboList))';
+            if (order != undefined) {
+                PARAM_DATA.SORT = order;
+                param.SORT = order;
+            }
+            else if (order == undefined) {
+                param.SORT = PARAM_DATA.SORT;
+            }
+
+            param = JSON.stringify(param);
+            ajax.GetAjax("/store/pv_StoreStatisticsList", param, "html", function (result) {
+                $("#dvTable table tbody").html(result);
+                $.mrc_table.Init(".mrc-table", false, order);
+                $("#dvpagination").show();
+                $("#dvpagination").pagination({
+                    total: Number($("#total").val()), page: PARAM_DATA.PAGE, pagesize: PARAM_DATA.PAGE_SIZE, perpage: PARAM_DATA.PAGE_COUNT
+                    , onPageClick: function (item, page) {
+                        doQuery(page);
+                    }
+                })
+                $("#dvpagination").css("display", "");
+             //   $.mrc_table.fixedHeder("#dvTable table");
+            });
+        }
+
+        function mrcGrid_Sort(objName, datasort, orderType) {
+            //_sortColumn = datasort;
+            //_sortOrder = orderType;
+
+            //        _page = 1;
+
+            if (datasort == "" || orderType == "") doQuery(1, "");
+            else doQuery(1, datasort + " " + orderType);
+        }
+
+        function ExcelDown() {
+            var params = BaseCommon.FormInfo.serializeJson(".ui.form");
+
+            params.SORT = PARAM_DATA.SORT;
+            var arrData = new Array();
+            $.each(params, function (key, val) {
+                //display the key and value pair
+
+                arrData.push({ name: key, value: val });
+            });
+            BaseCommon.FormInfo.PostSubmit('/store/StoreStatisticsExcelReport', arrData);
+        }
+
+    </script>
+}
+<style>
+    .ui.checkbox {
+        margin-top: 0.5em;
+    }
+
+    #dvpagination {
+        margin-top: 1em;
+    }
+
+    .mrc-table .totalColumnHeader {
+        font-weight:bold;
+        color:red;
+    }
+     .mrc-table .totalColumn {
+        
+        color:#f67f7f
+    }
+     .mrc-table .totalColumn2Header {
+        font-weight:bold;
+        color:blue;
+    }
+    .mrc-table .totalColumn2 {
+        
+        color:#4f71f7;
+    }
+</style>
+<div class="ui vertical stripe segment">
+    @Html.TitleNavigation()
+    <form class="ui form">
+        <div class="one column row">
+            <div class="column">
+                <table class="ui  table .search">
+                    <tbody>
+                        <tr>
+                            <td class="title">
+                                @Html.Semantic_TITLE2("배너일자")
+                            </td>
+                            <td class="content frtodate">
+                                @Html.Semantic_TextBox("FR_DATE", DateTime.Now.ToString("yyyy.MM.dd"), SemanticUIHelper.Size.mini, new { @style = "text-align:center;", @placeholder = "시작일자", @class = "size100" })@Html.Semantic_TextBox("TO_DATE", DateTime.Now.ToString("yyyy.MM.dd"), SemanticUIHelper.Size.mini, new { @style = "text-align:center;", @placeholder = "종료일자", @class = "size100" })
+                            </td>
+
+                            <td class="title">
+                                @Html.Semantic_TITLE2("업체명")
+                            </td>
+                            <td class="content">
+                                @Html.Semantic_TextBox("STORE_NAME", data.STORE_NAME, SemanticUIHelper.Size.mini, new { @placeholder = "업체명", @class = "field" })
+                            </td>
+                            <td class="title">
+                                @Html.Semantic_TITLE2("배너또는박스")
+                            </td>
+                            <td class="content">
+                                @Html.Semantic_CheckBox("REG_YN", "등록", "1")
+                            </td>
+                            <td class="title">
+                                @Html.Semantic_TITLE2("로컬박스등록")
+                            </td>
+                            <td class="content ">
+
+                                @Html.CommonCombo("LOCALBOX_REG_YN", new T_COMMON_COND { MAIN_CODE = "B003" }, "", "모두", new { @class = "size100" })
+                            </td>
+                            <td class="title">
+                                @Html.Semantic_TITLE2("배너등록")
+                            </td>
+                            <td class="content">
+                                @Html.CommonCombo("BANNER_REG_YN", new T_COMMON_COND { MAIN_CODE = "B003" }, "", "모두", new { @class = "size100" })
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="buttons" colspan="10">
+                                @*
+                                @{
+                                    Daum_MapMultiMarker optionmap = new Daum_MapMultiMarker() { ID = "store", bReadOnly = true, MAKER_MAX_COUNT = SessionHelper.LoginInfo.EMPLOYEE.MAKER_MAX_COUNT, bCircle = false };
+                                    @Html.EditorFor(model => new EditTempleateModel().Kakao_MapMakerCircle, new { optionmap = optionmap })
+                                }
+                                @Html.Semantic_Button2("btnOpen", "지도보기", SemanticUIHelper.enButtonType.Normal, new { @onclick = "markerMapPopupOpen();" })
+
+                                <script>
+                                    function markerMapPopupOpen() {
+                                        var params = BaseCommon.FormInfo.serializeJson(".ui.form");
+
+                                        params.PAGE_COUNT = 100000;
+                                        params = JSON.stringify(params);
+                                        ajax.GetAjax("/comp/GetStoreMapList", params, "json", function (result) {
+
+                                            //@(optionmap.ID)_DaumMapMaker_Open(result, 0, 0, "", 1, true);
+                                            @(optionmap.ID)_MapOpen(result);
+                                        });
+
+                                    }
+                                </script>
+                                    *@
+                                @Html.Semantic_Button2("btnExcel", "엑셀", SemanticUIHelper.enButtonType.Excel, SemanticUIHelper.Size.medium, new { @onclick = "ExcelDown();" })
+                                @Html.Semantic_Button2("btnSearch", "조회", SemanticUIHelper.enButtonType.ToList, SemanticUIHelper.Size.medium, new { onclick = "doQuery();" })
+
+
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="one column row">
+            <div class="column" id="dvTable">
+
+                <table class="mrc-table" id="tbList">
+                    <thead>
+                        <tr>
+                            <th class="sort" data-sort="A.STORE_NAME">회사명</th>
+                            <th class="sort totalColumn2Header" column_name="LOCALBOX_CNT">로컬박스수</th>
+                            <th class="sort" display_size="tablet" column_name="REAL_CNT">박스수(실제)</th>
+                            <th class="sort" display_size="tablet" column_name="VIRTUAL_CNT">박스수(가상)</th>
+                            @{
+                                foreach (T_COMMON cm1 in comboList.Where(w => w.MAIN_CODE == "H002"))
+                                {
+                                    <th class="sort" display_size="pc" column_name="LOCALBOX_FRAME_TYPE@(cm1.SUB_CODE)_CNT">@(cm1.NAME)(박스)</th>
+                                }
+                                foreach (T_COMMON cm1 in comboList.Where(w => w.MAIN_CODE == "D003"))
+                                {
+                                    <th class="sort" display_size="pc" column_name="DEVICE_TYPE@(cm1.SUB_CODE)">@(cm1.NAME)(박스)</th>
+                                }
+                                <th class="sort totalColumnHeader" column_name="AD_CNT" >배너수</th>
+                                foreach (T_COMMON cm1 in comboList.Where(w => w.MAIN_CODE == "H002"))
+                                {
+                                    <th class="sort" display_size="pc" column_name="AD_FRAME_TYPE@(cm1.SUB_CODE)_CNT">@(cm1.NAME)(배너)</th>
+                                }
+                                foreach (T_COMMON cm1 in comboList.Where(w => w.MAIN_CODE == "A006"))
+                                {
+                                    <th class="sort" display_size="pc" column_name="AD_TYPE@(cm1.SUB_CODE)">@(cm1.NAME)</th>
+                                }
+                            }
+
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+
+            </div>
+        </div>
+
+        <div class="one column row">
+            <div class="column">
+                <div id="dvpagination" class="ui floated pagination menu"></div>
+            </div>
+        </div>
+
+
+        <div class="one column row">
+            <div id="dvpagination" class="ui floated pagination menu"></div>
+        </div>
+
+    </form>
+
+</div>

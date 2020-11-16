@@ -1,0 +1,40 @@
+﻿<!-- Following Menu -->
+@*<div class="ui large top fixed hidden menu">
+        <div class="ui container">
+            <a class="active item">Home</a>
+            <a class="item">Work</a>
+            <a class="item">Company</a>
+            <a class="item">Careers</a>
+            <div class="right menu">
+                <div class="item">
+                    <a class="ui button" href="/home/login">Log in</a>
+                </div>
+                <div class="item">
+                    <a class="ui primary button">Sign Up</a>
+                </div>
+            </div>
+        </div>
+    </div>*@
+
+
+<header class="cd-main-header">
+    <a href="/" class="cd-logo" >@(Global.ConfigInfo.ProjectTitle)&nbsp; <span style="font-size:0.6em; vertical-align:top;">@SessionHelper.LoginInfo.STORE.COMPANY_NAME @(SessionHelper.LoginInfo.STORE.COMPANY_NAME != SessionHelper.LoginInfo.STORE.STORE_NAME ? SessionHelper.LoginInfo.STORE.STORE_NAME : "") </span></a>
+    <a href="/" class="cd-nav-trigger"><span></span></a>
+    <nav class="cd-nav">
+        <ul class="cd-top-nav">
+            @*<li><a href="#0">Tour</a></li>
+                <li><a href="#0">Support</a></li>*@
+            <li class="has-children account">
+                <a href="#0">
+                    @*<img src="~/Common/plugin/images/responsive-sidebar-navigation/cd-avatar.png" alt="avatar">*@
+                    @SessionHelper.LoginInfo.MEMBER.USER_NAME
+                </a>
+
+                <ul>
+                    <li><a href="/account/membermodify">내정보편집</a></li>
+                    <li><a href="javascript:BaseCommon.LoginInfo.doLogOut();">로그 아웃</a></li>
+                </ul>
+            </li>
+        </ul>
+    </nav>
+</header>

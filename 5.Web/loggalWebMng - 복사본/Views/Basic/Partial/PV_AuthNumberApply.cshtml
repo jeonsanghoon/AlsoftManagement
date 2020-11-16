@@ -1,0 +1,102 @@
+﻿<div class="ui tiny modal" id="popAutoNumberApply">
+    <div class="header" >인증번호 등록</div>
+    <div class="content">
+        <p>@Html.Semantic_TextBox("POP_AUTH_NUMBER", "", new { @placeholder="인증번호를 입력하세요", @maxlength="4" })</p>
+    </div>
+    <div class="actions">
+        @Html.Semantic_Button2("btnAutoNumberApply", "적용", SemanticUIHelper.enButtonType.Save, new { @onclick = "AuthNumberSave();" })
+        @Html.Semantic_Button2("btnAutoNumberApply", "닫기", SemanticUIHelper.enButtonType.Normal, new { @onclick = "AuthNumberClose();" })
+    </div>
+</div>
+<script type="text/javascript">
+    var _mode = "list";
+
+    var _authObj = { DEVICE_CODE : null, SIGN_CODE : null, }
+    function AuthNumberClose()
+    {
+        $('#popAutoNumberApply').modal("hide");
+    }
+    function errormessageClear()
+    {
+        $(".ui.error.message").hide();
+        $(".ui.error.message ul").html("");
+    }
+    function AuthNumberSave() {
+        errormessageClear();
+        if($("#POP_AUTH_NUMBER").val() == "" || $("#POP_AUTH_NUMBER").val().length < 4)
+        {
+            $(".ui.error.message ul").append("<li></li>");
+            $.MessageBox("인증번호(4자리)를 입하세요");
+            $("#POP_AUTH_NUMBER").focus();
+            return;
+        }
+        
+        var params = new Object();
+        if ($("#btnAutoNumberApply").hasClass("apply"))
+        {
+            params.SAVE_MODE = "0";
+        } else if ($("#btnAutoNumberApply").hasClass("clear"))
+        {
+            params.SAVE_MODE = "1";
+        }
+        params.DEVICE_CODE = _authObj.DEVICE_CODE;
+        params.SIGN_CODE = _authObj.SIGN_CODE;
+
+        if (_authObj.SIGN_CODE == null || _authObj.SIGN_CODE == undefined) {
+            params.AUTH_TYPE = 2;
+        }
+        else {
+            params.AUTH_TYPE = 3;
+        }
+
+        params.AUTH_NUMBER = $("#POP_AUTH_NUMBER").val();
+        params = JSON.stringify(params);
+        ajax.GetAjax("/Basic/loggalBoxAuthReg/", params, "json", function (result) {
+            if (result.ERROR_MESSAGE != "") {
+                $.MessageBox(result.ERROR_MESSAGE);
+            } else {
+                $('#popAutoNumberApply').modal("hide");
+                if (_mode == "reg") {
+                    location.reload();
+                } else {
+                    doQuery();
+                }
+            }
+        });
+    }
+
+    function popAutoNumberApplyShow(obj)
+    {
+        
+        $("#btnAutoNumberApply").removeClass("apply").removeClass("clear");
+        $("#btnAutoNumberApply").removeClass("red").removeClass("blue")
+        if (obj.AUTH_NUMBER.trim() == "" || obj.AUTH_NUMBER.trim() == "미인증") {
+            Input.TextBox.readOnly('#POP_AUTH_NUMBER', false);
+            $("#POP_AUTH_NUMBER").val("");
+            $("#btnAutoNumberApply").text("등록");
+            $("#btnAutoNumberApply").addClass("blue").addClass("apply");
+            try {
+                Input.TextBox.onlyNumber("#POP_AUTH_NUMBER");
+            } catch (e) { }
+        }
+        else {
+            Input.TextBox.readOnly('#POP_AUTH_NUMBER', true);
+            $("#POP_AUTH_NUMBER").val(obj.AUTH_NUMBER);
+            $("#btnAutoNumberApply").text("초기화");
+            $("#btnAutoNumberApply").addClass("red").addClass("clear");
+        }
+        if (obj.DEVICE_NAME == undefined)
+            $("#popAutoNumberApply .header").text(obj.DEVICE_NAME);
+        else 
+            $("#popAutoNumberApply .header").text(obj.SIGN_NAME);
+        
+        _authObj.DEVICE_CODE = obj.DEVICE_CODE;
+        _authObj.SIGN_CODE = obj.SIGN_CODE;
+
+        if (obj.MODE != undefined && obj.MODE == "reg")
+        {
+            _mode = obj.MODE;
+        }
+        
+    }
+</script>

@@ -1,0 +1,17 @@
+﻿@using ALT.VO.loggal;
+@{
+    List<DEVICE_LIST> list = ViewBag.list;
+    string DISPLAY_MODE = (ViewBag.DISPLAY_MODE == null ? "Normal" : ViewBag.DISPLAY_MODE);
+    string totCnt = (list.Count() == 0 ? "0" : list.First().TOTAL_ROWCOUNT.ToString());
+    <input type="hidden" id="total" value="@totCnt" />
+    foreach (DEVICE_LIST data in list)
+    {
+        <tr>
+            <td><a href="/basic/devicereg/@data.DEVICE_CODE">@data.DEVICE_NAME</a></td>
+            <td data-value="@data.STORE_CODE" class="@(SessionHelper.LoginInfo.STORE_CODE != 1 ? "hide" : "")">@data.STORE_NAME</td>
+            <td>@data.ADDRESS</td>
+            <td class="hide">@data.DEVICE_CODE</td>
+
+        </tr>
+    }
+}

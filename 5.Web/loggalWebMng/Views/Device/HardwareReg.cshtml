@@ -1,0 +1,278 @@
+﻿
+@using ALT.VO.Common;
+@{
+    T_HARDWARE data = (T_HARDWARE)ViewBag.data ?? new T_HARDWARE();
+}
+
+
+@section scripts{
+    <script type="text/javascript">
+        $(document).ready(function () {
+
+            validationinit();
+            $(".ui.form").submit(function (event) {
+
+                if ($(".ui.error.message").css("display") == "none") { doSave(); }
+
+                event.preventDefault();
+
+            });
+            ComponentInit();
+        })
+
+        function ComponentInit() {
+
+            $.datetimepicker.setLocale('kr');
+
+
+            $('#PURCHASE_DATE').datetimepicker({
+                timepicker: false,
+                format: 'Y.m.d'
+            });
+
+        }
+       
+        //// 체크
+        function validationinit() {
+
+            $('.ui.form').form({
+                on: 'change',
+                focusInvalid: true,
+                fields: {
+                    USER_ID: {
+                        identifier: 'HARDWARE_NAME',
+                        rules: [
+                          {
+                              type: 'empty',
+                              prompt: '이름을 입력하여 주시기 바랍니다.' // Please enter a first name
+                          }
+                        ]
+                    },
+                    BRAND: {
+                        identifier: 'BRAND',
+                        rules: [
+                          {
+                              type: 'empty',
+                              prompt: '브랜드를 선택하여 주시기 바랍니다.' // Please enter a first name
+                          }
+                        ]
+                    },
+                    DISPLAY_RESOLUTION: {
+                        identifier: 'DISPLAY_RESOLUTION',
+                        rules: [
+                            {
+                                type: 'empty',
+                                prompt: '해상도를 선택하여 주시기 바랍니다.' // Please enter a first name
+                            }
+                        ]
+                    },
+                    PURCHASE_DATE: {
+                        identifier: 'PURCHASE_DATE',
+                        rules: [
+                            {
+                                type: 'empty',
+                                prompt: '구매일자를 입력하여 주시기 바랍니다.' // Please enter a first name
+                            }
+                        ]
+                    }
+                   
+                }, onFailure: function (event, fields) {
+
+                    //실패후 첫번재 에러 태그에 포커스
+                    SemanticUI.Form.Invalidation.ErrorFocus();
+                }, onInvalid: function (event) {
+                }
+            });
+        }
+        function chkSave() {
+
+          /*
+            if($("#COMPANY_TYPE2").val() == "8" && $("#BUSI_REG_NUMBER").val()=="")
+            {
+                $.MessageBox("기업일 경우 사업자등록번호는 필수 입력입니다.").done(function () {
+                    $("#BUSI_REG_NUMBER").focus();
+                });
+                return false;
+            }
+            */
+            return true;
+        }
+        function doSave(saveType) {
+            saveType = saveType == undefined ? "U" : saveType;
+            if (!chkSave()) return;
+            var params = BaseCommon.FormInfo.serializeJson(".ui.form");
+            params.PURCHASE_DATE = moment(params.PURCHASE_DATE).format("YYYYMMDD");
+            params.SAVE_TYPE = saveType;
+            params.HIDE = (params.USE == "true"? "false" :"true")
+            params = JSON.stringify(params);
+           //
+            ajax.GetAjax("/device/hardwaresave/", params, "json", function (result) {
+                if (result.ERROR_MESSAGE != "") {
+                    $.MessageBox(result.ERROR_MESSAGE).done(function (){});
+                }
+                else {
+                    location.href = "/device/hardwarelist";
+                }
+            });
+        }
+        function MessageBoxConfirm(message) {
+            return $.MessageBox({
+                buttonDone: "예",
+                buttonFail: "아니오",
+                message: message
+            });
+        }
+        function doDelete() {
+            MessageBoxConfirm("정말로 삭제하시겠습니까?").done(function () {
+                doSave("D");
+            }).fail(function () {
+                // Do something in response to No
+            });
+        }
+        function localboxRemove() {
+            $("#tdLocalbox").html("미등록");
+            $("#DEVICE_CODE").val(null);
+   
+        }
+    </script>
+}
+<div class="ui vertical stripe segment">
+    <form class="ui form " onSubmit="return false;" action="/Base/FileUpload" data-ajax="true" data-ajax-mode="replace" data-ajax-update="#dc_goal_placeholder" enctype="multipart/form-data" id="frmUpload" method="post">
+        @Html.TitleNavigation()
+        @Html.Hidden("HARDWARE_CODE", data.HARDWARE_CODE)
+        @Html.Hidden("HARDWARE_HEIGHT", data.HARDWARE_HEIGHT.ToString("1000"))
+        @Html.Hidden("HARDWARE_WIDTH", data.HARDWARE_WIDTH.ToString("1000"))
+        @Html.Hidden("PURCHASE_COMPANY_CODE", data.PURCHASE_COMPANY_CODE.ToString(SessionHelper.LoginInfo.EMPLOYEE.COMPANY_CODE.ToString()))
+        @Html.Hidden("PURCHASE_STORE_CODE", data.PURCHASE_COMPANY_CODE.ToString(SessionHelper.LoginInfo.EMPLOYEE.STORE_CODE.ToString()))
+        @Html.Hidden("PURCHASE_EMPLOYEE_CODE", data.PURCHASE_COMPANY_CODE.ToString(SessionHelper.LoginInfo.EMPLOYEE.MEMBER_CODE.ToString()))
+        @Html.Hidden("CONTACT_COMPANY_CODE", data.CONTACT_COMPANY_CODE.ToString(SessionHelper.LoginInfo.EMPLOYEE.COMPANY_CODE.ToString()))
+        @Html.Hidden("CONTACT_STORE_CODE", data.CONTACT_STORE_CODE.ToString(SessionHelper.LoginInfo.EMPLOYEE.STORE_CODE.ToString()))
+        @Html.Hidden("CONTACT_EMPLOYEE_CODE", data.CONTACT_EMPLOYEE_CODE.ToString(SessionHelper.LoginInfo.EMPLOYEE.MEMBER_CODE.ToString()))
+        <div class="ui stackable grid">
+            <div class="sixteen wide column">
+
+                <table class="ui celled table">
+                    <tbody>
+
+                        <tr>
+                            <td class="title">
+                                @Html.Semantic_TITLE2("이름", true)
+
+                            </td>
+                            <td class="content">
+                                @{
+
+                                }
+                                @Html.Semantic_TextBox("HARDWARE_NAME", data.HARDWARE_NAME, SemanticUIHelper.Size.mini, new { @placeholder = "이름을 입력하세요", @class = "size150" })
+
+                            </td>
+                            <td class="title">
+                                @Html.Semantic_TITLE2("로컬박스")
+                            </td>
+                            <td class="content" id="tdLocalbox">
+                                @Html.Hidden("DEVICE_CODE", data.DEVICE_CODE)
+                                @{
+                                    if (string.IsNullOrEmpty(data.DEVICE_NAME))
+                                    {
+                                        @Html.Semantic_Button2("noReg", "미등록", SemanticUIHelper.enButtonType.Normal, new {  @disabled = "@disabled"})
+                                    }
+                                        else
+                                        {
+                                        <div class="ui action input">
+                                            <script>
+                                                function deviceMove() {
+                                                    location.href='/basic/devicereg3/' + @data.DEVICE_CODE;
+                                                }
+                                            </script>
+                                            @Html.TextBox("DEVICE_NAME", data.DEVICE_NAME, new { @class = "ui field size120", @readonly = "readonly", @onclick = "deviceMove();" })
+                                            @Html.Semantic_Button2("btnDeviceMove", "화면이동", SemanticUIHelper.enButtonType.Normal, new { @onclick = "deviceMove();" })
+                                            @Html.Semantic_Button2("btnDeviceRemove", "초기화", SemanticUIHelper.enButtonType.Del, new { @onclick = "localboxRemove();" })
+                                        </div>
+
+
+                                    }
+                                }
+                            </td>
+                            <td class="title">@Html.Semantic_TITLE2("상태")</td>
+                            @{
+                                List<SelectListItem> list = new List<SelectListItem>();
+                                list.Add(new SelectListItem { Value = "true", Text = "정상", Selected = (data.HIDE == false ? true : false) });
+                                list.Add(new SelectListItem { Value = "false", Text = "비정상", Selected = (data.HIDE == true ? true : false) });
+                            }
+                            <td>@Html.Semantic_YesOrNo("USE", list)</td>
+                        </tr>
+                        <tr>
+                            <td class="title">
+                                @Html.Semantic_TITLE2("구매일자", true)
+                            </td>
+                            <td class="content">
+                                @Html.Semantic_TextBox("PURCHASE_DATE", DateTime.Now.ToString("yyyy.MM.dd"), SemanticUIHelper.Size.mini, new { @style = "text-align:center;", @placeholder = "구매일자", @class = "size150" })
+                            </td>
+                            <td class="title">
+                                @Html.Semantic_TITLE2("브랜드", true)
+                            </td>
+                            <td class="content">
+                                @Html.CommonCombo("BRAND", new T_COMMON_COND { MAIN_CODE = "H004" }, data.BRAND.ToString("7"), "", new { @class = "size150" })
+                            </td>
+                            <td class="title">
+                                @Html.Semantic_TITLE2("모델명")
+                            </td>
+                            <td class="content">
+                                @Html.Semantic_TextBox("MODEL_NAME", data.MODEL_NAME, SemanticUIHelper.Size.mini, new { @style = "text-align:center;", @placeholder = "모델명", @class = "size150" })
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="title">
+                                @Html.Semantic_TITLE2("해상도")
+                            </td>
+                            <td class="content">
+                                @Html.CommonCombo("DISPLAY_RESOLUTION", new T_COMMON_COND { MAIN_CODE = "H003" }, data.DISPLAY_RESOLUTION.ToString(""), "", new { @class = "size150" })
+                            </td>
+
+                            <td class="title">
+                                @Html.Semantic_TITLE2("설명")
+                            </td>
+                            <td class="content" colspan="3">
+                                @Html.Semantic_TextBox("HARDWARE_DESC", data.HARDWARE_DESC, SemanticUIHelper.Size.mini, new { @placeholder = "설명을 입력하세요", @style = "width:100%" })
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="title">
+                                @Html.Semantic_TITLE2("비고")
+                            </td>
+                            <td class="content">
+                                @Html.TextArea("REMARK", data.REMARK, new { @class = "mini", @row = "3", @placeholder = "비고를 입력하세요" })
+                                
+                            </td>
+                            <td class="title">
+                                @Html.Semantic_TITLE2("수정정보")
+                            </td>
+                            <td class="content" colspan="3">
+                                <div class="fields" style="margin-bottom:0.1em">
+                                    <div class="seven wide field">
+                                        <b style="color:blue">등록자 :</b>@data.INSERT_NAME.ToString(SessionHelper.LoginInfo.MEMBER.USER_NAME).Trim() <b style="color:blue">등록일 :</b>@data.INSERT_DATE.ToString(DateTime.Now.ToString())
+                                    </div>
+                                    <div class="seven wide field">
+                                        <b style="color:blue">수정자 :</b>@data.UPDATE_NAME.ToString(SessionHelper.LoginInfo.MEMBER.USER_NAME).Trim() <b style="color:blue">수정일 :</b>@data.UPDATE_DATE.ToString(DateTime.Now.ToString())
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+                <div style="float:right">
+                    @{ 
+                        if (data.HARDWARE_CODE > 0)
+                        {
+                                @Html.Semantic_Button2("btnAdRegionDel", "삭제", SemanticUIHelper.enButtonType.Del, SemanticUIHelper.Size.mini, new { @style = "float:right;", @onclick = "doDelete();" })
+                        }
+                    }
+                    @Html.Semantic_Button2("btnSave", "저장", SemanticUIHelper.enButtonType.Save, SemanticUIHelper.Size.medium, new { @type = "submit" })
+                </div>
+
+            </div>
+        </div>
+
+        <div class="ui error message"></div>
+    </form>
+</div>

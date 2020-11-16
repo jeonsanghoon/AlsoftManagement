@@ -1,0 +1,906 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<DBAgentMultiTemplate  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns="http://altsoft.kr/">
+
+  <DBAgentTemplate TemplateID="GetKeywordKoreanList">
+    <!-- 
+    SqlType : SQL의 형태를 지정합니다.
+      Example 1:<SqlType>FixedSQL</SqlType> 고정적인 SQL을 지원합니다. 
+      Example 2:<SqlType>DynamicSQL</SqlType> 동적인 SQL Type1을 지원합니다.  
+    Description : 해당 SQL의 기능설명을 적습니다.
+    SQLModifier : 해당 SQL의 작성자(수정자)를 적습니다
+    LastModifyDate : 해당 SQL의 마지막 수정일을 적습니다
+    -->
+    <Information>
+      <SqlType>DynamicSQL</SqlType>
+      <Description>광고분류테이블 - 자동완성 조회</Description>
+      <SQLModifier>전상훈</SQLModifier>
+      <LastModifyDate>2016-07-12</LastModifyDate>
+    </Information>
+
+    <TemplateSQL>
+      <!-- FixedSQL : 고정된 SQL이 들어가는 곳입니다. -->
+      <FixedSQL>
+        <![CDATA[ 
+ 
+	SET NOCOUNT ON 
+	/****************************************************/
+	/*자동완성 키워드 조회하기-            SELECT QUERY */ 
+	/****************************************************/
+	SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED 
+    
+  DECLARE @KEYWORD_NAME NVARCHAR(200) = N'{0}'
+  
+  
+  DECLARE @TABLE TABLE
+	(   IDX  INT
+     ,CODE_TYPE NVARCHAR(200)
+	   ,CODE INT
+	   ,NAME NVARCHAR(200)
+	   
+	)
+
+	IF NOT EXISTS(SELECT * FROM T_KEYWORD A 
+                        WHERE KEYWORD_NAME =  @KEYWORD_NAME
+                          #[KEYWORD_TYPE]  
+                          AND HIDE = 0
+	 )
+	 BEGIN
+		  INSERT INTO @TABLE
+	    SELECT DISTINCT A1.IDX, C.NAME, ISNULL(B.KEYWORD_CODE, A1.CODE) AS CODE, ISNULL(B.KEYWORD_NAME, A1.NAME) AS NAME
+		    FROM (SELECT -1 AS IDX, -1 CODE, @KEYWORD_NAME AS NAME) A1
+		    LEFT JOIN T_KEYWORD A 
+		      ON  A.KEYWORD_TYPE = '2' AND A1.NAME = A.KEYWORD_NAME
+		    LEFT JOIN T_KEYWORD B
+		      ON A.BASE_CODE = B.BASE_CODE AND B.IS_SYNONYM = 0
+		    LEFT JOIN T_COMMON C
+		      ON C.MAIN_CODE = 'B006' AND C.SUB_CODE = ISNULL(B.KEYWORD_TYPE,2)
+	 END
+
+	 INSERT INTO @TABLE
+    
+    SELECT TOP 10  ROW_NUMBER() OVER(ORDER BY A.SEARCH_CNT, A.KEYWORD_NAME) AS IDX, B.NAME, A.KEYWORD_CODE AS CODE, A.KEYWORD_NAME AS NAME
+      FROM T_KEYWORD A
+     INNER JOIN T_COMMON B
+	      ON B.MAIN_CODE = 'B006' AND B.SUB_CODE = A.KEYWORD_TYPE
+     WHERE A.BASE_CODE IN (
+	                  SELECT BASE_CODE FROM T_KEYWORD
+		                  WHERE KEYWORD_TYPE = A.KEYWORD_TYPE
+                        AND KEYWORD_NAME LIKE   N'%{0}%'
+                        AND HIDE = 0
+		                    OR ( 1=1
+                             #[KOREAN_WANSUNG]
+                             #[CHOSUNG]
+		                         #[JUNGSUNG]
+		                         #[JONGSUNG]
+                        ) 
+                        #[KEYWORD_UNITS]
+                  ) 
+      #[KEYWORD_TYPE] 
+      AND A.IS_SYNONYM = 0
+      AND A.HIDE = 0
+
+
+	 SELECT * FROM @TABLE
+	SET NOCOUNT OFF 
+
+
+      ]]>
+      </FixedSQL>
+      <DynamicBodys>
+        <Key>KEYWORD_TYPE</Key>
+        <Body> AND A.KEYWORD_TYPE = '{0}' </Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>KOREAN_WANSUNG</Key>
+        <Body> {0} </Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>CHOSUNG</Key>
+        <Body> {0} </Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>JUNGSUNG</Key>
+        <Body>{0}</Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>JONGSUNG</Key>
+        <Body>{0} </Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>KEYWORD_UNITS</Key>
+        <Body>OR KEYWORD_UNITS LIKE '%{0}%' </Body>
+      </DynamicBodys>
+    </TemplateSQL>
+  </DBAgentTemplate>
+  <DBAgentTemplate TemplateID="GetLocalNameList">
+    <!-- 
+    SqlType : SQL의 형태를 지정합니다.
+      Example 1:<SqlType>FixedSQL</SqlType> 고정적인 SQL을 지원합니다. 
+      Example 2:<SqlType>DynamicSQL</SqlType> 동적인 SQL Type1을 지원합니다.  
+    Description : 해당 SQL의 기능설명을 적습니다.
+    SQLModifier : 해당 SQL의 작성자(수정자)를 적습니다
+    LastModifyDate : 해당 SQL의 마지막 수정일을 적습니다
+    -->
+    <Information>
+      <SqlType>DynamicSQL</SqlType>
+      <Description>지역자동완성 조회</Description>
+      <SQLModifier>전상훈</SQLModifier>
+      <LastModifyDate>2016-07-12</LastModifyDate>
+    </Information>
+
+    <TemplateSQL>
+      <!-- FixedSQL : 고정된 SQL이 들어가는 곳입니다. -->
+      <FixedSQL>
+        <![CDATA[ 
+ 
+	SET NOCOUNT ON 
+	/****************************************************/
+	/*지역자동완성 조회 - GetLocalNameList SELECT QUERY */ 
+	/****************************************************/
+	SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED 
+    
+ 
+DECLARE @CATEGORY_TYPE INT = 2
+	   ,@KEYWORD_TYPE INT = 1
+	   ,@TYPE INT =0 ;
+   
+
+DECLARE @TABLE TABLE
+(
+	SEQ FLOAT 
+, CATEGORY_TYPE2 INT
+, LEVEL_DEPTH INT
+  --, CATEGORY_CODE INT
+  --, PARENT_CATEGORY_CODE INT
+  ,LATITUDE   NUMERIC(20,15)
+  ,LONGITUDE  NUMERIC(20,15)
+  , SEARCH_CATEGORY_CODE VARCHAR(100)
+  , NAME VARCHAR(500)
+  , CK_CODE INT
+)
+
+INSERT INTO @TABLE
+SELECT TOP {0} CONVERT(FLOAT, POWER(10,5)) * CONVERT(FLOAT, POWER(10,5)) * CONVERT(FLOAT, A.ORDER_SEQ)   AS SEQ
+     ,A.CATEGORY_TYPE2
+	   ,A.LEVEL_DEPTH     
+   --, A.CATEGORY_CODE, A.PARENT_CATEGORY_CODE
+     , AB.LATITUDE, AB.LONGITUDE   
+     , A.SEARCH_CATEGORY_CODE, A.CATEGORY_NAME AS NAME
+     , AB.CK_CODE
+ FROM T_CATEGORY A
+ INNER JOIN T_CATEGORY_KEYWORD AB
+   ON A.CATEGORY_CODE = AB.CATEGORY_CODE
+INNER JOIN T_KEYWORD A1C
+   ON A1C.KEYWORD_CODE = AB.KEYWORD_CODE
+  AND A1C.KEYWORD_TYPE = @KEYWORD_TYPE
+  AND A1C.IS_SYNONYM = 0
+WHERE A.CATEGORY_TYPE = @CATEGORY_TYPE 
+  --AND A.CATEGORY_TYPE2 IN (2,3)
+  AND A.CATEGORY_TYPE2 = 2
+  AND A.LEVEL_DEPTH = 1
+  #[Condition1]
+	IF @@ROWCOUNT > 0
+	BEGIN 
+	   SET @TYPE = 1
+	END
+
+	INSERT INTO @TABLE
+	SELECT TOP {0}  CONVERT(FLOAT, POWER(10,5)) * CONVERT(FLOAT, POWER(10,5)) * CONVERT(FLOAT, A2.ORDER_SEQ) + CONVERT(FLOAT, A.ORDER_SEQ) * CONVERT(FLOAT, POWER(10,5))   AS SEQ 
+       ,A.CATEGORY_TYPE2
+	     ,A.LEVEL_DEPTH            
+		 --, A.CATEGORY_CODE, A.PARENT_CATEGORY_CODE
+     , AB.LATITUDE, AB.LONGITUDE     
+		 , A.SEARCH_CATEGORY_CODE, A2.CATEGORY_NAME + ' ' + A.CATEGORY_NAME AS NAME
+     , AB.CK_CODE
+	 FROM T_CATEGORY A
+	 INNER JOIN T_CATEGORY_KEYWORD AB
+	   ON A.CATEGORY_CODE = AB.CATEGORY_CODE
+	INNER JOIN T_KEYWORD A1C
+	   ON A1C.KEYWORD_CODE = AB.KEYWORD_CODE
+	  AND A1C.KEYWORD_TYPE = @KEYWORD_TYPE
+	  AND A1C.IS_SYNONYM = 0
+	INNER JOIN T_CATEGORY A2
+	   ON A2.CATEGORY_CODE = A.PARENT_CATEGORY_CODE
+	INNER JOIN T_CATEGORY_KEYWORD A2B
+	   ON A2.CATEGORY_CODE = A2B.CATEGORY_CODE
+	INNER JOIN T_KEYWORD A2C 
+	   ON A2C.KEYWORD_CODE = A2B.KEYWORD_CODE
+	  AND A2C.KEYWORD_TYPE = @KEYWORD_TYPE
+	  AND A2C.IS_SYNONYM = 0
+	WHERE A.CATEGORY_TYPE = @CATEGORY_TYPE 
+	  --AND A.CATEGORY_TYPE2 IN (2,3)
+    AND A.CATEGORY_TYPE2 = 2
+	  AND A.LEVEL_DEPTH = 2
+    #[Condition2]
+
+	IF @@ROWCOUNT > 0
+	BEGIN 
+	   SET @TYPE = @TYPE + 1
+	END
+
+
+IF @TYPE <= 1
+BEGIN
+   INSERT INTO @TABLE
+	SELECT TOP 15 CONVERT(FLOAT, POWER(10,5)) * CONVERT(FLOAT, POWER(10,5)) * CONVERT(FLOAT, C.ORDER_SEQ) + CONVERT(FLOAT, A2.ORDER_SEQ) * CONVERT(FLOAT, POWER(10,5)) + CONVERT(FLOAT, A.ORDER_SEQ) * 1    AS SEQ 
+     ,A.CATEGORY_TYPE2
+	   ,A.LEVEL_DEPTH          
+	--,  A.CATEGORY_CODE, A.PARENT_CATEGORY_CODE
+     , AB.LATITUDE, AB.LONGITUDE
+	  , A.SEARCH_CATEGORY_CODE, C.CATEGORY_NAME + ' ' + A2.CATEGORY_NAME + ' ' + A.CATEGORY_NAME AS NAME
+    , AB.CK_CODE
+	 FROM T_CATEGORY A
+	 INNER JOIN T_CATEGORY_KEYWORD AB
+	   ON A.CATEGORY_CODE = AB.CATEGORY_CODE
+	INNER JOIN T_KEYWORD A1C
+	   ON A1C.KEYWORD_CODE = AB.KEYWORD_CODE
+	  AND A1C.KEYWORD_TYPE = @KEYWORD_TYPE
+	  AND A1C.IS_SYNONYM = 0
+	INNER JOIN T_CATEGORY A2
+	   ON A2.CATEGORY_CODE = A.PARENT_CATEGORY_CODE
+	INNER JOIN T_CATEGORY_KEYWORD A2B
+	   ON A2.CATEGORY_CODE = A2B.CATEGORY_CODE
+	INNER JOIN T_KEYWORD A2C 
+	   ON A2C.KEYWORD_CODE = A2B.KEYWORD_CODE
+	  AND A2C.KEYWORD_TYPE = @KEYWORD_TYPE
+	  AND A2C.IS_SYNONYM = 0
+	INNER JOIN T_CATEGORY C
+	   ON C.CATEGORY_CODE = A2.PARENT_CATEGORY_CODE
+	INNER JOIN T_CATEGORY_KEYWORD A3B
+	   ON C.CATEGORY_CODE = A3B.CATEGORY_CODE
+	INNER JOIN T_KEYWORD A3C 
+	   ON A3C.KEYWORD_CODE = A3B.KEYWORD_CODE
+	  AND A3C.KEYWORD_TYPE = @KEYWORD_TYPE
+	  AND A3C.IS_SYNONYM = 0
+	WHERE A.CATEGORY_TYPE = @CATEGORY_TYPE 
+	  --AND A.CATEGORY_TYPE2 IN (2,3)
+    AND A.CATEGORY_TYPE2 = 2
+	  AND A.LEVEL_DEPTH = 3
+	  #[Condition3]
+    
+    
+END
+
+
+
+SELECT TOP {0} REF_DATA2, SEQ, SEARCH_CATEGORY_CODE AS SEARCH_CODE, A.NAME, A.LATITUDE, A.LONGITUDE  , A.CK_CODE
+  FROM @TABLE A
+  INNER JOIN T_COMMON B
+     ON B.MAIN_CODE = 'B005' AND A.CATEGORY_TYPE2 = B.SUB_CODE
+ORDER BY A.LEVEL_DEPTH, B.REF_DATA2, A.SEQ
+  
+  
+
+
+	SET NOCOUNT OFF 
+    ]]>
+      </FixedSQL>
+
+      <DynamicBodys>
+        <Key>Condition1</Key>
+        <Body> {0} </Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>Condition2</Key>
+        <Body>{0}</Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>Condition3</Key>
+        <Body>{0} </Body>
+      </DynamicBodys>
+    </TemplateSQL>
+  </DBAgentTemplate>
+
+  <DBAgentTemplate TemplateID="GetCategoryKeywordList">
+    <!-- 
+    SqlType : SQL의 형태를 지정합니다.
+      Example 1:<SqlType>FixedSQL</SqlType> 고정적인 SQL을 지원합니다. 
+      Example 2:<SqlType>DynamicSQL</SqlType> 동적인 SQL Type1을 지원합니다.  
+    Description : 해당 SQL의 기능설명을 적습니다.
+    SQLModifier : 해당 SQL의 작성자(수정자)를 적습니다
+    LastModifyDate : 해당 SQL의 마지막 수정일을 적습니다
+    -->
+    <Information>
+      <SqlType>DynamicSQL</SqlType>
+      <Description>광고분류테이블 - 자동완성 조회</Description>
+      <SQLModifier>전상훈</SQLModifier>
+      <LastModifyDate>2016-07-12</LastModifyDate>
+    </Information>
+
+    <TemplateSQL>
+      <!-- FixedSQL : 고정된 SQL이 들어가는 곳입니다. -->
+      <FixedSQL>
+        <![CDATA[ 
+ 
+	SET NOCOUNT ON 
+	/****************************************************/
+	/* 카테고리별 키워드 리스트 -   GetCategoryKeywordList         SELECT QUERY */ 
+	/****************************************************/
+	SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED 
+    
+  SELECT  B.CK_CODE AS CODE
+       , B.KEYWORD_NAME AS NAME 
+    FROM T_CATEGORY A
+   INNER JOIN T_CATEGORY_KEYWORD B
+      ON A.CATEGORY_CODE = B.CATEGORY_CODE
+   INNER JOIN T_KEYWORD C
+      ON B.KEYWORD_CODE = C.KEYWORD_CODE
+   WHERE 1=1
+     #[CATEGORY_CODE]
+     #[SEARCH_CATEGORY_CODE]
+     #[CATEGORY_TYPE]
+     #[LEVEL_DEPTH]
+     #[KEYWORD_TYPE]
+    ORDER BY C.SEARCH_CNT DESC
+	SET NOCOUNT OFF 
+
+
+      ]]>
+      </FixedSQL>
+      <DynamicBodys>
+        <Key>CATEGORY_CODE</Key>
+        <Body>  AND A.CATEGORY_CODE = '{0}' </Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>SEARCH_CATEGORY_CODE</Key>
+        <Body>  AND A.SEARCH_CATEGORY_CODE = '{0}' </Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>CATEGORY_TYPE</Key>
+        <Body>  AND A.CATEGORY_TYPE = {0} /*default : 2 지역*/ </Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>LEVEL_DEPTH</Key>
+        <Body>  AND A.LEVEL_DEPTH = {0} /*default : 1 최상위레벨*/ </Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>KEYWORD_TYPE</Key>
+        <Body>  AND C.KEYWORD_TYPE = {0} /*default : 2 카테고리 하위 키워드*/ </Body>
+      </DynamicBodys>
+    </TemplateSQL>
+  </DBAgentTemplate>
+
+
+  <DBAgentTemplate TemplateID="GetCategoryKeywordList2">
+    <!-- 
+    SqlType : SQL의 형태를 지정합니다.
+      Example 1:<SqlType>FixedSQL</SqlType> 고정적인 SQL을 지원합니다. 
+      Example 2:<SqlType>DynamicSQL</SqlType> 동적인 SQL Type1을 지원합니다.  
+    Description : 해당 SQL의 기능설명을 적습니다.
+    SQLModifier : 해당 SQL의 작성자(수정자)를 적습니다
+    LastModifyDate : 해당 SQL의 마지막 수정일을 적습니다
+    -->
+    <Information>
+      <SqlType>DynamicSQL</SqlType>
+      <Description>광고분류테이블 - 자동완성 조회(CODE = KEYWORDWORD_CODE로 바인딩)</Description>
+      <SQLModifier>전상훈</SQLModifier>
+      <LastModifyDate>2016-07-12</LastModifyDate>
+    </Information>
+
+    <TemplateSQL>
+      <!-- FixedSQL : 고정된 SQL이 들어가는 곳입니다. -->
+      <FixedSQL>
+        <![CDATA[ 
+ 
+	SET NOCOUNT ON 
+	/****************************************************/
+	/* 카테고리별 키워드 리스트 (CODE = KEYWORDWORD_CODE로 바인딩)-   GetCategoryKeywordList2        SELECT QUERY */ 
+	/****************************************************/
+	SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED 
+    
+  SELECT  B.KEYWORD_CODE AS CODE
+       , B.KEYWORD_NAME AS NAME 
+    FROM T_CATEGORY A
+   INNER JOIN T_CATEGORY_KEYWORD B
+      ON A.CATEGORY_CODE = B.CATEGORY_CODE
+   INNER JOIN T_KEYWORD C
+      ON B.KEYWORD_CODE = C.KEYWORD_CODE
+   WHERE 1=1
+     #[CATEGORY_CODE]
+     #[SEARCH_CATEGORY_CODE]
+     #[CATEGORY_TYPE]
+     #[LEVEL_DEPTH]
+     #[KEYWORD_TYPE]
+    ORDER BY C.SEARCH_CNT DESC
+	SET NOCOUNT OFF 
+
+
+      ]]>
+      </FixedSQL>
+      <DynamicBodys>
+        <Key>CATEGORY_CODE</Key>
+        <Body>  AND A.CATEGORY_CODE = '{0}' </Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>SEARCH_CATEGORY_CODE</Key>
+        <Body>  AND A.SEARCH_CATEGORY_CODE = '{0}' </Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>CATEGORY_TYPE</Key>
+        <Body>  AND A.CATEGORY_TYPE = {0} /*default : 2 지역*/ </Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>LEVEL_DEPTH</Key>
+        <Body>  AND A.LEVEL_DEPTH = {0} /*default : 1 최상위레벨*/ </Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>KEYWORD_TYPE</Key>
+        <Body>  AND C.KEYWORD_TYPE = {0} /*default : 2 카테고리 하위 키워드*/ </Body>
+      </DynamicBodys>
+    </TemplateSQL>
+  </DBAgentTemplate>
+
+  <DBAgentTemplate TemplateID="adDeviceKeywordSave">
+    <!-- 
+    SqlType : SQL의 형태를 지정합니다.
+      Example 1:<SqlType>FixedSQL</SqlType> 고정적인 SQL을 지원합니다. 
+      Example 2:<SqlType>DynamicSQL</SqlType> 동적인 SQL Type1을 지원합니다.  
+    Description : 해당 SQL의 기능설명을 적습니다.
+    SQLModifier : 해당 SQL의 작성자(수정자)를 적습니다
+    LastModifyDate : 해당 SQL의 마지막 수정일을 적습니다
+    -->
+    <Information>
+      <SqlType>DynamicSQL</SqlType>
+      <Description>광고키워드 저장</Description>
+      <SQLModifier>전상훈</SQLModifier>
+      <LastModifyDate>2016-09-01</LastModifyDate>
+    </Information>
+
+    <TemplateSQL>
+      <!-- FixedSQL : 고정된 SQL이 들어가는 곳입니다. -->
+      <FixedSQL>
+        <![CDATA[
+        /********************************/
+        /* adDeviceKeywordSave           */
+        /********************************/
+	SET NOCOUNT ON 
+DECLARE @AD_CODE BIGINT = CASE WHEN ISNUMERIC('{0}') = 1 THEN '{0}' ELSE NULL END
+       ,@DEVICE_CODE INT = CASE WHEN ISNUMERIC('{1}') = 1 THEN '{1}' ELSE NULL END
+       ,@CODE INT = {2}
+       ,@NAME NVARCHAR(200) = N'{3}'
+	     ,@BASE_CODE INT 
+	     ,@REG_CODE INT  = N'{4}'
+
+
+IF @CODE = -1
+BEGIN
+	SELECT @CODE = KEYWORD_CODE FROM T_KEYWORD
+	WHERE KEYWORD_TYPE = 2 AND KEYWORD_NAME = @NAME
+	
+	IF @@ROWCOUNT = 0
+	BEGIN
+    SELECT @BASE_CODE = ISNULL(MAX(BASE_CODE),0) + 1  FROM T_KEYWORD
+		INSERT INTO T_KEYWORD
+		(	  KEYWORD_TYPE                  		, BASE_CODE                     		, IS_SYNONYM                    		
+			, SEQ                           		, KEYWORD_NAME                  		, KEYWORD_DESC                  		
+			, REMARK                        		, SEARCH_CNT                    		, HIDE                          		
+			, INSERT_CODE                   		, INSERT_DATE                   		, UPDATE_CODE                   		, UPDATE_DATE                   		
+			
+		)
+		SELECT '2' AS KEYWORD_TYPE      , @BASE_CODE        , 0 AS IS_SYNONYM       
+		      , 1 AS REMARK             , @NAME             , @NAME                 		                 		
+			  , null                    , 0 AS SEARCH_CNT     , 0 HIDE                         		
+			  , @REG_CODE               , GETDATE()                 	
+			  , @REG_CODE               , GETDATE()
+	   SELECT @CODE = IDENT_CURRENT('T_KEYWORD')
+	END
+END
+
+IF NOT EXISTS (SELECT * FROM T_SEARCH_KEYWORD
+                WHERE ISNULL(AD_CODE,0) = ISNULL(@AD_CODE,0)
+                  AND KEYWORD_CODE = @CODE
+				          AND ISNULL(DEVICE_CODE,0) = ISNULL(@DEVICE_CODE,0)
+			        ) 
+BEGIN              
+  INSERT INTO T_SEARCH_KEYWORD
+  (AD_CODE, DEVICE_CODE,  KEYWORD_CODE, INSERT_CODE, INSERT_DATE, UPDATE_CODE, UPDATE_DATE)
+  SELECT @AD_CODE, @DEVICE_CODE, @CODE, @REG_CODE, GETDATE(), @REG_CODE, GETDATE()
+END
+
+SET NOCOUNT OFF
+
+  ]]>
+      </FixedSQL>
+    </TemplateSQL>
+  </DBAgentTemplate>
+
+  <DBAgentTemplate TemplateID="GetKeywordPageList">
+    <!-- 
+    SqlType : SQL의 형태를 지정합니다.
+      Example 1:<SqlType>FixedSQL</SqlType> 고정적인 SQL을 지원합니다. 
+      Example 2:<SqlType>DynamicSQL</SqlType> 동적인 SQL Type1을 지원합니다.  
+    Description : 해당 SQL의 기능설명을 적습니다.
+    SQLModifier : 해당 SQL의 작성자(수정자)를 적습니다
+    LastModifyDate : 해당 SQL의 마지막 수정일을 적습니다
+    -->
+    <Information>
+      <SqlType>DynamicSQL</SqlType>
+      <Description>키워드 조회</Description>
+      <SQLModifier>전상훈</SQLModifier>
+      <LastModifyDate>2017-02-02</LastModifyDate>
+    </Information>
+
+    <TemplateSQL>
+      <!-- FixedSQL : 고정된 SQL이 들어가는 곳입니다. -->
+      <FixedSQL>
+        <![CDATA[ 
+		SET NOCOUNT ON 
+    SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED 
+	/*******************************************************/
+	/* 키워드 테이블 - T_KEYWORD 조회 -  SELECT PAGE QUERY */ 
+	/*******************************************************/
+   DECLARE  @PAGE_COUNT INT = {0}
+           , @PAGE      INT = {1}
+           , @CATEGORY_CODE VARCHAR(300) = '{2}';
+
+    WITH T_TABLE AS
+    (
+      SELECT 
+            ROW_NUMBER() OVER(ORDER BY {3}) AS ROW_SEQ 
+	      , A.KEYWORD_CODE
+	      , A.KEYWORD_TYPE
+	      , A.BASE_CODE
+	      , A.IS_SYNONYM
+	      , A.SEQ
+	      , A.KEYWORD_NAME
+	      , A.KEYWORD_DESC
+	      , A.LATITUDE
+	      , A.LONGITUDE
+	      , A.CHOSUNG
+	      , A.JUNGSUNG
+	      , A.JONGSUNG
+	      , A.KEYWORD_UNITS
+	      , A.STATUS
+	      , A.REMARK
+	      , A.SEARCH_CNT
+	      , A.HIDE
+	      , A.INSERT_CODE
+	      , A.INSERT_DATE
+	      , A.UPDATE_CODE
+        , B.USER_NAME AS UPDATE_NAME
+	      , A.UPDATE_DATE  
+        , 
+            ISNULL(STUFF(( SELECT ',' + P.KEYWORD_NAME
+                     FROM T_KEYWORD P
+                     WHERE (P.BASE_CODE = A.BASE_CODE)
+			           AND P.IS_SYNONYM = 1
+                     FOR XML PATH ('')),1,1,'') ,'') AS SYNONYM_NAMES
+         , CONVERT(BIT, CASE WHEN C.KEYWORD_CODE IS NULL THEN 0 ELSE 1 END) AS IS_CATEGORY
+        FROM T_KEYWORD A
+       INNER JOIN T_MEMBER B
+          ON A.UPDATE_CODE = B.MEMBER_CODE
+       LEFT JOIN (SELECT KEYWORD_CODE FROM T_CATEGORY_KEYWORD
+                  WHERE CATEGORY_CODE = @CATEGORY_CODE
+                  ) C
+              ON A.KEYWORD_CODE = C.KEYWORD_CODE
+       WHERE 1=1
+         #[KEYWORD_CODE]
+         #[KEYWORD_TYPE]
+         #[BASE_CODE]
+         #[IS_SYNONYM]
+         #[KEYWORD_NAME]
+         #[STATUS]
+         #[HIDE]
+         
+		 )
+  SELECT *, (SELECT COUNT(1) FROM T_TABLE) TOTAL_ROWCOUNT FROM T_TABLE
+   WHERE ROW_SEQ > (@PAGE -1) * @PAGE_COUNT
+     AND ROW_SEQ <= @PAGE * @PAGE_COUNT
+   SET NOCOUNT OFF
+  ]]>
+      </FixedSQL>
+      <DynamicBodys>
+        <Key>KEYWORD_CODE</Key>
+        <Body>AND A.KEYWORD_CODE = {0}</Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>KEYWORD_TYPE</Key>
+        <Body>AND A.KEYWORD_TYPE = {0}</Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>BASE_CODE</Key>
+        <Body>AND A.BASE_CODE = {0}</Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>IS_SYNONYM</Key>
+        <Body>AND A.IS_SYNONYM = {0}</Body>
+      </DynamicBodys>
+        <DynamicBodys>
+        <Key>KEYWORD_NAME</Key>
+        <Body>AND A.BASE_CODE IN (SELECT BASE_CODE FROM T_KEYWORD WHERE KEYWORD_NAME LIKE N'{0}%')</Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>STATUS</Key>
+        <Body>AND A.STATUS = {0}</Body>
+      </DynamicBodys>
+         <DynamicBodys>
+        <Key>HIDE</Key>
+        <Body>AND A.HIDE = {0}</Body>
+      </DynamicBodys>
+    </TemplateSQL>
+  </DBAgentTemplate>
+
+  <DBAgentTemplate TemplateID="T_KEYWORD_Save">
+    <!-- 
+    SqlType : SQL의 형태를 지정합니다.
+      Example 1:<SqlType>FixedSQL</SqlType> 고정적인 SQL을 지원합니다. 
+      Example 2:<SqlType>DynamicSQL</SqlType> 동적인 SQL Type1을 지원합니다.  
+    Description : 해당 SQL의 기능설명을 적습니다.
+    SQLModifier : 해당 SQL의 작성자(수정자)를 적습니다
+    LastModifyDate : 해당 SQL의 마지막 수정일을 적습니다
+    -->
+    <Information>
+      <SqlType>DynamicSQL</SqlType>
+      <Description>키워드 저장</Description>
+      <SQLModifier>전상훈</SQLModifier>
+      <LastModifyDate>2017-02-02</LastModifyDate>
+    </Information>
+
+    <TemplateSQL>
+      <!-- FixedSQL : 고정된 SQL이 들어가는 곳입니다. -->
+      <FixedSQL>
+        <![CDATA[ 
+		SET NOCOUNT ON 
+	/*************************************************/
+	/* 키워드 테이블 - T_KEYWORD 저장 -  SAVE QUERY */ 
+	/*************************************************/
+	DECLARE @KEYWORD_CODE                   INT                  = N'{0}'
+			  , @KEYWORD_TYPE                   INT                  = CONVERT(INT, CASE WHEN ISNUMERIC('{1}') = 1 THEN '{1}' ELSE NULL END )
+			  , @BASE_CODE                      INT                  = CONVERT(INT, CASE WHEN ISNUMERIC('{2}') = 1 THEN '{2}' ELSE '0' END )
+			  , @IS_SYNONYM                     BIT                  = CONVERT(BIT, CASE WHEN ISNUMERIC('{3}') = 1 THEN '{3}' ELSE '0' END )
+			  , @SEQ                            INT                  = CONVERT(INT, CASE WHEN ISNUMERIC('{4}') = 1 THEN '{4}' ELSE '0' END )
+			  , @KEYWORD_NAME                   NVARCHAR(200)        = N'{5}'
+			  , @KEYWORD_DESC                   NVARCHAR(200)        = N'{6}'
+			  , @LATITUDE                       NUMERIC(20,15)       = CONVERT(NUMERIC(20,15), CASE WHEN ISNUMERIC('{7}') = 1 THEN '{7}' ELSE NULL END )
+			  , @LONGITUDE                      NUMERIC(20,15)       = CONVERT(NUMERIC(20,15), CASE WHEN ISNUMERIC('{8}') = 1 THEN '{8}' ELSE NULL END )
+			  , @CHOSUNG                        NVARCHAR(150)        = N'{9}'
+			  , @JUNGSUNG                       NVARCHAR(150)        = N'{10}'
+			  , @JONGSUNG                       NVARCHAR(150)        = N'{11}'
+			  , @KEYWORD_UNITS                  NVARCHAR(280)        = N'{12}'
+			  , @STATUS                         INT                  = CONVERT(INT, CASE WHEN ISNUMERIC('{13}') = 1 THEN '{13}' ELSE NULL END )
+			  , @REMARK                         NVARCHAR(200)        = N'{14}'
+			  , @SEARCH_CNT                     INT                  = CONVERT(INT, CASE WHEN ISNUMERIC('{15}') = 1 THEN '{15}' ELSE '0' END )
+			  , @HIDE                           BIT                  = CONVERT(BIT, CASE WHEN ISNUMERIC('{16}') = 1 THEN '{16}' ELSE '0' END )
+			  , @INSERT_CODE                    INT                  = {17}
+			  , @INSERT_DATE                    DATETIME             = GETDATE() 
+			  , @UPDATE_CODE                    INT                  = {17}
+			  , @UPDATE_DATE                    DATETIME             = GETDATE() 
+        
+        SET @KEYWORD_DESC  = CASE WHEN ISNULL(@KEYWORD_DESC ,'') = '' THEN @KEYWORD_NAME ELSE @KEYWORD_NAME END
+
+  SELECT @KEYWORD_CODE = KEYWORD_CODE 
+    FROM T_KEYWORD
+   WHERE BASE_CODE = @BASE_CODE AND KEYWORD_NAME = @KEYWORD_NAME
+   
+	UPDATE A 
+	SET  	  KEYWORD_TYPE                   = @KEYWORD_TYPE                  
+			 ,  BASE_CODE                      = @BASE_CODE                     		 ,  IS_SYNONYM                     = @IS_SYNONYM                    
+			 ,  SEQ                            = @SEQ                           		 ,  KEYWORD_NAME                   = @KEYWORD_NAME                  
+			 ,  KEYWORD_DESC                   = @KEYWORD_DESC                  		 ,  LATITUDE                       = @LATITUDE                      
+			 ,  LONGITUDE                      = @LONGITUDE                     		 ,  CHOSUNG                        = @CHOSUNG                       
+			 ,  JUNGSUNG                       = @JUNGSUNG                      		 ,  JONGSUNG                       = @JONGSUNG                      
+			 ,  KEYWORD_UNITS                  = @KEYWORD_UNITS                 		 ,  STATUS                         = @STATUS                        
+			 ,  REMARK                         = @REMARK                        		 ,  SEARCH_CNT                     = @SEARCH_CNT                    
+			 ,  HIDE                           = @HIDE                          		 ,  UPDATE_CODE                    = @UPDATE_CODE                   
+			 ,  UPDATE_DATE                    = @UPDATE_DATE                   
+	FROM T_KEYWORD A 
+	WHERE KEYWORD_CODE= @KEYWORD_CODE
+	IF @@ROWCOUNT = 0
+	BEGIN
+    IF @BASE_CODE <= 0
+    BEGIN
+	      SELECT @BASE_CODE = ISNULL(MAX(BASE_CODE),0) + 1 FROM T_KEYWORD
+    END
+		INSERT INTO T_KEYWORD
+		(		KEYWORD_TYPE                  		, BASE_CODE                     		, IS_SYNONYM                    		
+			, SEQ                           		, KEYWORD_NAME                  		, KEYWORD_DESC                  		, LATITUDE                      		
+			, LONGITUDE                     		, CHOSUNG                       		, JUNGSUNG                      		, JONGSUNG                      		
+			, KEYWORD_UNITS                 		, STATUS                        		, REMARK                        		, SEARCH_CNT                    		
+			, HIDE                          		, INSERT_CODE                   		, INSERT_DATE                   		, UPDATE_CODE                   		
+			, UPDATE_DATE                   		
+		)
+		SELECT @KEYWORD_TYPE                 		, @BASE_CODE                    	
+				, @IS_SYNONYM                   		, @SEQ                          		, @KEYWORD_NAME                 	
+				, @KEYWORD_DESC                 		, @LATITUDE                     		, @LONGITUDE                    	
+				, @CHOSUNG                      		, @JUNGSUNG                     		, @JONGSUNG                     	
+				, @KEYWORD_UNITS                		, @STATUS                       		, @REMARK                       	
+				, @SEARCH_CNT                   		, @HIDE                         		, @INSERT_CODE                  	
+				, @INSERT_DATE                  		, @UPDATE_CODE                  		, @UPDATE_DATE                  	
+			SET @KEYWORD_CODE = IDENT_CURRENT('T_KEYWORD')
+	 END
+   SELECT  CONVERT(VARCHAR(20), @KEYWORD_CODE) AS DATA, '' ERROR_MESSAGE
+SET NOCOUNT OFF
+
+
+  ]]>
+      </FixedSQL>
+    </TemplateSQL>
+  </DBAgentTemplate>
+  <DBAgentTemplate TemplateID="T_KEYWORD_Delete">
+    <!-- 
+    SqlType : SQL의 형태를 지정합니다.
+      Example 1:<SqlType>FixedSQL</SqlType> 고정적인 SQL을 지원합니다. 
+      Example 2:<SqlType>DynamicSQL</SqlType> 동적인 SQL Type1을 지원합니다.  
+    Description : 해당 SQL의 기능설명을 적습니다.
+    SQLModifier : 해당 SQL의 작성자(수정자)를 적습니다
+    LastModifyDate : 해당 SQL의 마지막 수정일을 적습니다
+    -->
+    <Information>
+      <SqlType>DynamicSQL</SqlType>
+      <Description>키워드 삭제</Description>
+      <SQLModifier>전상훈</SQLModifier>
+      <LastModifyDate>2017-02-10</LastModifyDate>
+    </Information>
+
+    <TemplateSQL>
+      <!-- FixedSQL : 고정된 SQL이 들어가는 곳입니다. -->
+      <FixedSQL>
+        <![CDATA[ 
+		SET NOCOUNT ON 
+	/*****************************************************************/
+	/* 키워드 테이블 - T_KEYWORD 삭제 -  SAVE QUERY T_KEYWORD_Delete */ 
+	/*****************************************************************/
+  
+	DECLARE @KEYWORD_CODE INT = {0}
+         ,@ERROR_MESSAGE NVARCHAR(1000) = ''
+  SELECT
+	  @ERROR_MESSAGE = N'카테고리(' + C.CATEGORY_NAME + ')에 키워드(' +  B.KEYWORD_NAME +')가 속해 있어 삭제를 할 수가 없습니다.' 
+  FROM T_CATEGORY_KEYWORD A
+  INNER JOIN T_KEYWORD B
+	  ON A.KEYWORD_CODE = B.KEYWORD_CODE
+  INNER JOIN T_CATEGORY C
+	  ON C.CATEGORY_CODE = A.CATEGORY_CODE
+  WHERE B.KEYWORD_CODE = @KEYWORD_CODE
+
+  SELECT 
+	  @ERROR_MESSAGE = N'광고에 해당키워드가 등록되어 있어 삭제를 할 수가 없습니다. 제목 : ' + B.TITLE
+    FROM T_SEARCH_KEYWORD A
+   INNER JOIN T_AD B
+      ON A.AD_CODE = B.AD_CODE
+   WHERE A.KEYWORD_CODE = @KEYWORD_CODE
+
+  SELECT 
+	  @ERROR_MESSAGE = N'기기에 해당키워드가 등록되어 있어 삭제를 할 수가 없습니다. 로컬박스명 : ' + B.DEVICE_NAME
+    FROM T_SEARCH_KEYWORD A
+   INNER JOIN T_DEVICE B
+      ON A.DEVICE_CODE = B.DEVICE_CODE
+   WHERE A.KEYWORD_CODE = @KEYWORD_CODE
+
+  IF @ERROR_MESSAGE != ''
+  BEGIN
+	  GOTO EXCEPTION
+  END
+
+  DELETE FROM T_KEYWORD
+  WHERE BASE_CODE IN (SELECT BASE_CODE 
+                        FROM T_KEYWORD
+                       WHERE KEYWORD_CODE = @KEYWORD_CODE)
+
+
+
+EXCEPTION: 
+	
+SELECT @ERROR_MESSAGE AS [ERROR_MESSAGE]
+
+SET NOCOUNT OFF
+
+
+  ]]>
+      </FixedSQL>
+    </TemplateSQL>
+  </DBAgentTemplate>
+  
+  
+  <DBAgentTemplate TemplateID="KEYWORD_Synonym_Save">
+    <!-- 
+    SqlType : SQL의 형태를 지정합니다.
+      Example 1:<SqlType>FixedSQL</SqlType> 고정적인 SQL을 지원합니다. 
+      Example 2:<SqlType>DynamicSQL</SqlType> 동적인 SQL Type1을 지원합니다.  
+    Description : 해당 SQL의 기능설명을 적습니다.
+    SQLModifier : 해당 SQL의 작성자(수정자)를 적습니다
+    LastModifyDate : 해당 SQL의 마지막 수정일을 적습니다
+    -->
+    <Information>
+      <SqlType>DynamicSQL</SqlType>
+      <Description>키워드 동의어 저장</Description>
+      <SQLModifier>전상훈</SQLModifier>
+      <LastModifyDate>2017-02-09</LastModifyDate>
+    </Information>
+
+    <TemplateSQL>
+      <!-- FixedSQL : 고정된 SQL이 들어가는 곳입니다. -->
+      <FixedSQL>
+        <![CDATA[ 
+		SET NOCOUNT ON 
+	/*************************************************/
+	/* 키워드 동의어 테이블 - T_KEYWORD 저장 -  SAVE QUERY */ 
+	/*************************************************/
+  DECLARE @BASE_CODE INT    = {0}
+         ,@KEYWORD_CODE INT = -1
+	       ,@KEYWORD_NAME NVARCHAR(200) = N'{1}'
+	       ,@KEYWORD_TYPE INT = 1
+	       ,@IS_SYNONYM   BIT = 1
+	       ,@LATITUDE     NUMERIC(20,15)
+	       ,@LONGITUDE    NUMERIC(20,15)
+	       ,@SEQ          INT
+	       ,@STATUS       INT = 9
+	       ,@REG_CODE     INT = {2}
+
+  SELECT @LATITUDE = LATITUDE
+       , @LONGITUDE = LONGITUDE
+    FROM T_KEYWORD
+   WHERE BASE_CODE = @BASE_CODE
+     AND IS_SYNONYM = 0
+
+  SELECT @KEYWORD_CODE = ISNULL(KEYWORD_CODE,-1) FROM T_KEYWORD
+   WHERE BASE_CODE = @BASE_CODE AND KEYWORD_NAME = @KEYWORD_NAME
+
+  IF @KEYWORD_CODE < 0
+  BEGIN
+
+    SELECT @SEQ = ISNULL(MAX(SEQ),0)  + 1
+      FROM T_KEYWORD
+     WHERE BASE_CODE = @BASE_CODE
+       AND IS_SYNONYM = @IS_SYNONYM
+
+	  INSERT INTO T_KEYWORD
+	  (  KEYWORD_TYPE, BASE_CODE,   IS_SYNONYM,  SEQ,        KEYWORD_NAME, KEYWORD_DESC
+	   , LATITUDE,     LONGITUDE,   STATUS,      REMARK,     SEARCH_CNT,   HIDE
+     , INSERT_CODE,  INSERT_DATE, UPDATE_CODE, UPDATE_DATE
+    )
+	  SELECT @KEYWORD_TYPE, @BASE_CODE, @IS_SYNONYM, @SEQ, @KEYWORD_NAME, @KEYWORD_NAME
+	       , @LATITUDE,     @LONGITUDE, @STATUS,  '', 0 AS SEARCH_CNT, 0 AS HIDE
+	       , @REG_CODE,     GETDATE(),  @REG_CODE, GETDATE()
+
+  --	 SET @KEYWORD_CODE = IDENT_CURRENT('T_KEYWORD')
+      SELECT N'' AS ERROR_MESSAGE
+  END
+  ELSE
+  BEGIN
+      SELECT '[' + @KEYWORD_NAME +']은 이미 등록 되어있는 키워드로 등록 할 수가 없습니다.' AS ERROR_MESSAGE
+  END
+SET NOCOUNT OFF
+
+
+  ]]>
+      </FixedSQL>
+    </TemplateSQL>
+  </DBAgentTemplate>
+
+  <DBAgentTemplate TemplateID="KEYWORD_Synonym_Delete">
+    <!-- 
+    SqlType : SQL의 형태를 지정합니다.
+      Example 1:<SqlType>FixedSQL</SqlType> 고정적인 SQL을 지원합니다. 
+      Example 2:<SqlType>DynamicSQL</SqlType> 동적인 SQL Type1을 지원합니다.  
+    Description : 해당 SQL의 기능설명을 적습니다.
+    SQLModifier : 해당 SQL의 작성자(수정자)를 적습니다
+    LastModifyDate : 해당 SQL의 마지막 수정일을 적습니다
+    -->
+    <Information>
+      <SqlType>DynamicSQL</SqlType>
+      <Description>키워드 동의어 삭제</Description>
+      <SQLModifier>전상훈</SQLModifier>
+      <LastModifyDate>2017-02-09</LastModifyDate>
+    </Information>
+
+    <TemplateSQL>
+      <!-- FixedSQL : 고정된 SQL이 들어가는 곳입니다. -->
+      <FixedSQL>
+        <![CDATA[ 
+		SET NOCOUNT ON 
+	/*************************************************/
+	/* 키워드 동의어 테이블 - T_KEYWORD 삭제 -  Delete QUERY */ 
+	/*************************************************/
+  DECLARE @BASE_CODE INT    = {0}
+   
+	DELETE FROM T_KEYWORD
+   WHERE BASE_CODE = @BASE_CODE
+     AND IS_SYNONYM = 1
+  SET NOCOUNT OFF
+
+
+  ]]>
+      </FixedSQL>
+    </TemplateSQL>
+  </DBAgentTemplate>
+</DBAgentMultiTemplate>

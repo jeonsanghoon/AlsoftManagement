@@ -1,0 +1,54 @@
+﻿<div class="ui tiny modal" id="popDeviceMainApproval">
+    <div class="header">공유상태</div>
+    <div class="content">
+        <p>@Html.CommonCombo("cboShareStatus", new T_COMMON_COND { MAIN_CODE="A009", ADD_COND = "AND A.SUB_CODE > 0" },"", null, new { @class="size180" } )
+    </div>
+    <div class="actions">
+        @Html.Semantic_Button2("btnDeviceMainShareSave", "적용", SemanticUIHelper.enButtonType.Save, new { @onclick = "DeviceMainShareApprovalSave();" })
+        @Html.Semantic_Button2("btnDeviceMainShareClose", "닫기", SemanticUIHelper.enButtonType.Normal, new { @onclick = "popDeviceMainApprovalClose();" })
+    </div>
+</div>
+<script type="text/javascript">
+    var _SaveDataList = new Array();
+    function popDeviceMainApprovalOpen(shareStatus, list) {
+        _SaveDataList = list;
+        
+        SemanticUI.ComboBox.SetVal("#cboShareStatus", shareStatus)
+        $("#popDeviceMainApproval").modal("show");
+    }
+    function popDeviceMainApprovalClose()
+    {
+        $('#popDeviceMainApproval').modal("hide");
+    }
+    function errormessageClear()
+    {
+        $(".ui.error.message").hide();
+        $(".ui.error.message ul").html("");
+    }
+    function DeviceMainShareApprovalSave() {
+        errormessageClear();
+        if (_SaveDataList == null || _SaveDataList == undefined)
+        {
+            $(".ui.error.message ul").append("<li></li>");
+
+            $.MessageBox("저장할 데이터가 없습니다. 승인처리할 데이터를 선택하여 주시기 바랍니다.").done(function (data, button) {
+                popDeviceMainApprovalClose();
+            });
+            return;
+        }
+
+
+        var params = new Object();
+        params.SHARE_STATUS = SemanticUI.ComboBox.GetVal("#cboShareStatus");
+        params.list = _SaveDataList;
+        params = JSON.stringify(params);
+        ajax.GetAjax("/Basic/DeviceMainApprovalSave/", params, "json", function (result) {
+            if (result.ERROR_MESSAGE != "") {
+                $.MessageBox(result.ERROR_MESSAGE);
+            } else {
+                $('#popDeviceMainApproval').modal("hide");
+                doQuery();
+            }
+        });
+    }
+</script>

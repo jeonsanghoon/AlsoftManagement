@@ -1,0 +1,185 @@
+﻿@{
+    TinyMCEOption option = (ViewData["option"] == null) ? new TinyMCEOption() : (TinyMCEOption)ViewData["option"];
+}
+<script type="text/javascript">
+    if (typeof tinymce === 'undefined') {
+        document.write('<script src="@Url.Content("~/Common/plugin/js/tinymce/tinymce.min.js")" type="text/javascript"><\/script>');
+
+    }
+</script>
+<style>
+    div[aria-label='Insert/edit video'] .mce-open {
+        display: none;
+    }
+
+    div[aria-label='Insert/edit video'] .mce-textbox {
+        width: 100%;
+    }
+</style>
+<script type="text/javascript">
+    var tinyMCE =
+     {
+         SetContent: function (id, html) {
+             if (id == undefined || id == null || id == "") id = "CONETNT";
+             tinymce.get(id).setContent(html);
+         }
+         , GetContent: function (id) {
+             if (id == undefined || id == null || id == "") id = "CONETNT";
+             return tinymce.get(id).getContent();
+         }
+     };
+</script>
+<script type="text/javascript">
+    var Tinymce_templeate = [
+           { title:'광고1', description: '광고1(SNS 공유).', url: '/Common/HtmlTempleate/adv1Temp.html', },
+           { title:'광고2', description: '광고2(모바일등록, SNS공유)', url: '/Common/HtmlTempleate/adv2Temp.html' }
+    ];
+    var Tinymce_templeate2 = new Array();
+
+    (function () {
+
+        @{
+            int idx = 0;
+            if (option.templeate_Index != null && option.templeate_Index.Length > 0)
+            {
+                foreach (int index in option.templeate_Index) {
+                    @:Tinymce_templeate2[@(idx)] = Tinymce_templeate[@(index)];
+                    idx++;
+                }
+            }
+        }
+
+        var myListItems = ['Item1', 'Item2'];
+        tinymce.PluginManager.add('myNewPluginName', function (editor) {
+            var menuItems = [];
+            tinymce.each(myListItems, function (myListItemName) {
+                menuItems.push({
+                    text: myListItemName,
+                    onclick: function () {
+                        editor.insertContent(myListItemName);
+                    }
+                });
+            });
+
+            editor.addMenuItem('insertValueOfMyNewDropdown', {
+                icon: 'date',
+                text: 'Do something with this new dropdown',
+                menu: menuItems,
+                context: 'insert'
+            });
+        });
+
+        tinymce.init({
+            relative_urls : false,
+            remove_script_host : false,
+            convert_urls : true,
+            setup: function (ed) {
+
+
+                ed.on("change", function (e) {
+                    try {
+                        @{
+                            if (option.ID == null) {
+                                @(ViewData.TemplateInfo.GetFullHtmlFieldId(string.Empty) + "_change();")
+                            }
+                            else
+                            {
+                                @(option.ID + "_change();")
+                            }
+                          }
+                    }
+                    catch (e) { }
+                });
+                ed.on("keyup", function () {
+                    try {
+                        @{
+                            if (option.ID == null) {
+                                @(ViewData.TemplateInfo.GetFullHtmlFieldId(string.Empty) + "_keyup();")
+                            }
+                            else
+                            {
+                                @(option.ID + "_change();")
+                            }
+                          }
+                    }
+                    catch (e) { }
+                });
+                ed.on('SetContent', function (e) {
+
+                });
+                ed.on("Init", function () {
+                    @(option.ID)_addForm();
+                });
+                //  ed.on("load", function () {  hideForderButton();});
+            }
+            , content_css: "//www.tinymce.com/css/codepen.min.css,http://fonts.googleapis.com/earlyaccess/nanumgothic.css,http://fonts.googleapis.com/earlyaccess/nanummyeongjo.css,http://fonts.googleapis.com/earlyaccess/nanumgothiccoding.css,http://fonts.googleapis.com/earlyaccess/nanumbrushscript.css,http://fonts.googleapis.com/earlyaccess/nanumpenscript.css,http://fonts.googleapis.com/earlyaccess/jejugothic.css,http://fonts.googleapis.com/earlyaccess/jejuhallasan.css,http://fonts.googleapis.com/earlyaccess/jejumyeongjo.css,http://fonts.googleapis.com/earlyaccess/hanna.css,http://fonts.googleapis.com/earlyaccess/kopubbatang.css,http://fonts.googleapis.com/earlyaccess/notosanskr.css"
+            , templates:Tinymce_templeate2
+               , valid_elements: "+*[*]"
+                  , valid_children: "+body[style],+head[link]"
+                  ,extended_valid_elements : "meta[*],link[*]"
+            , file_browser_callback: function (field_name, url, type, win) {
+
+                if (type == 'image') {  $('#@(option.ID)_form #@(option.ID)_file1').click(); }
+            }
+            , font_formats: 'Andale Mono=andale mono,monospace;Arial=arial,helvetica,sans-serif;Arial Black=arial black,sans-serif;Book Antiqua=book antiqua,palatino,serif;Comic Sans MS=comic sans ms,sans-serif;Courier New=courier new,courier,monospace;Georgia=georgia,palatino,serif;Helvetica=helvetica,arial,sans-serif;Impact=impact,sans-serif;Symbol=symbol;Tahoma=tahoma,arial,helvetica,sans-serif;Terminal=terminal,monaco,monospace;Times New Roman=times new roman,times,serif;Trebuchet MS=trebuchet ms,geneva,sans-serif;Verdana=verdana,geneva,sans-serif;Webdings=webdings;Wingdings=wingdings,zapf dingbats;돋움=Dotum;굴림=Gulim;맑은고딕=Malgun Gothic !important;나눔고딕=Nanum Gothic, serif;나눔명조=Nanum Myeongjo,serif;나눔고딕코딩=Nanum Gothic Coding,serif;나눔손글씨붓=Nanum Brush Script,serif;나눔손글씨펜=Nanum Pen Script,serif;제주고딕=Jeju Gothic,serif;제주한라산=Jeju Hallasan,serif;제주명조=Jeju Myeongjo,serif;한나체=Hanna,serif;KoPub바탕=KoPub Batang,serif;NotoSansKR=Noto Sans KR,sans-serif;'
+            , mode: "exact", language: "@option.LANGUAGE", selector: "#@(option.ID == null ? ViewData.TemplateInfo.GetFullHtmlFieldId(string.Empty) : option.ID)", theme: "modern", height: "@(option.ID == null ? "500px" : option.HEIGHT)", width: "@(option.ID == null ? "100%" : option.WIDTH)"
+            , plugins: ["advlist autolink autosave link image lists charmap print preview hr anchor pagebreak spellchecker", "searchreplace wordcount visualblocks visualchars code fullscreen insertdatetime media nonbreaking", "table contextmenu directionality emoticons template textcolor paste fullpage textcolor"]
+            , toolbar: 'template code preview fullscreen | insertfile undo redo |  styleselect formatselect | fontselect fontsizeselect | forecolor backcolor emoticons | bold italic | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | insertfile link image media | print  '
+            , theme_advanced_buttons3_add: "fullpage"
+        });
+    })();
+    function @(option.ID)_image_Onchange() {
+        $("#@(option.ID)_fileUpload").val($("#@(option.ID)_file1").val());
+        $("#dvLoading").removeClass("active");
+        $("#dvLoading").addClass("active");
+        $('#@(option.ID)_form').ajaxSubmit({
+            success: function (result, statusText) {
+                if(statusText=="success")
+                {
+                    $("div[aria-label='Insert/edit image']").find(".mce-btn.mce-open").prev().val(result.url);
+                    $("#@(option.ID)_file1").val("");
+                }
+                else{
+                    $.MessageBox("이미지 업로드를 실패하였습니다");
+                }
+                $("#dvLoading").removeClass("active");
+            }
+            ,error: function() {  $.MessageBox("이미지 업로드를 실패하였습니다"); $("#dvLoading").removeClass("active");},
+        });
+    }
+
+    function @(option.ID)_addForm() {
+
+        var frm1 = $("form.form");
+        @{
+            if(!string.IsNullOrEmpty(option.MAINFORM_ID))
+            {
+                @:frm1 = $("#@option.MAINFORM_ID");
+                    }
+        }
+        if (frm1.html() == undefined) frm1 = $("form.form");
+        if(!(frm1 == undefined || frm1.length ==0))
+        {
+            frm1.after("<iframe id=\"@(option.ID)_form_target\" name=\"@(option.ID)_form_target\" style=\"display:none\"></iframe>");
+           frm1.after("<form id=\"@(option.ID)_form\" action=\"/base/UploadImage/\" target=\"@(option.ID)_form_target\" method=\"post\" enctype=\"multipart/form-data\" style=\"width:0px;height:0;overflow:hidden\"> <input id=\"@(option.ID)_file1\" name=\"@(option.ID)_file1\" type=\"file\" onchange=\"@(option.ID)_image_Onchange();\"> </form>");
+        }
+        else
+        {
+            $("body").append("<iframe id=\"@(option.ID)_form_target\" name=\"@(option.ID)_form_target\" style=\"display:none\"></iframe>");
+            $("body").append("<form id=\"@(option.ID)_form\" action=\"/base/UploadImage/\" target=\"@(option.ID)_form_target\" method=\"post\" enctype=\"multipart/form-data\" style=\"width:0px;height:0;overflow:hidden\"> <input id=\"@(option.ID)_file1\" name=\"@(option.ID)_file1\" type=\"file\" onchange=\"@(option.ID)_image_Onchange();\"> </form>");
+        }
+
+    }
+</script>
+@{
+    if (option.ID == null)
+    {
+        @Html.TextArea(string.Empty, ViewData.TemplateInfo.FormattedModelValue)
+    }
+    else
+    {
+        @*@Html.TextArea(option.ID, option.CONTENT == null ? string.Empty : option.CONTENT)*@
+        @:<textarea cols="20" id="@option.ID" name="@option.ID" rows="2">@(option.CONTENT == null ? string.Empty : option.CONTENT)</textarea>
+    }
+}
+

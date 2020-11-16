@@ -1,0 +1,52 @@
+﻿@using ALT.VO.loggal;
+@{
+    Layout = null;
+    T_DEVICE_MAIN data = ViewBag.data;
+    string viewMode = Request["view"] == null ? "" : Request["view"].ToString();
+}
+<link href="//www.tinymce.com/css/codepen.min.css" rel='stylesheet' type='text/css'>
+<link href="http://fonts.googleapis.com/earlyaccess/nanumgothic.css" rel='stylesheet' type='text/css'>
+<link href="http://fonts.googleapis.com/earlyaccess/nanummyeongjo.css" rel='stylesheet' type='text/css'>
+<link href="http://fonts.googleapis.com/earlyaccess/nanumgothiccoding.css" rel='stylesheet' type='text/css'>
+<link href="http://fonts.googleapis.com/earlyaccess/nanumbrushscript.css" rel='stylesheet' type='text/css'>
+<link href="http://fonts.googleapis.com/earlyaccess/nanumpenscript.css" rel='stylesheet' type='text/css'>
+<link href="http://fonts.googleapis.com/earlyaccess/jejugothic.css" rel='stylesheet' type='text/css'>
+<link href="http://fonts.googleapis.com/earlyaccess/jejuhallasan.css" rel='stylesheet' type='text/css'>
+<link href="http://fonts.googleapis.com/earlyaccess/jejumyeongjo.css" rel='stylesheet' type='text/css'>
+<link href="http://fonts.googleapis.com/earlyaccess/hanna.css" rel='stylesheet' type='text/css'>
+<link href="http://fonts.googleapis.com/earlyaccess/kopubbatang.css" rel='stylesheet' type='text/css'>
+<link href="http://fonts.googleapis.com/earlyaccess/notosanskr.css" rel='stylesheet' type='text/css'>
+
+<link href="/Common/plugin/css/messagebox.css" rel='stylesheet' type='text/css'>
+<script src="https://code.jquery.com/jquery-2.2.4.min.js" integrity="sha256-BbhdlvQf/xTY9gja0Dq3HiwQF8LaCRTXxZKRutelT44=" crossorigin="anonymous"></script>
+<!--Message Box-->
+<script src="/Common/plugin/js/messagebox.min.js"></script>
+<!--공통코드-->
+<script src="/Common/js/Common.js?ver=20161207_1"></script>
+<script type="text/javascript">
+    $("document").ready(function () {
+        if("@viewMode" == "1")
+        {
+            $(".social").hide();
+            $(".dvPhone").hide();
+        } else if ("@viewMode" == "2") { /*SNS Hide*/
+            $(".social").hide();
+        }
+        else if ("@viewMode" == "3") { /*Phone Hide*/
+            $(".dvPhone").hide();
+        }
+
+        $("body").addClass("mce-content-body");
+        $("body").attr("id", "tinymce"); 
+        
+    })
+
+</script>
+@Html.Raw(data.CONTENT_DETAIL)
+
+<style>
+    .dvAddForm {
+        background-image: url(null);
+        background-color: #fff;
+    }
+</style>

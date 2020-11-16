@@ -1,0 +1,290 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<DBAgentMultiTemplate  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns="http://altsoft.kr/">
+
+  <DBAgentTemplate TemplateID="GetWebMenu">
+    <!-- 
+    SqlType : SQL의 형태를 지정합니다.
+      Example 1:<SqlType>FixedSQL</SqlType> 고정적인 SQL을 지원합니다. 
+      Example 2:<SqlType>DynamicSQL</SqlType> 동적인 SQL Type1을 지원합니다.  
+    Description : 해당 SQL의 기능설명을 적습니다.
+    SQLModifier : 해당 SQL의 작성자(수정자)를 적습니다
+    LastModifyDate : 해당 SQL의 마지막 수정일을 적습니다
+    -->
+    <Information>
+      <SqlType>DynamicSQL</SqlType>
+      <Description>웹메뉴조회</Description>
+      <SQLModifier>전상훈</SQLModifier>
+      <LastModifyDate>2016-10-04</LastModifyDate>
+    </Information>
+
+    <TemplateSQL>
+      <!-- FixedSQL : 고정된 SQL이 들어가는 곳입니다. -->
+      <FixedSQL>
+        <![CDATA[ 
+  SET NOCOUNT ON 
+	/*************************************************/
+	/* 매장별웹메뉴 - T_WEBMENU 조회 -  SELECT QUERY */ 
+	/*************************************************/
+	SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED 
+	SELECT
+       A.PROJECT_SITE
+		, A.MENU_CODE
+		, A.SEARCH_CODE
+		, A.MENU_TYPE
+		, C.NAME AS MENU_TYPE_NAME
+		, A.MENU_AUTH
+		, D.NAME AS MENU_AUTH_NAME
+		, A.MENU_COMPANY_CODE
+		, ISNULL(E.COMPANY_NAME,'') AS MENU_COMPANY_NAME
+		, A.MENU_STORE_CODE 
+		, ISNULL(F.STORE_NAME,'') AS MENU_STORE_NAME
+		, A.PARENT_CODE
+		, A.LEVEL
+		, A.SEQ
+		, A.NAME
+		, A.FULL_NAME
+		, A.MENU_URL
+		, A.MENU_CLASS
+    , ISNULL(A.USER_AUTH,'') AS USER_AUTH
+		, A.REMARK
+		, A.HIDE
+    , AB.USER_NAME AS INSERT_NAME
+    , A.INSERT_DATE
+    , B.USER_NAME AS UPDATE_NAME
+		, B.UPDATE_DATE
+	FROM T_WEBMENU A 
+  INNER JOIN T_MEMBER B 
+     ON A.UPDATE_CODE = B.MEMBER_CODE
+  INNER JOIN T_MEMBER AB 
+     ON A.INSERT_CODE = AB.MEMBER_CODE
+   LEFT JOIN T_COMMON C
+     ON C.MAIN_CODE = 'M001'
+	AND C.SUB_CODE = A.MENU_TYPE
+   LEFT JOIN T_COMMON D
+     ON D.MAIN_CODE = 'U002'
+	AND D.SUB_CODE = A.mENU_AUTH
+   LEFT JOIN T_COMPANY E
+     ON E.COMPANY_CODE = A.MENU_COMPANY_CODE
+   LEFT JOIN T_STORE F
+     ON F.STORE_CODE = A.MENU_STORE_CODE
+  WHERE 1=1
+
+   #[PROJECT_SITE]
+   #[MENU_CODE]
+   #[SEARCH_CODE]
+   #[NAME]
+   #[LEVEL]
+   #[HIDE]
+   ORDER BY  A.SEARCH_CODE
+	SET NOCOUNT OFF 
+
+
+	SET NOCOUNT OFF 
+      ]]>
+      </FixedSQL>
+      <DynamicBodys>
+        <Key>PROJECT_SITE</Key>
+        <Body>AND A.PROJECT_SITE = {0} </Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>MENU_CODE</Key>
+        <Body>AND A.MENU_CODE = {0} </Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>SEARCH_CODE</Key>
+        <Body>AND A.SEARCH_CODE LIKE N'{0}%' </Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>NAME</Key>
+        <Body>AND A.NAME LIKE N'%{0}%' </Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>LEVEL</Key>
+        <Body>AND A.LEVEL = {0} </Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>HIDE</Key>
+        <Body>AND A.HIDE = {0} </Body>
+      </DynamicBodys>
+
+    </TemplateSQL>
+  </DBAgentTemplate>
+  <DBAgentTemplate TemplateID="WebMenuSave">
+    <!-- 
+    SqlType : SQL의 형태를 지정합니다.
+      Example 1:<SqlType>FixedSQL</SqlType> 고정적인 SQL을 지원합니다. 
+      Example 2:<SqlType>DynamicSQL</SqlType> 동적인 SQL Type1을 지원합니다.  
+    Description : 해당 SQL의 기능설명을 적습니다.
+    SQLModifier : 해당 SQL의 작성자(수정자)를 적습니다
+    LastModifyDate : 해당 SQL의 마지막 수정일을 적습니다
+    -->
+    <Information>
+      <SqlType>DynamicSQL</SqlType>
+      <Description>메뉴저장</Description>
+      <SQLModifier>전상훈</SQLModifier>
+      <LastModifyDate>2017-01-25</LastModifyDate>
+    </Information>
+
+    <TemplateSQL>
+      <!-- FixedSQL : 고정된 SQL이 들어가는 곳입니다. -->
+      <FixedSQL>
+        <![CDATA[ 
+	SET NOCOUNT ON 
+	/************************************************/
+	/* 매장별웹메뉴 - T_WEBMENU 저장 -  SAVE QUERY */ 
+	/************************************************/
+	DECLARE @PROJECT_SITE                   INT                  = N'{0}'
+			  , @MENU_CODE                      INT                  = N'{1}'
+			  , @MENU_TYPE                      INT                  = CONVERT(INT, CASE WHEN ISNUMERIC('{2}') = 1 THEN '{2}' ELSE NULL END )
+			  , @MENU_AUTH                      INT                  = CONVERT(INT, CASE WHEN ISNUMERIC('{3}') = 1 THEN '{3}' ELSE NULL END )
+			  , @MENU_COMPANY_CODE              INT                  = CONVERT(INT, CASE WHEN ISNUMERIC('{4}') = 1 THEN '{4}' ELSE NULL END )
+			  , @MENU_STORE_CODE                INT                  = CONVERT(INT, CASE WHEN ISNUMERIC('{5}') = 1 THEN '{5}' ELSE NULL END )
+			  , @SEARCH_CODE                    VARCHAR(20)          = N'{6}'
+			  , @PARENT_CODE                    INT                  = CONVERT(INT, CASE WHEN ISNUMERIC('{7}') = 1 THEN '{7}' ELSE NULL END )
+			  , @LEVEL                          INT                  = CONVERT(INT, CASE WHEN ISNUMERIC('{8}') = 1 THEN '{8}' ELSE NULL END )
+			  , @SEQ                            INT                  = CONVERT(INT, CASE WHEN ISNUMERIC('{9}') = 1 THEN '{9}' ELSE NULL END )
+			  , @NAME                           NVARCHAR(200)        = N'{10}'
+			  , @FULL_NAME                      NVARCHAR(200)        = N'{11}'
+			  , @MENU_URL                       NVARCHAR(200)        = N'{12}'
+			  , @TEMPLEATE_PAGE                 NVARCHAR(100)        = N'{13}'
+			  , @MENU_CLASS                     NVARCHAR(100)        = N'{14}'
+        , @USER_AUTH                      VARCHAR(100)         = N'{15}'
+			  , @REMARK                         NVARCHAR(200)        = N'{16}'
+			  , @HIDE                           BIT                  = CONVERT(BIT, CASE WHEN ISNUMERIC('{17}') = 1 THEN '{17}' ELSE NULL END )
+			  , @INSERT_CODE                    INT                  = {18}
+			  , @INSERT_DATE                    DATETIME             = GETDATE() 
+			  , @UPDATE_CODE                    INT                  = {18}
+			  , @UPDATE_DATE                    DATETIME             = GETDATE() 
+        , @TMP_PARENT_CODE                INT
+
+   /*메뉴등록 페이지와 상위 페이지는 항상 사용 처리*/
+   IF @HIDE = 1 AND @menu_url  LIKE '/common/webmenureglist%'
+    BEGIN
+       SELECT @HIDE = 0, @TMP_PARENT_CODE    = PARENT_CODE FROM T_WEBMENU where menu_url LIKE '/common/webmenureglist%'
+     
+       SELECT @HIDE = 0 FROM T_WEBMENU
+        WHERE PROJECT_SITE = 3
+          AND MENU_CODE = @TMP_PARENT_CODE
+    END
+  
+  
+  
+   SELECT @PARENT_CODE = MENU_CODE FROM T_WEBMENU
+    WHERE SEARCH_CODE = SUBSTRING (@SEARCH_CODE, 1, LEN(@SEARCH_CODE) -2)
+   
+	UPDATE A 
+	SET  	  MENU_TYPE                      = @MENU_TYPE                     		 ,  MENU_AUTH                      = @MENU_AUTH                     
+			 ,  MENU_COMPANY_CODE              = @MENU_COMPANY_CODE             		 ,  MENU_STORE_CODE                = @MENU_STORE_CODE               
+			 ,  SEARCH_CODE                    = @SEARCH_CODE                   		 ,  PARENT_CODE                    = @PARENT_CODE                   
+			 ,  LEVEL                          = @LEVEL                         		 ,  SEQ                            = @SEQ                           
+			 ,  NAME                           = @NAME                          		 ,  FULL_NAME                      = @FULL_NAME                     
+			 ,  MENU_URL                       = @MENU_URL                      		 ,  TEMPLEATE_PAGE                 = @TEMPLEATE_PAGE                
+			 ,  MENU_CLASS                     = @MENU_CLASS                    		 ,  USER_AUTH                      = @USER_AUTH
+       ,  REMARK                         = @REMARK                        
+			 ,  HIDE                           = @HIDE                          		 
+       ,  UPDATE_CODE                    = @UPDATE_CODE                   
+			 ,  UPDATE_DATE                    = @UPDATE_DATE                   
+	FROM T_WEBMENU A 
+	WHERE PROJECT_SITE= @PROJECT_SITE	  AND MENU_CODE= @MENU_CODE
+	IF @@ROWCOUNT = 0
+	BEGIN
+    SELECT @MENU_CODE = ISNULL(MAX(MENU_CODE),0) + 1 
+      FROM T_STORE_WEBMENU
+     WHERE PROJECT_SITE = @PROJECT_SITE
+       
+		INSERT INTO T_WEBMENU
+		(		PROJECT_SITE                  		, MENU_CODE                     		, MENU_TYPE                     		, MENU_AUTH                     		
+			, MENU_COMPANY_CODE             		, MENU_STORE_CODE               		, SEARCH_CODE                   		, PARENT_CODE                   		
+			, LEVEL                         		, SEQ                           		, NAME                          		, FULL_NAME                     		
+			, MENU_URL                      		, TEMPLEATE_PAGE                		, MENU_CLASS                    		, USER_AUTH
+      , REMARK                        		
+			, HIDE                          		, INSERT_CODE                   		, INSERT_DATE                   		, UPDATE_CODE                   		
+			, UPDATE_DATE                   		
+		)
+		SELECT @PROJECT_SITE                 		, @MENU_CODE                    		, @MENU_TYPE                    	
+				, @MENU_AUTH                    		, @MENU_COMPANY_CODE            		, @MENU_STORE_CODE              	
+				, @SEARCH_CODE                  		, @PARENT_CODE                  		, @LEVEL                        	
+				, @SEQ                          		, @NAME                         		, @FULL_NAME                    	
+				, @MENU_URL                     		, @TEMPLEATE_PAGE               		, @MENU_CLASS                   	, @USER_AUTH
+        , @REMARK                       		, @HIDE                         		, @INSERT_CODE                  	
+				, @INSERT_DATE                  		, @UPDATE_CODE                  		, @UPDATE_DATE                  	
+			
+	 END
+   
+   SELECT N'' AS [ERROR_MESSAGE]
+SET NOCOUNT OFF
+
+  ]]>
+      </FixedSQL>
+    </TemplateSQL>
+  </DBAgentTemplate>
+  <DBAgentTemplate TemplateID="WebMenuDelete">
+    <!-- 
+    SqlType : SQL의 형태를 지정합니다.
+      Example 1:<SqlType>FixedSQL</SqlType> 고정적인 SQL을 지원합니다. 
+      Example 2:<SqlType>DynamicSQL</SqlType> 동적인 SQL Type1을 지원합니다.  
+    Description : 해당 SQL의 기능설명을 적습니다.
+    SQLModifier : 해당 SQL의 작성자(수정자)를 적습니다
+    LastModifyDate : 해당 SQL의 마지막 수정일을 적습니다
+    -->
+    <Information>
+      <SqlType>DynamicSQL</SqlType>
+      <Description>메뉴저장</Description>
+      <SQLModifier>전상훈</SQLModifier>
+      <LastModifyDate>2017-01-25</LastModifyDate>
+    </Information>
+
+    <TemplateSQL>
+      <!-- FixedSQL : 고정된 SQL이 들어가는 곳입니다. -->
+      <FixedSQL>
+        <![CDATA[ 
+	SET NOCOUNT ON 
+	/************************************************/
+	/* 매장별웹메뉴 - T_WEBMENU 삭제 - Delete QUERY */ 
+	/************************************************/
+  /* 저장 후 T_WEBMENU 테이블의 트리거 실행 됨 */ 
+  DECLARE @PROJECT_CODE INT = {0}
+         ,@MEMU_CODE    INT = {1} 
+	       ,@REG_CODE     INT = {2}
+
+ /* IF EXISTS (SELECT * FROM T_STORE_WEBMENU_EMPLOYEE_MENU
+             WHERE PROJECT_SITE = @PROJECT_CODE 
+		       AND MENU_CODE    = @MEMU_CODE
+		     )
+  BEGIN
+	  UPDATE T_WEBMENU
+	     SET HIDE = 1
+	   WHERE PROJECT_SITE = @PROJECT_CODE 
+         AND MENU_CODE    = @MEMU_CODE
+  END
+  ELSE 
+  BEGIN
+  */
+    DELETE FROM T_STORE_WEBMENU_EMPLOYEE_MENU
+          WHERE PROJECT_SITE = @PROJECT_CODE 
+		        AND MENU_CODE    = @MEMU_CODE
+           
+    DELETE FROM T_STORE_WEBMENU_GROUP_MENU
+	   WHERE PROJECT_SITE = @PROJECT_CODE 
+       AND MENU_CODE    = @MEMU_CODE
+         
+    DELETE FROM T_STORE_WEBMENU
+	   WHERE PROJECT_SITE = @PROJECT_CODE 
+       AND MENU_CODE    = @MEMU_CODE
+         
+	  DELETE FROM T_WEBMENU
+	   WHERE PROJECT_SITE = @PROJECT_CODE 
+       AND MENU_CODE    = @MEMU_CODE
+  /*END*/
+  SELECT N'' AS [ERROR_MESSAGE]
+  SET NOCOUNT OFF
+
+  ]]>
+      </FixedSQL>
+      <DynamicBodys>
+        <Key>INSERT_QUERY</Key>
+        <Body>{0} </Body>
+      </DynamicBodys>
+    </TemplateSQL>
+  </DBAgentTemplate>
+</DBAgentMultiTemplate>

@@ -1,0 +1,319 @@
+﻿@section scripts{
+    <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+    <script type="text/javascript">
+        google.charts.load("current", { packages: ["corechart"] });
+
+        $(document).ready(function () {
+
+
+            var pageCount = ($(window).height()- $(".column.schedule").height() - $(".cd-main-header").outerHeight() + $(".ui.header").outerHeight() + $(".ui.table.search").outerHeight() + $(".ui.footer").outerHeight() - $(".ui.table.search").height() - 420) / 30;
+            if (pageCount != NaN) PARAM_DATA.PAGE_COUNT = Number(Math.floor(pageCount));
+            doQuery();
+
+            ComponentInit();
+        }); //End document.ready
+
+        function ComponentInit() {
+            $('#FR_DATE').datetimepicker({
+                timepicker: false,
+                format: 'Y.m.d'
+            });
+
+            $('#TO_DATE').datetimepicker({
+                timepicker: false,
+                format: 'Y.m.d'
+            });
+            $("#SEARCH_TEXT").attr("placeholder", Input.ComboBox.GetText("#cboGubun"));
+            $("#cboGubun").change(function () {
+                $("#SEARCH_TEXT").attr("placeholder", Input.ComboBox.GetText("#cboGubun"));
+            });
+            if ($(window).width() >= 768) {
+                $("#piechart").width($(window).width() / 2);
+                $("#piechart").height($(window).width() * 0.3);
+                $("#piechart2").width($(window).width() / 2);
+                $("#piechart2").height($(window).width() * 0.3);
+
+            }
+            else {
+                $("#piechart").width($(window).width());
+                $("#piechart").height($(window).width() * 0.4);
+                $("#piechart2").width($(window).width());
+                $("#piechart2").height($(window).width() * 0.4);
+
+            }
+        
+        }
+        var PARAM_DATA = {
+            PAGE_SIZE: ($("window").width() < 768 ? 5 : 10)
+            , PAGE_COUNT: 15
+            , PAGE: 1
+            , SORT_ORDER: ""
+        }
+        function doQuery(page, order) {
+            if (page == undefined || page == null || page < 1) page = 1;
+            PARAM_DATA.PAGE = page;
+
+            var param = BaseCommon.FormInfo.serializeJson(".ui.form");
+
+            param.PAGE_COUNT = PARAM_DATA.PAGE_COUNT;
+            param.PAGE = PARAM_DATA.PAGE;
+
+            param[$("#cboGubun").val()] = $("#SEARCH_TEXT").val();
+
+
+            if (order != undefined) {
+                PARAM_DATA.SORT_ORDER = order;
+                param.SORT_ORDER = order;
+            }
+            else if (order == undefined) {
+                param.SORT_ORDER = PARAM_DATA.SORT_ORDER;
+            }
+            param = JSON.stringify(param);
+            ajax.GetAjax("/device/pv_AdPlayMonthTotalList", param, "html", function (result) {
+                $("#dvTable table tbody").html(result);
+                //$.mrc_table.Init(".mrc-table", false, order);
+				 $.mrc_table.InitObject({
+					 objName: ".mrc-table"
+					 
+				 });
+
+                // $("#dvpagination").show();
+                google.setOnLoadCallback(drawChart);
+                 google.setOnLoadCallback(drawChart2);
+                // drawChart();
+                //$("#idTotal").text($("#total").val()).number(true, 0, ",");
+                /*    $("#dvpagination").pagination({
+                        total: Number($("#total").val()), page: PARAM_DATA.PAGE, pagesize: PARAM_DATA.PAGE_SIZE, perpage: PARAM_DATA.PAGE_COUNT
+                        , onPageClick: function (item, page) {
+                            doQuery(page);
+                        }
+                    })
+                    $("#dvpagination").css("display", "");*/
+            });
+        }
+
+        function drawChart() {
+            var jsondata = JSON.parse($("#piechartData").val());
+
+            var data = google.visualization.arrayToDataTable([
+                ['구분', '시간'],
+                ['이미지-1', jsondata.IMAGE1_PLAY_TIME],
+                ['이미지-6', jsondata.IMAGE6_PLAY_TIME],
+                ['이미지-12', jsondata.IMAGE12_PLAY_TIME],
+                ['클릭', jsondata.CLICK_PLAY_TIME],
+                ['동영상', jsondata.VIDEO_PLAY_TIME],
+                ['유튜브', jsondata.YOUTUBE_PLAY_TIME]
+            ]);
+
+            var options = {
+                title: '배너재생시간',
+                pieHole: 0,
+            };
+
+            var chart = new google.visualization.PieChart(document.getElementById('piechart'));
+
+            chart.draw(data, options);
+
+        }
+
+         function drawChart2() {
+              var jsondata = JSON.parse($("#piechartData").val());
+
+            var data = google.visualization.arrayToDataTable([
+                 ['구분', '시간'],
+                ['이미지-1', jsondata.IMAGE1_PLAY_QTY],
+                ['이미지-6', jsondata.IMAGE6_PLAY_QTY],
+                ['이미지-12', jsondata.IMAGE12_PLAY_QTY],
+                ['클릭', jsondata.CLICK_PLAY_QTY],
+                ['동영상', jsondata.VIDEO_PLAY_QTY],
+                ['유튜브', jsondata.YOUTUBE_PLAY_QTY]
+            ]);
+
+            var options = {
+                title: '배너재생건수',
+                pieHole: 0,
+            };
+
+            var chart = new google.visualization.PieChart(document.getElementById('piechart2'));
+
+            chart.draw(data, options);
+        }
+
+        function mrcGrid_Sort(objName, datasort, orderType) {
+            if (datasort == "" || orderType == "") doQuery(1, "");
+            else doQuery(1, datasort + " " + orderType);
+        }
+
+     
+        function adPlayDetail(obj, regDay, storeCode) {
+            $.mrc_table.SetActiveIndex(".mrc-table", $(obj).closest("tr").index() - 1);
+            var params = $.mrc_table.GetActiveRowData(".mrc-table")[0];
+            var arrData = new Array();
+            $.each(params, function (key, val) {
+                //display the key and value pair
+
+                arrData.push({ name: key, value: val });
+            });
+
+            arrData.push({ name: "FR_DATE", value: $("#FR_DATE").val() });
+            arrData.push({ name: "TO_DATE", value: $("#TO_DATE").val() });
+            arrData.push({ name: "STORE_CODE", value: storeCode });
+            BaseCommon.FormInfo.PostSubmit('/device/adplaylogMongoList', arrData);
+        }
+
+        function SchedulerExec() {
+
+            $.MessageBox({
+                buttonDone: "예",
+                buttonFail: "아니오",
+                message: "기초데이터를 집계데이터에 적용하시겠습니까?"
+            }).done(function () {
+                SchedulerExecDone();
+            }).fail(function () {
+
+            });
+        }
+        function SchedulerExecDone() {
+             var params = new Object();
+            params = JSON.stringify(params);
+            ajax.GetAjax("/device/AdPlayScheduler/", params, "json", function (result) {
+                if (result.ERROR_MESSAGE != "") {
+                    $.MessageBox(result.ERROR_MESSAGE);
+                }
+                else {
+                    $.MessageBox("반영되었습니다.").done(function () {
+                        $("#spBaseDate").text(result.DATA);
+                        $("#spApplyTime").text(result.DATA2);
+                        doQuery();
+                    });
+                }
+            })
+        }
+    </script>
+}
+<style>
+    .ui.checkbox {
+        margin-top: 0.5em;
+    }
+
+    #dvpagination {
+        margin-top: 1em;
+    }
+
+    .ui.table td.title {
+        width: 120px;
+    }
+
+    @@media (min-width:768px) and (max-width:1023px) {
+        .ui.table td.frtodate {
+            width: 39.5%;
+        }
+    }
+
+    @@media only screen and (min-width:1024px) {
+        .ui.table td.frtodate {
+            width: 23.5%;
+        }
+    }
+</style>
+<div class="ui vertical stripe segment">
+    @Html.TitleNavigation()
+    <form class="ui form">
+        <div class="ui stackable grid fields">
+            <div class="one column row">
+                <div class="column">
+                    <table class="ui table search">
+                        <tbody>
+                            <tr>
+                                <td class="title">
+                                    @Html.Semantic_TITLE2("조회일자")
+                                </td>
+                                <td class="content frtodate">
+                                    @Html.Semantic_TextBox("FR_DATE", DateTime.Now.ToString("yyyy.MM." + "01"), SemanticUIHelper.Size.mini, new { @style = "text-align:center;", @class = "size100", @placeholder = "시작일자" })@Html.Semantic_TextBox("TO_DATE", DateTime.Now.ToString("yyyy.MM.dd"), SemanticUIHelper.Size.mini, new { @style = "text-align:center;", @class = "size100", @placeholder = "종료일자" })
+                                </td>
+
+
+                                <td class="conetent buttons">
+
+                                    <!--총 <span style="font-weight:bold;color:red;" id="idTotal">0</span>건이 조회되었습니다.-->
+                                    @Html.Semantic_Button2("btnApply", "현재시간반영", SemanticUIHelper.enButtonType.Save, SemanticUIHelper.Size.medium, new { onclick = "SchedulerExec();" })
+                                    @Html.Semantic_Button2("btnSearch", "조회", SemanticUIHelper.enButtonType.ToList, SemanticUIHelper.Size.medium, new { onclick = "doQuery();" })
+
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                </div>
+            </div>
+            <div class="one column row">
+                <div class="column schedule right" style="font-weight:bold;"><span style="color:red">기준일자  : </span> <span id="spBaseDate">@SessionHelper.ScheduleInfo.MONGODB_BASE_DATE.ToFormatDate()</span> &nbsp; <span style="color:blue">적용시간</span> : <span id="spApplyTime">@SessionHelper.ScheduleInfo.MONGODB_APPLY_TIME</span></div>
+                <div class="column" id="dvTable">
+                    <table class="mrc-table" id="tbList">
+						<thead>
+							<tr>
+								<th  rowspan="2">광고수</th>
+								<th display_size="tablet" rowspan="2">로컬박스수</th>
+								@*<th column_name="BANNER_KIND_NAME" data-sort="A.BANNER_KIND" class="sort">배너구분</th>*@
+								<th display_size="tablet" colspan="2">이미지-1</th>
+								<th display_size="pc" colspan="2">이미지-6</th>
+								<th display_size="pc" colspan="2">클릭</th>
+								
+								<th display_size="pc" colspan="2">비디오</th>
+								
+								<th display_size="tablet" colspan="2">유튜브</th>
+								
+								<th colspan="2">합계</th>
+							
+							</tr>
+							<tr>
+							
+								@*<th column_name="BANNER_KIND_NAME" data-sort="A.BANNER_KIND" class="sort">배너구분</th>*@
+								<th column_name="IMAGE1_PLAY_QTY" display_size="tablet">건수</th>
+								<th column_name="IMAGE1_PLAY_TIME" display_size="tablet">재생(초)</th>
+								<th column_name="IMAGE6_PLAY_QTY" display_size="pc">건수</th>
+								<th column_name="IMAGE6_PLAY_TIME" display_size="pc">재생(초)</th>
+			
+								<th column_name="CLICK_QTY" display_size="pc">건수</th>
+								<th column_name="CLICK_TIME" display_size="pc">재생(s)</th>
+								<th column_name="VIDEO_PLAY_QTY" display_size="pc">건수</th>
+								<th column_name="VIDEO_PLAY_TIME" display_size="pc">재생(s)</th>
+								<th column_name="YOUTUBE_PLAY_QTY" display_size="tablet">건수</th>
+								<th column_name="YOUTUBE_PLAY_TIME" display_size="tablet">재생(s)</th>
+								<th column_nmae="TOT_QTY">건수</th>
+								<th column_nmae="TOT_PLAY_TIME">재생(초)</th>
+							</tr>
+							<tr class="hide">
+								<th column_name="AD_CNT">광고수</th>
+								<th column_name="DEVICE_CNT" display_size="tablet">로컬박스수</th>
+								@*<th column_name="BANNER_KIND_NAME" data-sort="A.BANNER_KIND" class="sort">배너구분</th>*@
+								<th column_name="IMAGE1_PLAY_QTY" display_size="tablet">이미지-1(건)</th>
+								<th column_name="IMAGE1_PLAY_TIME" display_size="tablet">이미지-1(초)</th>
+								<th column_name="IMAGE6_PLAY_QTY" display_size="pc">이미지-6(건)</th>
+								<th column_name="IMAGE6_PLAY_TIME" display_size="pc">이미지-6(초)</th>
+								<th column_name="CLICK_QTY" display_size="pc">클릭(건)</th>
+								<th column_name="CLICK_TIME" display_size="pc">클릭(초)</th>
+								<th column_name="VIDEO_PLAY_QTY" display_size="pc">비디오(건)</th>
+								<th column_name="VIDEO_PLAY_TIME" display_size="pc">비디오(초)</th>
+								<th column_name="YOUTUBE_PLAY_QTY" display_size="tablet">유튜브(건)</th>
+								<th column_name="YOUTUBE_PLAY_TIME" display_size="tablet">유튜브(초)</th>
+								<th column_nmae="TOT_QTY">총건수</th>
+								<th column_nmae="TOT_PLAY_TIME">총시간</th>
+							</tr>
+						</thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="one column row" style="display:none;">
+                <div id="dvpagination" class="ui floated pagination menu"></div>
+            </div>
+            <div class="two column row">
+                <div class="column"><div id="piechart" style="width: 900px; height: 300px;"></div></div>
+                <div class="column"><div id="piechart2" style="width: 900px; height: 300px;"></div></div>
+            </div>
+
+        </div>
+</form>
+</div>
+

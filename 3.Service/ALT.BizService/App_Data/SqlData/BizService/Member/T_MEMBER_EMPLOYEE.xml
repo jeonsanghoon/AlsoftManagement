@@ -1,0 +1,1041 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<DBAgentMultiTemplate  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns="http://altsoft.kr/">
+  <DBAgentTemplate TemplateID="GetEmployeeInfoList">
+    <!-- 
+    SqlType : SQL의 형태를 지정합니다.
+      Example 1:<SqlType>FixedSQL</SqlType> 고정적인 SQL을 지원합니다. 
+      Example 2:<SqlType>DynamicSQL</SqlType> 동적인 SQL Type1을 지원합니다.  
+    Description : 해당 SQL의 기능설명을 적습니다.
+    SQLModifier : 해당 SQL의 작성자(수정자)를 적습니다
+    LastModifyDate : 해당 SQL의 마지막 수정일을 적습니다
+    -->
+    <Information>
+      <SqlType>DynamicSQL</SqlType>
+      <Description>회원조회</Description>
+      <SQLModifier>전상훈</SQLModifier>
+      <LastModifyDate>2016-09-24</LastModifyDate>
+    </Information>
+
+    <TemplateSQL>
+      <!-- FixedSQL : 고정된 SQL이 들어가는 곳입니다. -->
+      <FixedSQL>
+        <![CDATA[ 
+    SET NOCOUNT ON
+    /*****************************************************/
+    /* 직원정보 조회 - 로그인시 정보 GetEmployeeInfoList */
+    /*****************************************************/
+    SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED
+    
+    SELECT A.MEMBER_CODE
+          ,A.USER_NAME
+          ,D.COMPANY_CODE
+          ,D.COMPANY_NAME
+          ,C.STORE_CODE, C.STORE_NAME
+	        ,B.DEPT_CODE
+	        ,BD.DEPT_NAME
+	        ,B.PARENT_MEMBER_CODE
+	        ,E.USER_NAME AS PARENT_MEMBER_NAME
+	        ,B.COMP_POSITION
+	        ,G.NAME AS COMP_POSITION_NAME
+	        ,B.COMP_TITLE
+	        ,H.NAME AS COMP_TITLE_NAME
+	        ,B.EMP_AUTH
+	        ,F.NAME AS EMP_AUTH_NAME
+          ,CONVERT(INT, CASE WHEN ISNUMERIC(F.REF_DATA1) = 1 THEN F.REF_DATA1 ELSE 20 END) AS MAKER_MAX_COUNT
+	        ,B.MENU_GROUP
+	        ,I.GROUP_NAME AS MENU_GROUP_NAME 
+          ,B.MEMO
+		      ,B.TELEGRAM_CHAT_ID
+       FROM T_MEMBER A 
+      INNER JOIN T_MEMBER_EMPLOYEE B
+          ON A.MEMBER_CODE = B.MEMBER_CODE
+      INNER JOIN T_STORE C
+          ON B.STORE_CODE = C.STORE_CODE
+      LEFT JOIN T_STORE_DEPT BD
+          ON BD.STORE_CODE = B.STORE_CODE
+        AND BD.DEPT_CODE = B.DEPT_CODE
+      INNER JOIN T_COMPANY D
+          ON C.COMPANY_CODE = D.COMPANY_CODE
+      LEFT JOIN T_MEMBER E
+          ON E.MEMBER_CODE = B.PARENT_MEMBER_CODE
+      INNER JOIN T_COMMON F
+          ON F.MAIN_CODE = 'A002'
+        AND F.SUB_CODE = B.EMP_AUTH
+      LEFT JOIN T_STORE_POSITION G
+          ON B.STORE_CODE = G.STORE_CODE
+         AND B.COMP_POSITION =  G.POSITION_CODE
+      LEFT JOIN T_STORE_POSITION H
+          ON B.STORE_CODE = H.STORE_CODE
+         AND B.COMP_TITLE = H.POSITION_CODE
+      LEFT JOIN T_STORE_WEBMENU_GROUP I
+          ON B.STORE_CODE = I.STORE_CODE 
+        AND B.MENU_GROUP = I.GROUP_CODE
+      WHERE 1=1
+       #[MEMBER_CODE]
+       #[STORE_CODE]
+       #[DEPT_CODE]
+       #[COMP_TITLE]
+      ORDER BY BD.DEPT_SEARCH, G.SEQ, H.SEQ, A.USER_NAME
+   SET NOCOUNT OFF
+      ]]>
+      </FixedSQL>
+
+      <DynamicBodys>
+        <Key>MEMBER_CODE</Key>
+        <Body>AND A.MEMBER_CODE = {0} </Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>STORE_CODE</Key>
+        <Body>AND B.STORE_CODE = {0} </Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>DEPT_CODE</Key>
+        <Body>AND B.DEPT_CODE = {0} </Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>COMP_TITLE</Key>
+        <Body>AND B.COMP_TITLE = {0} </Body>
+      </DynamicBodys>
+    </TemplateSQL>
+  </DBAgentTemplate>
+  <DBAgentTemplate TemplateID="GetStoreDept">
+    <!-- 
+    SqlType : SQL의 형태를 지정합니다.
+      Example 1:<SqlType>FixedSQL</SqlType> 고정적인 SQL을 지원합니다. 
+      Example 2:<SqlType>DynamicSQL</SqlType> 동적인 SQL Type1을 지원합니다.  
+    Description : 해당 SQL의 기능설명을 적습니다.
+    SQLModifier : 해당 SQL의 작성자(수정자)를 적습니다
+    LastModifyDate : 해당 SQL의 마지막 수정일을 적습니다
+    -->
+    <Information>
+      <SqlType>DynamicSQL</SqlType>
+      <Description>부서 조회</Description>
+      <SQLModifier>전상훈</SQLModifier>
+      <LastModifyDate>2016-09-20</LastModifyDate>
+    </Information>
+
+    <TemplateSQL>
+      <!-- FixedSQL : 고정된 SQL이 들어가는 곳입니다. -->
+      <FixedSQL>
+        <![CDATA[ 
+	SET NOCOUNT ON 
+	/********************************************************/
+	/* 매장별부서테이블 - T_STORE_DEPT 조회 -  SELECT QUERY */ 
+	/********************************************************/
+	SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED 
+	
+   SELECT 
+	      A.STORE_CODE
+	    , A.DEPT_CODE
+	    , A.PARENT_DEPT_CODE
+	    , A.DEPT_NAME
+	    , A.DEPT_SEARCH
+	    , A.REMARK
+	    , A.INSERT_CODE
+	    , A.INSERT_DATE
+	    , A.UPDATE_CODE
+	    , A.UPDATE_DATE
+	  FROM T_STORE_DEPT A 
+	  WHERE 1=1 
+    #[STORE_CODE]
+    #[PARENT_DEPT_CODE]
+	SET NOCOUNT OFF 
+
+      ]]>
+      </FixedSQL>
+      <DynamicBodys>
+        <Key>STORE_CODE</Key>
+        <Body>AND A.STORE_CODE = '{0}' </Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>PARENT_DEPT_CODE</Key>
+        <Body>AND A.PARENT_DEPT_CODE = '{0}' </Body>
+      </DynamicBodys>
+    </TemplateSQL>
+  </DBAgentTemplate>
+
+  <DBAgentTemplate TemplateID="GetStorePosition">
+    <!-- 
+    SqlType : SQL의 형태를 지정합니다.
+      Example 1:<SqlType>FixedSQL</SqlType> 고정적인 SQL을 지원합니다. 
+      Example 2:<SqlType>DynamicSQL</SqlType> 동적인 SQL Type1을 지원합니다.  
+    Description : 해당 SQL의 기능설명을 적습니다.
+    SQLModifier : 해당 SQL의 작성자(수정자)를 적습니다
+    LastModifyDate : 해당 SQL의 마지막 수정일을 적습니다
+    -->
+    <Information>
+      <SqlType>DynamicSQL</SqlType>
+      <Description>StorePosition조회</Description>
+      <SQLModifier>전상훈</SQLModifier>
+      <LastModifyDate>2016-09-20</LastModifyDate>
+    </Information>
+
+    <TemplateSQL>
+      <!-- FixedSQL : 고정된 SQL이 들어가는 곳입니다. -->
+      <FixedSQL>
+        <![CDATA[ 
+   		SET NOCOUNT ON 
+	/*************************************************************/
+	/* 직급/직책테이블 - T_STORE_POSITION 조회 -  SELECT QUERY */ 
+	/*************************************************************/
+	SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED 
+	SELECT 
+      A.POSITION_CODE
+		, A.STORE_CODE
+		, A.POSITION_TYPE
+		, A.SEQ
+		, A.NAME
+		, A.HIDE
+		, A.REMARK
+		, A.INSERT_CODE
+		, A.INSERT_DATE
+		, A.UPDATE_CODE
+		, A.UPDATE_DATE
+	FROM T_STORE_POSITION A 
+  
+	WHERE 1=1
+  #[STORE_CODE]
+  #[HIDE]
+  #[POSITION_TYPE]
+	SET NOCOUNT OFF 
+
+
+      ]]>
+      </FixedSQL>
+      <DynamicBodys>
+        <Key>STORE_CODE</Key>
+        <Body>AND A.STORE_CODE = '{0}' </Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>HIDE</Key>
+        <Body>AND A.HIDE = '{0}' </Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>POSITION_TYPE</Key>
+        <Body>AND A.POSITION_TYPE = '{0}' </Body>
+      </DynamicBodys>
+    </TemplateSQL>
+  </DBAgentTemplate>
+
+  <DBAgentTemplate TemplateID="GetEmployeeList">
+    <!-- 
+    SqlType : SQL의 형태를 지정합니다.
+      Example 1:<SqlType>FixedSQL</SqlType> 고정적인 SQL을 지원합니다. 
+      Example 2:<SqlType>DynamicSQL</SqlType> 동적인 SQL Type1을 지원합니다.  
+    Description : 해당 SQL의 기능설명을 적습니다.
+    SQLModifier : 해당 SQL의 작성자(수정자)를 적습니다
+    LastModifyDate : 해당 SQL의 마지막 수정일을 적습니다
+    -->
+    <Information>
+      <SqlType>DynamicSQL</SqlType>
+      <Description>직원 상세조회</Description>
+      <SQLModifier>전상훈</SQLModifier>
+      <LastModifyDate>2016-09-20</LastModifyDate>
+    </Information>
+
+    <TemplateSQL>
+      <!-- FixedSQL : 고정된 SQL이 들어가는 곳입니다. -->
+      <FixedSQL>
+        <![CDATA[ 
+	SET NOCOUNT ON 
+	/************************************************/
+	/* 직원조회                                */
+  /* - T_MEMBER, T_MEMBER_EMPLOYEE  조회          */ 
+  /* - SELECT QUERY                              */ 
+	/************************************************/
+	SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED 
+  
+DECLARE @PAGE_COUNT INT = {0}
+        , @PAGE       INT = {1}
+        ;
+         
+WITH T_TABLE AS 
+(
+    SELECT ROW_NUMBER() OVER(ORDER BY {2}) AS SEQ
+      ,CONVERT(INT, 3) AS PROJECT_SITE
+	    ,D.COMPANY_CODE
+	    ,D.COMPANY_NAME
+	    ,C.STORE_CODE
+	    ,C.STORE_NAME
+	    ,A.MEMBER_CODE
+	    ,A.USER_TYPE
+	    ,CM.NAME AS USER_TYPE_NAME
+	    ,A.USER_ID
+	    ,A.PASSWORD
+	    ,A.USER_NAME 
+	    ,A.EMAIL
+	    ,A.PHONE
+	    ,A.MOBILE
+	    ,A.ADDRESS1
+	    ,A.ADDRESS2
+	    ,A.ZIP_CODE
+	    ,A.BIRTH
+	    ,A.GENDER
+	    ,A.PASSWORD_CHANGE_URL
+	    ,A.PASSWORD_AUTH_TIME
+	    ,B.DEPT_CODE
+      ,SD.DEPT_SEARCH
+	    ,SD.DEPT_NAME
+	    ,B.PARENT_MEMBER_CODE
+	    ,ISNULL(BM.USER_NAME,'') AS PARENT_MEMBER_NAME
+	    ,B.COMP_POSITION
+	    ,SP.NAME AS COMP_POSITION_NAME
+	    ,B.COMP_TITLE
+	    ,SP1.NAME AS COMP_TITLE_NAME
+	    ,B.EMP_AUTH
+	    ,CM2.NAME AS EMP_AUTH_NAME
+	    ,B.MENU_GROUP
+	    ,WG.GROUP_NAME AS MENU_GROUP_NAME
+	    ,B.MEMO
+	    ,B.TELEGRAM_CHAT_ID
+	    ,A.HIDE
+	    ,CM3.REF_DATA1 AS HIDE_NAME
+	    ,A.REMARK
+	    ,A.INSERT_CODE
+	    ,M1.USER_NAME AS INSERT_NAME
+	    ,A.INSERT_DATE
+	    ,A.UPDATE_CODE
+	    ,M2.USER_NAME AS UPDATE_NAME
+	    ,A.UPDATE_DATE
+	    ,ISNULL(E.CNT,0) AS AD_CNT
+		  ,ISNULL(E1.CNT,0) AS DEVICE_CNT
+		  ,ISNULL(F.CNT,0) AS CONTACT_AD_CNT
+		  ,ISNULL(F1.CNT,0) AS CONTACT_DEVICE_CNT
+     FROM T_MEMBER A
+     INNER JOIN T_MEMBER_EMPLOYEE B
+        ON A.MEMBER_CODE = B.MEMBER_CODE
+      LEFT JOIN T_MEMBER BM
+        ON B.PARENT_MEMBER_CODE = BM.MEMBER_CODE
+     INNER JOIN T_STORE C
+        ON B.STORE_CODE = C.STORE_CODE
+     INNER JOIN T_COMPANY D
+        ON D.COMPANY_CODE = C.COMPANY_CODE
+     INNER JOIN T_COMMON CM
+        ON CM.MAIN_CODE = 'U001'
+       AND CM.SUB_CODE = A.USER_TYPE
+      LEFT JOIN T_STORE_DEPT SD
+        ON B.STORE_CODE = SD.STORE_CODE
+       AND B.DEPT_CODE = SD.DEPT_CODE
+     LEFT JOIN T_STORE_POSITION SP
+        ON B.STORE_CODE = SP.STORE_CODE
+       AND SP.POSITION_CODE = B.COMP_POSITION
+     LEFT JOIN T_STORE_POSITION SP1
+        ON B.STORE_CODE = SP1.STORE_CODE
+       AND B.COMP_TITLE = SP1.POSITION_CODE 
+     LEFT JOIN T_COMMON CM2
+        ON CM2.MAIN_CODE = 'A002'
+       AND CM2.SUB_CODE = B.EMP_AUTH
+     LEFT JOIN T_STORE_WEBMENU_GROUP WG
+        ON WG.PROJECT_SITE = 3
+       AND WG.STORE_CODE = B.STORE_CODE
+       AND WG.GROUP_CODE = B.MENU_GROUP
+     INNER JOIN T_MEMBER M1
+        ON M1.MEMBER_CODE = A.INSERT_CODE
+     LEFT JOIN T_MEMBER M2
+        ON M2.MEMBER_CODE = A.UPDATE_CODE
+     LEFT JOIN T_COMMON CM3
+       ON CM3.MAIN_CODE = 'B003'
+      AND CM3.SUB_CODE = A.HIDE 
+	   LEFT JOIN (SELECT MEMBER_CODE, COUNT(*) CNT 
+                  FROM T_AD
+                 WHERE REP_CATEGORY_CODE <> 6336
+                   AND HIDE = 0
+	               GROUP BY MEMBER_CODE
+				  ) E ON A.MEMBER_CODE = E.MEMBER_CODE
+	  LEFT JOIN (SELECT MEMBER_CODE, COUNT(*) CNT 
+                 FROM T_DEVICE
+                WHERE HIDE = 0
+	               GROUP BY MEMBER_CODE
+				  ) E1 ON A.MEMBER_CODE = E1.MEMBER_CODE
+    LEFT JOIN (SELECT MEMBER_CODE, COUNT(*) CNT 
+                 FROM T_AD
+                WHERE REP_CATEGORY_CODE <> 6336
+                  AND HIDE = 0
+	              GROUP BY MEMBER_CODE
+				  ) F ON A.MEMBER_CODE = F.MEMBER_CODE
+	  LEFT JOIN (SELECT MEMBER_CODE, COUNT(*) CNT 
+                 FROM T_DEVICE
+                WHERE HIDE = 0
+	              GROUP BY MEMBER_CODE
+				  ) F1 ON A.MEMBER_CODE = F1.MEMBER_CODE      
+     WHERE 1=1
+      #[COMPANY_CODE]
+      #[STORE_CODE]      
+      
+      #[DEPT_CODE]
+      #[DEPT_SEARCH]
+      #[PARENT_MEMBER_CODE]
+      #[MEMBER_CODE]
+      #[USER_NAME]
+      #[MOBILE]
+      #[COMP_POSITION]
+      #[COMP_TITLE]
+      #[STR_EMP_AUTH]
+      #[FR_BIRTH]
+      #[TO_BIRTH]
+      #[MOBILE]
+      #[HIDE]
+     )
+           
+  SELECT *
+       , (SELECT COUNT(1) FROM T_TABLE) TOTAL_ROWCOUNT 
+    FROM T_TABLE
+   WHERE SEQ > (@PAGE -1) * @PAGE_COUNT
+     AND SEQ <= @PAGE * @PAGE_COUNT
+   SET NOCOUNT OFF
+  
+	SET NOCOUNT OFF 
+
+      ]]>
+      </FixedSQL>
+      <DynamicBodys>
+        <Key>COMPANY_CODE</Key>
+        <Body>AND C.COMPANY_CODE= {0} </Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>STORE_CODE</Key>
+        <Body>AND B.STORE_CODE = {0} </Body>
+      </DynamicBodys>
+     <DynamicBodys>
+        <Key>DEPT_CODE</Key>
+        <Body>AND B.DEPT_CODE = {0} </Body>
+      </DynamicBodys>
+      <DynamicBodys>
+      <Key>DEPT_SEARCH</Key>
+      <Body>AND SD.DEPT_SEARCH LIKE '{0}%' </Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>PARENT_MEMBER_CODE</Key>
+        <Body>AND (B.PARENT_MEMBER_CODE = {0} OR B.MEMBER_CODE = {0})</Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>MEMBER_CODE</Key>
+        <Body>AND A.MEMBER_CODE = {0} </Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>USER_NAME</Key>
+        <Body>AND A.USER_NAME LIKE N'%{0}%' </Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>MOBILE</Key>
+        <Body>AND A.MOBILE LIKE '%{0}%' </Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>COMP_POSITION</Key>
+        <Body>AND B.COMP_POSITION = {0} </Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>COMP_TITLE</Key>
+        <Body>AND B.COMP_TITLE = {0} </Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>STR_EMP_AUTH</Key>
+        <Body>
+          AND B.EMP_AUTH IN (SELECT VAL1
+          FROM FN_SPLIT('{0}','|'))
+        </Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>FR_BIRTH</Key>
+        <Body>
+          <![CDATA[ AND RIGHT(A.BIRTH,4) >= RIGHT('{0}',4) ]]>
+        </Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>TO_BIRTH</Key>
+        <Body>
+          <![CDATA[ AND RIGHT(A.BIRTH,4) <= RIGHT('{0}',4) ]]>
+        </Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>HIDE</Key>
+        <Body>AND A.HIDE = {0} </Body>
+      </DynamicBodys>
+    </TemplateSQL>
+  </DBAgentTemplate>
+
+  <DBAgentTemplate TemplateID="GetMenuGroupList">
+    <!-- 
+    SqlType : SQL의 형태를 지정합니다.
+      Example 1:<SqlType>FixedSQL</SqlType> 고정적인 SQL을 지원합니다. 
+      Example 2:<SqlType>DynamicSQL</SqlType> 동적인 SQL Type1을 지원합니다.  
+    Description : 해당 SQL의 기능설명을 적습니다.
+    SQLModifier : 해당 SQL의 작성자(수정자)를 적습니다
+    LastModifyDate : 해당 SQL의 마지막 수정일을 적습니다
+    -->
+    <Information>
+      <SqlType>DynamicSQL</SqlType>
+      <Description>메뉴권한그룹조회</Description>
+      <SQLModifier>전상훈</SQLModifier>
+      <LastModifyDate>2016-09-20</LastModifyDate>
+    </Information>
+
+    <TemplateSQL>
+      <!-- FixedSQL : 고정된 SQL이 들어가는 곳입니다. -->
+      <FixedSQL>
+        <![CDATA[ 
+	SET NOCOUNT ON 
+	/********************************************************************/
+	/* 웹메뉴 그룹(템플릿)테이블 - T_STORE_WEBMENU_GROUP 조회 -  SELECT QUERY */ 
+	/********************************************************************/
+	SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED 
+	SELECT 
+		    A.PROJECT_SITE
+      , A.STORE_CODE
+      , A.GROUP_CODE
+      , A.GROUP_NAME
+      , A.ORDER_SEQ
+      , A.DEPT_AUTH
+      , A.COMP_POSITION_AUTH
+      , A.COMP_TITLE_AUTH
+      , A.REMARK
+      , A.HIDE
+      , A.INSERT_CODE
+      , A.INSERT_DATE
+      , A.UPDATE_CODE
+      , A.UPDATE_DATE
+	FROM T_STORE_WEBMENU_GROUP A 
+
+	WHERE 1=1 
+  #[STORE_CODE]
+  #[GROUP_CODE]
+  #[HIDE]
+	SET NOCOUNT OFF 
+
+      ]]>
+      </FixedSQL>
+      <DynamicBodys>
+        <Key>STORE_CODE</Key>
+        <Body>AND A.STORE_CODE = '{0}' </Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>GROUP_CODE</Key>
+        <Body>AND A.GROUP_CODE = '{0}' </Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>HIDE</Key>
+        <Body>AND A.HIDE = {0} </Body>
+      </DynamicBodys>
+    </TemplateSQL>
+  </DBAgentTemplate>
+
+  <DBAgentTemplate TemplateID="SaveEmployee">
+    <!-- 
+    SqlType : SQL의 형태를 지정합니다.
+      Example 1:<SqlType>FixedSQL</SqlType> 고정적인 SQL을 지원합니다. 
+      Example 2:<SqlType>DynamicSQL</SqlType> 동적인 SQL Type1을 지원합니다.  
+    Description : 해당 SQL의 기능설명을 적습니다.
+    SQLModifier : 해당 SQL의 작성자(수정자)를 적습니다
+    LastModifyDate : 해당 SQL의 마지막 수정일을 적습니다
+    -->
+    <Information>
+      <SqlType>DynamicSQL</SqlType>
+      <Description>직원 저장</Description>
+      <SQLModifier>전상훈</SQLModifier>
+      <LastModifyDate>2016-09-20</LastModifyDate>
+    </Information>
+
+    <TemplateSQL>
+      <!-- FixedSQL : 고정된 SQL이 들어가는 곳입니다. -->
+      <FixedSQL>
+        <![CDATA[ 
+  SET NOCOUNT ON         
+	/*********************************************/
+	/* 직원정보 - T_MEMBER, T_MEMBER_EMPLOYEE 저장 -  SAVE QUERY */ 
+	/*********************************************/
+	DECLARE @MEMBER_CODE                    INT                            = N'{0}'
+			  , @USER_TYPE                      INT                            = 5
+			  , @USER_ID                        NVARCHAR(50)                   = N'{1}'
+			  , @PASSWORD                       NVARCHAR(200)                  = N'{2}'
+			  , @USER_NAME                      NVARCHAR(100)                  = N'{3}'
+			  , @EMAIL                          NVARCHAR(100)                  = N'{4}'
+			  , @PHONE                          VARCHAR(30)                    = N'{5}'
+			  , @MOBILE                         VARCHAR(30)                    = N'{6}'
+			  , @ADDRESS1                       NVARCHAR(200)                  = N'{7}'
+			  , @ADDRESS2                       NVARCHAR(200)                  = N'{8}'
+			  , @ZIP_CODE                        VARCHAR(10)                    = N'{9}'
+			  , @BIRTH                          VARCHAR(8)                     = N'{10}'
+			  , @GENDER                         INT                            = CONVERT(INT, CASE WHEN ISNUMERIC('{11}') = 1 THEN '{11}' ELSE NULL END )
+			  , @REMARK                         NVARCHAR(1000)                 = N'{12}'
+			  , @HIDE                           BIT                            = CONVERT(BIT, CASE WHEN ISNUMERIC('{13}') = 1 THEN '{13}' ELSE '0' END )
+			  , @INSERT_CODE                    INT                            = {14}
+			  , @INSERT_DATE                    DATETIME                       = GETDATE() 
+			  , @UPDATE_CODE                    INT                            = {14}
+			  , @UPDATE_DATE                    DATETIME                       = GETDATE() 
+			  , @STORE_CODE                     INT                            = {24}
+			  , @DEPT_CODE                      INT                            = CONVERT(INT, CASE WHEN ISNUMERIC('{15}') = 1 THEN '{15}' ELSE NULL END )
+			  , @PARENT_MEMBER_CODE             INT                            = CONVERT(INT, CASE WHEN ISNUMERIC('{16}') = 1 THEN '{16}' ELSE NULL END )
+			  , @COMP_POSITION                  INT                            = CONVERT(INT, CASE WHEN ISNUMERIC('{17}') = 1 THEN '{17}' ELSE NULL END )
+			  , @COMP_TITLE                     INT                            = CONVERT(INT, CASE WHEN ISNUMERIC('{18}') = 1 THEN '{18}' ELSE NULL END )
+			  , @EMP_AUTH                       INT                            = CONVERT(INT, CASE WHEN ISNUMERIC('{19}') = 1 THEN '{19}' ELSE NULL END )
+			  , @MENU_GROUP                     INT                            = CONVERT(INT, CASE WHEN ISNUMERIC('{20}') = 1 THEN '{20}' ELSE NULL END )
+			  , @MEMO                           NVARCHAR(400)                  = N'{21}'
+			  , @TELEGRAM_CHAT_ID				        VARCHAR(30)					   = N'{22}'
+        , @PROJECT_SITE                   INT                    = {23}
+        , @PRE_MEMU_GROUP                 INT                    
+        
+        
+ SELECT @MEMBER_CODE = MAX(MEMBER_CODE) FROM T_MEMBER
+  WHERE USER_ID = @USER_ID
+ 
+ SELECT @PRE_MEMU_GROUP = ISNULL(MAX(MENU_GROUP),-1) 
+   FROM T_MEMBER_EMPLOYEE
+  WHERE MEMBER_CODE = @MEMBER_CODE
+  
+ 
+  UPDATE A 
+	SET  	  USER_TYPE                 = @USER_TYPE                
+			 ,  USER_ID                   = @USER_ID                  		 ,  PASSWORD                  = @PASSWORD                 
+			 ,  USER_NAME                 = @USER_NAME                		 ,  EMAIL                     = @EMAIL                    
+			 ,  PHONE                     = @PHONE                    		 ,  MOBILE                    = @MOBILE                   
+			 ,  ADDRESS1                  = @ADDRESS1                 		 ,  ADDRESS2                  = @ADDRESS2                 
+			 ,  ZIP_CODE                  = @ZIP_CODE                  		 ,  BIRTH                     = @BIRTH                    
+			 ,  GENDER                    = @GENDER                   		 ,  REMARK                    = @REMARK                   
+			 ,  HIDE                      = @HIDE                     		 
+			 ,  UPDATE_CODE               = @UPDATE_CODE					 ,  UPDATE_DATE               = @UPDATE_DATE
+			 
+	FROM T_MEMBER A 
+	WHERE MEMBER_CODE= @MEMBER_CODE
+	
+	IF @@ROWCOUNT = 0
+	BEGIN
+
+		SELECT @MEMBER_CODE = MAX(MEMBER_CODE) + 1
+		  FROM T_MEMBER
+
+		INSERT INTO T_MEMBER
+		(		USER_TYPE                     		, USER_ID                       		, PASSWORD                      		
+			, USER_NAME                     		, EMAIL                         		, PHONE                         		, MOBILE                        		
+			, ADDRESS1                      		, ADDRESS2                      		, ZIP_CODE                       		, BIRTH                         		
+			, GENDER                        		, REMARK                        		, HIDE                          		, INSERT_CODE                   		
+			, INSERT_DATE                   		, UPDATE_CODE                   		, UPDATE_DATE                   		
+		)
+		SELECT @USER_TYPE                    		, @USER_ID                      	
+				, @PASSWORD                     		, @USER_NAME                    		, @EMAIL                        	
+				, @PHONE                        		, @MOBILE                       		, @ADDRESS1                     	
+				, @ADDRESS2                     		, @ZIP_CODE                      		, @BIRTH                        	
+				, @GENDER                       		, @REMARK                       		, @HIDE                         	
+				, @INSERT_CODE                  		, @INSERT_DATE                  		, @UPDATE_CODE                  	
+				, @UPDATE_DATE                  	
+		
+		SET @MEMBER_CODE = @@IDENTITY
+	END
+
+	UPDATE A 
+	SET  		STORE_CODE                = @STORE_CODE               
+			 ,  DEPT_CODE                 = @DEPT_CODE                		 ,  PARENT_MEMBER_CODE        = @PARENT_MEMBER_CODE       
+			 ,  COMP_POSITION             = @COMP_POSITION            		 ,  COMP_TITLE                = @COMP_TITLE               
+			 ,  EMP_AUTH                  = @EMP_AUTH                 		 ,  MENU_GROUP                = @MENU_GROUP               
+			 ,  MEMO                      = @MEMO							 ,  TELEGRAM_CHAT_ID          = @TELEGRAM_CHAT_ID
+       ,  UPDATE_DATE               = @UPDATE_DATE 
+	FROM T_MEMBER_EMPLOYEE A 
+	WHERE STORE_CODE  = @STORE_CODE
+	  AND MEMBER_CODE = @MEMBER_CODE
+
+	IF @@ROWCOUNT = 0
+	BEGIN
+		INSERT INTO T_MEMBER_EMPLOYEE
+		(		MEMBER_CODE                   		, STORE_CODE                    		, DEPT_CODE                     		, PARENT_MEMBER_CODE            		
+			, COMP_POSITION                 		, COMP_TITLE                    		, EMP_AUTH                      		, MENU_GROUP                    		
+			, MEMO                          		, TELEGRAM_CHAT_ID                  , UPDATE_DATE 
+		)
+		SELECT @MEMBER_CODE                  			, @STORE_CODE                   		, @DEPT_CODE                    	
+				, @PARENT_MEMBER_CODE           		, @COMP_POSITION                		, @COMP_TITLE                   	
+				, @EMP_AUTH                     		, @MENU_GROUP                   		, @MEMO                         	, @TELEGRAM_CHAT_ID
+        , @UPDATE_DATE 
+        
+        
+			
+	 END
+   
+   IF @PRE_MEMU_GROUP <> @MENU_GROUP
+   BEGIN
+   
+   	  /*신규 직원 등록 시 웹메뉴 적용*/
+		  DELETE FROM T_STORE_WEBMENU_EMPLOYEE_MENU
+		  WHERE PROJECT_SITE = @PROJECT_SITE
+        AND STORE_CODE = @STORE_CODE
+		    AND MEMBER_CODE = @MEMBER_CODE
+
+
+	      INSERT INTO T_STORE_WEBMENU
+		( PROJECT_SITE, STORE_CODE, MENU_CODE, MENU_TYPE, SEARCH_CODE, PARENT_CODE, LEVEL, SEQ, NAME
+			,FULL_NAME, MENU_URL, TEMPLEATE_PAGE, MENU_CLASS, REMARK, HIDE, INSERT_CODE, INSERT_DATE, UPDATE_CODE,UPDATE_DATE
+	     )
+		 SELECT  A1.PROJECT_SITE, A1.STORE_CODE, A1.MENU_CODE, B.MENU_TYPE
+		       , B.SEARCH_CODE, B.PARENT_CODE, B.LEVEL, B.SEQ, B.NAME
+               , B.FULL_NAME, B.MENU_URL, B.TEMPLEATE_PAGE, B.MENU_CLASS
+	           , B.REMARK, B.HIDE, A1.INSERT_CODE, GETDATE() INSERT_DATE
+			   , A1.UPDATE_CODE, GETDATE() UPDATE_DATE
+	   FROM (SELECT PROJECT_SITE, STORE_CODE, MENU_CODE, MAX(INSERT_CODE) INSERT_CODE, MAX(UPDATE_CODE) AS UPDATE_CODE 
+	          FROM T_STORE_WEBMENU_GROUP_MENU
+			 GROUP BY PROJECT_SITE, STORE_CODE, MENU_CODE 
+			  ) A1
+	   LEFT JOIN T_STORE_WEBMENU A
+	     ON A1.PROJECT_SITE = A.PROJECT_SITE
+        AND A1.STORE_CODE    = A.STORE_CODE
+		AND A1.MENU_CODE     = A.MENU_CODE
+     INNER JOIN T_WEBMENU B
+	    ON A1.PROJECT_SITE = B.PROJECT_SITE
+	   AND A1.MENU_CODE    = B.MENU_CODE
+		WHERE A.PROJECT_SITE IS NULL
+		
+		  INSERT INTO T_STORE_WEBMENU_EMPLOYEE_MENU
+		  (  PROJECT_SITE, STORE_CODE, MEMBER_CODE, MENU_CODE, INSERT_AUTH, UPDATE_AUTH, EXCEL_AUTH, PRINT_AUTH, HIDE, REMARK
+		    , INSERT_CODE, INSERT_DATE, UPDATE_CODE, UPDATE_DATE
+		  )
+		  SELECT @PROJECT_SITE, B.STORE_CODE, A.MEMBER_CODE, C.MENU_CODE, C.INSERT_AUTH, C.UPDATE_AUTH, C.EXCEL_AUTH, C.PRINT_AUTH 
+			   , 0 HIDE, N'그룹권한 일괄적용', @INSERT_CODE, GETDATE(), @INSERT_CODE, GETDATE()
+		  FROM T_MEMBER_EMPLOYEE A
+		  INNER JOIN T_STORE_WEBMENU_GROUP B
+		     ON A.STORE_CODE = B.STORE_CODE
+        
+		  INNER JOIN T_STORE_WEBMENU_GROUP_MENU C
+		     ON B.PROJECT_SITE = C.PROJECT_SITE
+        AND B.STORE_CODE = C.STORE_CODE
+		    AND B.GROUP_CODE = C.GROUP_CODE
+		    AND C.HIDE = 0
+		  WHERE B.PROJECT_SITE = 3
+        AND B.STORE_CODE = @STORE_CODE
+		    AND B.GROUP_CODE = @MENU_GROUP
+        AND A.MEMBER_CODE = @MEMBER_CODE
+   END
+
+	 SELECT ISNULL(@MEMBER_CODE,-1) AS MEMBER_CODE
+
+SET NOCOUNT OFF
+
+      ]]>
+      </FixedSQL>
+    </TemplateSQL>
+  </DBAgentTemplate>
+
+  <DBAgentTemplate TemplateID="GetEmployeeListByAuth">
+    <!-- 
+    SqlType : SQL의 형태를 지정합니다.
+      Example 1:<SqlType>FixedSQL</SqlType> 고정적인 SQL을 지원합니다. 
+      Example 2:<SqlType>DynamicSQL</SqlType> 동적인 SQL Type1을 지원합니다.  
+    Description : 해당 SQL의 기능설명을 적습니다.
+    SQLModifier : 해당 SQL의 작성자(수정자)를 적습니다
+    LastModifyDate : 해당 SQL의 마지막 수정일을 적습니다
+    -->
+    <Information>
+      <SqlType>DynamicSQL</SqlType>
+      <Description>권한별, 직책별 직원 조회</Description>
+      <SQLModifier>전상훈</SQLModifier>
+      <LastModifyDate>2016-11-08</LastModifyDate>
+    </Information>
+
+    <TemplateSQL>
+      <!-- FixedSQL : 고정된 SQL이 들어가는 곳입니다. -->
+      <FixedSQL>
+        <![CDATA[ 
+	SET NOCOUNT ON 
+	/************************************************************/
+	/* 권한별, 직책별 직원 조회 - T_MEMBER, T_MEMBER_EMPLOYEE   */
+  /* GetEmployeeListByAuth조회  -  SELECT QUERY               */ 
+	/************************************************************/
+	SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED 
+  
+  SELECT 
+		  A.MEMBER_CODE
+		, A.USER_TYPE
+		, A.USER_ID
+		, A.PASSWORD
+		, A.USER_NAME
+		, A.EMAIL
+		, A.PHONE
+		, A.MOBILE
+		, A.ADDRESS1
+		, A.ADDRESS2
+		, A.ZIP_CODE
+		, A.BIRTH
+		, A.GENDER
+		, A.REMARK
+		, A.HIDE
+		, A.INSERT_CODE
+		, A.INSERT_DATE
+		, A.UPDATE_CODE
+		, M2.USER_NAME		  AS UPDATE_MEMBER_NAME
+		, A.UPDATE_DATE
+		, B.STORE_CODE
+		, B.DEPT_CODE
+		, B.PARENT_MEMBER_CODE
+		, M1.USER_NAME		  AS PARENT_MEMBER_NAME
+		, B.COMP_POSITION
+		, SP1.NAME			    AS COMP_POSITION_NAME
+		, B.COMP_TITLE
+		, SP2.NAME			    AS COMP_TITLE_NAME
+		, B.EMP_AUTH
+		, B.MENU_GROUP
+		, B.MEMO
+		, B.TELEGRAM_CHAT_ID
+	FROM T_MEMBER A 
+	LEFT JOIN T_MEMBER_EMPLOYEE AS B
+	  ON A.MEMBER_CODE = B.MEMBER_CODE
+  LEFT JOIN T_STORE BS
+    ON B.STORE_CODE = BS.STORE_CODE
+  LEFT JOIN T_STORE_POSITION AS SP1	--직급
+    ON SP1.STORE_CODE = B.STORE_CODE
+   AND SP1.POSITION_TYPE = 1
+   AND SP1.POSITION_CODE  = B.COMP_POSITION 
+  LEFT JOIN T_STORE_POSITION AS SP2	--직책
+    ON SP2.STORE_CODE = B.STORE_CODE
+   AND SP2.POSITION_TYPE = 2
+   AND SP2.POSITION_CODE = B.COMP_TITLE
+  LEFT JOIN T_MEMBER AS M1
+    ON B.PARENT_MEMBER_CODE = M1.MEMBER_CODE
+  LEFT JOIN T_MEMBER AS M2
+    ON A.UPDATE_CODE = M2.MEMBER_CODE
+	WHERE 1=1 
+    AND A.USER_TYPE = 5
+  #[COMPANY_CODE]
+  #[STORE_CODE]      
+  #[MEMBER_CODE]
+  #[DEPT_CODE]
+  #[COMP_POSITION]
+  #[COMP_TITLE]
+  #[EMP_AUTH]
+  #[STR_EMP_AUTH]
+  
+	SET NOCOUNT OFF 
+
+      ]]>
+      </FixedSQL>
+      <DynamicBodys>
+        <Key>MEMBER_CODE</Key>
+        <Body>AND A.MEMBER_CODE = '{0}' </Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>DEPT_CODE</Key>
+        <Body>AND B.DEPT_CODE = '{0}' </Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>COMP_POSITION</Key>
+        <Body>AND B.COMP_POSITION = '{0}' </Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>COMP_TITLE</Key>
+        <Body>AND B.COMP_TITLE = '{0}' </Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>EMP_AUTH</Key>
+        <Body>AND B.EMP_AUTH = '{0}' </Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>STR_EMP_AUTH</Key>
+        <Body>
+          AND B.EMP_AUTH IN (SELECT VAL1
+          FROM FN_SPLIT('{0}','|'))
+        </Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>COMPANY_CODE</Key>
+        <Body>AND BS.COMPANY_CODE = '{0}' </Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>STORE_CODE</Key>
+        <Body>AND B.STORE_CODE = '{0}' </Body>
+      </DynamicBodys>
+    </TemplateSQL>
+  </DBAgentTemplate>
+  <DBAgentTemplate TemplateID="MemberJoinSave">
+    <!-- 
+    SqlType : SQL의 형태를 지정합니다.
+      Example 1:<SqlType>FixedSQL</SqlType> 고정적인 SQL을 지원합니다. 
+      Example 2:<SqlType>DynamicSQL</SqlType> 동적인 SQL Type1을 지원합니다.  
+    Description : 해당 SQL의 기능설명을 적습니다.
+    SQLModifier : 해당 SQL의 작성자(수정자)를 적습니다
+    LastModifyDate : 해당 SQL의 마지막 수정일을 적습니다
+    -->
+    <Information>
+      <SqlType>DynamicSQL</SqlType>
+      <Description>회원가입</Description>
+      <SQLModifier>전상훈</SQLModifier>
+      <LastModifyDate>2017-03-24</LastModifyDate>
+    </Information>
+
+    <TemplateSQL>
+      <!-- FixedSQL : 고정된 SQL이 들어가는 곳입니다. -->
+      <FixedSQL>
+        <![CDATA[ 
+  SET NOCOUNT ON         
+	/*********************************************/
+	/* 직원정보 - T_MEMBER, T_MEMBER_EMPLOYEE MEMBER JOIN저장 -  SAVE QUERY */ 
+	/*********************************************/
+	
+  DECLARE @COMPANY_ID VARCHAR(30)      = '{0}'
+         ,@BUSI_REG_NUMBER VARCHAR(10) = '{1}'
+	       ,@BIRTH VARCHAR(8)            = '{2}'
+	       ,@GENDER INT                  = '{3}'
+         ,@SHARE_AUTH_NUMBER VARCHAR(2) = N'{4}'
+
+  UPDATE T_STORE
+     SET BUSI_REG_NUMBER = @BUSI_REG_NUMBER
+   WHERE STORE_ID        = @COMPANY_ID
+
+  UPDATE T_MEMBER
+     SET BIRTH   = @BIRTH
+       ,GENDER   = @GENDER
+       ,SHARE_AUTH_NUMBER = @SHARE_AUTH_NUMBER
+   WHERE USER_ID = @COMPANY_ID
+
+SET NOCOUNT OFF
+
+      ]]>
+      </FixedSQL>
+    </TemplateSQL>
+  </DBAgentTemplate>
+
+  <DBAgentTemplate TemplateID="MemberModifySave">
+    <!-- 
+    SqlType : SQL의 형태를 지정합니다.
+      Example 1:<SqlType>FixedSQL</SqlType> 고정적인 SQL을 지원합니다. 
+      Example 2:<SqlType>DynamicSQL</SqlType> 동적인 SQL Type1을 지원합니다.  
+    Description : 해당 SQL의 기능설명을 적습니다.
+    SQLModifier : 해당 SQL의 작성자(수정자)를 적습니다
+    LastModifyDate : 해당 SQL의 마지막 수정일을 적습니다
+    -->
+    <Information>
+      <SqlType>DynamicSQL</SqlType>
+      <Description>회원수정</Description>
+      <SQLModifier>전상훈</SQLModifier>
+      <LastModifyDate>2017-03-24</LastModifyDate>
+    </Information>
+
+    <TemplateSQL>
+      <!-- FixedSQL : 고정된 SQL이 들어가는 곳입니다. -->
+      <FixedSQL>
+        <![CDATA[ 
+  SET NOCOUNT ON         
+	/*********************************************/
+	/* 사업자정보 - T_MEMBER, T_MEMBER_EMPLOYEE MemberModifySave 저장 -  SAVE QUERY */ 
+	/*********************************************/
+	
+    DECLARE @COMPANY_CODE    INT = {0}
+           ,@STORE_CODE      INT = {1}
+           ,@COMPANY_TYPE    INT 
+	         ,@COMPANY_TYPE2   INT = {2}
+           ,@BUSI_REG_NUMBER VARCHAR(10) = '{3}'
+	         ,@REG_CODE INT  = {4}
+
+    SELECT @COMPANY_TYPE = CONVERT(INT, REF_DATA1) 
+      FROM T_COMMON 
+     WHERE MAIN_CODE = 'C004' 
+       AND SUB_CODE = @COMPANY_TYPE2
+
+    UPDATE T_COMPANY
+       SET COMPANY_TYPE = @COMPANY_TYPE
+          ,COMPANY_TYPE2 = @COMPANY_TYPE2
+	      ,UPDATE_CODE     = @REG_CODE
+	      ,UPDATE_DATE     = GETDATE()
+     WHERE COMPANY_CODE = @COMPANY_CODE
+      AND COMPANY_TYPE2 <>  @COMPANY_TYPE2
+
+    UPDATE T_STORE
+       SET BUSI_REG_NUMBER = @BUSI_REG_NUMBER
+          ,UPDATE_CODE     = @REG_CODE
+	      ,UPDATE_DATE     = GETDATE()
+     WHERE STORE_CODE      = @STORE_CODE
+       AND ISNULL(BUSI_REG_NUMBER,'') <> @BUSI_REG_NUMBER
+
+
+SET NOCOUNT OFF
+
+      ]]>
+      </FixedSQL>
+    </TemplateSQL>
+  </DBAgentTemplate>
+  <DBAgentTemplate TemplateID="GetEmployeePopupList">
+    <!-- 
+    SqlType : SQL의 형태를 지정합니다.
+      Example 1:<SqlType>FixedSQL</SqlType> 고정적인 SQL을 지원합니다. 
+      Example 2:<SqlType>DynamicSQL</SqlType> 동적인 SQL Type1을 지원합니다.  
+    Description : 해당 SQL의 기능설명을 적습니다.
+    SQLModifier : 해당 SQL의 작성자(수정자)를 적습니다
+    LastModifyDate : 해당 SQL의 마지막 수정일을 적습니다
+    -->
+    <Information>
+      <SqlType>DynamicSQL</SqlType>
+      <Description>직원팝업조회</Description>
+      <SQLModifier>전상훈</SQLModifier>
+      <LastModifyDate>2017-03-30</LastModifyDate>
+    </Information>
+
+    <TemplateSQL>
+      <!-- FixedSQL : 고정된 SQL이 들어가는 곳입니다. -->
+      <FixedSQL>
+        <![CDATA[ 
+  SET NOCOUNT ON 
+	/*********************************************/
+	/* 직원팝업조회  - GetEmployeePopupList      */ 
+	/*********************************************/
+    SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED
+	/*업체별 직원 조회*/
+    DECLARE  @PAGE_COUNT INT = {0}
+           , @PAGE      INT = {1};
+   DECLARE @SEARCH_TEXT NVARCHAR(100) = N'{3}';
+    WITH T_TABLE AS
+    (
+
+    SELECT 
+        ROW_NUMBER() OVER(ORDER BY {2}) AS SEQ
+	    , A.COMPANY_CODE
+	    , A.COMPANY_NAME
+	    , B.STORE_CODE
+	    , B.STORE_NAME
+	    , D.MEMBER_CODE
+	    , D.USER_ID
+	    , D.USER_NAME
+      , D.MOBILE
+    FROM T_COMPANY A
+   INNER JOIN T_STORE B
+      ON A.COMPANY_CODE = B.COMPANY_CODE
+   INNER JOIN T_MEMBER_EMPLOYEE C
+      ON B.STORE_CODE = C.STORE_CODE
+   INNER JOIN T_MEMBER D
+      ON C.MEMBER_CODE = D.MEMBER_CODE
+
+   WHERE  
+   
+     ( A.COMPANY_NAME LIKE '%' + @SEARCH_TEXT + '%'
+            OR B.STORE_NAME LIKE '%' + @SEARCH_TEXT + '%'
+		    OR D.USER_ID LIKE '%' + @SEARCH_TEXT + '%'
+		    OR D.USER_NAME LIKE '%' + @SEARCH_TEXT + '%'
+		  )
+      #[SEARCH_TYPE]
+      #[COMPANY_CODE]
+      #[STORE_CODE]
+      AND A.STATUS = 1
+      AND B.STATUS = 1
+	  AND D.HIDE = 0
+	    )
+    SELECT *, (SELECT COUNT(1) FROM T_TABLE) TOTAL_ROWCOUNT FROM T_TABLE
+     WHERE SEQ > (@PAGE -1) * @PAGE_COUNT
+       AND SEQ <= @PAGE * @PAGE_COUNT
+ 
+   
+    
+SET NOCOUNT OFF
+
+   
+      ]]>
+      </FixedSQL>
+      <DynamicBodys>
+        <Key>SEARCH_TYPE</Key>
+        <Body>{0}</Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>COMPANY_CODE</Key>
+        <Body>AND A.COMPANY_CODE = {0} </Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>STORE_CODE</Key>
+        <Body>AND B.STORE_CODE = {0}  </Body>
+      </DynamicBodys>
+
+    </TemplateSQL>
+  </DBAgentTemplate>
+</DBAgentMultiTemplate>
+
+   

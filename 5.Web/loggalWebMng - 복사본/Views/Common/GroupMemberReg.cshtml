@@ -1,0 +1,184 @@
+﻿@using ALT.VO.Common;
+@using ALT.BizService;
+@{
+
+    int? STORE_CODE = Convert.ToInt32(ViewBag.STORE_CODE);
+}
+@section scripts{
+
+    <script type="text/javascript">
+
+        $(document).ready(function () {
+
+            doQuery();
+            doQuery2();
+
+        }); //End document.ready
+        function SemanticUI_ComboChange(obj) {
+            if ($(obj)[0].id == "STORE_CODE") {
+                location.href = "/common/groupmemberreg/" + $("#STORE_CODE").val();
+            }
+        }
+
+        function doQuery() {
+
+            var param = new Object();
+            param.STORE_CODE = $("#STORE_CODE").val();
+            param = JSON.stringify(param);
+            ajax.GetAjax("/common/pv_GroupMemberRegList", param, "html", function (result) {
+                $("#dvTable").html(result);
+                $.mrc_table.Init("#dvTable table.list");
+
+            });
+        }
+
+        function mrc_table_trClick(objName, param) {
+            if (objName == "#dvTable table.list") {
+                doQuery2(param.STORE_CODE, param.GROUP_CODE);
+            }
+        }
+
+        function doQuery2(storeCode) {
+
+            var param = new Object();
+            param.STORE_CODE = storeCode == undefined ? $("#STORE_CODE").val() : storeCode;
+
+
+            param = JSON.stringify(param);
+            ajax.GetAjax("/common/pv_GroupMemberRegList2", param, "html", function (result) {
+                $("#dvTable2").html(result);
+                $.mrc_table.Init("#dvTable2 table.list", true);
+                $("#dvTable2 table.list th:first-child").hide();
+                $("#dvTable2 table.list td:nth-child(1)").hide();
+
+                $("#chkAll").click(function () {
+
+                    Input.CheckBox.CheckedAll("chkUse", Input.CheckBox.isChecked($(this).attr("id")));
+
+                    $("#dvTable2 table.list tbody .editableCheck").each(function () {
+                        $(this).find(".editMode").text("U");
+                    });
+
+                    $("#dvTable2 table.list tbody tr.trInputHIde td:eq(0) input").hide();
+                })
+            });
+
+
+        }
+        function doSave() {
+            $.MessageBox({
+                buttonDone: "예",
+                buttonFail: "아니오",
+                message: "저장하시겠습니까? <br/> 기존에 적용되었던 메뉴권한은 삭제되고 선택된 그룹의 메뉴권한이 적용됩니다."
+            }).done(function () {
+                var arrdata = $.mrc_table.GetActiveRowData("#dvTable table");
+                if (arrdata.length == 0) {
+                    $.MessageBox("적용할 그룹(왼쪽리스트)을 선택하세요");
+                    return;
+                }
+
+                
+                var param = new Object();
+                param.STORE_CODE = arrdata[0].STORE_CODE;
+                param.GROUP_CODE = arrdata[0].GROUP_CODE;
+                
+                arrdata = Input.CheckBox.CheckedValues("chkSel");
+                if (arrdata.length == 0) {
+                    $.MessageBox("적용할 직원(오른쪽리스트)을 선택하세요");
+                    return;
+                }
+                param.MEMBER_CODES = arrdata.join(",");
+                var param = JSON.stringify(param);
+                ajax.GetAjax("/common/groupMemberSave", param, "json", function (result) {
+                    if (result.ERROR_MESSAGE != "") {
+                        $.MessageBox(result.ERROR_MESSAGE);
+                    }
+                    else {
+                        var data1 = $.mrc_table.GetActiveRowData("#dvTable table")[0];
+                        doQuery2(data1.STORE_CODE);
+                    }
+
+                });
+            }).fail(function () {
+
+            });
+        }
+
+
+    </script>
+}
+<style>
+    .ui.checkbox {
+        margin-top: 0.5em;
+    }
+
+    #dvTable, #dvTable2 {
+        min-height: 100px;
+    }
+</style>
+<div class="ui vertical stripe segment">
+    @Html.TitleNavigation()
+    <form class="ui medium  form">
+        <div class="ui stackable two column grid">
+            <div class="column">
+                <div class="one column row">
+                    <div class="column">
+                        <table class="ui table">
+                            <tbody>
+                                <tr>
+                                    <td class="title">
+                                        @Html.Semantic_TITLE2("지점")
+                                    </td>
+                                    <td>
+                                        @Html.StoreCombo("STORE_CODE", new T_STORE_COND { COMBO_DISPLAY = 1 }, STORE_CODE.ToString(), null, new { @class = "size200" })
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div><div class="one column row">
+                    <div class="column">
+                        <div id="dvTable"></div>
+                    </div>
+                </div>
+                <div class="one column row">
+                    <div class="column">
+                        <span style="color:red; font-size:1.0em;height:37.09px">* 선택된 그룹의 메뉴가 직원에게 할당된다</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="column">
+
+                <div class="one column row">
+                    <div class="column">
+                        <table class="ui  table search">
+                            <tbody>
+                                <tr>
+                                    <td class="buttons">@Html.Semantic_Button2("btnSave", "저장", SemanticUIHelper.enButtonType.Save, SemanticUIHelper.Size.medium, new { @style = "float:right", onclick = "doSave();" })</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div id="dvTable2">
+                    <table class="mrc-table">
+                        <thead>
+                            <tr>
+                                <th style="width:50px;">선택</th>
+                                <th column_name="USER_NAME">직원명</th>
+                                <th column_name="DEPT_NAME">부서명</th>
+                                <th column_name="COMP_TITLE_NAME">직책</th>
+                                <th column_name="COMP_TITLE_NAME">직급</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+
+
+                </div>
+            </div>
+        </div>
+    </form>
+</div>

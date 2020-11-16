@@ -1,0 +1,107 @@
+﻿@using ALT.VO.Common;
+@using ALT.Framework.Data;
+@using ALT.BizService;
+@{
+    List<T_STORE_WEBMENU_GROUP> list = ViewBag.list;
+    int? STORE_CODE = ViewBag.STORE_CODE;
+
+    List<SelectListItem> cboDept = new List<SelectListItem>();
+    IList<T_STORE_DEPT> deptList = Service.employeeService.GetStoreDept(new T_STORE_DEPT() { STORE_CODE = STORE_CODE });
+    if (deptList != null)
+    {
+        cboDept = deptList.Select(x => new SelectListItem() { Text = x.DEPT_NAME, Value = x.DEPT_CODE.ToString() }).ToList();
+    }
+
+    List<SelectListItem> cboCompPosition = new List<SelectListItem>();
+    List<SelectListItem> cboCompTitle = new List<SelectListItem>();
+    IList<T_STORE_POSITION> positionList = Service.employeeService.GetStorePosition(new T_STORE_POSITION() { STORE_CODE = STORE_CODE, HIDE = false });
+    if (positionList != null)
+    {
+        cboCompPosition = positionList.Where(x => x.POSITION_TYPE == 1).Select(x => new SelectListItem() { Text = x.NAME, Value = x.POSITION_CODE.ToString() }).ToList();  //직급
+        cboCompTitle = positionList.Where(x => x.POSITION_TYPE == 2).Select(x => new SelectListItem() { Text = x.NAME, Value = x.POSITION_CODE.ToString() }).ToList();  //직책
+    }
+
+
+
+
+    foreach (T_STORE_WEBMENU_GROUP data in list)
+    {
+            <tr>
+                <td class="center">@data.GROUP_CODE</td>
+                <td><input type="text" value="@data.GROUP_NAME" /></td>
+                <td class="center"><input type="text" style="min-width:3em;width:3em;" class="number" maxlength="1" value="@data.ORDER_SEQ" /></td>
+                <td class="center"><input type="checkbox" @(data.HIDE == true ? "checked='checked'" : "") /></td>
+
+                @{
+
+                    List<string> arrData = data.DEPT_AUTH.ToString("").Split(',').ToList();
+                    var cboDept2 = from a in cboDept
+                                   join b in arrData on a.Value equals b into ab
+                                   from b in ab.DefaultIfEmpty()
+                                   select new SelectListItem
+                                   {
+                                       Value = a.Value
+                                       ,
+                                       Text = a.Text
+                                       ,
+                                       Selected = string.IsNullOrEmpty(b) ? false : true
+                                   };
+                }
+
+                <td>
+                    @Html.DropDownList("DEPT_AUTH", cboDept2, new { @placeholder = "부서선택", @multiple = "" })
+                </td>
+                @{
+
+                    arrData = data.COMP_POSITION_AUTH.ToString("").Split(',').ToList();
+
+                    var cboPosition = from a in cboCompPosition
+                                      join b in arrData on a.Value equals b into ab
+                                      from b in ab.DefaultIfEmpty()
+                                      select new SelectListItem
+                                      {
+                                          Value = a.Value
+                                          ,
+                                          Text = a.Text
+                                          ,
+                                          Selected = string.IsNullOrEmpty(b) ? false : true
+                                      };
+
+
+
+
+
+                }
+                <td>
+
+
+                    @Html.DropDownList("COMP_POSITION_AUTH", cboPosition, new { @placeholder = "직급선택", @multiple = "" })
+                </td>
+                @{
+
+                    arrData = data.COMP_TITLE_AUTH.ToString("").Split(',').ToList();
+                    var cboCompTitle2 = from a in cboCompTitle
+                                        join b in arrData on a.Value equals b into ab
+                                        from b in ab.DefaultIfEmpty()
+                                        select new SelectListItem
+                                        {
+                                            Value = a.Value
+                                            ,
+                                            Text = a.Text
+                                            ,
+                                            Selected = string.IsNullOrEmpty(b) ? false : true
+                                        };
+
+
+                }
+                <td>@Html.DropDownList("COMP_TITLE_AUTH", cboCompTitle2, new { @placeholder = "직책선택", @multiple = "" })</td>
+                @*<td><input type="text" value="@data.REMARK" /></td>*@
+                <td class="center">@data.UPDATE_NAME</td>
+                <td class="center">@data.UPDATE_DATE</td>
+                <td class="hide center">@data.STORE_CODE</td>
+
+            </tr>
+         }
+}
+
+

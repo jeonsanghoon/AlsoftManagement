@@ -1,0 +1,205 @@
+﻿@{
+	int nhideType;
+	string placeHolder = "업체명,지점명,아이디,이름으로 검색";
+	if (SessionHelper.LoginInfo.STORE_CODE == 1)
+	{
+		nhideType = 1;
+	}
+	else if (SessionHelper.LoginInfo.STORE.STORE_TYPE == 1 || SessionHelper.LoginInfo.STORE.STORE_TYPE == 4)
+	{
+		placeHolder = "지점명,아이디,이름으로 검색";
+		nhideType = 2;
+	}
+	else
+	{
+		placeHolder = "이름으로 검색";
+		nhideType = 3;
+	}
+}
+<style>
+	#dvEmployeePopup .column.row {
+		padding: 0.25em;
+	}
+
+	#dvEmployeePopup {
+		min-height: 450px;
+	}
+</style>
+<div class="ui modal form" id="dvEmployeePopup">
+	<div class="header">업체별직원</div>
+	<div class="content">
+		<div class="ui grid">
+			<div class="one column row">
+				<div class="column">
+					<div class="ui grid">
+						<div class="five wide column">
+
+							@{
+								List<SelectListItem> comboSearchType = new List<SelectListItem>();
+								comboSearchType.Add(new SelectListItem { Value = "D.USER_NAME", Text = "이름" });
+								comboSearchType.Add(new SelectListItem { Value = "D.USER_ID", Text = "아이디" });
+								comboSearchType.Add(new SelectListItem { Value = "A.COMPANY_NAME", Text = "회사명" });
+								comboSearchType.Add(new SelectListItem { Value = "B.STORE_NAME", Text = "지점명" });
+
+
+							}
+							@Html.CommonComboNormal("P_SEARCH_TYPE", comboSearchType, "", "-조건-", new { @class = "ui small size150" })
+						</div>
+						<div class="six wide column">
+							@Html.Semantic_TextBox("P_SEARCH_TEXT", "", new { @style = "width:100%", @placeholder = placeHolder })
+						</div>
+						<div class="five wide column buttons">
+							@Html.Semantic_Button2("btnStoreGroupAdd", "조회", SemanticUIHelper.enButtonType.Normal, SemanticUIHelper.Size.mini, new { onclick = "doQuery_EmployeeP();" })
+						</div>
+					</div>
+				</div>
+			</div>
+
+			<div class="one column row">
+				<div class="column">
+					<div id="dvEmployeeGroup">
+						<table id="tbList" class="mrc-table">
+							<thead>
+								<tr>
+									<th column_name="USER_ID" class="sort" data-sort="D.USER_ID">아이디</th>
+									<th column_name="USER_NAME" class="sort" data-sort="D.USER_NAME">이름</th>
+									<th column_name="MOBILE" class="hide sort" display_size="detail" data-sort="D.MOBILE">연락처</th>
+									<th column_name="COMPANY_CODE" class="hide">업체</th>
+									<th column_name="COMPANY_NAME" display_size="tablet" class='@(nhideType > 1 ? "hide" : "") sort' data-sort="A.COMPANY_NAME">업체명</th>
+									<th column_name="STORE_CODE" class="hide">매장코드</th>
+									<th column_name="STORE_NAME" display_size="tablet" class='@(nhideType == 3 ? "hide" : "")" sort' data-sort="B.STORE_NAME">매장명</th>
+									<th column_name="MEMBER_CODE" class="hide" data-sort="D.MEMBER_CODE">직원코드</th>
+
+								</tr>
+							</thead>
+							<tbody></tbody>
+						</table>
+						<center style="padding-top:0.5em">
+							<div id="dvpagination_employee" class="ui floated pagination menu"></div>
+						</center>
+					</div>
+				</div>
+			</div>
+			<div class="one column row hide comment">
+				<div class="column">
+
+					<table class="ui table size100Percent">
+						<tr>
+							<td class="title" style="width:6em;">코멘트</td>
+							<td>@Html.TextArea("COMMENT", new { @style = "height:5em;width:100%;", @cols = "40", @rows = 2 })</td>
+						</tr>
+					</table>
+				</div>
+			</div>
+		</div>
+
+	</div>
+	<div class="actions">
+		@Html.Semantic_Button2("btnEmployeePSel", "확인", SemanticUIHelper.enButtonType.Save, new { @onclick = "EmployeePConfirm();" })
+		@Html.Semantic_Button2("btnEmployeePDel", "닫기", SemanticUIHelper.enButtonType.Normal, new { @onclick = "EmployeePClose();" })
+	</div>
+</div>
+
+<script type="text/javascript">
+	var _popName = "";
+	function EmployeePOpen(popName) {
+		_popName = popName;
+
+		$("#dvEmployeePopup #COMMENT").val("");
+		if (_popName == 'share') {
+			$("#dvEmployeePopup .header").text("배너공유");
+			$("#dvEmployeePopup .comment").removeClass("hide");
+		}
+		else if (_popName.toLowerCase().indexOf('localboxshare') >= 0) {
+			$("#dvEmployeePopup .header").text("로컬박스공유");
+			$("#dvEmployeePopup .comment").removeClass("hide");
+		}
+		else {
+			$("#dvEmployeePopup .header").text("업체별직원");
+			$("#dvEmployeePopup .comment").addClass("hide");
+		}
+		$('#dvEmployeePopup').modal('setting', {
+			autofocus: false,
+			onShow: function () {
+				setTimeout("EmployeeP_Init()", 1000);
+			}
+		}).modal("show");
+		doQuery_EmployeeP();
+		$("#P_SEARCH_TEXT").keydown(function (e) {
+			if (e.keyCode == 13) doQuery_EmployeeP();
+		});
+		// $("#dvEmployeePopup").css("margin-top", "-300px");
+
+	}
+	function EmployeeP_Init() {
+		$("#P_SEARCH_TEXT").focus();
+		$("#P_SEARCH_TEXT").select();
+	}
+	function EmployeePClose() {
+		$('#dvEmployeePopup').modal("hide");
+	}
+	function errormessageClear() {
+		$(".ui.error.message").hide();
+		$(".ui.error.message ul").html("");
+	}
+
+	function mrc_table_trClick(objName, result) {
+
+		if (objName == "#dvEmployeeGroup table") {
+			// EmployeePopupSelected(result);
+			// EmployeePClose();
+		}
+	}
+
+	function EmployeePConfirm() {
+		var list = $.mrc_table.GetActiveRowData("#dvEmployeeGroup table");
+		if (list.length == 0) $.MessageBox("선택된 데이터가 없습니다.");
+		if (_popName == 'share') { EmployeePopupSelected(_popName, $.mrc_table.GetCheckedData("#dvEmployeeGroup table")); }
+		else { EmployeePopupSelected(_popName, $.mrc_table.GetActiveRowData("#dvEmployeeGroup table")[0]); }
+
+		EmployeePClose();
+	}
+	var PARAM_DATA_EMP_P = {
+		PAGE_SIZE: 5
+		, PAGE_COUNT: 7
+		, PAGE: 1
+		, SORT: "D.USER_NAME"
+	}
+	function doQuery_EmployeeP(page, sort) {
+		if (page == undefined || page < 1) page = 1;
+		PARAM_DATA_EMP_P.PAGE = page;
+		var params = new Object();
+		params.SEARCH_DATA = $("#P_SEARCH_TEXT").val();
+		params.SEARCH_DATA1 = $("#P_SEARCH_TYPE").val();
+		params.PAGE_COUNT = PARAM_DATA_EMP_P.PAGE_COUNT;
+		params.PAGE = PARAM_DATA_EMP_P.PAGE;
+		if (!(sort == undefined || sort == null)) PARAM_DATA_EMP_P.SORT = sort;
+		params.SORT = PARAM_DATA_EMP_P.SORT;
+		params = JSON.stringify(params);
+		ajax.GetAjax("/Employee/PV_EmployeePList", params, "html", function (result) {
+			$("#dvEmployeeGroup table tbody").html(result);
+			if (_popName == 'share') $.mrc_table.Init("#dvEmployeeGroup table", true, PARAM_DATA_EMP_P.SORT);
+			else $.mrc_table.Init("#dvEmployeeGroup table", false, PARAM_DATA_EMP_P.SORT);
+
+			$("#dvpagination_employee").show();
+
+			$("#dvpagination_employee").pagination({
+				total: Number($("#employeep_total").val()), page: PARAM_DATA_EMP_P.PAGE, pagesize: PARAM_DATA_EMP_P.PAGE_SIZE, perpage: PARAM_DATA_EMP_P.PAGE_COUNT
+				, onPageClick: function (item, page) {
+					doQuery_EmployeeP(page);
+				}
+			})
+		});
+	}
+
+	function mrcGrid_Sort(gridName, columnName, orderType) {
+		if (gridName == "#dvEmployeeGroup table") {
+			var sSort = (orderType == undefined || orderType == "") ? "D.USER_NAME" : columnName + " " + orderType;
+			doQuery_EmployeeP(1, sSort)
+		} else {
+			try {
+				mrcGrid_Sort_After(gridName, columnName, orderType);
+			} catch (e) { }
+		}
+	}
+</script>

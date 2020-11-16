@@ -1,0 +1,290 @@
+﻿@using ALT.Framework.MVC.Helpers;
+@{
+
+    Layout = "~/Views/Theme/SpicyX/Shared/_Layout.cshtml";
+}
+<style>
+    #mu-reservation {
+        background-color: white;
+    }
+</style>
+@section script{
+<script type="text/javascript">
+
+    $("document").ready(function (e) {
+        $("#chkAll").click(function () {
+            $("input:checkbox").each(function () {
+                if (String($(this).attr("name")).indexOf("chkitemList") >= 0) {
+
+                    var bChk = Input.CheckBox.isChecked($("#chkAll").attr("id"));
+                    Input.CheckBox.CheckedAll("chkitemList", bChk);
+                }
+            })
+        })
+        $("#chkAll, input[name='chkitemList']").click(function () { SetPayAmt(); });
+    })
+
+    function SetPayAmt() {
+
+        var cartArray = $("input[name='chkitemList']:checked").map(function () {
+
+            return $(this).val();
+
+        });
+        var saleData = {
+            saleCnt: 0, saleDcAmt: 0, saleAmt: 0
+        }
+
+        $.each(cartArray.get(), function (i, data) {
+            var saleitem = JSON.parse(data);
+            saleData.saleCnt += saleitem.CNT;
+            saleData.saleDcAmt += saleitem.DISCOUNT_AMT;
+            saleData.saleAmt += saleitem.SALES_AMT;
+        });
+        $("#pay_itemcnt").text($.number(saleData.saleCnt));
+        $("#pay_itemdiscount").text($.number(saleData.saleDcAmt));
+        $("#pay_saleamt").text($.number(saleData.saleAmt));
+
+    }
+
+
+    function touchSpinChangeEvent(id) {
+        var param = $("#" + String(id).replace("cnt", "chk")).attr("value");
+        param = JSON.parse(param);
+        param.saveType = "U";
+        param.CNT = $("#" + id).val();
+        doCartChange(param);
+    }
+    function DelCart(id) {
+        var param = JSON.parse($("#chk_" + id).attr("value"));
+
+        param.saveType = "D";
+        doCartChange(param);
+    }
+
+    /// 정보 저장
+    function doCartChange(param) {
+        param = JSON.stringify(param);
+        ajax.GetAjax("@SessionHelper.LoginInfo.BASE_URL/order/CartUpdateOrDel", param, "json", function (result) {
+            if (result.error_message != "") {
+                modal({ /* https://github.com/CreativeDream/jquery.modal */
+                    type: 'warning',
+                    title: '저장에러',
+                    text: result.error_message
+                    , closeClick: false
+                    , callback: function (e) {
+                    }
+                });
+            } else {
+                $("#spTotAmt").text(result.TOT_AMT);
+                $("#tbList").html(result.CartListHtml);
+                $("input[name='chkitemList']").click(function () { SetPayAmt(); alert(''); });
+            }
+        }, false);
+    }
+
+    function SelCart() {
+
+    }
+    var objTag, chkData = true;
+    function CheckSave() {
+        chkData = true;
+        $(".mu-reservation-form").find("input,select,radio").each(function () {
+            if ($(this).val() == "") {
+
+                objTag = $(this);
+                MsgBox.Alert("필수입력체크", $(this).attr("placeholder") + " 을(를) 입력하세요!", function (result) {
+                    objTag.focus(); objTag.select();
+                });
+                chkData = false;
+                return false;
+            }
+        })
+        return chkData;
+    }
+
+    function doSave_CartReservation() {
+        if (!CheckSave()) return;
+        var params = BaseCommon.FormInfo.serializeJson(".mu-reservation-form", "RESERVATION_");
+        ajax.GetAjax("@SessionHelper.LoginInfo.BASE_URL/order/CartReservation", params, "json", function (result) {
+            if (result.error_message != "") {
+                modal({ /* https://github.com/CreativeDream/jquery.modal */
+                    type: 'warning',
+                    title: '저장에러',
+                    text: result.error_message
+                    , closeClick: false
+                    , callback: function (e) {
+                    }
+                });
+            } else {
+                location.href = "@SessionHelper.LoginInfo.BASE_URL";
+                //$("#spTotAmt").text(result.TOT_AMT);
+                //$("#tbList").html(result.CartListHtml);
+                //$("input[name='chkitemList']").click(function () { SetPayAmt(); alert(''); });
+            }
+        }, false);
+    }
+
+</script>
+}
+
+
+<section id="mu-contact">
+    <div class="container">
+        <div class="row">
+            <div class="col-md-12">
+                <div class="mu-contact-area">
+                    <div class="mu-title">
+                        <span class="mu-subtitle">Get In Touch</span>
+                        <h2>테이블예약</h2>
+                        <i class="fa fa-spoon"></i>
+                        <span class="mu-title-bar"></span>
+                    </div>
+                    <h4 style="float:right; color:red">* 선택된 데이터만 예약됩니다.</h4>
+                    <div class="mu-contact-content">
+                  
+                        <div class="row">
+                            <div class="col-md-12">
+                               
+                                <table id="table_cart">
+                                    <thead>
+                                        <tr>
+                                            <th id="selItem" class="centercolumn">@Html.CheckBox("chkAll", true)</th>
+                                            <th id="cart_item">품목</th>
+                                            <th class="rightcolumn">가격</th>
+                                            <th style="width:150px" class="rightcolumn">수량</th>
+                                            <th class="rightcolumn">할인금액</th>
+                                            <th class="rightcolumn">판매금액</th>
+                                            <th class="centercolumn">삭제</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="tbList">
+                                        @{
+                                            SHOPPING_CART cart = SessionHelper.LoginInfo.SHOPPING_CART;
+                                            if (cart != null && cart.ITEM_LIST != null)
+                                            {
+                                                foreach (SHOPPING_ITEM data in cart.ITEM_LIST)
+                                                {
+                                                    <tr>
+                                                        <td data-title="선택" class="centercolumn">
+                                                            <input type="checkbox" id="chk_@data.ITEM_CODE" name="chkitemList" value="@Json.Encode(data)" checked />
+                                                        </td>
+                                                        <td data-title="품목" class="cart_item">
+
+                                                            <div class="col-lg-2 cart_item_image">
+                                                                <a href="#">
+                                                                    <img style="height:40px;" src="@data.ITEM_IMAGEURL" alt="img">
+                                                                </a>
+                                                            </div>
+                                                            <div class="col-lg-10  cart_item_name">
+                                                                <h4 class="media-heading"><a href="#">@data.ITEM_NAME</a></h4>
+                                                            </div>
+                                                        </td>
+                                                        <td data-title="가격" class="rightcolumn">@data.PRICE.ToFormatAmt()</td>
+                                                        <td data-title="수량" class="rightcolumn">@Html.TouchSpan("cnt_" + data.ITEM_CODE, data.CNT, new TouchSpan { width = 130, min = 1 })</td>
+                                                        <td data-title="할인금액" class="rightcolumn">@data.DISCOUNT_AMT.ToFormatAmt()</td>
+                                                        <td data-title="판매금액" class="rightcolumn">@data.SALES_AMT.ToFormatAmt()</td>
+
+                                                        <td data-title="삭제" class="centercolumn"><i class="fa fa-minus-square-o" aria-hidden="true" style="cursor:pointer;" onclick="DelCart('@data.ITEM_CODE');"></i></td>
+                                                    </tr>
+                                                }
+                                            }
+                                        }
+                                        <tr style="font-weight:bold; background-color:lightgray;color:#fff">
+                                            <td class="mobilehide"></td>
+                                            <td>합계</td>
+                                            <td class="mobilehide"> </td>
+                                            <td class="rightcolumn" data-title="수량">@cart.ITEM_CNT.ToString("#,##0")</td>
+                                            <td class="rightcolumn" data-title="할인금액">@cart.ITEM_DISCOUNT_AMT.ToFormatAmt()</td>
+                                            <td class="rightcolumn" data-title="판매금액">@cart.TOTAL_AMT.ToFormatAmt()</td>
+                                            <td class="mobilehide"></td>
+                                        </tr>
+                                        <tr class="mu-cart-total" style="background-color:darkgray">
+                                            <td class="mobilehide"></td>
+                                            <td>결재금액</td>
+                                            <td class="mobilehide"> </td>
+                                            <td class="rightcolumn" data-title="수량" id="pay_itemcnt">@cart.ITEM_CNT.ToString("#,##0")</td>
+                                            <td class="rightcolumn" data-title="할인금액" id="pay_itemdiscount">@cart.ITEM_DISCOUNT_AMT.ToFormatAmt()</td>
+                                            <!--<td class="rightcolumn" data-title="할인금액" id="pay_orderdiscount">@cart.ORDER_DISCOUNT_AMT.ToFormatAmt()</td>-->
+                                            <td class="rightcolumn" data-title="판매금액" id="pay_saleamt">@cart.TOTAL_AMT.ToFormatAmt()</td>
+                                            <td class="mobilehide"></td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        @{ 
+
+            T_MEMBER member = (SessionHelper.LoginInfo.MEMBER == null ? new T_MEMBER() : SessionHelper.LoginInfo.MEMBER);
+        }
+        <div class="row cart_reservation">
+            <div class="col-md-12">
+                <div class="mu-reservation-area">
+
+                    <div class="mu-reservation-content">
+                        <form class="mu-reservation-form">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        @Html.TextBox("RESERVATION_NAME", member.USER_NAME, new { @class = "form-control", @placeholder = "이름" })
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        @Html.TextBox("RESERVATION_EMAIL", member.EMAIL, new { @type = "email", @class = "form-control", @placeholder = "이메일" })
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        @Html.TextBox("RESERVATION_PHONE", member.PHONE, new { @class = "form-control", @placeholder = "전화번호" })
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        @{
+                                            List<SelectListItem> comboList = new List<SelectListItem>();
+                                            for (int i = 1; i < 100; i++)
+                                            {
+                                                comboList.Add(new SelectListItem { Value = i.ToString(), Text = i.ToString() + " 명" , Selected = (i==1) ? true : false});
+
+                                            }
+                                        }
+                                        @Html.DropDownList("RESERVATION_PEOPLE_NUMBER", comboList,"인원", new { @class = "form-control" })
+
+                                    </div>
+                                </div>
+                             
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <input type="text" class="form-control datepicker" id="RESERVATION_REQUEST_DATE" name="RESERVATION_REQUEST_DATE" placeholder="일자(필수)">
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        @*<input type="text" class="form-control" placeholder="Phone No">*@
+                                    </div>
+                                </div>
+                                <div class="col-md-12">
+                                    <div class="form-group">
+                                        @Html.TextArea("RESERVATION_CONTENT", "",new { @class = "form-control", @cols = "30", @rows = "10", @placeholder = "요청내용" })
+                                    </div>
+                                </div>
+                                <div class="col-md-12">
+                                    <button type="button" id="btnReservationSave" class="mu-readmore-btn2" onclick="doSave_CartReservation();">예약하기</button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+
+

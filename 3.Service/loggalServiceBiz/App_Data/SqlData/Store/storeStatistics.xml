@@ -1,0 +1,122 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<DBAgentMultiTemplate  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns="http://altsoft.kr/">
+
+	<DBAgentTemplate TemplateID="GetStoreStatisticsList">
+		<!-- 
+    SqlType : SQL의 형태를 지정합니다.
+      Example 1:<SqlType>FixedSQL</SqlType> 고정적인 SQL을 지원합니다. 
+      Example 2:<SqlType>DynamicSQL</SqlType> 동적인 SQL Type1을 지원합니다.  
+    Description : 해당 SQL의 기능설명을 적습니다.
+    SQLModifier : 해당 SQL의 작성자(수정자)를 적습니다
+    LastModifyDate : 해당 SQL의 마지막 수정일을 적습니다
+    -->
+		<Information>
+			<SqlType>DynamicSQL</SqlType>
+			<Description>업체별통계리스트</Description>
+			<SQLModifier>전상훈</SQLModifier>
+			<LastModifyDate>2019-08-21</LastModifyDate>
+		</Information>
+
+		<TemplateSQL>
+			<!-- FixedSQL : 고정된 SQL이 들어가는 곳입니다. -->
+			<FixedSQL>
+				<![CDATA[ 
+			SET NOCOUNT ON
+			/*******************************************/
+			/* 업체별통계리스트 GetStoreStatisticsList */
+			/*******************************************/
+			SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED
+				DECLARE @PAGE_COUNT INT = {0}, @PAGE INT = {1}
+					  , @FR_DATE VARCHAR(8) = '{3}'
+        		      , @TO_DATE VARCHAR(8) = '{4}';
+				WITH T_TABLE
+				AS(       
+				SELECT 
+        				ROW_NUMBER() OVER(ORDER BY {2}) AS IDX
+					 , A.STORE_CODE, A.STORE_NAME, B.LOCALBOX_CNT
+					 , B.REAL_CNT, B.VIRTUAL_CNT
+        			 , B.LOCALBOX_FRAME1_CNT, B.LOCALBOX_FRAME6_CNT
+					 , B.DEVICE_TYPE1, B.DEVICE_TYPE2, B.DEVICE_TYPE3
+        			 , C.AD_CNT, C.AD_TYPE1, C.AD_TYPE2, C.AD_TYPE3
+        			 , C.AD_FRAME_TYPE1_CNT, C.AD_FRAME_TYPE6_CNT
+        
+				 FROM T_STORE A
+				INNER JOIN T_COMPANY AC
+				   ON A.COMPANY_CODE = AC.COMPANY_CODE
+				LEFT JOIN (SELECT STORE_CODE   /* DEVICE_TYPE >> 1:내부배너,  2:외부배너, 3:내부+외부
+												  STATUS >> S006 1:대기, 9:운영, 11:정지, 12:폐기*/
+        						  --, CASE WHEN A.AUTH_NUMBER IS NULL THEN 1 ELSE 0 END LOCALBOX_GUBUN
+        						  ,COUNT(*) AS LOCALBOX_CNT
+        			  			  ,SUM(CASE WHEN A.AUTH_NUMBER IS NOT NULL THEN 1 ELSE 0 END) AS REAL_CNT
+        						  ,SUM(CASE WHEN A.AUTH_NUMBER IS NULL THEN 1 ELSE 0 END) AS VIRTUAL_CNT
+								  ,SUM(CASE WHEN A.AD_FRAME_TYPE = 1 THEN 1 ELSE 0 END) AS LOCALBOX_FRAME1_CNT
+        						  ,SUM(CASE WHEN A.AD_FRAME_TYPE <> 1 THEN 1 ELSE 0 END) AS LOCALBOX_FRAME6_CNT
+        						  ,SUM(CASE WHEN A.DEVICE_TYPE = 1 THEN 1 ELSE 0 END) AS DEVICE_TYPE1
+        						  ,SUM(CASE WHEN A.DEVICE_TYPE = 2 THEN 1 ELSE 0 END) AS DEVICE_TYPE2
+        						  ,SUM(CASE WHEN A.DEVICE_TYPE = 3 THEN 1 ELSE 0 END) AS DEVICE_TYPE3
+							  FROM T_DEVICE a
+        					 WHERE A.STATUS = 9
+							 GROUP BY STORE_CODE
+        					) B
+				  ON A.STORE_CODE = b.STORE_CODE
+				LEFT JOIN (SELECT STORE_CODE	/* A001 5:요청, 6:심사,9:광고중,11:취소,12:보류,13:재심사,14:반려*/
+								, COUNT(*) aS AD_CNT
+								, SUM(CASE WHEN AD_TYPE=1 THEN 1 ELSE 0 END) AS AD_TYPE1
+        								, SUM(CASE WHEN AD_TYPE=2 THEN 1 ELSE 0 END) AS AD_TYPE2
+        								, SUM(CASE WHEN AD_TYPE=3 THEN 1 ELSE 0 END) AS AD_TYPE3
+        								, SUM(CASE WHEN AD_FRAME_TYPE=1 THEN 1 ELSE 0 END) AS AD_FRAME_TYPE1_CNT
+        								, SUM(CASE WHEN AD_FRAME_TYPE<>1 THEN 1 ELSE 0 END) AS AD_FRAME_TYPE6_CNT
+							FROM T_AD
+        						 WHERE STATUS = 9
+            					   AND ((FR_DATE BETWEEN @FR_DATE AND @TO_DATE
+        						        AND TO_DATE BETWEEN @FR_DATE AND @TO_DATE)
+								      OR (FR_DATE <= @FR_DATE AND TO_DATE >= @TO_DATE))
+						   GROUP BY STORE_CODE
+        					) C
+				 ON A.STORE_CODE = C.STORE_CODE
+				 WHERE 1=1
+				   #[COMPANY_CODE]
+				   #[COMPANY_NAME]
+				   #[STORE_CODE]
+				   #[STORE_NAME]
+				   #[LOCALBOX_YN]
+				   #[BANNER_YN]
+				   #[REG_YN]
+				)   SELECT *, (SELECT COUNT(1) FROM T_TABLE) TOTAL_ROWCOUNT FROM T_TABLE
+				   WHERE IDX > (@PAGE -1) * @PAGE_COUNT
+					 AND IDX <= @PAGE * @PAGE_COUNT
+		   SET NOCOUNT OFF   SET NOCOUNT OFF
+			  ]]>
+			</FixedSQL>
+			<DynamicBodys>
+				<Key>COMPANY_CODE</Key>
+				<Body>AND AC.COMPANY_CODE = {0} </Body>
+			</DynamicBodys>
+			<DynamicBodys>
+				<Key>COMPANY_NAME</Key>
+				<Body>AND AC.COMPANY_NAME LIKE N'%{0}%' </Body>
+			</DynamicBodys>
+			<DynamicBodys>
+				<Key>STORE_CODE</Key>
+				<Body>AND A.STORE_CODE = {0} </Body>
+			</DynamicBodys>
+			<DynamicBodys>
+				<Key>STORE_NAME</Key>
+				<Body>AND A.STORE_NAME LIKE N'%{0}%' </Body>
+			</DynamicBodys>
+
+			<DynamicBodys>
+				<Key>LOCALBOX_YN</Key>
+				<Body>  AND ((B.STORE_CODE IS NOT NULL AND {0} = 1) OR ( B.STORE_CODE IS NULL AND {0} = 0)) </Body>
+			</DynamicBodys>
+			<DynamicBodys>
+				<Key>BANNER_YN</Key>
+				<Body> AND ((C.STORE_CODE IS NOT NULL AND {0} = 1) OR ( C.STORE_CODE IS NULL AND {0} = 0)) </Body>
+			</DynamicBodys>
+			<DynamicBodys>
+				<Key>REG_YN</Key>
+				<Body> AND ((B.STORE_CODE IS NOT NULL OR C.STORE_CODE IS NOT NULL) AND {0} = 1) </Body>
+			</DynamicBodys>
+		</TemplateSQL>
+	</DBAgentTemplate>
+</DBAgentMultiTemplate>

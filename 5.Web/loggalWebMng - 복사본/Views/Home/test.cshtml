@@ -1,0 +1,88 @@
+﻿
+@{
+    ViewBag.Title = "Index";
+}
+
+
+@section scripts{
+    <script type="text/javascript">
+        $(document).ready(function () {
+            FileUpload();
+            PaginationInit();
+        })
+
+        function FileUpload() {
+            var params = new Object();
+            params.FolderName = $("#FolderName").val();
+            //uploadfile_Common.js id CHECK_MENU 체크박스 값확인 이벤트있음
+            uploadFile.init("fileuploader", "/Templeate/FileUpload", params, false, function (result, returntype) {
+                if (returntype == undefined) {
+                    if (result.return_msg != "") {
+                        alert(result.return_msg);
+                    } else {
+                        //$("#spurl").val(result.URL);
+                        $("#spfullurl").val(result.FULL_URL);
+                        $('#Store_img').html("");
+                        $('#Store_img').css("background-image", "url(" + result.FULL_URL + ")");
+                    }
+                }
+            });
+
+        }
+        function PaginationInit() {
+
+            /*주의사항 개발시 : 모바일 사이즈일경우 PageSize :5 PC일경우 10으로 설정*/
+            $("#pagination1").pagination({
+                total: 280, page: 1, pagesize: 10, perpage: 20, onPageClick:function(item, page) {
+
+                    alert(page);
+                }
+            })
+
+            $("#pagination2").pagination({
+                total: 20, page: 1, pagesize: 5, isFirstLast: false, onPageClick:function(item, page) {
+
+                    alert(page);
+                }
+            })
+        }
+
+    </script>
+}
+
+<div class="ui vertical stripe segment" style="padding:35px">
+    <div class="ui stackable grid fields">
+        <div class="one column row">
+            <div class="column">
+                <h2>Index</h2>
+
+                @using (Ajax.BeginForm("FileUpload", "Home", new { }, new AjaxOptions { UpdateTargetId = "dc_goal_placeholder" }, new { id = "frmUpload", enctype = "multipart/form-data" }))
+                {
+                    <div id="fileuploader">파일업로드</div> <!-- Upload -->
+                    <input type="hidden" id="FolderName" value="Store_img" />
+                    <input type="hidden" id="spfullurl" value="" />
+                }
+            </div>
+        </div>
+        <div class="one column row">
+            <div class="column">
+                <!--페이지처리-->
+                <div id="pagination1" class="ui floated pagination menu"></div>
+            </div>
+        </div>
+        <div class="one column row">
+            <div class="column">
+                <!--페이지처리-->
+                <div id="pagination2" class="ui floated pagination menu"></div>
+            </div>
+            <div class="one column row">
+                <div class="column">
+                    @{ TinyMCEOption editor1Option = new TinyMCEOption { MAINFORM_ID = "form1", ID = "editor1", CONTENT = "", HEIGHT = "250px", WIDTH = "100%" };}
+                    @Html.EditorFor(model => new EditTempleateModel().TinyMCE_Editor, new { option = editor1Option })
+                </div>
+            </div>
+        </div>
+
+        @Html.Partial("/Views/Shared/Partial/SNS.cshtml")
+    </div>
+</div>

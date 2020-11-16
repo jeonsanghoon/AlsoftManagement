@@ -1,0 +1,687 @@
+﻿
+@using ALT.VO.Common;
+@using ALT.Framework.Data;
+@{
+
+    T_MEMBER LOGIN_MEMBER = (T_MEMBER)((SessionHelper.LoginInfo.MEMBER == null) ? new T_MEMBER() : SessionHelper.LoginInfo.MEMBER);
+
+    EMPLOYEE_INFO data = ViewBag.data;
+
+    data.COMPANY_CODE = (data.COMPANY_CODE == null || data.COMPANY_CODE <= 0) ? SessionHelper.LoginInfo.STORE.COMPANY_CODE : data.COMPANY_CODE;
+    data.STORE_CODE = (data.STORE_CODE == null || data.STORE_CODE <= 0) ? SessionHelper.LoginInfo.STORE.STORE_CODE : data.STORE_CODE;
+
+
+    bool IsNew = true;
+
+    if (data.MEMBER_CODE != null && data.MEMBER_CODE > 0) { IsNew = false; }
+    data.MEMBER_CODE = data.MEMBER_CODE == null ? -1 : data.MEMBER_CODE;
+}
+
+@section scripts{
+    <script type="text/javascript">
+        $(document).ready(function () {
+
+            validationinit();
+            $("#frmMember").submit(function (event) {
+                var isValid = $("#frmMember").form("is valid");
+                if (isValid)
+                {
+                    doSave();
+                }
+                event.preventDefault();
+            });
+            ComponentInit();
+        })
+
+        function ComponentInit() {
+
+            $.datetimepicker.setLocale('kr');
+
+            var birth = '@data.BIRTH';
+            if (birth != "")
+            {
+                var dt = DateInfo.GetDatetimeValue(birth);
+                if (dt != null)
+                {
+                    birth = dt.year + "." + dt.month + "." + dt.day;
+                }
+            }
+
+            $('#BIRTH').datetimepicker({
+                timepicker: false,
+                format: 'Y.m.d',
+                value: birth
+            });
+
+            if (Number($("#MEMBER_CODE").val()) <= 0) {
+                $("#USER_ID").blur(function () {
+                    USER_ID_Chk();
+                });
+            }
+
+            $("#MOBILE").keydown(function (event) {
+                var key = window.event ? event.keyCode : event.which;
+
+                if ((event.shiftKey == false)
+                    && ((key > 47 && key < 58)  //숫자
+                    || (key > 95 && key < 106)  //Num Lock 숫자
+                    || key == 35 || key == 36 || key == 37 || key == 39  // 방향키 좌우,home,end
+                    || key == 8 || key == 9 || key == 46 // del,tab, back space
+                    || key == 109 || key == 189) // hypen "-"
+                ) {
+                    return true;
+                } else {
+                    return false;
+                }
+            });
+            if ($("#COMPANY_CODE").val() != "" && Number($("#COMPANY_CODE").val()) > 0)
+            {
+                $("#COMPANY_CODE").closest(".ui.dropdown").addClass("disabled");
+            }
+            if ($("#STORE_CODE").val() != "" && Number($("#STORE_CODE").val()) > 0) {
+                $("#STORE_CODE").closest(".ui.dropdown").addClass("disabled");
+            }
+       
+        }
+
+        function SemanticUI_ComboChange(obj) {
+
+            if ($(obj)[0].id == "COMPANY_CODE") {
+                SetStore();
+            }
+            else if ($(obj)[0].id == "STORE_CODE") {
+                SetStoreDept();
+                SetCompPosition();
+                SetCompTitle();
+                SetMenuGroup();
+            }
+        }
+
+        function SetStore() {
+            var params = new Object();
+            var htmlattribute = new Object();
+            htmlattribute.class = "mini size150";
+            params.name = "STORE_CODE";
+            params.optionLabel = "-선택-";
+            params.COMPANY_CODE = $("#COMPANY_CODE").val();
+            params.selectedValue = $("#STORE_CODE").val();
+            params.htmlAttributes = JSON.stringify(htmlattribute);
+            params = JSON.stringify(params);
+            ajax.GetAjax("/common/StoreCombo", params, "html", function (result) {
+                $("#td_STORE_CODE").html(result);
+                SemanticUI.ComponentInit($("#td_STORE_CODE"));
+                
+
+                SetStoreDept();
+                SetCompPosition();
+                SetCompTitle();
+                SetMenuGroup();
+                validationinit();
+            })
+        }
+        function SetStoreDept() {
+            var params = new Object();
+            var htmlattribute = new Object();
+            htmlattribute.class = "mini size150";
+            params.name = "DEPT_CODE";
+            params.optionLabel = "-선택-";
+            params.STORE_CODE = $("#STORE_CODE").val();
+            params.selectedValue = $("#DEPT_CODE").val();
+            params.htmlAttributes = JSON.stringify(htmlattribute);
+            params = JSON.stringify(params);
+            ajax.GetAjax("/common/StoreDeptCombo", params, "html", function (result) {
+                
+                $("#td_DEPT_CODE").html(result);
+
+                SemanticUI.ComponentInit($("#td_DEPT_CODE"));
+                validationinit();
+            })
+        }
+
+        function SetCompTitle() {
+            var params = new Object();
+            var htmlattribute = new Object();
+            htmlattribute.class = "mini size150";
+            params.name = "COMP_TITLE";
+            params.optionLabel = "-선택-";
+            params.STORE_CODE = $("#STORE_CODE").val();
+            params.POSITION_TYPE = 2;
+            params.selectedValue = $("#COMP_TITLE").val();
+            params.htmlAttributes = JSON.stringify(htmlattribute);
+            params = JSON.stringify(params);
+            ajax.GetAjax("/common/StorePositionCombo", params, "html", function (result) {
+                $("#td_COMP_TITLE").html(result);
+                SemanticUI.ComponentInit($("#td_COMP_TITLE"));
+                validationinit();
+            })
+        }
+
+        function SetCompPosition() {
+            var params = new Object();
+            var htmlattribute = new Object();
+            htmlattribute.class = "mini size150";
+            params.name = "COMP_POSITION";
+            params.optionLabel = "-선택-";
+            params.STORE_CODE = $("#STORE_CODE").val();
+            params.POSITION_TYPE = 1;
+            params.selectedValue = $("#COMP_POSITION").val();
+            params.htmlAttributes = JSON.stringify(htmlattribute);
+            params = JSON.stringify(params);
+            ajax.GetAjax("/common/StorePositionCombo", params, "html", function (result) {
+                $("#td_COMP_POSITION").html(result);
+               SemanticUI.ComponentInit($("#td_COMP_POSITION"));
+               validationinit();
+            })
+        }
+
+        function SetMenuGroup() {
+            var params = new Object();
+            var htmlattribute = new Object();
+            htmlattribute.class = "mini size150";
+            params.name = "MENU_GROUP";
+            params.optionLabel = "-선택-";
+            params.STORE_CODE = $("#STORE_CODE").val();
+            params.selectedValue = $("#MENU_GROUP").val();
+            params.htmlAttributes = JSON.stringify(htmlattribute);
+            params = JSON.stringify(params);
+            ajax.GetAjax("/common/StoreMenuGroupCombo", params, "html", function (result) {
+                $("#td_MENU_GROUP").html(result);
+                SemanticUI.ComponentInit($("#td_MENU_GROUP"));
+                validationinit();
+            })
+        }
+        var Id_validation = false;
+
+        //// 아이디 중복 체크
+        function USER_ID_Chk() {
+            if ($("#USER_ID").val() == "") {
+                return;
+            }
+
+            var param = new Object();
+            param.USER_ID = $("#USER_ID").val();
+            param = JSON.stringify(param);
+
+            ajax.GetAjax("/account/MemberList/", param, "json", function (result) {
+
+                if (result.list.length == 0) {
+                    Id_validation = true;
+                    $('#USER_ID').popup('hide');
+                    $('#USER_ID').popup('destroy');
+                } else {
+                    $("#USER_ID").popup({
+                        title: '아이디 확인',
+                        content: '등록되어있는 아이디가 있습니다.'
+                    });
+
+                    $('#USER_ID').popup('show');
+                    $("#USER_ID").parent().addClass("error");
+                    $("#USER_ID").focus(); $("#USER_ID").select();
+                    Id_validation = false;
+                    return;
+                }
+            });
+        }
+
+        //// 체크
+        function validationinit() {
+
+            $('#frmMember').form({
+                on: 'change',
+                focusInvalid: true,
+                fields: {
+                    COMPANY_CODE: {
+                        identifier: 'COMPANY_CODE',
+                        rules: [
+                          {
+                              type: 'empty',
+                              prompt: '회사를 선택하여 주시기 바랍니다.'
+                          }
+                        ]
+                    },
+                    STORE_CODE: {
+                        identifier: 'STORE_CODE',
+                        rules: [
+                          {
+                              type: 'empty',
+                              prompt: '지사(지점)을 선택하여 주시기 바랍니다.'
+                          }
+                        ]
+                    },
+                    USER_ID: {
+                        identifier: 'USER_ID',
+                        rules: [
+                          {
+                              type: 'empty',
+                              prompt: '아이디를 입력하여 주시기 바랍니다.' // Please enter a first name
+                          },
+                          {
+                              type: 'minLength[4]',
+                              prompt: '아이디는 최소한 {ruleValue} 자리이상 입력되어야 합니다.'
+                          }
+						  ,
+						  {
+						  	type: 'email',
+						  	prompt: 'ID는 Email 형식이어야 합니다.'
+						  }
+                        ]
+                    },
+                    USER_NAME: {
+                        identifier: 'USER_NAME',
+                        rules: [
+                          {
+                              type: 'empty',
+                              prompt: '사용자이름을 입력하여 주시기 바랍니다.'
+                          }
+                        ]
+                    }
+					//,
+                    //EMAIL: {
+                    //    identifier: 'EMAIL',
+                    //    optional: true,
+                    //    rules: [
+                    //         {
+                    //             type: 'email',
+                    //             prompt: '이메일이 형식에 맞지 않습니다.'
+                    //         }
+                    //    ]
+                    //}
+                    ,PASSWORD: {
+                        identifier: 'PASSWORD',
+                        rules: [
+                            {
+                                type: 'empty',
+                                prompt: '비밀번호를 입력하여 주시기 바랍니다'
+                            },
+                            {
+                                type: 'minLength[6]',
+                                prompt: '비밀번호는 최소한 {ruleValue} 자리이상 입력되어야 합니다.'
+                            }
+                        ]
+                    },
+                    PASSWORD_CONFIRM: {
+                        identifier: 'PASSWORD_CONFIRM',
+                        rules: [
+                            {
+                                type: 'match[PASSWORD]',
+                                prompt: '입력하신 비밀번호와 다릅니다.'
+                            }
+                        ]
+                    }
+                    , DEPT_CODE: {
+                    	identifier: 'DEPT_CODE',
+						rules: [
+                            {
+                            	type: 'empty',
+                            	prompt: '부서를 선택하여 주시기 바랍니다.'
+                            }
+						]
+                    }, COMP_POSITION: {
+                        identifier: 'COMP_POSITION',
+                        rules: [
+                            {
+                                type: 'empty',
+                                prompt: '직급을 선택하여 주시기 바랍니다.'
+                            }
+                        ]
+                    }, COMP_TITLE: {
+                        identifier: 'COMP_TITLE',
+                        rules: [
+                            {
+                                type: 'empty',
+                                prompt: '직책을 선택하여 주시기 바랍니다.'
+                            }
+                        ]
+                    }, EMP_AUTH: {
+                        identifier: 'EMP_AUTH',
+                        rules: [
+                            {
+                                type: 'empty',
+                                prompt: '권한을 선택하여 주시기 바랍니다.'
+                            }
+                        ]
+                    }
+                    , MENU_GROUP: {
+                        identifier: 'MENU_GROUP',
+                        rules: [
+                            {
+                                type: 'empty',
+                                prompt: '메뉴권한을 선택하여 주시기 바랍니다.'
+                            }
+                        ]
+                    }
+                }, onFailure: function (event, fields) {
+
+                    //실패후 첫번재 에러 태그에 포커스
+                    SemanticUI.Form.Invalidation.ErrorFocus();
+                }, onInvalid: function (event) {
+                    //SemanticUI.Form.addErrorMessage(event);
+                }
+            });
+        }
+
+        function doSave() {
+            var params = BaseCommon.FormInfo.serializeJson("#frmMember");
+            params = JSON.stringify(params);
+
+            ajax.GetAjax("/employee/SaveEmployee/", params, "json", function (result) {
+                if (result.RESPONSE_CODE == "0" && result.MEMBER_CODE > -1)
+                {
+                    $.MessageBox({
+                        buttonDone: "닫기",
+                        message: "직원 정보가 정상적으로 저장 되었습니다.",
+                    }).done(function () {
+                        location.href = "/employee/MemberReg/" + result.MEMBER_CODE;
+                    });
+                }
+                else
+                {
+                    $.MessageBox({
+                        buttonDone: "닫기",
+                        message: "직원 저장에 실패했습니다.\n" + result.RESPONSE_MSG,
+                    }).done(function () {
+
+                    });
+                }
+            });
+        }
+
+        function SetParentMemberCombo()
+        {
+            var params = new Object();
+            var htmlattribute = new Object();
+            htmlattribute.class = "mini size150";
+            params.name = "PARENT_MEMBER_CODE";
+            params.STORE_CODE = $("#STORE_CODE").val();
+            params.DEPT_CODE = $("#DEPT_CODE").val();
+            
+            params.STR_EMP_AUTH = "1|2|8";
+           
+            params.optionLabel = "-선택-";
+            params.htmlAttributes = JSON.stringify(htmlattribute);
+
+            if (param.EMP_AUTH == 9)
+                params.STORE_CODE = 2;
+            params = JSON.stringify(params);
+
+            ajax.GetAjax("/common/EmployeeCombo", params, "html", function (result) {
+                $("#td_PARENT_MEMBER_CODE").html(result);
+                SemanticUI.ComponentInit($("#td_PARENT_MEMBER_CODE"));
+            })
+        }
+
+        function fnNew() {
+            location.href = "/employee/EmployeeReg";
+        }
+
+        function fnList()
+        {
+            location.href = "/employee/employeelist?STORE_CODE=" +$("#STORE_CODE").val();
+        }
+
+        function fnGetMemberForEmployee() {
+            $("#popMember").modal("show");
+        }
+
+</script>
+}
+<style>
+    @@media only screen and (max-width: 767px) {
+        .ui.table td.title .ui.header {
+            min-width: 90px;
+            text-align: right;
+        }
+    }
+</style>
+<div class="ui vertical stripe segment">
+    <form id ="frmMember" class="ui form">
+        @{
+            if (IsNew)
+            {
+                @:<div class="ui stackable two column grid">
+                @:  <div class="column">
+                @:      @Html.TitleNavigation("(신규)")
+                @:  </div>
+                @:</div>
+            }
+            else
+            {
+                @:@Html.TitleNavigation()
+            }
+                }
+
+                    <div class="ui stackable grid fields">
+                        <div class="one column row">
+                            <div class="column">
+                                <table class="ui celled table">
+                                    <tbody>
+                                        @Html.Hidden("MEMBER_CODE", data.MEMBER_CODE) 
+                                         <tr style="display:none">
+                                             <td class="title">
+                                                 @Html.Semantic_TITLE2("회사명", true)
+                                             </td>
+                                             <td class="content">
+                                                 @{
+                                                     var comboComp = new ALT.BizService.BasicService().GetCompanyList(new T_COMPANY_COND() { }).Select(s => new SelectListItem { Value = s.COMPANY_CODE.ToString(), Text = s.COMPANY_NAME }).ToList();
+                                                     @Html.CommonComboNormal("COMPANY_CODE", comboComp, data.COMPANY_CODE.ToString(), "-선택-", new { @class = "size150 field" })
+                                                 }
+
+                                             </td>
+                                            <td class="title">
+                                                @Html.Semantic_TITLE2("지점명", true)
+                                            </td>
+                                             <td class="content" colspan="3" id="td_STORE_CODE">
+                                                 @{  if (data.STORE_CODE.ToString("") == "") { @Html.StoreCombo("STORE_CODE", new T_STORE_COND { COMPANY_CODE = data.COMPANY_CODE, COMBO_DISPLAY = 0 }, data.STORE_CODE.ToString(""), "-지점선택-", new { @class = "size150" })  } else { @Html.StoreCombo("STORE_CODE", new T_STORE_COND { COMPANY_CODE = data.COMPANY_CODE, COMBO_DISPLAY = 0 }, data.STORE_CODE.ToString(""), null, new { @class = "size150" })  } }
+                                            </td>
+
+                                        </tr>
+                                        <tr>
+                                            <td class="title">
+                                                @Html.Semantic_TITLE2("아이디", true)
+                                            </td>
+                                            <td class="content">
+                                               @Html.Semantic_TextBox("USER_ID", data.USER_ID, SemanticUIHelper.Size.mini, new { @placeholder = "ID를 등록하세요" })
+                                            </td >
+                                            <td class="title">
+                                                @Html.Semantic_TITLE2("이름", true)
+                                            </td>
+                                            <td class="content">
+                                                @Html.Semantic_TextBox("USER_NAME", data.USER_NAME, SemanticUIHelper.Size.mini, new { @placeholder = "이름을 등록하세요", @class = "size180" })
+                                            </td>
+                                            <td class="title">
+                                                @Html.Semantic_TITLE2("근무여부")
+                                            </td>
+                                            <td class="content">
+                                                @{
+                                                    List<SelectListItem> hideList = new List<SelectListItem>();
+                                                    hideList.Add(new SelectListItem { Value = "0", Text = "근무", Selected = true });
+                                                    hideList.Add(new SelectListItem { Value = "1", Text = "퇴사" });
+                                                }
+                                                @Html.Semantic_YesOrNo("HIDE", hideList, SemanticUIHelper.Size.mini, data.HIDE == true ? "1" : "0")
+                                            </td>
+                                        </tr>
+                                        <tr>
+
+                                            <td class="title">
+                                                @Html.Semantic_TITLE2("비밀번호", true)
+                                            </td>
+                                            <td class="content">
+                                                @{
+                                                    @Html.Hidden("EX_PASSWORD", data.PASSWORD)
+                                                    if (IsNew)
+                                                    {
+                                                        @Html.Semantic_TextBox("PASSWORD", "", SemanticUIHelper.Size.mini, new { @placeholder = "비밀번호(6자리이상)를 입력하세요", @type = "password", @class = "size180" })
+                                                    }
+                                                    else
+                                                    {
+                                                        @Html.Semantic_TextBox("PASSWORD", "******", SemanticUIHelper.Size.mini, new { @placeholder = "비밀번호(6자리이상)를 입력하세요", @type = "password", @class = "size180" })
+                                                    }
+                                                }
+                                            </td>
+                                            <td class="title">
+                                                @Html.Semantic_TITLE2("비밀번호확인", true)
+                                            </td>
+                                            <td class="content">
+                                                @{
+                                                    if (IsNew)
+                                                    {
+                                                        @Html.Semantic_TextBox("PASSWORD_CONFIRM", "", SemanticUIHelper.Size.mini, new { @placeholder = "비밀번호가 맞는지 확인하세요", @type = "password", @class = "size180" })
+                                                    }
+                                                    else
+                                                    {
+                                                        @Html.Semantic_TextBox("PASSWORD_CONFIRM", "******", SemanticUIHelper.Size.mini, new { @placeholder = "비밀번호가 맞는지 확인하세요", @type = "password", @class = "size180" })
+                                                    }
+                                                }
+                                            </td>
+                                            <td class="title">
+                                                @Html.Semantic_TITLE2("전화번호")
+                                            </td>
+                                            <td class="content">
+                                                @Html.Semantic_TextBox("MOBILE", data.MOBILE, SemanticUIHelper.Size.mini, new { @placeholder = "전화번호" })
+                                            </td>
+                                            <td class="title" style="display:none">
+                                                @Html.Semantic_TITLE2("텔레그램 ID")
+                                            </td>
+                                            <td class="content" style="display:none">
+                                                @Html.Semantic_TextBox("TELEGRAM_CHAT_ID", data.TELEGRAM_CHAT_ID, SemanticUIHelper.Size.mini, new { @placeholder = "텔레그램 ID" })
+                                            </td>
+                                        </tr>
+                                        <tr>
+
+                                            <td class="title">
+                                                @Html.Semantic_TITLE2("생년월일", false)
+                                            </td>
+                                            <td class="content">
+                                                <div class="ui input ">
+                                                    @Html.Semantic_TextBox("BIRTH", "", SemanticUIHelper.Size.mini, new { @placeholder = "생년월일(클릭)", @style = "text-align:center;" })
+                                                </div>
+                                            </td>
+                                            <td class="title">
+                                                @Html.Semantic_TITLE2("성별")
+                                            </td>
+                                            <td class="content" >
+                                                @{
+                                                    List<SelectListItem> genderList = new List<SelectListItem>();
+                                                    genderList.Add(new SelectListItem { Value = "0", Text = "남자", Selected = true });
+                                                    genderList.Add(new SelectListItem { Value = "1", Text = "여자" });
+                                                }
+                                                @Html.Semantic_YesOrNo("GENDER", genderList, SemanticUIHelper.Size.mini, data.GENDER == null ? null : data.GENDER.ToString())
+
+                                            </td>
+                                            <td class="title">
+                                                @Html.Semantic_TITLE2("권한", true)
+                                            </td>
+                                            <td class="content">
+                                                @{
+                                                    var chkEmpAuth = new ALT.BizService.CommonService().GetCommon(new T_COMMON_COND { MAIN_CODE = "A002", SUB_CODE = SessionHelper.LoginInfo.EMPLOYEE.EMP_AUTH }).FirstOrDefault();
+                                                    int nchkEmpAuth = 0;
+                                                    if (chkEmpAuth != null)
+                                                    {
+                                                        nchkEmpAuth = (int)(chkEmpAuth.ORDER_SEQ == null ? 0 : chkEmpAuth.ORDER_SEQ);
+                                                    }
+
+                                                }
+
+                                                @Html.CommonCombo("EMP_AUTH", new T_COMMON_COND { MAIN_CODE = "A002", ADD_COND = " AND A.ORDER_SEQ >=" + nchkEmpAuth.ToString() }, data.EMP_AUTH.ToString("9"), "-선택-", new { @class = "mini field size150", @disable= (SessionHelper.LoginInfo.STORE_CODE == 1 ? "disable" : "") })
+                                            </td>
+                                        </tr>
+                                      
+                                      
+                                    </tbody>
+                                </table>
+                            </div>
+
+
+                        </div>
+                        <div class="one column row">
+                            <div class="column button">
+                                @Html.Semantic_Button2("btnList", "목록", SemanticUIHelper.enButtonType.ToList, SemanticUIHelper.Size.medium, new { @onclick = "fnList();" })
+                                @Html.Semantic_Button2("btnList", "신규", SemanticUIHelper.enButtonType.New, SemanticUIHelper.Size.medium, new { @onclick = "fnNew();" })
+                                @Html.Semantic_Button2("btnSubmit", "저장", SemanticUIHelper.enButtonType.Save, SemanticUIHelper.Size.medium, new { @type = "submit" })
+                            </div>
+                        </div>
+                    </div>
+                    <div class="ui error message"></div>
+</form>
+</div>
+<style>
+    @@media only screen and (max-width: 767px) {
+        #popMember .ui.table td.title .ui.header {
+            min-width: 40px;
+        }
+    }
+</style>
+<div class="ui tiny  modal" id="popMember">
+    <div class="header">회원정보</div>
+    <div class="content">
+        <p>
+           <table class="ui  table">
+               <tr><td class="title">@Html.Semantic_TITLE2("아이디")</td>
+               <td class="content">@Html.Semantic_TextBox("POP_MEMBER_EMAIL", "", new { @style="width:65%" })@Html.Semantic_Button2("btnPopMemberSave", "확인", SemanticUIHelper.enButtonType.Save, SemanticUIHelper.Size.mini, new { @onclick= "popMember_GetMember();" })</td>
+               </tr>
+           </table>
+        </p>
+    </div>
+    <div class="actions">
+        
+        @Html.Semantic_Button2("btnPopMemberCancel", "닫기", SemanticUIHelper.enButtonType.Normal, SemanticUIHelper.Size.mini, new { @onclick= "popMember_hide()" })
+        
+    </div>
+</div>
+<script type="text/javascript">
+    $("document").ready(function () {
+        $("#POP_MEMBER_EMAIL").keyup(function (e) {
+            var code = (e.keyCode ? e.keyCode : e.which);
+            if (code == 13) {
+                popMember_GetMember();
+                e.preventDefault();
+            }
+        });
+    })
+    function popMember_GetMember() {
+
+        var param = new Object();
+        param.USER_ID = $("#POP_MEMBER_EMAIL").val();
+        param.EMPLOYEE_YN = false;
+        param = JSON.stringify(param);
+
+        ajax.GetAjax("/account/MemberList/", param, "json", function (result) {
+            
+            if (result.list.length == 1) {
+                try {
+                    SetPopMember(result.list[0]);
+                } catch (e) { }
+                $('#popMember').modal('hide');
+                Id_validation = false;
+            } else  {
+                Input.TextBox.readOnly('#USER_ID', false);
+                Id_validation = true;
+                $("#USER_ID").val("");
+                $.MessageBox("입력하신 아이디가 정확하지 않습니다.");
+                return;
+            }
+        });
+    }
+
+    function SetPopMember(result) {
+        Input.TextBox.readOnly('#USER_ID', true);
+        $("#USER_ID").val(result.USER_ID);
+        $("#USER_NAME").val(result.USER_NAME);
+        $("#BIRTH").val(result.BIRTH);
+        $("#PHONE").val(result.PHONE);
+        //$("#dv_").Append(id).Append("_Click(" + +resul.PHONE)
+        dv_GENDER_Click(result.GENDER);
+    }
+    function popMember_hide() {
+        $('#popMember').modal('hide');
+    }
+</script>
+
+<form name="paging">
+    <input type="hidden" name="page" />
+    <input type="hidden" name="src_name" />
+    <input type="hidden" name="src_value" />
+</form>
+
+
+

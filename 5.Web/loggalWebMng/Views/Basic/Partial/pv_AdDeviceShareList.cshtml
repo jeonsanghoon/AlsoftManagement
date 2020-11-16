@@ -1,0 +1,19 @@
+﻿@using ALT.VO.loggal;
+@{
+    List<AD_DEVICE_SHARE_LIST> list = (List<AD_DEVICE_SHARE_LIST>)ViewBag.list;
+
+    foreach (AD_DEVICE_SHARE_LIST data in list)
+    {
+
+        <tr>
+            <td style="text-decoration:underline;color:blue;" onclick="javascript:location.href='/advertise/adreg2/@data.AD_CODE'">@data.TITLE</td>
+            <td class="hide">@data.AD_CODE</td>
+            <td class="center">@data.FR_DATE</td>
+            <td class="center">@data.TO_DATE</td>
+            <td class="center">@data.FR_TIME</td>
+            <td class="center">@data.TO_TIME</td>
+            <td class="center">@data.STATUS_NAME</td>
+        </tr>
+    }
+}
+

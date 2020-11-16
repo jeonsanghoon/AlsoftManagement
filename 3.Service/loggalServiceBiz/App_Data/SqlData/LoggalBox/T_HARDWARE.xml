@@ -1,0 +1,296 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<DBAgentMultiTemplate  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns="http://altsoft.kr/">
+
+  <DBAgentTemplate TemplateID="GetHardwareList">
+    <!-- 
+    SqlType : SQL의 형태를 지정합니다.
+      Example 1:<SqlType>FixedSQL</SqlType> 고정적인 SQL을 지원합니다. 
+      Example 2:<SqlType>DynamicSQL</SqlType> 동적인 SQL Type1을 지원합니다.  
+    Description : 해당 SQL의 기능설명을 적습니다.
+    SQLModifier : 해당 SQL의 작성자(수정자)를 적습니다
+    LastModifyDate : 해당 SQL의 마지막 수정일을 적습니다
+    -->
+    <Information>
+      <SqlType>DynamicSQL</SqlType>
+      <Description>장비(디스플레이)정보 가져오기</Description>
+      <SQLModifier>전상훈</SQLModifier>
+      <LastModifyDate>2019-01-14</LastModifyDate>
+    </Information>
+
+    <TemplateSQL>
+      <!-- FixedSQL : 고정된 SQL이 들어가는 곳입니다. -->
+      <FixedSQL>
+        <![CDATA[ 
+	SET NOCOUNT ON 
+	/******************************************/
+	/* 장비(디스플레이)정보 - T_HARDWARE 조회 */
+  /* -  SELECT QUERY GetHardwareList        */ 
+	/******************************************/
+	SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED 
+  DECLARE @PAGE INT       = CASE WHEN ISNUMERIC('{0}') = 1 THEN '{0}' ELSE 1 END
+		     ,@PAGE_COUNT INT = CASE WHEN ISNUMERIC('{1}') = 1 THEN '{1}' ELSE 1 END;
+WITH T_TABLE
+AS
+(
+	SELECT ROW_NUMBER() OVER(ORDER BY {2}) AS IDX 
+		    , A.HARDWARE_CODE
+		    , A.HARDWARE_NAME
+        , A.PURCHASE_DATE
+		    , A.BRAND
+		    , B.NAME AS BRAND_NAME
+		    , A.MODEL_NAME
+		    , A.HARDWARE_WIDTH
+		    , A.HARDWARE_HEIGHT
+		    , A.DISPLAY_RESOLUTION
+		    , C.NAME AS  DISPLAY_RESOLUTION_NAME 
+		    , A.HARDWARE_DESC
+		    , A.PURCHASE_COMPANY_CODE
+		    , D.COMPANY_NAME AS PURCHASE_COMPANY_NAME
+		    , A.PURCHASE_STORE_CODE
+		    , D1.STORE_NAME AS PURCHASE_STORE_NAME
+		    , A.PURCHASE_EMPLOYEE_CODE
+		    , D2.USER_NAME AS PURCHASE_EMPLOYEE_NAME
+		    , A.CONTACT_COMPANY_CODE
+		    , E.COMPANY_NAME AS CONTACT_COMPANY_NAME
+		    , A.CONTACT_STORE_CODE
+		    , E1.STORE_NAME AS CONTACT_STORE_NAME
+		    , A.CONTACT_EMPLOYEE_CODE
+		    , E2.USER_NAME AS CONTACT_EMPLOYEE_NAME
+		    , A.REMARK
+		    , A.HIDE
+        , G.REF_DATA3 AS HIDE_NAME
+        , A.INSERT_CODE
+        , U1.USER_NAME AS INSERT_NAME
+        , A.INSERT_DATE
+        , A.UPDATE_CODE
+        , U2.USER_NAME AS UPDATE_NAME
+        , A.UPDATE_DATE
+	      , DE.DEVICE_CODE
+	      , DE.DEVICE_NAME
+    FROM T_HARDWARE A 
+    LEFT JOIN T_DEVICE DE
+      ON A.HARDWARE_CODE = DE.HARDWARE_CODE
+   INNER JOIN T_COMMON B
+      ON B.MAIN_CODE = 'H004'
+	 AND B.SUB_CODE  = A.BRAND
+   INNER JOIN T_COMMON C
+      ON C.MAIN_CODE = 'H003'
+	 AND C.SUB_CODE  = A.DISPLAY_RESOLUTION
+   INNER JOIN T_COMPANY D
+      ON D.COMPANY_CODE = A.PURCHASE_COMPANY_CODE
+   INNER JOIN T_STORE D1
+      ON D1.COMPANY_CODE = A.PURCHASE_COMPANY_CODE
+	   AND D1.STORE_CODE = A.PURCHASE_STORE_CODE
+   INNER JOIN T_MEMBER D2
+      ON D2.MEMBER_CODE = A.PURCHASE_EMPLOYEE_CODE 
+	INNER JOIN T_COMPANY E
+      ON E.COMPANY_CODE = A.CONTACT_COMPANY_CODE
+   INNER JOIN T_STORE E1
+      ON E1.COMPANY_CODE = A.CONTACT_COMPANY_CODE
+	   AND E1.STORE_CODE = A.CONTACT_STORE_CODE
+   INNER JOIN T_MEMBER E2
+      ON E2.MEMBER_CODE = A.CONTACT_EMPLOYEE_CODE 
+   INNER JOIN T_MEMBER F
+      ON A.INSERT_CODE = F.MEMBER_CODE
+   INNER JOIN T_MEMBER F1
+      ON A.UPDATE_CODE = F1.MEMBER_CODE
+   INNER JOIN T_COMMON G
+      ON G.MAIN_CODE = 'B003'
+     AND G.SUB_CODE  = A.HIDE
+   INNER JOIN T_MEMBER U1
+      ON A.INSERT_CODE = U1.MEMBER_CODE
+   INNER JOIN T_MEMBER U2
+      ON A.UPDATE_CODE = U2.MEMBER_CODE
+   WHERE 1=1 	
+   #[FR_DATE]
+   #[TO_DATE]
+   #[HARDWARE_CODE]
+   #[HARDWARE_NAME]
+   #[BRAND]
+   #[MODEL_NAME]
+   #[CONTACT_EMPLOYEE_CODE]
+   #[CONTACT_EMPLOYEE_NAME]
+   #[HIDE]
+) 
+SELECT *, (SELECT COUNT(1) AS T_TABLE) AS TOTAL_ROWCOUNT 
+  FROM T_TABLE
+ WHERE IDX >= (@PAGE - 1) * @PAGE_COUNT 
+   AND IDX <= @PAGE * @PAGE_COUNT 
+
+
+    ]]>
+      </FixedSQL>
+      <DynamicBodys>
+        <Key>FR_DATE</Key>
+        <Body>AND A.PURCHASE_DATE >= '{0}' </Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>TO_DATE</Key>
+        <Body>
+          <![CDATA[AND A.PURCHASE_DATE <= '{0}']]> 
+        </Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>HARDWARE_CODE</Key>
+        <Body>AND A.HARDWARE_CODE = {0} </Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>HARDWARE_NAME</Key>
+        <Body>AND A.HARDWARE_NAME LIKE '%{0}%' </Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>BRAND</Key>
+        <Body>AND A.BRAND = {0} </Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>MODEL_NAME</Key>
+        <Body>AND A.MODEL_NAME LIKE '%{0}%' </Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>CONTACT_EMPLOYEE_CODE</Key>
+        <Body>AND A.CONTACT_EMPLOYEE_CODE = {0} </Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>CONTACT_EMPLOYEE_NAME</Key>
+        <Body>AND E2.USER_NAME LIKE N'%{0}%' </Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>HIDE</Key>
+        <Body>AND A.HIDE = {0} </Body>
+      </DynamicBodys>
+    </TemplateSQL>
+  </DBAgentTemplate>
+
+  <DBAgentTemplate TemplateID="HardwareSave">
+    <!-- 
+    SqlType : SQL의 형태를 지정합니다.
+      Example 1:<SqlType>FixedSQL</SqlType> 고정적인 SQL을 지원합니다. 
+      Example 2:<SqlType>DynamicSQL</SqlType> 동적인 SQL Type1을 지원합니다.  
+    Description : 해당 SQL의 기능설명을 적습니다.
+    SQLModifier : 해당 SQL의 작성자(수정자)를 적습니다
+    LastModifyDate : 해당 SQL의 마지막 수정일을 적습니다
+    -->
+    <Information>
+      <SqlType>DynamicSQL</SqlType>
+      <Description>장비(디스플레이)정보 저장</Description>
+      <SQLModifier>전상훈</SQLModifier>
+      <LastModifyDate>2019-01-14</LastModifyDate>
+    </Information>
+
+    <TemplateSQL>
+      <!-- FixedSQL : 고정된 SQL이 들어가는 곳입니다. -->
+      <FixedSQL>
+        <![CDATA[ 
+	SET NOCOUNT ON 
+	/*******************************************************/
+	/* 장비(디스플레이)정보 - T_HARDWARE 저장 -  SAVE QUERY */ 
+	/*******************************************************/
+	DECLARE @HARDWARE_CODE                   INT                  = N'{0}'
+			  , @HARDWARE_NAME                  NVARCHAR(100)        = N'{1}'
+			  , @BRAND                          INT                  = CONVERT(INT, CASE WHEN ISNUMERIC('{2}') = 1 THEN '{2}' ELSE '0' END )
+			  , @MODEL_NAME                     NVARCHAR(50)         = N'{3}'
+			  , @HARDWARE_WIDTH                 INT                  = CONVERT(INT, CASE WHEN ISNUMERIC('{4}') = 1 THEN '{4}' ELSE NULL END )
+			  , @HARDWARE_HEIGHT                INT                  = CONVERT(INT, CASE WHEN ISNUMERIC('{5}') = 1 THEN '{5}' ELSE NULL END )
+			  , @DISPLAY_RESOLUTION             INT                  = CONVERT(INT, CASE WHEN ISNUMERIC('{6}') = 1 THEN '{6}' ELSE '0' END )
+			  , @HARDWARE_DESC                  NVARCHAR(200)        = N'{7}'
+			  , @PURCHASE_DATE                  VARCHAR(8)           = N'{8}'
+			  , @PURCHASE_COMPANY_CODE          INT                  = CONVERT(INT, CASE WHEN ISNUMERIC('{9}') = 1 THEN '{9}' ELSE NULL END )
+			  , @PURCHASE_STORE_CODE            INT                  = CONVERT(INT, CASE WHEN ISNUMERIC('{10}') = 1 THEN '{10}' ELSE NULL END )
+			  , @PURCHASE_EMPLOYEE_CODE         INT                  = CONVERT(INT, CASE WHEN ISNUMERIC('{11}') = 1 THEN '{11}' ELSE NULL END )
+			  , @CONTACT_COMPANY_CODE           INT                  = CONVERT(INT, CASE WHEN ISNUMERIC('{12}') = 1 THEN '{12}' ELSE NULL END )
+			  , @CONTACT_STORE_CODE             INT                  = CONVERT(INT, CASE WHEN ISNUMERIC('{13}') = 1 THEN '{13}' ELSE NULL END )
+			  , @CONTACT_EMPLOYEE_CODE          INT                  = CONVERT(INT, CASE WHEN ISNUMERIC('{14}') = 1 THEN '{14}' ELSE NULL END )
+			  , @REMARK                         NVARCHAR(200)        = N'{15}'
+			  , @HIDE                           BIT                  = CONVERT(BIT, CASE WHEN ISNUMERIC('{16}') = 1 THEN '{16}' ELSE '0' END )
+			  , @INSERT_CODE                    INT                  = {17}
+			  , @INSERT_DATE                    DATETIME             = GETDATE() 
+			  , @UPDATE_CODE                    INT                  = {17}
+			  , @UPDATE_DATE                    DATETIME             = GETDATE() 
+
+	UPDATE A 
+	SET  	  HARDWARE_NAME                  = @HARDWARE_NAME                 
+			 ,  BRAND                          = @BRAND                         		 ,  MODEL_NAME                     = @MODEL_NAME                    
+			 ,  HARDWARE_WIDTH                 = @HARDWARE_WIDTH                		 ,  HARDWARE_HEIGHT                = @HARDWARE_HEIGHT               
+			 ,  DISPLAY_RESOLUTION             = @DISPLAY_RESOLUTION            		 ,  HARDWARE_DESC                  = @HARDWARE_DESC                 
+			 ,  PURCHASE_DATE                  = @PURCHASE_DATE                 		 ,  PURCHASE_COMPANY_CODE          = @PURCHASE_COMPANY_CODE         
+			 ,  PURCHASE_STORE_CODE            = @PURCHASE_STORE_CODE           		 ,  PURCHASE_EMPLOYEE_CODE         = @PURCHASE_EMPLOYEE_CODE        
+			 ,  CONTACT_COMPANY_CODE           = @CONTACT_COMPANY_CODE          		 ,  CONTACT_STORE_CODE             = @CONTACT_STORE_CODE            
+			 ,  CONTACT_EMPLOYEE_CODE          = @CONTACT_EMPLOYEE_CODE         		 ,  REMARK                         = @REMARK                        
+			 ,  HIDE                           = @HIDE                          		 ,  UPDATE_CODE                    = @UPDATE_CODE                   
+			 ,  UPDATE_DATE                    = @UPDATE_DATE                   
+	FROM T_HARDWARE A 
+	WHERE HARDWARE_CODE= @HARDWARE_CODE
+	IF @@ROWCOUNT = 0
+	BEGIN
+		INSERT INTO T_HARDWARE
+		(		HARDWARE_NAME                 		, BRAND                         		, MODEL_NAME                    		
+			, HARDWARE_WIDTH                		, HARDWARE_HEIGHT               		, DISPLAY_RESOLUTION            		, HARDWARE_DESC                 		
+			, PURCHASE_DATE                 		, PURCHASE_COMPANY_CODE         		, PURCHASE_STORE_CODE           		, PURCHASE_EMPLOYEE_CODE        		
+			, CONTACT_COMPANY_CODE          		, CONTACT_STORE_CODE            		, CONTACT_EMPLOYEE_CODE         		, REMARK                        		
+			, HIDE                          		, INSERT_CODE                   		, INSERT_DATE                   		, UPDATE_CODE                   		
+			, UPDATE_DATE                   		
+		)
+		SELECT @HARDWARE_NAME                		, @BRAND                        	
+				, @MODEL_NAME                   		, @HARDWARE_WIDTH               		, @HARDWARE_HEIGHT              	
+				, @DISPLAY_RESOLUTION           		, @HARDWARE_DESC                		, @PURCHASE_DATE                	
+				, @PURCHASE_COMPANY_CODE        		, @PURCHASE_STORE_CODE          		, @PURCHASE_EMPLOYEE_CODE       	
+				, @CONTACT_COMPANY_CODE         		, @CONTACT_STORE_CODE           		, @CONTACT_EMPLOYEE_CODE        	
+				, @REMARK                       		, @HIDE                         		, @INSERT_CODE                  	
+				, @INSERT_DATE                  		, @UPDATE_CODE                  		, @UPDATE_DATE                  	
+			
+		 SET @HARDWARE_CODE = IDENT_CURRENT('T_HARDWARE')
+	 END
+	SELECT CONVERT(VARCHAR(100), @HARDWARE_CODE) AS DATA
+	SET NOCOUNT OFF
+
+
+    ]]>
+      </FixedSQL>
+    </TemplateSQL>
+  </DBAgentTemplate>
+
+  <DBAgentTemplate TemplateID="HardwareDelete">
+    <!-- 
+    SqlType : SQL의 형태를 지정합니다.
+      Example 1:<SqlType>FixedSQL</SqlType> 고정적인 SQL을 지원합니다. 
+      Example 2:<SqlType>DynamicSQL</SqlType> 동적인 SQL Type1을 지원합니다.  
+    Description : 해당 SQL의 기능설명을 적습니다.
+    SQLModifier : 해당 SQL의 작성자(수정자)를 적습니다
+    LastModifyDate : 해당 SQL의 마지막 수정일을 적습니다
+    -->
+    <Information>
+      <SqlType>DynamicSQL</SqlType>
+      <Description>장비(디스플레이)정보 삭제</Description>
+      <SQLModifier>전상훈</SQLModifier>
+      <LastModifyDate>2019-01-15</LastModifyDate>
+    </Information>
+
+    <TemplateSQL>
+      <!-- FixedSQL : 고정된 SQL이 들어가는 곳입니다. -->
+      <FixedSQL>
+        <![CDATA[ 
+	SET NOCOUNT ON 
+	/*******************************************************/
+	/* 장비(디스플레이)정보 - T_HARDWARE 삭제 -  SAVE QUERY */ 
+	/*******************************************************/
+	DECLARE @HARDWARE_CODE                   INT                  = N'{0}'
+			  , @UPDATE_CODE                    INT                  = {1}
+			  , @UPDATE_DATE                    DATETIME             = GETDATE() 
+
+	UPDATE T_DEVICE
+     SET HARDWARE_CODE = @HARDWARE_CODE
+        ,UPDATE_CODE  = @UPDATE_CODE
+        ,UPDATE_DATE  = @UPDATE_DATE
+  WHERE HARDWARE_CODE = @HARDWARE_CODE
+  
+  DELETE T_HARDWARE 
+   WHERE HARDWARE_CODE = @HARDWARE_CODE
+
+	SET NOCOUNT OFF
+
+
+    ]]>
+      </FixedSQL>
+    </TemplateSQL>
+  </DBAgentTemplate>
+</DBAgentMultiTemplate>

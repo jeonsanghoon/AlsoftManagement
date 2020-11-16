@@ -1,0 +1,51 @@
+﻿<style>
+    #previewPop {
+        width:75%;
+        max-width:1600px;
+        height:auto;
+        max-height:1000px;
+    }
+</style>
+<div class="ui  modal form" id="previewPop">
+    <div class="header">미리보기</div>
+    <div class="content" style="min-height:200px;text-align:center;">
+        @{
+            <img id="imgPreview"  style="width:90%; height:auto; max-height:1000px; display:none" />
+            @*<img id="imgPreview" src="://semantic-ui.com//images/wireframe/image.png" style="width:310px; height:auto; max-height:600px; display:none" />*@
+            //https://www.jqueryscript.net/demo/Download-Videos-On-Page-Load-jQuery-Blobber/videos/611180814.mp4
+            <video style="height:auto;width:90%" id="vdoPreview" autoplay="autoplay" controls>
+                <source id="movie_src" type="video/mp4" src="" />
+            </video>
+            <iframe id="ifmYoutubePreview" style="width:90%;height:auto" allowfullscreen="allowfullscreen"></iframe>
+            @*<iframe id="ifmYoutubePreview" style="width:310px;height:auto" src="://www.youtube.com/embed/A8o3TSFlQKM?autoplay=0&playsinline=0&autohide=1&showinfo=0&controls=0&frameborder=0" allowfullscreen="allowfullscreen"></iframe>*@
+        }
+    </div>
+    <div class="actions">
+        @Html.Semantic_Button2("btnpreviewPopClose", "닫기", SemanticUIHelper.enButtonType.Normal, new { @onclick = "previewPopClose();" })
+    </div>
+</div>
+<script type="text/javascript">
+    function PreviewPopOpen(data) {
+        $("#imgPreview").hide();
+        $("#vdoPreview").hide();
+        $("#ifmYoutubePreview").hide();
+        if (data.SIGN_TYPE == 1) {
+            $("#imgPreview").attr("src", data.CONTENT_URL);
+            $("#imgPreview").show();
+        }
+        else if (data.SIGN_TYPE == 2) { /*동영상*/
+            "video/" + String(data.CONTENT_URL).split('.')[1];
+            $("#movie_src").attr("src", data.CONTENT_URL);
+            $('#vdoPreview').modal("show");
+        }
+        else if (data.SIGN_TYPE == 3) { /*유튜브*/
+            $("#ifmYoutubePreview").attr("src", "//www.youtube.com/embed/" + data.CONTENT_URL + "?autoplay=1&playsinline=0&autohide=0&showinfo=0&controls=1&frameborder=0");
+            $("#ifmYoutubePreview").show();
+        }
+        $('#previewPop').modal("show");
+    }
+
+    function previewPopClose() {
+        $('#previewPop').modal("hide");
+    }
+</script>

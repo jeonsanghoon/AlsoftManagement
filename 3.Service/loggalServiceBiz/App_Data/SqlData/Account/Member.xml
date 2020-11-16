@@ -1,0 +1,564 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<DBAgentMultiTemplate  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns="http://altsoft.kr/">
+
+  <DBAgentTemplate TemplateID="GetMemberList">
+    <!-- 
+    SqlType : SQL의 형태를 지정합니다.
+      Example 1:<SqlType>FixedSQL</SqlType> 고정적인 SQL을 지원합니다. 
+      Example 2:<SqlType>DynamicSQL</SqlType> 동적인 SQL Type1을 지원합니다.  
+    Description : 해당 SQL의 기능설명을 적습니다.
+    SQLModifier : 해당 SQL의 작성자(수정자)를 적습니다
+    LastModifyDate : 해당 SQL의 마지막 수정일을 적습니다
+    -->
+    <Information>
+      <SqlType>DynamicSQL</SqlType>
+      <Description>회원조회</Description>
+      <SQLModifier>전상훈</SQLModifier>
+      <LastModifyDate>2016-08-23</LastModifyDate>
+    </Information>
+
+    <TemplateSQL>
+      <!-- FixedSQL : 고정된 SQL이 들어가는 곳입니다. -->
+      <FixedSQL>
+        <![CDATA[ 
+    SET NOCOUNT ON
+    /* Customer 조회 GetMemberList */
+    SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED
+
+
+    SELECT 
+		  A.MEMBER_CODE
+		, A.USER_TYPE
+		, A.USER_ID
+		, A.PASSWORD
+		, A.USER_NAME
+		, A.EMAIL
+		, A.PHONE
+		, A.MOBILE
+		, A.ADDRESS1
+		, A.ADDRESS2
+		, A.ZIP_CODE
+		, A.BIRTH
+		, A.GENDER
+		, A.PASSWORD_CHANGE_URL
+		, A.PASSWORD_AUTH_TIME
+    , A.KAKAO_ID
+    , A.GOOGLE_ID
+    , A.NAVER_ID
+    , A.FACEBOOK_ID
+		, A.HIDE
+		, A.REMARK
+		, A.INSERT_CODE
+		, A.INSERT_DATE
+		, A.UPDATE_CODE
+    , B.USER_NAME AS UPDATE_NAME
+		, A.UPDATE_DATE
+	FROM T_MEMBER A
+  INNER JOIN T_MEMBER B
+     ON A.UPDATE_CODE = B.MEMBER_CODE
+  
+   WHERE 1=1
+    #[USER_ID]
+    #[PASSWORD]
+    #[USER_TYPE]
+    #[PHONE]
+    #[MOBILE]
+    #[KAKAO_ID]
+    #[GOOGLE_ID]
+    #[NAVER_ID]
+    #[FACEBOOK_ID]
+    #[HIDE]
+   ORDER BY A.USER_NAME
+   SET NOCOUNT OFF
+      ]]>
+      </FixedSQL>
+      <DynamicBodys>
+        <Key>USER_ID</Key>
+        <Body>AND A.USER_ID = '{0}' </Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>PASSWORD</Key>
+        <Body>AND A.PASSWORD = '{0}' </Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>USER_TYPE</Key>
+        <Body>AND A.USER_TYPE = '{0}' </Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>PHONE</Key>
+        <Body>AND A.PHONE LIKE '%{0}%' </Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>MOBILE</Key>
+        <Body>AND A.MOBILE LIKE '%{0}%' </Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>KAKAO_ID</Key>
+        <Body>AND A.KAKAO_ID = '{0}' </Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>GOOGLE_ID</Key>
+        <Body>AND A.GOOGLE_ID = '{0}' </Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>NAVER_ID</Key>
+        <Body>AND A.NAVER_ID = '{0}' </Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>FACEBOOK_ID</Key>
+        <Body>AND A.FACEBOOK_ID = '{0}' </Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>HIDE</Key>
+        <Body>AND A.HIDE = {0} </Body>
+      </DynamicBodys>
+    </TemplateSQL>
+  </DBAgentTemplate>
+
+  <DBAgentTemplate TemplateID="MemberSave">
+    <!-- 
+    SqlType : SQL의 형태를 지정합니다.
+      Example 1:<SqlType>FixedSQL</SqlType> 고정적인 SQL을 지원합니다. 
+      Example 2:<SqlType>DynamicSQL</SqlType> 동적인 SQL Type1을 지원합니다.  
+    Description : 해당 SQL의 기능설명을 적습니다.
+    SQLModifier : 해당 SQL의 작성자(수정자)를 적습니다
+    LastModifyDate : 해당 SQL의 마지막 수정일을 적습니다
+    -->
+    <Information>
+      <SqlType>DynamicSQL</SqlType>
+      <Description>회원저장</Description>
+      <SQLModifier>전상훈</SQLModifier>
+      <LastModifyDate>2016-08-23</LastModifyDate>
+    </Information>
+
+    <TemplateSQL>
+      <!-- FixedSQL : 고정된 SQL이 들어가는 곳입니다. -->
+      <FixedSQL>
+        <![CDATA[ 
+	SET NOCOUNT ON 
+	/*********************************************/
+	/* 사용자정보 - T_MEMBER 저장 -  SAVE QUERY */ 
+	/*********************************************/
+	DECLARE @MEMBER_CODE                    INT                  = N'{0}'
+			  , @USER_TYPE                      INT                  = CONVERT(INT, CASE WHEN ISNUMERIC('{1}') = 1 THEN '{1}' ELSE NULL END )
+			  , @USER_ID                        NVARCHAR(50)         = N'{2}'
+			  , @PASSWORD                       NVARCHAR(200)        = N'{3}'
+			  , @USER_NAME                      NVARCHAR(100)        = N'{4}'
+			  , @EMAIL                          NVARCHAR(100)        = N'{5}'
+			  , @PHONE                          VARCHAR(30)          = N'{6}'
+			  , @MOBILE                         VARCHAR(30)          = N'{7}'
+			  , @ADDRESS1                       NVARCHAR(200)        = N'{8}'
+			  , @ADDRESS2                       NVARCHAR(200)        = N'{9}'
+			  , @ZIP_CODE                        VARCHAR(10)         = N'{10}'
+			  , @BIRTH                          VARCHAR(8)           = N'{11}'
+			  , @GENDER                         INT                  = CONVERT(INT, CASE WHEN ISNUMERIC('{12}') = 1 THEN '{12}' ELSE NULL END )
+			  , @PASSWORD_CHANGE_URL            NVARCHAR(200)        = N'{13}'
+			  , @PASSWORD_AUTH_TIME             DATETIME             = CASE WHEN ISDATE('{14}') = 1 THEN '{14}' ELSE GETDATE() END
+        , @KAKAO_ID                       VARCHAR(100)         = N'{15}'
+			  , @GOOGLE_ID                      VARCHAR(100)         = N'{16}'
+			  , @NAVER_ID                       VARCHAR(100)         = N'{17}'
+			  , @FACEBOOK_ID                    VARCHAR(100)         = N'{18}'
+			  , @HIDE                           BIT                  = CONVERT(BIT, CASE WHEN ISNUMERIC('{19}') = 1 THEN '{19}' ELSE '0' END )
+			  , @REMARK                         NVARCHAR(1000)       = N'{20}'
+			  , @INSERT_CODE                    INT                  = CASE WHEN ISNUMERIC('{21}') = 1 THEN '{21}' ELSE '{21}' END
+			  , @INSERT_DATE                    DATETIME             = GETDATE() 
+			  , @UPDATE_CODE                    INT                  = CASE WHEN ISNUMERIC('{21}') = 1 THEN '{21}' ELSE '{21}' END
+        , @UPDATE_DATE                    DATETIME             = GETDATE()
+        , @SAVE_MODE                      VARCHAR(20)          = '{22}'
+        , @thumnailPath                   NVARCHAR(200)        = '{23}'
+
+  SET @MOBILE = CASE WHEN ISNULL(@MOBILE,'') = '' THEN @PHONE ELSE @MOBILE END
+  
+  IF @SAVE_MODE ='memberJoin'
+  BEGIN
+      IF EXISTS (SELECT * FROM T_MEMBER 
+                    WHERE USER_ID = @USER_ID
+                   )
+        BEGIN
+      
+          IF NOT EXISTS (SELECT * FROM T_MEMBER 
+                  WHERE USER_ID = @USER_ID
+                    AND PASSWORD = @PASSWORD
+                    )
+          BEGIN
+            SELECT '' DATA, 'ID_DUPLICATION' AS DATA2,'' AS MESSAGE,  N'해당 아이디(' + @USER_ID + ')는 이미 가입이 되어 있습니다.' AS ERROR_MESSAGE
+          END
+          ELSE
+          BEGIN
+            SELECT '' DATA, 'ID_DUPLICATION' AS DATA2,'LOGIN' AS MESSAGE,  N'해당 아이디(' + @USER_ID + ')는 이미 가입이 되어 있습니다.' AS ERROR_MESSAGE
+          END
+          
+          GOTO EXCEPTION
+        END
+  END
+  
+  IF @SAVE_MODE = 'D' OR @thumnailPath ='D'
+  BEGIN
+         DELETE T_FILE
+          WHERE TABLE_NAME = 'T_MEMBER'
+            AND TABLE_KEY = @MEMBER_CODE
+            AND FILE_TYPE = 1
+            AND REF_DATA1 = '1'
+  END
+  IF  @SAVE_MODE  = 'D'
+  BEGIN
+      BEGIN TRY 
+      
+           SELECT @MEMBER_CODE = MEMBER_CODE 
+             FROM T_MEMBER
+            WHERE USER_ID  = @USER_ID
+              AND PASSWORD = @PASSWORD
+          DELETE FROM T_MEMBER
+          WHERE USER_ID  = @USER_ID
+            AND PASSWORD = @PASSWORD
+            
+       
+            
+      END TRY 
+      BEGIN CATCH 
+          UPDATE T_MEMBER
+             SET HIDE = 1
+          WHERE USER_ID  = @USER_ID
+            AND PASSWORD = @PASSWORD
+      END CATCH
+  END
+  ELSE
+  BEGIN
+   UPDATE A 
+	    SET  	 USER_TYPE                      = @USER_TYPE                     
+			     , USER_ID                        = @USER_ID                       		 /*, PASSWORD                       = @PASSWORD */                     
+			     , USER_NAME                      = @USER_NAME                     		 , EMAIL                          = @EMAIL                         
+			     , PHONE                          = @PHONE                         		 , MOBILE                         = @MOBILE                        
+			     , ADDRESS1                       = @ADDRESS1                      		 , ADDRESS2                       = @ADDRESS2                      
+			     , ZIP_CODE                       = @ZIP_CODE                       		 , BIRTH                          = @BIRTH                         
+			     , GENDER                         = @GENDER                        		 , PASSWORD_CHANGE_URL            = @PASSWORD_CHANGE_URL           
+			     , PASSWORD_AUTH_TIME             = @PASSWORD_AUTH_TIME            		 
+           , KAKAO_ID                       = @KAKAO_ID                           , GOOGLE_ID                      = @GOOGLE_ID
+           , NAVER_ID                       = @NAVER_ID                           , FACEBOOK_ID                    = @FACEBOOK_ID
+           , HIDE                           = @HIDE                          
+			     , REMARK                         = @REMARK                        		 , UPDATE_CODE                    = @UPDATE_CODE                   
+			     , UPDATE_DATE                    = @UPDATE_DATE                   
+	    FROM T_MEMBER A 
+	    WHERE MEMBER_CODE= @MEMBER_CODE
+	    IF @@ROWCOUNT = 0
+	    BEGIN
+  
+      
+    
+		    INSERT INTO T_MEMBER
+		    (		USER_TYPE                     		, USER_ID                       		, PASSWORD                      		
+			    , USER_NAME                     		, EMAIL                         		, PHONE                         		, MOBILE                        		
+			    , ADDRESS1                      		, ADDRESS2                      		, ZIP_CODE                       		, BIRTH                         		
+			    , GENDER                        		, PASSWORD_CHANGE_URL           		, PASSWORD_AUTH_TIME            		
+          , KAKAO_ID                          , GOOGLE_ID                         , NAVER_ID                          , FACEBOOK_ID
+          , HIDE                          		
+			    , REMARK                        		, INSERT_CODE                   		, INSERT_DATE                   		, UPDATE_CODE                   		
+			    , UPDATE_DATE                   		
+		    )
+		    SELECT @USER_TYPE                    		, @USER_ID                      	
+				    , @PASSWORD                     		, @USER_NAME                    		, @EMAIL                        	
+				    , @PHONE                        		, @MOBILE                       		, @ADDRESS1                     	
+				    , @ADDRESS2                     		, @ZIP_CODE                      		, @BIRTH                        	
+				    , @GENDER                       		, @PASSWORD_CHANGE_URL          		, @PASSWORD_AUTH_TIME           	
+				    , @KAKAO_ID                         , @GOOGLE_ID                        , @NAVER_ID
+            , @FACEBOOK_ID
+            , @HIDE                         		, @REMARK                       		, @INSERT_CODE                  	
+				    , @INSERT_DATE                  		, @UPDATE_CODE                  		, @UPDATE_DATE   
+        
+            SELECT @MEMBER_CODE = CONVERT(INT, IDENT_CURRENT( 'T_MEMBER' ))
+	     END
+       
+       
+       
+       IF ISNULL(@thumnailPath ,'') <> ''
+       BEGIN
+           DELETE T_FILE
+            WHERE TABLE_NAME = 'T_MEMBER'
+              AND TABLE_KEY = @MEMBER_CODE
+              AND FILE_TYPE = 1
+              AND REF_DATA1 = '1'
+              
+              DECLARE @FILE_SEQ INT
+              SELECT @FILE_SEQ = ISNULL(MAX(FILE_SEQ),0) + 1 FROM T_FILE
+              WHERE TABLE_NAME = 'T_MEMBER'
+                AND TABLE_KEY  = CONVERT(VARCHAR(20),@MEMBER_CODE)
+                AND FILE_TYPE = 1
+                AND REF_DATA1 = '1'
+                
+           INSERT INTO T_FILE
+           ( TABLE_NAME, TABLE_KEY, FILE_SEQ, FILE_TYPE, FILE_NAME, FILE_EXT, FILE_URL, REF_DATA1,REF_DATA2, REMARK, INSERT_CODE, INSERT_DATE)
+           SELECT 'T_MEMBER', CONVERT(VARCHAR(20),@MEMBER_CODE), @FILE_SEQ, 1,'','',@thumnailPath,'1', '','', @UPDATE_CODE , GETDATE()
+         
+       END
+   END
+   SELECT CONVERT(VARCHAR(30), @MEMBER_CODE) AS DATA,'' AS DATA2, '' AS MESSAGE, '' AS ERROR_MESSAGE
+   
+   EXCEPTION:
+   
+   
+  SET NOCOUNT OFF
+  ]]>
+      </FixedSQL>
+    </TemplateSQL>
+  </DBAgentTemplate>
+
+<DBAgentTemplate TemplateID="GetMobileLogin">
+    <!-- 
+    SqlType : SQL의 형태를 지정합니다.
+      Example 1:<SqlType>FixedSQL</SqlType> 고정적인 SQL을 지원합니다. 
+      Example 2:<SqlType>DynamicSQL</SqlType> 동적인 SQL Type1을 지원합니다.  
+    Description : 해당 SQL의 기능설명을 적습니다.
+    SQLModifier : 해당 SQL의 작성자(수정자)를 적습니다
+    LastModifyDate : 해당 SQL의 마지막 수정일을 적습니다
+    -->
+    <Information>
+      <SqlType>DynamicSQL</SqlType>
+      <Description>모바일 로그인</Description>
+      <SQLModifier>전상훈</SQLModifier>
+      <LastModifyDate>2017-05-29</LastModifyDate>
+    </Information>
+
+    <TemplateSQL>
+      <!-- FixedSQL : 고정된 SQL이 들어가는 곳입니다. -->
+      <FixedSQL>
+        <![CDATA[ 
+    SET NOCOUNT ON
+    /* 모바일 로그인  GetMobileLogin */
+    SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED
+
+
+    DECLARE @TABLE TABLE
+    (
+       MEMBER_CODE INT
+	    ,USER_ID NVARCHAR(50)
+	    ,USER_NAME NVARCHAR(100)
+	    ,PASSWORD NVARCHAR(400)
+      ,ERROR_TYPE INT
+	    ,ERROR_MESSAGE NVARCHAR(1000)
+      ,thumnailPath NVARCHAR(200)
+    )
+    INSERT INTO @TABLE
+    SELECT A.MEMBER_CODE, A.USER_ID, A.USER_NAME, A.PASSWORD , 0 ERROR_TYPE, '' AS ERROR_MESSAGE,  ISNULL(B.FILE_URL,'') AS thumnailPath
+      FROM T_MEMBER A
+      LEFT JOIN T_FILE B
+        ON B.TABLE_NAME = 'T_MEMBER'
+       AND B.TABLE_KEY  = CONVERT(VARCHAR(20), A.MEMBER_CODE)
+       AND B.FILE_TYPE  = '1'
+       AND B.REF_DATA1 = '1'
+     WHERE 1=1
+       #[USER_ID]
+       #[KAKAO_ID]
+       #[GOOGLE_ID]
+       #[NAVER_ID]
+       #[FACEBOOK_ID]
+       AND HIDE = 0
+     IF @@ROWCOUNT = 0
+     BEGIN
+	    INSERT INTO @TABLE
+	    (USER_ID, USER_NAME, PASSWORD, ERROR_TYPE, ERROR_MESSAGE)
+	    SELECT '', '', '',1, N'아이디가 존재하지 않습니다.'
+    END
+    ELSE
+    BEGIN
+	    IF NOT EXISTS (SELECT * FROM @TABLE A
+                     WHERE 1=1
+                          #[PASSWORD])
+	    BEGIN
+		    UPDATE A
+		       SET ERROR_TYPE = 2
+		          ,ERROR_MESSAGE = N'비밀번호를 잘못 입력하였습니다.'
+         FROM @TABLE A
+		    WHERE 1=1
+          #[USER_ID]
+	    END
+    END
+
+    SELECT MEMBER_CODE, USER_ID, USER_NAME, ERROR_TYPE, ERROR_MESSAGE, thumnailPath FROM @TABLE
+
+
+   SET NOCOUNT OFF
+      ]]>
+      </FixedSQL>
+      <DynamicBodys>
+        <Key>USER_ID</Key>
+        <Body>AND A.USER_ID = '{0}' </Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>PASSWORD</Key>
+        <Body>AND A.PASSWORD = '{0}' </Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>KAKAO_ID</Key>
+        <Body>AND A.KAKAO_ID = '{0}' </Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>GOOGLE_ID</Key>
+        <Body>AND A.GOOGLE_ID = '{0}' </Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>NAVER_ID</Key>
+        <Body>AND A.NAVER_ID = '{0}' </Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>FACEBOOK_ID</Key>
+        <Body>AND A.FACEBOOK_ID = '{0}' </Body>
+      </DynamicBodys>
+    </TemplateSQL>
+  </DBAgentTemplate>
+<DBAgentTemplate TemplateID="MobilePasswordChange">
+    <!-- 
+    SqlType : SQL의 형태를 지정합니다.
+      Example 1:<SqlType>FixedSQL</SqlType> 고정적인 SQL을 지원합니다. 
+      Example 2:<SqlType>DynamicSQL</SqlType> 동적인 SQL Type1을 지원합니다.  
+    Description : 해당 SQL의 기능설명을 적습니다.
+    SQLModifier : 해당 SQL의 작성자(수정자)를 적습니다
+    LastModifyDate : 해당 SQL의 마지막 수정일을 적습니다
+    -->
+    <Information>
+      <SqlType>DynamicSQL</SqlType>
+      <Description>모바일 비밀번호변경</Description>
+      <SQLModifier>전상훈</SQLModifier>
+      <LastModifyDate>2017-05-29</LastModifyDate>
+    </Information>
+
+    <TemplateSQL>
+      <!-- FixedSQL : 고정된 SQL이 들어가는 곳입니다. -->
+      <FixedSQL>
+        <![CDATA[ 
+    SET NOCOUNT ON
+    /* 모바일 비밀번호변경  MobilePasswordChange */
+    
+
+    DECLARE @USER_ID      NVARCHAR(50) ='{0}'
+           ,@PASSWORD     NVARCHAR(400) = '{1}'
+           ,@NEW_PASSWORD NVARCHAR(400) = '{2}'
+	         ,@ERROR_TYPE   INT
+           ,@USER_NAME    NVARCHAR(200)
+
+
+          SELECT @ERROR_TYPE=  CASE WHEN ISNULL(MAX(USER_ID),'') = '' THEN 1
+                      WHEN ISNULL(MAX(USER_ID),'') = @USER_ID AND ISNULL(MAX(PASSWORD),'') <> @PASSWORD
+			          THEN 2
+			          ELSE 0 END
+                ,@USER_NAME = MAX(USER_NAME)
+          FROM T_MEMBER
+          WHERE USER_ID = @USER_ID
+            AND HIDE = 0
+          
+
+        SELECT
+		         @USER_ID AS USER_ID
+		        ,@USER_NAME AS USER_NAME
+		        ,@ERROR_TYPE ERROR_TYPE
+                ,CASE WHEN @ERROR_TYPE = 1 THEN N'아이디가 잘못 입력되었습니다.'
+	                  WHEN @ERROR_TYPE = 2 THEN N'비밀번호가 잘못 입력되었습니다.'
+			          ELSE '' END
+	              AS ERROR_MESSAGE
+        IF @ERROR_TYPE = 0
+        BEGIN
+	        UPDATE T_MEMBER
+	           SET PASSWORD = @NEW_PASSWORD
+                ,UPDATE_CODE = MEMBER_CODE
+                ,UPDATE_DATE = GETDATE()
+	         WHERE USER_ID  = @USER_ID
+	           AND PASSWORD = @PASSWORD
+        END
+
+   SET NOCOUNT OFF
+      ]]>
+      </FixedSQL>
+    </TemplateSQL>
+  </DBAgentTemplate>
+
+
+  <DBAgentTemplate TemplateID="MemberSnsIDUpdate">
+    <!-- 
+    SqlType : SQL의 형태를 지정합니다.
+      Example 1:<SqlType>FixedSQL</SqlType> 고정적인 SQL을 지원합니다. 
+      Example 2:<SqlType>DynamicSQL</SqlType> 동적인 SQL Type1을 지원합니다.  
+    Description : 해당 SQL의 기능설명을 적습니다.
+    SQLModifier : 해당 SQL의 작성자(수정자)를 적습니다
+    LastModifyDate : 해당 SQL의 마지막 수정일을 적습니다
+    -->
+    <Information>
+      <SqlType>DynamicSQL</SqlType>
+      <Description>모바일 사용자 SNS ID 업데이트</Description>
+      <SQLModifier>전상훈</SQLModifier>
+      <LastModifyDate>2019-02-01</LastModifyDate>
+    </Information>
+
+    <TemplateSQL>
+      <!-- FixedSQL : 고정된 SQL이 들어가는 곳입니다. -->
+      <FixedSQL>
+        <![CDATA[ 
+    SET NOCOUNT ON
+    /* 모바일 사용자 SNS ID 업데이트  MemberSnsIDUpdate */
+    
+
+    DECLARE @USER_ID     NVARCHAR(50) ='{0}'
+           ,@PASSWORD    NVARCHAR(200) = '{1}'
+    	     ,@SNS_TYPE    INT ='{2}' /*1:KAKAO_ID 2:GOOGLE_ID 3:NAVER_ID 4:FACEBOOK_ID*/
+           ,@KAKAO_ID    VARCHAR(50) = '{3}'
+           ,@GOOGLE_ID   VARCHAR(100) = '{4}'
+           ,@NAVER_ID    VARCHAR(100) = '{5}'
+           ,@FACEBOOK_ID VARCHAR(100) = '{6}'
+    	     ,@UPDATE_CODE INT = 0
+    	     ,@UPDATE_DATE DATETIME = GETDATE()
+    UPDATE T_MEMBER 
+    SET KAKAO_ID    = CASE WHEN @SNS_TYPE = 1 THEN @KAKAO_ID ELSE KAKAO_ID END
+       ,GOOGLE_ID   = CASE WHEN @SNS_TYPE = 2 THEN @GOOGLE_ID ELSE GOOGLE_ID END
+       ,NAVER_ID    = CASE WHEN @SNS_TYPE = 3 THEN @NAVER_ID ELSE NAVER_ID END
+       ,FACEBOOK_ID = CASE WHEN @SNS_TYPE = 4 THEN @FACEBOOK_ID ELSE FACEBOOK_ID END 
+       ,UPDATE_CODE = @UPDATE_CODE
+       ,UPDATE_DATE = @UPDATE_DATE  
+    WHERE USER_ID  = @USER_ID
+      AND PASSWORD = @PASSWORD
+   SET NOCOUNT OFF
+      ]]>
+      </FixedSQL>
+    </TemplateSQL>
+  </DBAgentTemplate>
+
+
+  <DBAgentTemplate TemplateID="MemberPasswordChange">
+    <!-- 
+    SqlType : SQL의 형태를 지정합니다.
+      Example 1:<SqlType>FixedSQL</SqlType> 고정적인 SQL을 지원합니다. 
+      Example 2:<SqlType>DynamicSQL</SqlType> 동적인 SQL Type1을 지원합니다.  
+    Description : 해당 SQL의 기능설명을 적습니다.
+    SQLModifier : 해당 SQL의 작성자(수정자)를 적습니다
+    LastModifyDate : 해당 SQL의 마지막 수정일을 적습니다
+    -->
+    <Information>
+      <SqlType>DynamicSQL</SqlType>
+      <Description>모바일 패스워드변경</Description>
+      <SQLModifier>전상훈</SQLModifier>
+      <LastModifyDate>2019-02-20</LastModifyDate>
+    </Information>
+
+    <TemplateSQL>
+      <!-- FixedSQL : 고정된 SQL이 들어가는 곳입니다. -->
+      <FixedSQL>
+        <![CDATA[ 
+    SET NOCOUNT ON
+    /* 모바일 사용자 패스워드변경  MemberPasswordChange */
+    
+
+    DECLARE @USER_ID NVARCHAR(50)   = '{0}'
+           ,@PASSWORD NVARCHAR(200) = '{1}'
+	         ,@UPDATE_CODE INT        = CASE WHEN ISNUMERIC('{2}') = 1 THEN '{2}' ELSE '0' END
+	         ,@UPDATE_DATE DATETIME   = GETDATE();
+
+      UPDATE T_MEMBER
+         SET  PASSWORD    = @PASSWORD
+             ,UPDATE_CODE = @UPDATE_CODE
+	           ,UPDATE_DATE = @UPDATE_DATE
+       WHERE  USER_ID = @USER_ID
+       
+    SELECT '' AS ERROR_MESSAGE
+   SET NOCOUNT OFF
+      ]]>
+      </FixedSQL>
+    </TemplateSQL>
+  </DBAgentTemplate>
+</DBAgentMultiTemplate>

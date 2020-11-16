@@ -1,0 +1,30 @@
+﻿@using ALT.VO.Common;
+
+@{
+    List<T_STORE_WEBMENU_GROUP_MENU> list = ViewBag.list;
+
+    foreach (T_STORE_WEBMENU_GROUP_MENU data in list)
+    {
+        string sDisplay = string.IsNullOrEmpty(data.MENU_URL) ? "style='display:none'" : "";
+        bool bUse = (data.HIDE == null || data.HIDE == true ? false : true);
+        <tr class="@(string.IsNullOrEmpty(data.MENU_URL) ? "trInputHIde" : "")">
+            <td class="center"><input type="checkbox" name="chkUse" @(bUse == true ? "checked='checked'" : "") @Html.Raw(sDisplay) /> </td>
+            <td class="center hidden">@data.GROUP_CODE</td>
+            <td class="center hidden">@data.MENU_CODE</td>
+            <td>@data.SEARCH_CODE</td>
+            <td>@data.MENU_NAME</td>
+            <td class="center"><input type="checkbox" @((data.INSERT_AUTH == null || data.INSERT_AUTH == true) ? "checked='checked'" : "") @Html.Raw(sDisplay) /></td>
+            <td class="center"><input type="checkbox" @((data.UPDATE_AUTH == null || data.UPDATE_AUTH == true) ? "checked='checked'" : "") @Html.Raw(sDisplay) /></td>
+            <td class="center"><input type="checkbox" @((data.EXCEL_AUTH == null || data.EXCEL_AUTH == true) ? "checked='checked'" : "") @Html.Raw(sDisplay) /></td>
+            <td class="center"><input type="checkbox" @((data.PRINT_AUTH == null || data.PRINT_AUTH == true) ? "checked='checked'" : "") @Html.Raw(sDisplay) /></td>
+            <td class="center">@data.UPDATE_NAME</td>
+            <td class="center">@data.UPDATE_DATE</td>
+            <td class="hide center">@data.PROJECT_SITE</td>
+            <td class="hide center">@data.STORE_CODE</td>
+        </tr>
+    }
+}
+    
+
+
+

@@ -1,0 +1,374 @@
+﻿@{
+	string empPopID = "emp";
+	DEVICE_LIST_COND Cond = ViewBag.Cond ?? new DEVICE_LIST_COND();
+	Daum_MapMultiMarker optionmap = new Daum_MapMultiMarker() { ID = "device", bReadOnly = true, MAKER_MAX_COUNT = SessionHelper.LoginInfo.EMPLOYEE.MAKER_MAX_COUNT, bCircle = false };
+	Daum_MapMultiMarker option2 = new Daum_MapMultiMarker() { ID = "devicePlace", MAKER_MAX_COUNT = 1, bScript = false, bCircle = false, bPostSearch = true };
+}
+<!--<script src="https://dmaps.daum.net/map_js_init/postcode.v2.js"></script>-->
+<script src="https://ssl.daumcdn.net/dmaps/map_js_init/postcode.v2.js"></script>
+@section scripts{
+
+
+	<script type="text/javascript">
+        var PARAM_DATA = {
+            PAGE_SIZE: ($("window").width() < 768 ? 5 : 10)
+            , PAGE_COUNT: 15
+            , PAGE: 1
+        }
+        $(document).ready(function () {
+            //var pageCount = ($(window).height() - $(".cd-main-header").outerHeight() + $(".ui.header").outerHeight() + $(".ui.table.search").outerHeight() + $(".ui.footer").outerHeight() - 450) / 30;
+			PARAM_DATA = $.mrc_table.SetPageSizeObject({ pageParam :PARAM_DATA, searchObjName:".ui.table.search"});
+
+            loadConditionSetting();
+            ComponentInit();
+
+        }); //End document.ready
+        function loadConditionSetting() {
+
+            @{
+                if (Cond.STORE_CODE != null)
+                {
+                    @:SemanticUI.ComboBox.SetVal("#STORE_CODE", "@(Cond.STORE_CODE)");
+                }
+                if (Cond.MEMBER_CODE != null)
+                {
+                   @:$("#MEMBER_CODE").val(@(Cond.MEMBER_CODE));;
+                   @:$("#spSearText").text("@(Cond.USER_NAME)(코드:@(Cond.MEMBER_CODE))로 검색되었습니다.");
+                }
+             }
+
+        }
+        var bInitQuery = false;
+        function ComponentInit() {
+
+            if (navigator.geolocation) {
+
+                // GeoLocation을 이용해서 접속 위치를 얻어옵니다
+                navigator.geolocation.getCurrentPosition(function (position) {
+                    $("#@(option2.ID)_LATITUDE").val(position.coords.latitude);
+                    $("#@(option2.ID)_LONGITUDE").val(position.coords.longitude);
+                    PARAM_DATA.bPlace = true;
+                    @(option2.ID)_map.lat = position.coords.latitude, // 위도
+                    @(option2.ID)_map.lng = position.coords.longitude; // 경도
+                    bInitQuery = true;
+                    doQuery(1, "", true);
+                }, function () {
+                    /*사용자 정보를 가져오지 못할 경우*/
+                    doQuery(1);
+                }
+                );
+            }
+            else {
+                doQuery(1);
+            }
+
+
+            $(".ui.form .search input").keyup(function (e) {
+                var code = (e.keyCode ? e.keyCode : e.which);
+                if (code == 13) {
+                    doQuery();
+                }
+            })
+        }
+      // 검색위치 초기화
+        function SearchaddressInit() {
+            $("#spSearchAddress").html("");
+            PARAM_DATA.bPlace = false;
+            $("#@(option2.ID)_ADDRESS1").val("");
+            $("#@(option2.ID)_LATITUDE").val("");
+            $("#@(option2.ID)_LONGITUDE").val("");
+        }
+		function doQuery(page, sort, bInit) {
+			var params = BaseCommon.FormInfo.serializeJson(".ui.form");
+
+			if (page != undefined && page == -1) {
+				$("#MEMBER_CODE").val("");
+				$("#spSearText").text("");
+				params.MEMBER_CODE = "";
+			}
+			if (page == undefined || page < 1) page = 1;
+			PARAM_DATA.PAGE = page;
+
+
+			var compStore = SemanticUI.ComboBox.GetCompStoreVal('STORE_CODE');
+			params.COMPANY_CODE = compStore.COMPANY_CODE;
+			params.STROE_CODE = compStore.STROE_CODE;
+			params.PAGE_COUNT = PARAM_DATA.PAGE_COUNT;
+			params.PAGE = PARAM_DATA.PAGE;
+
+			params.SORT = sort;
+			if (bInit != undefined && bInit == true) {
+				PARAM_DATA.bPlace = false;
+				params.MEMBER_CODE = $("#MEMBER_CODE").val();
+			}
+
+			if (PARAM_DATA.bPlace == false) {
+				params.LATITUDE = 37;
+				params.LONGITUDE = 127;
+			}
+			else {
+				params.LATITUDE = $("#@(option2.ID)_LATITUDE").val();
+				params.LONGITUDE = $("#@(option2.ID)_LONGITUDE").val();
+				params.SORT = "DBO.FN_TO_DISTANCE({3}, {4}, A.LATITUDE, A.LONGITUDE,'M')";
+			}
+			params.DISPLAY_MODE = "Total";
+			params.MEMBER_CODE = ($("#emp_ID").val() != "") ? $("#emp_ID").val() : $("#MEMBER_CODE").val();
+			params.USER_ID = $("#emp_ID").val();
+			params.USER_NAME = $("#emp_NAME").val();
+
+
+			params = JSON.stringify(params);
+			ajax.GetAjax("/basic/PV_devicelist", params, "html", function (result) {
+				$("#dvTable tbody").html(result);
+				$.mrc_table.Init("#tbList", false, sort);
+
+				$("#dvpagination").show();
+
+				$("#dvpagination").pagination({
+					total: Number($("#total").val()), page: PARAM_DATA.PAGE, pagesize: PARAM_DATA.PAGE_SIZE, perpage: PARAM_DATA.PAGE_COUNT
+					, onPageClick: function (item, page) {
+						doQuery(page);
+					}
+				})
+				$("#dvpagination").css("display", "");
+
+				//$(".authnumberpopup").click(function () {
+				//    $("#popAutoNumberApply").modal("show");
+				//})
+
+			});
+		}
+
+
+        function SemanticUI_ComboChange(obj) {
+
+            if ($(obj)[0].id == "STORE_CODE") {
+                SetStoreGroupCombo();
+                doQuery();
+			}else  if ($(obj)[0].id == "AD_FRAME_TYPE") {
+                SetStoreGroupCombo();
+                doQuery();
+            }
+
+        }
+
+        function SetStoreGroupCombo() {
+
+            var params = new Object();
+            var htmlattribute = new Object();
+            htmlattribute.class = "mini size200";
+            params.name = "GROUP_CODE";
+            var compStore = SemanticUI.ComboBox.GetCompStoreVal('STORE_CODE');
+            params.COMPANY_CODE = compStore.COMPANY_CODE;
+            params.STROE_CODE = compStore.STROE_CODE;
+            params.GROUP_TYPE = 2;
+            params.selectedValue = $("#GROUP_CODE").val();
+            params.optionLabel = "-선택-";
+            params.htmlAttributes = JSON.stringify(htmlattribute);
+            params = JSON.stringify(params);
+            ajax.GetAjax("/common/StoreGroupCombo", params, "html", function (result) {
+                $("#dvGroupCode").html(result);
+                SemanticUI.ComponentInit($("#dvGroupCode"));
+            })
+
+        }
+
+        function mrc_table_trClick(objName, param) {
+
+            if (objName == "#tbList")
+                popAutoNumberApplyShow(param);
+        }
+        function btnNewClick(adFrameType) {
+            location.href = "devicereg_" + String(adFrameType) + "frame";
+        }
+
+    function mrcGrid_Sort(gridName, columnName, orderType) {
+            $("#spSearchAddress").html("");
+
+        //    $("#@(option2.ID)_LATITUDE").val(position.coords.latitude);
+         //   $("#@(option2.ID)_LONGITUDE").val(position.coords.longitude);
+            PARAM_DATA.bPlace = false;
+            var sSort = (orderType == undefined || orderType == "") ? "A.UPDATE_DATE DESC" : columnName + " " + orderType;
+            doQuery(1, sSort)
+        }
+
+        function ExcelDown() {
+			var params = BaseCommon.FormInfo.serializeJson(".ui.form");
+			params.DISPLAY_MODE = "Total";
+            var arrData = new Array();
+            $.each(params, function (key, val) {
+                //display the key and value pair
+
+                arrData.push({ name: key, value: val });
+            });
+            BaseCommon.FormInfo.PostSubmit('/basic/DeviceExcelReport', arrData);
+        }
+
+        function DeviceStationPopupSelected(data) {
+            $("#STATION_CODE").val(data.STATION_CODE);
+            $("#STATION_NAME").val(data.STATION_NAME);
+        }
+
+        function STATION_NAME_keyUp() {
+            $("#STATION_CODE").val("");
+        }
+
+        function @(option2.ID)_DaumMapMarker_Callback(data) {
+
+            if (data.length > 0) {
+                $("#spSearchAddress").html("<b>" + data[0].JIBUN_ADDRESS + "</b> 지역으로 검색 (위도 : " + data[0].LATITUDE + "/ 경도 : " + data[0].LONGITUDE + ")");
+                PARAM_DATA.bPlace = true;
+                doQuery(1 );
+            }
+        }
+
+        function EmployeePConfirm_@(empPopID)_callBack(obj)
+        {
+            doQuery(1);
+        }
+	</script>
+}
+<style>
+	.ui.checkbox {
+		margin-top: 0.5em;
+	}
+</style>
+@Html.EditorFor(model => new EditTempleateModel().Kakao_MapMakerCircle_Range, new { optionmap = option2 })
+@Html.EditorFor(model => new EditTempleateModel().Kakao_MapMakerCircle, new { optionmap = optionmap })
+<div class="ui vertical stripe segment">
+	@Html.TitleNavigation()
+	<form class="ui form" onSubmit="return false;" action="/Base/FileUpload" data-ajax="true" data-ajax-mode="replace" data-ajax-update="#dc_goal_placeholder" enctype="multipart/form-data" id="frmUpload" method="post">
+
+		@*@Html.TitleHeader()*@
+
+
+		<div class="ui grid " style="height:100%;">
+			<div class="one column row">
+				<div class="column">
+					<table class="ui table search">
+						<tbody>
+							<tr>
+								<td class="title" style="width:11%">
+									@Html.Semantic_TITLE2("화면분할")
+								</td>
+								<td class="content">
+									@Html.CommonCombo("AD_FRAME_TYPE", new T_COMMON_COND { MAIN_CODE = "H002" }, "", "-화면분할-", new { @class = "size200", @onchange = "doquery(1);" })
+								</td>
+								<td class="title" style="width:11%">
+									@Html.Semantic_TITLE2("승인상태")
+								</td>
+								<td class="content" style="width:22%">
+									@Html.CommonCombo("STATUS", new T_COMMON_COND { MAIN_CODE = "S006" }, "", "-상태-", new { @class = "size180" })
+								</td>
+								<td class="title" style="width:11%">
+									@Html.Semantic_TITLE2("소유업체")
+								</td>
+								<td class="content" style="width:22%">
+									@Html.CompanyStoreCombo("STORE_CODE", new T_STORE_COND { COMBO_DISPLAY = 1 }, "", "-소유주-", new { @class = "size200" })
+								</td>
+							</tr>
+							<tr>
+								<td class="title">
+									@Html.Semantic_TITLE2("소유주")
+								</td>
+								<td class="content">
+									@Html.EditorFor(model => new EditTempleateModel().Employee_Popup, new { id = empPopID })
+									@Html.Hidden("MEMBER_CODE")
+								</td>
+								<td class="title">
+									@Html.Semantic_TITLE2("인증여부")
+								</td>
+								<td class="content" colspan="4">
+									@Html.CommonCombo("AUTH_YN", new T_COMMON_COND { MAIN_CODE = "B003" }, "", "-인증여부-", new { @class = "size180" })
+
+								</td>
+							</tr>
+
+							<tr>
+								<td class="title">
+									@Html.Semantic_TITLE2("가상로컬박스명")
+								</td>
+								<td class="content">
+									@Html.Semantic_TextBox("VIRTUAL_DEVICE_NAME", "", new { @placeholder = "가상로컬박스명", @class = "size200" })
+								</td>
+								<td class="buttons" colspan="6">
+									<span id="spSearchAddress" style="padding-right:2em;"></span>
+									<span style="color:blue;font-weight:bold;" id="spSearText"></span>
+									@Html.Semantic_Button2("btnSelectPlaceOpen", "위치", SemanticUIHelper.enButtonType.Normal, new { @onclick = "btn_" + option2.ID + "_MapRangeOpen();" })
+									<script>
+										function btn_@(option2.ID)_MapRangeOpen() {
+
+											@(option2.ID)_MapRangeOpen_title('위치선택');
+										}
+									</script>
+
+									@Html.Semantic_Button2("btnOpen", "지도", SemanticUIHelper.enButtonType.Normal, new { @onclick = "markerMapPopupOpen();" })
+									<script>
+										function markerMapPopupOpen() {
+											var params = new Array();
+											params.TITLE = $("#DEVICE_NAME").val();
+											params = JSON.stringify(params);
+											ajax.GetAjax("/basic/GetDeviceMapList", params, "json", function (result) {
+
+												//@(optionmap.ID)_DaumMapMaker_Open(result, 0, 0, "", 2);
+												@(optionmap.ID)_MapOpen(result);
+											});
+
+										}
+									</script>
+									@Html.Semantic_Button2("btnSearch", "조회", SemanticUIHelper.enButtonType.ToList, SemanticUIHelper.Size.medium, new { @onclick = "SearchaddressInit();doQuery(-1);" })
+									@Html.Semantic_Button2("btnExcel", "엑셀", SemanticUIHelper.enButtonType.Excel, SemanticUIHelper.Size.medium, new { @onclick = "ExcelDown();" })
+									@Html.Semantic_Button2("btnNew1", "1Frame 추가", SemanticUIHelper.enButtonType.New, SemanticUIHelper.Size.medium, new { @onclick = "btnNewClick(1);" })
+									@Html.Semantic_Button2("btnNew6", "6Frame 추가", SemanticUIHelper.enButtonType.New, SemanticUIHelper.Size.medium, new { @onclick = "btnNewClick(6);" })
+								</td>
+							</tr>
+						</tbody>
+					</table>
+				</div>
+			</div>
+			<div class="one column row">
+				<div class="column" id="dvTable">
+					<table id="tbList" class="mrc-table">
+						<thead>
+							<tr>
+								<th column_name="DEVICE_NAME" data-sort="A.DEVICE_NAME" style="min-width:50px;" class="sort">로컬박스명</th>
+								<th column_name="AD_FRAME_TYPE" data-sort="A.AD_FRAME_TYPE" class="sort" display_size="tablet">화면분할</th>
+								<th class="hide sort" display_size="tablet" column_name="STATION_NAME" data-sort="A.STATION_NAME">로컬스테이션</th>
+								<th display_size="tablet" column_name="VIRTUAL_DEVICE_NAME" data-sort="A.VIRTUAL_DEVICE_NAME" style="min-width:50px;" class="sort">가상로컬박스</th>
+								<th column_name="LOGO_URL">썸네일</th>
+
+								<th display_size="tablet" column_name="STORE_NAME" data-sort="B.STORE_NAME" class="sort @(SessionHelper.LoginInfo.STORE_CODE != 1 ? "hide" : "")">사업자명</th>
+								<th display_size="detail" column_name="GROUP_NAME" data-sort="SG.GROUP_NAME" class="sort hide">그룹명</th>
+
+								<th column_name="DEVICE_TYPE" data-sort="A.DEVICE_TYPE" class="sort" display_size="pc">구분</th>
+								<th display_size="detail" column_name="BUSI_TYPE_NAME" data-sort="C1.NAME" class="sort hide">영리구분</th>
+								<th column_name="BUSI_TYPE_NAME2" data-sort="C2.NAME" class="hide sort" display_size="pc">사업구분</th>
+								<th display_size="detail" column_name="CONTACT_NAME" data-sort="A.CONTACT_NAME" class="sort">담당자</th>
+								<th display_size="detail" column_name="CONTACT_PHONE" data-sort="A.CONTACT_PHONE" class="sort">담당자전화</th>
+								<th column_name="STATUS" class="center sort" data-sort="A.STATUS" display_size="tablet">진행</th>
+
+
+								<th column_name="ADDRESS" data-sort="A.ADDRESS1, A.ADDRESS2" display_size="pc" class="sort">주소</th>
+								<th column_name="UPDATE_NAME" data-sort="M.USER_NAME" display_size="pc" class="sort">수정자</th>
+								<th column_name="UPDATE_DATE" data-sort="A.UPDATE_DATE" display_size="pc" class="sort">수정시간</th>
+								<th column_name="DEVICE_CODE" data-sort="A.DEVICE_CODE" class="hide sort" display_size="pc">로컬박스코드</th>
+								<th column_name="HARDWARE_NAME" data-sort="AH1.HARDWARE_NAME" class="sort" display_size="pc">하드웨어</th>
+								<th column_name="MODEL_NAME" data-sort="AH1.MODEL_NAME" class="sort" display_size="detail">모델명</th>
+							</tr>
+						</thead>
+						<tbody></tbody>
+					</table>
+				</div>
+			</div>
+			<div class="one column row">
+				<div id="dvpagination" class="ui floated pagination menu"></div>
+			</div>
+		</div>
+		@{
+			Html.RenderPartial("/Views/Popup/deviceStationP.cshtml");
+			Html.RenderPartial("/Views/Basic/Partial/PV_AuthNumberApply.cshtml");
+		}
+	</form>
+</div>
+
+

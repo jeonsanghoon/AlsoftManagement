@@ -1,0 +1,429 @@
+﻿@model EditTempleateModel
+@using ALT.VO.Common;
+@{
+    T_STORE data = ViewBag.data;
+    var mapoption = new DaumAddressOption { ID = "STORE", POST_CODE = data.ZIP_CODE, ADDRESS1 = data.ADDRESS1, ADDRESS2 = data.ADDRESS2, LATITUDE = data.LATITUDE, LONGITUDE = data.LONGITUDE };
+}
+
+@section scripts{
+    <script type="text/javascript">
+        var _bSave = true;
+        var _bStoreID = false;
+        $(document).ready(function () {
+            validationinit();
+            $(".ui.form").submit(function (event) {
+                if (($(".ui.field.error") == null || $(".ui.field.error").length == 0) && _bSave == true) { doSave(); }
+                event.preventDefault();
+            });
+
+            $("input").keydown(function (event) {
+                if (event.keyCode == 13) {
+                    _bSave = false;
+                    event.preventDefault();
+                    return false;
+                }
+                else {
+                    _bSave = true;
+                }
+            })
+            $("input").blur(function (event) {
+                _bSave = true;
+            });
+
+            if(Number("@data.STORE_CODE") <=0 )
+            {
+                $("#STORE_ID").blur(function () {
+                    if ($("#STORE_ID").val() != "") {
+                        doChkStoreList();
+                    }
+                });
+            }
+            else {
+                _bStoreID = true;
+            }
+
+            if ($("#COMPANY_CODE").val() != "" && Number($("#COMPANY_CODE").val()) > 0) {
+                $("#COMPANY_CODE").closest(".ui.dropdown").addClass("disabled");
+                SetStoreType();
+            }
+        });
+
+        function SemanticUI_ComboChange(obj)
+        {
+            if($(obj)[0].id =="COMPANY_CODE")
+            {
+                SetStoreType();
+            }
+        }
+
+      
+        function SetStoreType() {
+            var param = new Object();
+            param.COMPANY_CODE = $("#COMPANY_CODE").val();
+            param = JSON.stringify(param);
+            ajax.GetAjax("/comp/GetCompList", param, "json", function (result) {
+                if (result.length == 1) {
+                    var params = new Object();
+                    var htmlattribute = new Object();
+                    htmlattribute.class = "mini size150";
+                    params.name = "STORE_TYPE";
+                    params.MAIN_CODE = "C005";
+                    
+                    params.ADD_COND = " AND A.REF_DATA1 = '" + (result[0].COMPANY_TYPE2 == "1" || result[0].COMPANY_TYPE2 == "2" ? "1" : "-1") + "'";
+
+                    params.optionLabel = "-선택-";
+                    params.selectedValue = $("#STORE_TYPE").val();
+                    params.htmlAttributes = JSON.stringify(htmlattribute);
+                    params = JSON.stringify(params);
+                    ajax.GetAjax("/common/CommonCombo", params, "html", function (result) {
+                        
+                        $("#td_STORE_TYPE").html(result);
+                        SemanticUI.ComponentInit($("#td_STORE_TYPE"));
+                        validationinit();
+                    })
+                }
+            });
+        }
+
+        function doChkStoreList() {
+            var param = new Object();
+            param.COMPANY_CODE = $("#COMPANY_CODE").val();
+            param.STORE_ID = $("#STORE_ID").val();
+            param = JSON.stringify(param);
+            ajax.GetAjax("/comp/GetStoreList", param, "json", function (result) {
+
+                if (result.length <= 0) {
+                    _bStoreID = true;
+                    $('#STORE_ID').popup('hide');
+                    $('#STORE_ID').popup('destroy');
+                }
+                else {
+                    $("#STORE_ID").popup({
+                        title: '아이디 확인',
+                        content: '등록되어있는 아이디가 있습니다.'
+                    });
+
+                    $('#STORE_ID').popup('show');
+                    $("#STORE_ID").parent().addClass("error");
+                    $("#STORE_ID").focus(); $("#STORE_ID").select();
+                    _bStoreID = false;
+                }
+            });
+        }
+
+        function validationinit() {
+
+            $('.ui.form').form({
+                on: 'change',
+
+                fields: {
+                    COMPANY_CODE: {
+                        identifier: 'COMPANY_CODE',
+                        rules: [
+                          {
+                              type: 'empty',
+                              prompt: '회사를 선택하여 주시기 바랍니다.'
+                          }
+                        ]
+                    }, STORE_NAME: {
+                        identifier: 'STORE_NAME',
+                        rules: [
+                          {
+                              type: 'empty',
+                              prompt: '회사명을 입력하여 주시기 바랍니다..'
+                          }
+                        ]
+                    }, STORE_ID: {
+                        identifier: 'STORE_ID',
+                        rules: [
+                          {
+                              type: 'empty',
+                              prompt: '아이디를 입력하여 주시기 바랍니다..'
+                          }
+                        ]
+                    }, PASSWORD: {
+                        identifier: 'PASSWORD',
+                        rules: [
+                          {
+                              type: 'empty',
+                              prompt: '암호를 입력하여 주시기 바랍니다.'
+                          }
+                        ]
+                    }, STORE_TYPE: {
+                        identifier: 'STORE_TYPE',
+                        rules: [
+                          {
+                              type: 'empty',
+                              prompt: '유형을 선택하여 주시기 바랍니다.'
+                          }
+                        ]
+                    }
+                    , STORE_POST_CODE: {
+                        identifier: 'STORE_POST_CODE',
+                        rules: [
+                          {
+                              type: 'empty',
+                              prompt: '주소를 입력하여 주시기 바랍니다.'
+                          }
+                        ]
+                    }
+                    , STORE_ADDRESS2: {
+                        identifier: 'STORE_ADDRESS2',
+                        rules: [
+                          {
+                              type: 'empty',
+                              prompt: '상세주소를 입력하여 주시기 바랍니다.'
+                          }
+                        ]
+                    }
+                    ,STATUS: {
+                        identifier: 'STATUS',
+                        rules: [
+                          {
+                              type: 'empty',
+                              prompt: '상태를 선택하여 주시기 바랍니다.'
+                          }
+                        ]
+                    }
+                }
+
+               , onSuccess: function (event, fields) { $(".ui.error.message").html(""); $(".ui.error.message").hide(); }
+               , onFailure: function (event, fields) {
+
+                   //실패후 첫번재 에러 태그에 포커스
+                   SemanticUI.Form.Invalidation.ErrorFocus();
+               }, onInvalid: function (event) {
+                   //
+                   SemanticUI.Form.addErrorMessage(event);
+               }
+            });
+        }
+
+        function doList() {
+            location.href = "/comp/storelist?COMPANY_CODE=" + $("#COMPANY_CODE").val();
+        }
+        var _compCode = 0;
+        function doSave() {
+            if (_bStoreID == false) {
+                $.MessageBox("아이디가 중복되었습니다..");
+                $("#STORE_ID").focus();
+                $("#STORE_ID").select();
+                return;
+            }
+            var params = BaseCommon.FormInfo.serializeJson(".ui.form");
+            
+            params.COMPANY_CODE = $("#COMPANY_CODE").val();
+            _compCode = params.COMPANY_CODE;
+            params.ZIP_CODE = $("#@(mapoption.ID)_POST_CODE").val();
+            params.ADDRESS1 = $("#@(mapoption.ID)_ADDRESS1").val();
+            params.ADDRESS2 = $("#@(mapoption.ID)_ADDRESS2").val();
+            params.LATITUDE = $("#@(mapoption.ID)_LATITUDE").val();
+            params.LONGITUDE = $("#@(mapoption.ID)_LONGITUDE").val();
+            params = JSON.stringify(params);
+            ajax.GetAjax("/comp/StoreSave/", params, "json", function (result) {
+                
+                if (result.ERROR_MESSAGE != "") {
+                    $.MessageBox(result.ERROR_MESSAGE);
+                }
+                else {
+                    $("#COMPANY_CODE").val(result.DATA);
+                    $.MessageBox("저장되었습니다.").done(function () {
+                        location.href = "/comp/storelist?COMPANY_CODE=" + _compCode;
+                    });;
+                }
+            })
+        }
+
+        function doDelete() {
+            $.MessageBox({
+                buttonDone: "Yes",
+                buttonFail: "No",
+                message: "정말로 삭제하시겠습니까?"
+            }).done(function () {
+                var params = BaseCommon.FormInfo.serializeJson(".ui.form");
+                params.SAVE_TYPE = "D";
+
+                params = JSON.stringify(params);
+                ajax.GetAjax("/comp/StoreSave/", params, "json", function (result) {
+                    if (result.ERROR_MESSAGE != "") {
+                        $.MessageBox(result.ERROR_MESSAGE);
+                    }
+                    else {
+
+                        $.MessageBox("삭제되었습니다.").done(function () {
+                            
+                            location.href = "/comp/storelist?COMPANY_CODE=" + $("#COMPANY_CODE").val();
+                        });;
+                    }
+                })
+            });
+        }
+
+        function doNew() {
+            location.href = "/comp/storereg?COMPANY_CODE=" + $("#COMPANY_CODE").val();
+        }
+
+
+    </script>
+}
+    <div class="ui vertical stripe segment">
+        @Html.TitleNavigation()
+        <form class="ui form" onSubmit="return false;" action="/Base/FileUpload" data-ajax="true" data-ajax-mode="replace" data-ajax-update="#dc_goal_placeholder" enctype="multipart/form-data" id="frmUpload" method="post">
+            <div class="ui stackable grid">
+                <div class="sixteen wide column right button">
+                    @Html.Semantic_Button2("btnList", "목록", SemanticUIHelper.enButtonType.ToList, SemanticUIHelper.Size.mini, new { @onclick = "doList();" })
+                    @{
+                        if (SessionHelper.LoginInfo.STORE.STORE_TYPE == 1 || SessionHelper.LoginInfo.STORE.STORE_TYPE == 4)
+                        {
+                            @Html.Semantic_Button2("btnNew", "신규", SemanticUIHelper.enButtonType.New, SemanticUIHelper.Size.mini, new { @onclick = "doNew();" })
+
+                            if (data.STORE_CODE != null && data.STORE_CODE > 0)
+                            {
+                                @Html.Semantic_Button2("btnDel", "삭제", SemanticUIHelper.enButtonType.Del, SemanticUIHelper.Size.mini, new { @onclick = "doDelete();" })
+                            }
+                        }
+                    }
+                    @Html.Semantic_Button2("btnSubmit", "저장", SemanticUIHelper.enButtonType.Save, SemanticUIHelper.Size.mini, new { @type = "submit" })
+                </div>
+                <div class="ui error message" style="display:none;width:100%;"></div>
+
+                @Html.Hidden("STORE_CODE", data.STORE_CODE)
+                @Html.Hidden("CULTURE_NAME", data.CULTURE_NAME.ToString("ko-KR"))
+
+                @Html.Hidden("OWNER_PHONE", data.OWNER_PHONE.ToString(""))
+                @Html.Hidden("OWNER_MOBILE", data.OWNER_MOBILE.ToString(""))
+
+                <div class="sixteen wide column">
+                    <table class="ui celled table">
+                        <tbody>
+                            <tr>
+                                <td class="title">
+                                    @Html.Semantic_TITLE2("회사명", true)
+                                </td>
+                                <td class="content">
+                                    @{
+                                        var comboComp = new ALT.BizService.BasicService().GetCompanyList(new T_COMPANY_COND() { PAGE_COUNT = 100000 }).Select(s => new SelectListItem { Value = s.COMPANY_CODE.ToString(), Text = s.COMPANY_NAME }).ToList();
+                                    }
+                                    
+                                    @Html.CommonComboNormal("COMPANY_CODE", comboComp, data.COMPANY_CODE.ToString(), "-선택-", new { @class = "size150 field" })
+                                </td>
+                                <td class="title">
+                                    @Html.Semantic_TITLE2("지점명", true)
+                                </td>
+                                <td class="content">
+                                    @Html.Semantic_TextBox("STORE_NAME", data.STORE_NAME, SemanticUIHelper.Size.mini, new { @placeholder = "지점명(사업장)를 입력하세요" })
+                                </td>
+                                <td class="title">
+                                    @Html.Semantic_TITLE2("유형", true)
+                                </td>
+                                <td class="content" id="td_STORE_TYPE">
+                                    @Html.CommonCombo("STORE_TYPE", new T_COMMON_COND { MAIN_CODE = "C005", ADD_COND = " AND A.REF_DATA1 = '" + ((data.COMPANY_TYPE2 == null || data.COMPANY_TYPE2 != 1) ? "-1" : data.COMPANY_TYPE2.ToString()) + "'" }, data.STORE_TYPE.ToString("1"), "-선택-", new { @class = "size150 field" })
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="title">
+                                    @Html.Semantic_TITLE2("아이디", true)
+                                </td>
+                                <td class="content">
+                                    @Html.Semantic_TextBox("STORE_ID", data.STORE_ID, SemanticUIHelper.Size.mini, new { @placeholder = "아이디를 입력하세요(중복체크)" ,@autocomplete = "false" })
+                                </td>
+                                <td class="title">
+                                    @Html.Semantic_TITLE2("비밀번호", true)
+                                </td>
+                                <td class="content">
+                                    @Html.Semantic_TextBox("PASSWORD", string.IsNullOrEmpty(data.PASSWORD) ? "" : "****", SemanticUIHelper.Size.mini, new { @type = "password", @class = "dataclear", @autocomplete = "off", @placeholder = "암호를 입력하세요!(6자리이상)" })
+                                </td>
+                                <td class="title">
+                                    @Html.Semantic_TITLE2("시간대", true)
+                                </td>
+                                <td class="content">
+                                    @Html.Semantic_TextBox("TIME_ZONE", data.TIME_ZONE.ToString("9"), SemanticUIHelper.Size.mini, new { @placeholder = "시간대역을 입력하세요", @class = "right" })
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="title">
+                                    @Html.Semantic_TITLE2("대표자", true)
+                                </td>
+                                <td class="content">
+                                    @Html.Semantic_TextBox("OWNER_NAME", data.OWNER_NAME, SemanticUIHelper.Size.mini, new { @placeholder = "대표자를 입력하세요" })
+
+                                </td>
+                                <td class="title">
+                                    @Html.Semantic_TITLE2("전화")
+                                </td>
+                                <td class="content">
+                                    @Html.Semantic_TextBox("PHONE", data.PHONE.ToString(""), SemanticUIHelper.Size.mini, new { @placeholder = "대표전화를 입력하세요" })
+                                </td>
+                                <td class="title">
+                                    @Html.Semantic_TITLE2("휴대폰")
+                                </td>
+                                <td class="content">
+                                    @Html.Semantic_TextBox("MOBILE", data.MOBILE.ToString(""), SemanticUIHelper.Size.mini, new { @placeholder = "휴대폰 번호를 입력하세요" })
+                                </td>
+
+                            </tr>
+                            <tr>
+                                <td class="title" rowspan="3" style="height:7em;margin-right:0.3em;">
+                                    @Html.Semantic_TITLE2("주소", true)
+                                </td>
+                                <td class="content address" rowspan="3" colspan="3">
+                                    @Html.EditorFor(model => model.Kakao_address, new { option = mapoption })
+                                </td>
+                                <td class="title">
+                                    @Html.Semantic_TITLE2("대표메일")
+                                </td>
+                                <td class="content">
+                                    @Html.Semantic_TextBox("EMAIL", data.EMAIL.ToString(""), SemanticUIHelper.Size.mini, new { @placeholder = "대표이메일을 입력하세요" })
+                                </td>
+                            </tr>
+
+                            <tr>
+                                <td class="title leftborder">@Html.Semantic_TITLE2("비고")</td>
+                                <td class="content">@Html.TextArea("REMARK", data.REMARK, new { @rows = 3, @style = "width:100%;resize:none" })</td>
+                            </tr>
+                            <tr>
+                               
+                                <td class="title leftborder">@Html.Semantic_TITLE2("상태", true)</td>
+                                <td class="content">@Html.CommonCombo("STATUS", new T_COMMON_COND { MAIN_CODE = "S001" }, data.STATUS.ToString("1"), "-선택-", new { @class = "size150 field" })</td>
+                            </tr>
+                            <tr>
+                                <td class="title">
+                                    @Html.Semantic_TITLE2("위도")
+                                </td>
+                                <td class="content">
+                                    @Html.Semantic_TextBox("LATITUDE", data.LATITUDE.ToString(), SemanticUIHelper.Size.mini, new { @placeholder = "위도", @class = "size150", @maxlength = "20" })
+                                </td>
+                                <td class="title">
+                                    @Html.Semantic_TITLE2("경도")
+                                </td>
+                                <td class="content">
+                                    @Html.Semantic_TextBox("LONGITUDE", data.LONGITUDE.ToString(), SemanticUIHelper.Size.mini, new { @placeholder = "경도", @class = "size150", @maxlength = "20" })
+                                </td>
+                                <td class="title">@Html.Semantic_TITLE2("사업자등록번호")</td>
+                                <td class="content">@Html.Semantic_TextBox("BUSI_REG_NUMBER", data.BUSI_REG_NUMBER)</td>
+                            </tr>
+                            <tr>
+                                <td class="title">
+                                    @Html.Semantic_TITLE2("수정정보")
+                                </td>
+                                <td class="content" colspan="5">
+                                    <div class="fields" style="margin-bottom:0.1em">
+                                        <div class="seven wide field">
+                                            <b style="color:blue">등록자 :</b>@data.INSERT_NAME.ToString(SessionHelper.LoginInfo.MEMBER.USER_NAME).Trim() <b style="color:blue">등록일 :</b>@data.INSERT_DATE.ToString(DateTime.Now.ToString())
+                                        </div>
+                                        <div class="seven wide field">
+                                            <b style="color:blue">수정자 :</b>@data.UPDATE_NAME.ToString(SessionHelper.LoginInfo.MEMBER.USER_NAME).Trim() <b style="color:blue">수정일 :</b>@data.UPDATE_DATE.ToString(DateTime.Now.ToString())
+                                        </div>
+                                    </div>
+                                </td>
+
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="ui bottom attached tab segment" data-tab="second">
+
+                </div>
+            </div>
+        </form>
+    </div>

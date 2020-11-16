@@ -1,0 +1,286 @@
+﻿@{ 
+    List<T_STORE_BUSINESSHOURS_LIST> list = ViewBag.BusinessHourList;
+
+
+}    
+
+<!-- Start Contact section -->
+<section id="mu-contact">
+    <div class="container">
+        <div class="row">
+            <div class="col-md-12">
+                <div class="mu-contact-area">
+                    <div class="mu-title">
+                        <span class="mu-subtitle">Get In Touch</span>
+                        <h2>Contact Us</h2>
+                        <i class="fa fa-spoon"></i>
+                        <span class="mu-title-bar"></span>
+                    </div>
+                    <div class="mu-contact-content">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mu-contact-left">
+                                    <form class="mu-contact-form">
+                                        <div class="form-group">
+                                            <label css="essential" for="CONTACT_NAME">이름</label>
+                                            @Html.TextBox("CONTACT_NAME", "", new { @class= "form-control", @placeholder = "이름(필수)" })
+                                        </div>
+                                        <div class="form-group">
+                                            <label css="essential"  for="CONTACT_EMAIL">이메일</label>
+                                            @Html.TextBox("CONTACT_EMAIL", "", new { @type="email", @class = "form-control", @placeholder = "이메일(필수)" })
+                                        </div>
+                                        <div class="form-group">
+                                            <label css="essential"  for="CONTACT_SUBJECT">제목</label>
+                                            @Html.TextBox("CONTACT_TITLE", "", new {  @class = "form-control", @placeholder = "제목(필수)" })
+                                       </div>
+                                        <div class="form-group">
+                                            <label css="essential"  for="CONTACT_CONTENT">문의사항</label>
+                                            @Html.TextArea("CONTACT_CONTENT", "", new { @class="form-control", @cols = "30", @rows = "10", @placeholder = "문의사항을 적으세요(필수)" })
+                                    
+                                        </div>
+                                        <button type="button" onclick="btncontactSave_click();" class="mu-send-btn">보내기</button>
+                                    </form>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mu-contact-right">
+                                    <div class="mu-contact-widget">
+                                        <h3>Office Address</h3>
+                                        @*<p>Lorem ipsum dolor sit amet, consectetur adipisicing elit. Mollitia temporibus corporis ea non consequatur porro corrupti hic voluptatibus assumenda, doloribus.</p>*@
+                                        <address>
+                                            <p><i class="fa fa-phone"></i> @SessionHelper.LoginInfo.STORE.PHONE</p>
+                                            <p><i class="fa fa-envelope-o"></i>@SessionHelper.LoginInfo.STORE.EMAIL</p>
+                                            <p><i class="fa fa-map-marker"></i>@SessionHelper.LoginInfo.STORE.ADDRESS1 @SessionHelper.LoginInfo.STORE.ADDRESS2</p>
+                                        </address>
+                                    </div>
+                                    <div class="mu-contact-widget">
+                                        <h3>Open Hours</h3>
+                                        <address>
+                                            @{
+                                                var list1 = list.Where(w => w.SCHEDULE_TYPE == 1).ToList();
+                                                foreach (T_STORE_BUSINESSHOURS_LIST data in list1)
+                                                {
+
+                                                    if (data.STATUS == 2)
+                                                    {
+                                                        @:<p style="color:red">
+                                                    }
+                                                    else
+                                                    {
+                                                         @:<p>
+                                                    }
+                                                    @:<span>@data.WEEK_NAME</span>
+
+
+                                                    if (data.STATUS != 2)
+                                                    {
+                                                        @: @(data.FR_TIME2) ~ @(data.TO_TIME2)
+                                                        }
+
+                                                    @: @data.STATUS_NAME
+                                                @:</p>
+                                                }
+
+
+                                                list1 = list.Where(w => w.SCHEDULE_TYPE == 2 || w.SCHEDULE_TYPE == 3 || w.SCHEDULE_TYPE == 4).ToList();
+                                                string SEARCH_DATE = ViewBag.SearchDate;
+                                                foreach (T_STORE_BUSINESSHOURS_LIST data in list1)
+                                                {
+
+
+                                                    if (data.STATUS == 2)
+                                                    {
+                                                        @:<p style="color:red">
+                                                    }
+                                                    else
+                                                    {
+                                                        @:<p>
+                                                    }
+                                                    @:<span>@data.WEEK_NAME</span>
+
+                                                    if (data.STATUS != 2)
+                                                    {
+                                                        @: @(data.FR_TIME2) ~ @(data.TO_TIME2)
+                                                    }
+
+                                                        @: @data.SCHEDULE_TYPE_NAME @data.STATUS_NAME 
+                                                    
+                                                    @:</p>
+                                                     List<DateTime> dateList = Global.Format.GetDates(SEARCH_DATE.Substring(0, 4), SEARCH_DATE.Substring(4, 2), Convert.ToInt32(data.SCHEDULE_TYPE_DTL));
+                                                    List<DateTime> dateListFilter = new List<DateTime>();
+
+                                                    for(var i=0; i< dateList.Count(); i++)
+                                                    {
+                                                        if (data.SCHEDULE_TYPE == 2)
+                                                        {
+                                                            if (i+1==1 || i+1 == 3) /*1, 3 주*/
+                                                            {
+                                                                dateListFilter.Add(dateList[i]);
+                                                            }
+
+                                                        }
+                                                        else if (data.SCHEDULE_TYPE == 3)
+                                                        {
+                                                            if (i + 1 == 1 || i + 1 == 3 || i + 1 == 5) /*1, 3, 5 주*/
+                                                            {
+                                                                dateListFilter.Add(dateList[i]);
+                                                            }
+
+                                                        }
+                                                        else if (data.SCHEDULE_TYPE == 4)
+                                                        {
+                                                            if (i + 1 == 2 || i + 1 == 4 ) /*1, 3, 5 주*/
+                                                            {
+                                                                dateListFilter.Add(dateList[i]);
+                                                            }
+
+                                                        }
+
+                                                    }
+                                                    <p style="font-size:10pt">
+                                                        @{
+
+                                                            int nCnt = 0;
+                                                            if (dateListFilter.Count() > 0)
+                                                            {@: ▶
+                                                            }
+                                                            foreach (DateTime date2 in dateListFilter)
+                                                            {
+                                                                if (nCnt > 0)
+                                                                {@:,
+                                                                 }
+                                                                @:&nbsp; &nbsp; &nbsp; @date2.ToString("yyyy-MM-dd") <!--@data.SCHEDULE_TYPE_NAME @data.STATUS_NAME* -->
+                                                                nCnt++;
+                                                                    }
+                                                               
+                                                            }
+
+                                                    </p>
+                                                }
+
+
+
+                                                list1 = list.Where(w => w.SCHEDULE_TYPE == 5).ToList();
+
+                                                foreach (T_STORE_BUSINESSHOURS_LIST data in list1)
+                                                {
+                                                    if (data.STATUS == 2)
+                                                    {
+                                                        @:<p style="color:red">
+                                                    }
+                                                    else
+                                                    {
+                                                        @: <p>
+                                                                                                }
+                                                    @:<span>@(data.SCHEDULE_TYPE_DTL.Substring(0,4) + "-" + data.SCHEDULE_TYPE_DTL.Substring(4, 2) + "-" + data.SCHEDULE_TYPE_DTL.Substring(6, 2)) </span>
+
+
+                                                    if (data.STATUS != 2)
+                                                    {
+                                                        @: @(data.FR_TIME2) ~ @(data.TO_TIME2)
+                                                     }
+                                                    @: @data.STATUS_NAME 
+                                                    @:</p>
+
+                                                }
+
+                                                list1 = list.Where(w => w.SCHEDULE_TYPE > 5).ToList();
+
+                                                foreach (T_STORE_BUSINESSHOURS_LIST data in list1)
+                                                {
+                                                    if (data.STATUS == 2)
+                                                    {
+                                                        @:<p style="color:red">
+                                                    }
+                                                    else
+                                                    {
+                                                        @: <p>
+                                                   }
+                                                        if (data.SCHEDULE_TYPE == 7)
+                                                        {
+                                                            @:<span> @data.SCHEDULE_TYPE_DTL.Substring(0,2)-@data.SCHEDULE_TYPE_DTL.Substring(2,2)</span>
+                                                        }
+                                                        else
+                                                        {
+                                                            @:<span> @data.SCHEDULE_TYPE_DTL</span>
+                                                        }
+                                                         
+                                                        if (data.STATUS != 2)
+                                                        {
+                                                            @: @(data.FR_TIME2) ~ @(data.TO_TIME2)
+                                                                                                     }
+                                                        @: @data.SCHEDULE_TYPE_NAME @data.STATUS_NAME
+                                                        @:</p>
+
+                                                    }
+                                                }
+
+                                            @*
+
+                                                var list1 = list.Where(w => w.SCHEDULE_TYPE == 1).ToList();
+                                            <p><span>Saturday</span> 9.00 am to 10 pm</p>
+                                            <p><span>Sunday</span> 10.00 am to 12 pm</p>*@
+
+                                        </address>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+<!-- End Contact section -->
+
+<script type="text/javascript">
+    var objTag, chkData = true;
+    function CheckContactSave()
+    {
+        $(".mu-contact-content").find("input,select,radio").each(function () {
+            if($(this).val() == "")
+            {
+          
+                objTag = $(this);
+                MsgBox.Alert("필수입력체크", $(this).prev().text() + " 을(를) 입력하세요!", function (result) {
+                    objTag.focus(); objTag.select();
+                });
+                chkData = false;
+                return false;
+               
+            }
+        })
+        
+
+        //MsgBox.Message(MsgBox.MsgType.error, "제목", "테스트", function (result) { alert("테스트"); })
+     
+        return chkData;
+    }
+    function btncontactSave_click()
+    {
+
+        if (!CheckContactSave()) return;
+      
+        var params = $(".mu-contact-form").serializeArray();
+ 
+        params = BaseCommon.FormInfo.arrayToJSON(params, "CONTACT_");
+        ajax.GetAjax("@SessionHelper.LoginInfo.BASE_URL/home/StoreContactSave", params, "json", function (result) {
+
+            if (result.error_message != "") {
+                modal({ /* https://github.com/CreativeDream/jquery.modal */
+                    type: 'warning',
+                    title: '저장에러',
+                    text: result.error_message
+                    , closeClick: false
+                    , callback: function (e) {
+                    
+                    }
+                });
+            } else {
+
+                $(".mu-contact-form").each(function () { this.reset(); });
+            }
+        })
+    }
+</script>

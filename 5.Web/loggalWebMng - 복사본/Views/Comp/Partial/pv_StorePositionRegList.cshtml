@@ -1,0 +1,22 @@
+﻿@using ALT.VO.Common;
+@{
+        List<T_STORE_POSITION> list = ViewBag.list;
+        int nRow = 0;
+        foreach (T_STORE_POSITION data in list)
+        {
+
+        <tr>
+            <td><input type="text" value="@data.NAME" /></td>
+
+            <td><input type="text" class="number" id="SEQ_@nRow" value="@data.SEQ" maxlength="2"/></td>
+			<td class="center"><input type="checkbox" @Html.Raw(data.HIDE == true ? "checked" : "") /></td>
+			<td class="center">@data.UPDATE_NAME</td>
+			<td class="center">@data.UPDATE_DATE</td>
+			<td class="center hide">@data.POSITION_CODE</td>
+			<td class="center hide">@data.POSITION_TYPE</td>
+			<td class="center hide">@data.STORE_CODE</td>
+		</tr>
+        nRow++;
+
+    }
+}

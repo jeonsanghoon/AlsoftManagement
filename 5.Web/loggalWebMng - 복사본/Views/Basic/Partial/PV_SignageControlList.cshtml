@@ -1,0 +1,26 @@
+﻿@using ALT.VO.loggal;
+@{
+    List<T_SIGNAGE_CONTROL> list = ViewBag.list;
+    string totCnt = (list.Count() == 0 ? "0" : list.First().TOTAL_ROWCOUNT.ToString());
+    <input type="hidden" id="total" value="@totCnt" />
+    foreach (T_SIGNAGE_CONTROL data in list)
+    {
+    <tr>
+        <td style="cursor:pointer" onclick="location.href=/basic/SignageControl/@data.SIGN_CODE?IDX=@data.IDX"><a href="/basic/SignageControl/@data.SIGN_CODE?IDX=@data.IDX">@data.IDX</a></td>
+        <td>@data.REQUEST_EMAIL</td>
+        <td>@data.REQUEST_NAME</td>
+
+        <td class="center"><cneter><img src="@data.CONTENT_URL" class="ui mini logo rounded image" style="display:unset"></cneter></td>
+        <td><a href="/basic/signagereg/@data.SIGN_CODE">@data.SIGN_NAME</a></td>
+        
+        <td class="center">@data.PLAY_REQ_TIME</td>
+        <td class="center">@data.PLAY_FR_TIME</td>
+        <td class="center">@data.PLAY_TO_TIME</td>
+        <td class="center">@data.COMPLEATED_DATE</td>
+        <td class="center">@data.CONTENT</td>
+        <td class="center">@data.UPDATE_NAME</td>
+        <td class="center">@data.UPDATE_DATE</td>
+    </tr>
+    }
+}
+ 

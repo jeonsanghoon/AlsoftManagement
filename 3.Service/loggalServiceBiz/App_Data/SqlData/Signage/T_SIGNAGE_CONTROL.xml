@@ -1,0 +1,234 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<DBAgentMultiTemplate  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns="http://altsoft.kr/">
+
+  <DBAgentTemplate TemplateID="GetSignageControlList">
+    <!-- 
+    SqlType : SQL의 형태를 지정합니다.
+      Example 1:<SqlType>FixedSQL</SqlType> 고정적인 SQL을 지원합니다. 
+      Example 2:<SqlType>DynamicSQL</SqlType> 동적인 SQL Type1을 지원합니다.  
+    Description : 해당 SQL의 기능설명을 적습니다.
+    SQLModifier : 해당 SQL의 작성자(수정자)를 적습니다
+    LastModifyDate : 해당 SQL의 마지막 수정일을 적습니다
+    -->
+    <Information>
+      <SqlType>DynamicSQL</SqlType>
+      <Description>로컬사인 배너리스트</Description>
+      <SQLModifier>전상훈</SQLModifier>
+      <LastModifyDate>2018-04-19</LastModifyDate>
+    </Information>
+
+    <TemplateSQL>
+      <!-- FixedSQL : 고정된 SQL이 들어가는 곳입니다. -->
+      <FixedSQL>
+        <![CDATA[ 
+  SET NOCOUNT ON 
+	/********************************************************************/
+	/* 사이니지 제어테이블 - T_SIGNAGE_CONTROL 조회 -  SELECTPAGE QUERY */ 
+	/********************************************************************/
+	SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED 
+	DECLARE @PAGE INT      = {0}
+	       ,@PAGE_SIZE INT = {1};
+	WITH T_TABLE AS
+	(
+
+ SELECT  ROW_NUMBER() OVER(ORDER BY {2}) AS ROW_IDX 
+			, A.IDX
+			, A.SIGN_CODE
+      , B.SIGN_NAME
+			, A.PLAY_TYPE
+			, A.PLAY_REQ_TIME
+			, A.PLAY_FR_TIME
+			, A.PLAY_TO_TIME
+			, A.CONTENT_URL
+			, A.CONTENT
+			, A.REQUEST_NAME
+			, A.REQUEST_EMAIL
+      , A.COMPLEATED_DATE
+			, A.HIDE
+			, A.INSERT_CODE
+			, A.INSERT_DATE
+      , C.USER_NAME AS INSERT_NAME
+			, A.UPDATE_CODE
+      , D.USER_NAME AS UPDATE_NAME
+			, A.UPDATE_DATE
+		FROM T_SIGNAGE_CONTROL A 
+   INNER JOIN T_SIGNAGE B
+      ON A.SIGN_CODE = B.SIGN_CODE
+   INNER JOIN T_MEMBER C
+      ON A.INSERT_CODE = C.MEMBER_CODE
+   INNER JOIN T_MEMBER D
+      ON A.UPDATE_CODE = D.MEMBER_CODE
+		WHERE 1=1 
+    #[IDX]
+    #[SIGN_CODE]
+    #[SIGN_NAME]
+    #[FR_PLAY_REQ_TIME]
+    #[TO_PLAY_REQ_TIME]
+    #[PLAY_TYPE]
+    #[IS_COMPLEATED]
+    #[HIDE]
+	 ) SELECT *, (SELECT COUNT(*) FROM T_TABLE) AS TOTAL_ROWCOUNT FROM T_TABLE 
+	 WHERE ROW_IDX > (@PAGE-1) * @PAGE_SIZE 
+	   AND ROW_IDX <= @PAGE * @PAGE_SIZE 
+	SET NOCOUNT OFF 
+      ]]>
+      </FixedSQL>
+      <DynamicBodys>
+        <Key>IDX</Key>
+        <Body>AND A.IDX = {0} </Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>SIGN_CODE</Key>
+        <Body>AND A.SIGN_CODE = {0} </Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>SIGN_NAME</Key>
+        <Body>AND B.SIGN_NAME LIKE N'%{0}%' </Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>PLAY_TYPE</Key>
+        <Body>AND A.PLAY_TYPE = {0} </Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>FR_PLAY_REQ_TIME</Key>
+        <Body>AND A.PLAY_REQ_TIME >= CONVERT(DATETIME, '{0}') </Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>TO_PLAY_REQ_TIME</Key>
+        <Body> <![CDATA[ AND A.PLAY_REQ_TIME < DATEADD(DAY,1, CONVERT(DATETIME, '{0}')) ]]> </Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>IS_COMPLEATED</Key>
+        <Body>AND {0} </Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>HIDE</Key>
+        <Body>AND A.HIDE = {0} </Body>
+      </DynamicBodys>
+    </TemplateSQL>
+  </DBAgentTemplate>
+  <DBAgentTemplate TemplateID="SignageControlSave">
+    <!-- 
+    SqlType : SQL의 형태를 지정합니다.
+      Example 1:<SqlType>FixedSQL</SqlType> 고정적인 SQL을 지원합니다. 
+      Example 2:<SqlType>DynamicSQL</SqlType> 동적인 SQL Type1을 지원합니다.  
+    Description : 해당 SQL의 기능설명을 적습니다.
+    SQLModifier : 해당 SQL의 작성자(수정자)를 적습니다
+    LastModifyDate : 해당 SQL의 마지막 수정일을 적습니다
+    -->
+    <Information>
+      <SqlType>DynamicSQL</SqlType>
+      <Description>로컬사인 정보 저장</Description>
+      <SQLModifier>전상훈</SQLModifier>
+      <LastModifyDate>2017-02-28</LastModifyDate>
+    </Information>
+
+    <TemplateSQL>
+      <!-- FixedSQL : 고정된 SQL이 들어가는 곳입니다. -->
+      <FixedSQL>
+        <![CDATA[ 
+	SET NOCOUNT ON 
+	/**************************************************************/
+	/* 사이니지 제어테이블 - T_SIGNAGE_CONTROL 저장 -  SAVE QUERY */ 
+	/**************************************************************/
+	DECLARE @IDX                            BIGINT               = N'{0}'
+			  , @SIGN_CODE                      BIGINT               = CONVERT(BIGINT, CASE WHEN ISNUMERIC('{1}') = 1 THEN '{1}' ELSE NULL END )
+			  , @PLAY_TYPE                      INT                  = CONVERT(INT, CASE WHEN ISNUMERIC('{2}') = 1 THEN '{2}' ELSE NULL END )
+			  , @PLAY_REQ_TIME                  DATETIME             = CASE WHEN ISDATE('{3}') = 1 THEN '{3}' ELSE null END
+			  , @PLAY_FR_TIME                   DATETIME             = CASE WHEN ISDATE('{4}') = 1 THEN '{4}' ELSE null END
+			  , @PLAY_TO_TIME                   DATETIME             = CASE WHEN ISDATE('{5}') = 1 THEN '{5}' ELSE null END
+			  , @CONTENT_URL                    NVARCHAR(200)        = N'{6}'
+			  , @CONTENT                        NVARCHAR(400)        = N'{7}'
+			  , @REQUEST_NAME                   NVARCHAR(100)        = N'{8}'
+			  , @REQUEST_EMAIL                  NVARCHAR(100)        = N'{9}'
+			  , @COMPLEATED_DATE                DATETIME             = CASE WHEN ISDATE('{10}') = 1 THEN '{10}' ELSE null END
+			  , @HIDE                           BIT                  = CONVERT(BIT, CASE WHEN ISNUMERIC('{11}') = 1 THEN '{11}' ELSE 0 END )
+			  , @INSERT_CODE                    INT                  = {12}
+			  , @INSERT_DATE                    DATETIME             = GETDATE() 
+			  , @UPDATE_CODE                    INT                  = {12}
+			  , @UPDATE_DATE                    DATETIME             = GETDATE() 
+
+	UPDATE A 
+	SET  	  SIGN_CODE                      = @SIGN_CODE                     
+			 ,  PLAY_TYPE                      = @PLAY_TYPE                     		 ,  PLAY_REQ_TIME                  = @PLAY_REQ_TIME                 
+			 ,  PLAY_FR_TIME                   = @PLAY_FR_TIME                  		 ,  PLAY_TO_TIME                   = @PLAY_TO_TIME                  
+			 ,  CONTENT_URL                    = @CONTENT_URL                   		 ,  CONTENT                        = @CONTENT                       
+			 ,  REQUEST_NAME                   = @REQUEST_NAME                  		 ,  REQUEST_EMAIL                  = @REQUEST_EMAIL                 
+			 ,  COMPLEATED_DATE                = @COMPLEATED_DATE               		 ,  HIDE                           = @HIDE                          
+			 ,  UPDATE_CODE                    = @UPDATE_CODE                   		 ,  UPDATE_DATE                    = @UPDATE_DATE                   
+	
+	FROM T_SIGNAGE_CONTROL A 
+	WHERE IDX= @IDX
+	IF @@ROWCOUNT = 0
+	BEGIN
+		INSERT INTO T_SIGNAGE_CONTROL
+		(		SIGN_CODE                     		, PLAY_TYPE                     		, PLAY_REQ_TIME                 		
+			, PLAY_FR_TIME                  		, PLAY_TO_TIME                  		, CONTENT_URL                   		, CONTENT                       		
+			, REQUEST_NAME                  		, REQUEST_EMAIL                 		, COMPLEATED_DATE               		, HIDE                          		
+			, INSERT_CODE                   		, INSERT_DATE                   		, UPDATE_CODE                   		, UPDATE_DATE                   		
+			
+		)
+		SELECT @SIGN_CODE                    		, @PLAY_TYPE                    	
+				, @PLAY_REQ_TIME                		, @PLAY_FR_TIME                 		, @PLAY_TO_TIME                 	
+				, @CONTENT_URL                  		, @CONTENT                      		, @REQUEST_NAME                 	
+				, @REQUEST_EMAIL                		, @COMPLEATED_DATE              		, @HIDE                         	
+				, @INSERT_CODE                  		, @INSERT_DATE                  		, @UPDATE_CODE                  	
+				, @UPDATE_DATE                            	
+			
+		 SET @IDX = IDENT_CURRENT('T_SIGNAGE_CONTROL')
+	 END
+  SELECT CONVERT(VARCHAR(100), @IDX) AS DATA
+  SET NOCOUNT OFF
+
+
+      ]]>
+      </FixedSQL>
+    </TemplateSQL>
+  </DBAgentTemplate>
+  <DBAgentTemplate TemplateID="SignageControlPlayUpdate">
+    <!-- 
+    SqlType : SQL의 형태를 지정합니다.
+      Example 1:<SqlType>FixedSQL</SqlType> 고정적인 SQL을 지원합니다. 
+      Example 2:<SqlType>DynamicSQL</SqlType> 동적인 SQL Type1을 지원합니다.  
+    Description : 해당 SQL의 기능설명을 적습니다.
+    SQLModifier : 해당 SQL의 작성자(수정자)를 적습니다
+    LastModifyDate : 해당 SQL의 마지막 수정일을 적습니다
+    -->
+    <Information>
+      <SqlType>DynamicSQL</SqlType>
+      <Description>로컬사인 재생시간 정보 업데이트</Description>
+      <SQLModifier>전상훈</SQLModifier>
+      <LastModifyDate>2017-04-24</LastModifyDate>
+    </Information>
+
+    <TemplateSQL>
+      <!-- FixedSQL : 고정된 SQL이 들어가는 곳입니다. -->
+      <FixedSQL>
+        <![CDATA[ 
+	SET NOCOUNT ON 
+	/**************************************************************************/
+	/* 사이니지 제어테이블 - T_SIGNAGE_CONTROL                                */
+  /* 로컬사인 재생시간 정보 업데이트 - SignageControlPlayUpdate SAVE QUERY  */ 
+	/**************************************************************************/
+	DECLARE @IDX                            BIGINT               = N'{0}'
+			  , @PLAY_FR_TIME                   DATETIME             = CASE WHEN ISDATE('{1}') = 1 THEN '{1}' ELSE null END
+			  , @PLAY_TO_TIME                   DATETIME             = CASE WHEN ISDATE('{2}') = 1 THEN '{2}' ELSE null END
+			  , @UPDATE_CODE                    INT                  = {3}
+			  , @UPDATE_DATE                    DATETIME             = GETDATE() 
+
+	UPDATE A 
+	SET    PLAY_FR_TIME                   = @PLAY_FR_TIME                  		 ,  PLAY_TO_TIME                   = @PLAY_TO_TIME   
+       ,  COMPLEATED_DATE = GETDATE()
+			 ,  UPDATE_CODE                    = @UPDATE_CODE                   		 ,  UPDATE_DATE                    = @UPDATE_DATE                   
+	
+	FROM T_SIGNAGE_CONTROL A 
+	WHERE IDX= @IDX
+	SELECT CONVERT(VARCHAR(100), @IDX) AS DATA
+  SET NOCOUNT OFF
+
+
+      ]]>
+      </FixedSQL>
+    </TemplateSQL>
+  </DBAgentTemplate>
+</DBAgentMultiTemplate>

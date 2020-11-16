@@ -1,0 +1,92 @@
+﻿<div class="ui tiny modal" id="popSynonym">
+    <div class="header">동의어 등록 (<span id="spKeywordName"></span>)</div>
+    <div class="content">
+        <p>@Html.Semantic_TextBox("ADD_SYNONYM_KEYWORD", "", new { @placeholder = "동의어를 등록하세요" }) @Html.Semantic_Button2("btnSynonymAdd", "추가", SemanticUIHelper.enButtonType.New, new { @onclick="synonymAdd();" })</p>
+        <p id="p_KEYWORD_SYNONYM"></p>
+    </div>
+    <div class="actions">
+        @Html.Semantic_Button2("btnSynonymSave", "저장", SemanticUIHelper.enButtonType.Save, new { @onclick = "SynonymSave();" })
+        @Html.Semantic_Button2("btnSynonymClose", "닫기", SemanticUIHelper.enButtonType.Normal, new { @onclick = "SynonymClose();" })
+    </div>
+</div>
+<script type="text/javascript">
+    var _baseCode = -1;
+
+ 
+    function SynonymClose() {
+        $('#popSynonym').modal("hide");
+        _baseCode = -1;
+    }
+
+  
+    function synonymAdd()
+    {
+        if ($("#ADD_SYNONYM_KEYWORD").val() == "")
+        {
+            return;
+        }
+        
+        var arrData = SemanticUI.ComboBox.GetAllData("#SYNONYM_COMBO", "KEYWORD_CODE", "KEYWORD_NAME");;
+        var option_value = String( -1 * (arrData.length + 1)), option_text = $("#ADD_SYNONYM_KEYWORD").val();
+        var test = SemanticUI.ComboBox.GetSelectedArray("#SYNONYM_COMBO");
+        SemanticUI.ComboBox.AddItem("#SYNONYM_COMBO", option_value, option_text, true);
+        $("#ADD_SYNONYM_KEYWORD").val("");
+
+    }
+    function SynonymSave() {
+
+        var arrData = SemanticUI.ComboBox.GetSelectedArray("#SYNONYM_COMBO", "KEYWORD_CODE", "KEYWORD_NAME", { BASE_CODE: _baseCode, IS_SYNONYM: true, INSERT_CODE: "@SessionHelper.LoginInfo.MEMBER.MEMBER_CODE" });
+        var param = new Object();
+        param.BASE_CODE = _baseCode;
+        param.KEYWORD_LIST = arrData;
+        var param = JSON.stringify(param);
+        ajax.GetAjax("/basic/KEYWORD_Synonym_Save", param, "json", function (result) {
+            if (result.ERROR_MESSAGE != "") {
+                $.MessageBox(result.ERROR_MESSAGE);
+            }
+            else {
+                $.MessageBox("저장되었습니다.");
+				$('#popSynonym').modal("hide");
+				try{
+					SynonymSave_callback();
+				}catch (e) { }
+               
+            }
+
+        });
+
+    }
+
+    function popSynonymOpen(baseCode, keywordName) {
+        var params = new Object();
+        var htmlattribute = new Object();
+        htmlattribute.class = "mini";
+        if (keywordName != undefined) {
+            $("#spKeywordName").text(keywordName);
+        }
+        _baseCode = baseCode;
+
+        params.name = "SYNONYM_COMBO";
+        htmlattribute.multiple = "multiple";
+        htmlattribute.style = "width:100%;";
+
+        params.BASE_CODE = baseCode;
+        params.HIDE = 0;
+        params.htmlAttributes = JSON.stringify(htmlattribute);
+        params = JSON.stringify(params);
+
+        ajax.GetAjax("/basic/KeywordSynonymCombo", params, "html", function (result) {
+            $("#p_KEYWORD_SYNONYM").html(result);
+            SemanticUI.ComponentInit($("#p_KEYWORD_SYNONYM"));
+            $('#popSynonym').modal('show');
+
+            $("#ADD_SYNONYM_KEYWORD").keypress(function (e) {
+                if (e.keyCode == 13) {
+                    synonymAdd();
+                }
+            })
+
+        })
+    }
+
+</script>

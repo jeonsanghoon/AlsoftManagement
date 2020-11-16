@@ -1,0 +1,257 @@
+﻿@{
+    int nhideType;
+    string placeHolder = "업체명,지점명,아이디,이름으로 검색";
+
+    string objId = ((ViewData["id"] == null) ? "EMPLOYEE" : ViewData["id"]).ToString();
+
+    if (SessionHelper.LoginInfo.STORE_CODE == 1)
+    {
+        nhideType = 1;
+    }
+    else if (SessionHelper.LoginInfo.STORE.STORE_TYPE == 1 || SessionHelper.LoginInfo.STORE.STORE_TYPE == 4)
+    {
+        placeHolder = "지점명,아이디,이름으로 검색";
+        nhideType = 2;
+    }
+    else
+    {
+        placeHolder = "이름으로 검색";
+        nhideType = 3;
+    }
+}
+<style>
+    #dvEmployeePopup_@(objId) .column.row {
+        padding: 0.25em;
+    }
+
+    #dvEmployeePopup_@(objId) {
+        min-height: 450px;
+    }
+</style>
+<div class="ui action input">
+    <input type="text" id="@(objId)_ID" name="@(objId)_ID" style="width:10em;" placeholder="아이디" />
+    <input type="text" id="@(objId)_NAME" name="@(objId)_NAME" style="width:10em;" placeholder="이름" />
+    <input type="hidden" id="@(objId)_CODE" name="@(objId)_CODE" style="width:10em;" placeholder="코드" />
+    <button class="ui icon button" type="button">
+        <i class="search icon" onclick="EmployeePOpen_@(objId)('request');"></i>
+    </button>
+</div>
+<div class="ui modal" id="dvEmployeePopup_@(objId)">
+    <div class="header">직원검색</div>
+    <div class="content">
+        <div class="ui grid">
+            <div class="one column row">
+                <div class="column">
+                    <div class="ui grid">
+                        <div class="five wide column">
+
+                            @{
+                                List<SelectListItem> comboSearchType = new List<SelectListItem>();
+                                comboSearchType.Add(new SelectListItem { Value = "D.USER_NAME", Text = "이름" });
+                                comboSearchType.Add(new SelectListItem { Value = "D.USER_ID", Text = "아이디" });
+                                comboSearchType.Add(new SelectListItem { Value = "A.COMPANY_NAME", Text = "회사명" });
+                                comboSearchType.Add(new SelectListItem { Value = "B.STORE_NAME", Text = "지점명" });
+
+
+                            }
+                            @Html.CommonComboNormal("P_SEARCH_TYPE_" + objId, comboSearchType, "", "-조건-", new { @class = "ui small size150" })
+                        </div>
+                        <div class="six wide column">
+                            @Html.Semantic_TextBox("P_SEARCH_TEXT_" + objId, "", new { @style = "width:100%", @placeholder = placeHolder })
+                        </div>
+                        <div class="five wide column buttons">
+                            @Html.Semantic_Button2("btnStoreGroupAdd_" + objId, "조회", SemanticUIHelper.enButtonType.Normal, SemanticUIHelper.Size.mini, new { onclick = "doQuery_EmployeeP_" + objId +"();" })
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="one column row">
+                <div class="column">
+                    <div id="dvEmployeeGroup_@(objId)">
+                        <table class="mrc-table">
+                            <thead>
+                                <tr>
+                                    <th column_name="USER_ID" class="sort" data-sort="D.USER_ID">아이디</th>
+                                    <th column_name="USER_NAME" class="sort" data-sort="D.USER_NAME">이름</th>
+                                    <th column_name="MOBILE" class="hide sort" display_size="detail" data-sort="D.MOBILE">연락처</th>
+                                    <th column_name="COMPANY_CODE" class="hide">업체</th>
+                                    <th column_name="COMPANY_NAME" display_size="tablet" class='@(nhideType > 1 ? "hide" : "") sort' data-sort="A.COMPANY_NAME">업체명</th>
+                                    <th column_name="STORE_CODE" class="hide">매장코드</th>
+                                    <th column_name="STORE_NAME" display_size="tablet" class='@(nhideType == 3 ? "hide" : "")" sort' data-sort="B.STORE_NAME">매장명</th>
+                                    <th column_name="MEMBER_CODE" class="hide" data-sort="D.MEMBER_CODE">직원코드</th>
+
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                        <center style="padding-top:0.5em">
+                            <div id="dvpagination_@(objId)" class="ui floated pagination menu"></div>
+                        </center>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+    <div class="actions">
+        @Html.Semantic_Button2("btnEmployeePSel_" + objId , "확인", SemanticUIHelper.enButtonType.Save, new { @onclick = "EmployeePConfirm_" + objId + "();" })
+        @Html.Semantic_Button2("btnEmployeePDel_" + objId, "닫기", SemanticUIHelper.enButtonType.Normal, new { @onclick = "EmployeePClose_" + objId + "();" })
+    </div>
+</div>
+
+<script type="text/javascript">
+    var _popName = "";
+    $("document").ready(function () {
+        $('#dvEmployeePopup_@(objId)').modal('setting', {
+            autofocus: false,
+            onShow: function () {
+                setTimeout("EmployeeP_Init_@(objId)()", 1000);
+            }
+        }).modal("hide");
+        $("#@(objId)_ID").change(function () {
+            $("#@(objId)_NAME").val(""); $("#@(objId)_CODE").val("");
+            ChkEmployee_@(objId)($(this).val());
+        });
+        
+        $("#@(objId)_NAME").change(function () {
+            $("#@(objId)_ID").val(""); $("#@(objId)_CODE").val("");
+            ChkEmployee_@(objId)(null,$(this).val());
+        });
+    })
+    function EmployeePOpen_@(objId)(popName, userid, username) {
+        _popName = popName;
+        $('#dvEmployeePopup_@(objId)').modal('setting', {
+            autofocus: false,
+            onShow: function () {
+                setTimeout("EmployeeP_Init_@(objId)()", 1000);
+            }
+        }).modal("show");
+
+        if (!(userid == undefined || userid == "")) $("#P_SEARCH_TEXT_@(objId)").val(userid);
+        else {
+            if ($("#@(objId)_ID").val() != "") $("#P_SEARCH_TEXT_@(objId)").val($("#@(objId)_ID").val());
+            if ($("#@(objId)_NAME").val() != "") $("#P_SEARCH_TEXT_@(objId)").val($("#@(objId)_NAME").val());
+        }
+
+       
+
+
+        doQuery_EmployeeP_@(objId)();
+        $("#P_SEARCH_TEXT_@(objId)").keydown(function (e) {
+            if (e.keyCode == 13) doQuery_EmployeeP_@(objId)();
+        });
+      
+        // $("#dvEmployeePopup_@(objId)").css("margin-top", "-300px");
+
+    }
+    function EmployeeP_Init_@(objId)() {
+        $("#P_SEARCH_TEXT_@(objId)").focus();
+        $("#P_SEARCH_TEXT_@(objId)").select();
+    }
+    function EmployeePClose_@(objId)(objType) {
+        objType = (objType == undefined ? "" : objType);
+        if (objType == "D") {
+            $("#@(objId)_ID").val("");
+            $("#@(objId)_NAME").val("");
+            $("#@(objId)_CODE").val("");
+        }
+        $('#dvEmployeePopup_@(objId)').modal("hide");
+    }
+   
+
+    function mrc_table_trClick(objName, result) {
+
+        if (objName == "#dvEmployeeGroup_@(objId) table") {
+            // EmployeePopupSelected_@(objId)()(result);
+            // EmployeePClose_@(objId)();
+        }
+    }
+
+    function mrc_table_trClick_dvEmployeeGroup_@(objId)table(objName, result)
+    {
+        //EmployeePopupSelected_@(objId)()(result);
+        //EmployeePClose_@(objId)()
+    }
+
+    function EmployeePConfirm_@(objId)() {
+        var list = $.mrc_table.GetActiveRowData("#dvEmployeeGroup_@(objId) table");
+        if (list.length == 0) $.MessageBox("선택된 데이터가 없습니다.");
+        //EmployeePopupSelected_@(objId)()(_popName, $.mrc_table.GetActiveRowData("#dvEmployeeGroup_@(objId) table")[0]);
+
+        var rtn = $.mrc_table.GetActiveRowData("#dvEmployeeGroup_@(objId) table")[0];
+
+        $("#@(objId)_ID").val(rtn.USER_ID);
+        $("#@(objId)_NAME").val(rtn.USER_NAME);
+        $("#@(objId)_CODE").val(rtn.MEMBER_CODE);
+        try { EmployeePConfirm_@(objId)_callBack(rtn); } catch (e){ }
+        EmployeePClose_@(objId)();
+    }
+    var PARAM_DATA_EMP_P_@(objId) = {
+        PAGE_SIZE: 5
+        , PAGE_COUNT: 7
+        , PAGE: 1
+        , SORT: "D.USER_NAME"
+    }
+    function doQuery_EmployeeP_@(objId)(page, sort) {
+        if (page == undefined || page < 1) page = 1;
+        PARAM_DATA_EMP_P_@(objId).PAGE = page;
+        var params = new Object();
+        params.SEARCH_DATA = $("#P_SEARCH_TEXT_@(objId)").val();
+        params.SEARCH_DATA1 = $("#P_SEARCH_TYPE_@(objId)").val();
+        params.PAGE_COUNT = PARAM_DATA_EMP_P_@(objId).PAGE_COUNT;
+        params.PAGE = PARAM_DATA_EMP_P_@(objId).PAGE;
+        if (!(sort == undefined || sort == null)) PARAM_DATA_EMP_P_@(objId).SORT = sort;
+        params.SORT = PARAM_DATA_EMP_P_@(objId).SORT;
+        params = JSON.stringify(params);
+        ajax.GetAjax("/Employee/PV_EmployeePList", params, "html", function (result) {
+            $("#dvEmployeeGroup_@(objId) table tbody").html(result);
+            $.mrc_table.Init("#dvEmployeeGroup_@(objId) table", false, PARAM_DATA_EMP_P_@(objId).SORT);
+            $("#dvpagination_@objId").show();
+
+            $("#dvpagination_@objId").pagination({
+                total: Number($("#dvEmployeeGroup_@(objId) #employeep_total").val()), page: PARAM_DATA_EMP_P_@(objId).PAGE, pagesize: PARAM_DATA_EMP_P_@(objId).PAGE_SIZE, perpage: PARAM_DATA_EMP_P_@(objId).PAGE_COUNT
+                , onPageClick: function (item, page) {
+                    doQuery_EmployeeP_@(objId)(page);
+                }
+            })
+        });
+    }
+
+    function ChkEmployee_@(objId)(userid, username) {
+        var params = new Object();
+
+        var sText = userid == undefined ? "" : userid;
+        sText = username == undefined ? sText : username;
+        params.SEARCH_DATA =  sText;
+        params.SEARCH_DATA1 =  "";
+        params.PAGE_COUNT = 100;
+        params.PAGE = 1;
+        params = JSON.stringify(params);
+        ajax.GetAjax("/Employee/getEmployeePList", params, "json", function (result) {
+            if (result.length == 1) {
+                $("#@(objId)_CODE").val(result[0].MEMBER_CODE);
+                $("#@(objId)_ID").val(result[0].USER_ID);
+                $("#@(objId)_NAME").val(result[0].USER_NAME);
+                EmployeePClose_@(objId)();
+            }
+            else {
+                EmployeePOpen_@(objId)("", $("#@(objId)_ID").val(), $("#@(objId)_NAME").val());
+            }
+        });
+    }
+
+    @*function mrcGrid_Sort(gridName, columnName, orderType) {
+        if (gridName == "#dvEmployeeGroup_@(objId) table") {
+            var sSort = (orderType == undefined || orderType == "") ? "D.USER_NAME" : columnName + " " + orderType;
+            doQuery_EmployeeP_@(objId)(1, sSort)
+        } 
+    }*@
+
+    
+    function mrcGrid_Sort_dvEmployeeGroup_@(objId)table(objName, columnName, orderType)
+    {
+        var sSort = (orderType == undefined || orderType == "") ? "D.USER_NAME" : columnName + " " + orderType;
+        window["doQuery_EmployeeP_@(objId)"].apply(null, [1,sSort]);
+    }
+</script>

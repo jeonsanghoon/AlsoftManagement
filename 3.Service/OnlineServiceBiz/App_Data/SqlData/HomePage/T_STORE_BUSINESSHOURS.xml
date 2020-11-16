@@ -1,0 +1,71 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<DBAgentMultiTemplate  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns="http://altsoft.kr/">
+
+  <DBAgentTemplate TemplateID="GetStoreBusinessHourList">
+    <!-- 
+    SqlType : SQL의 형태를 지정합니다.
+      Example 1:<SqlType>FixedSQL</SqlType> 고정적인 SQL을 지원합니다. 
+      Example 2:<SqlType>DynamicSQL</SqlType> 동적인 SQL Type1을 지원합니다.  
+    Description : 해당 SQL의 기능설명을 적습니다.
+    SQLModifier : 해당 SQL의 작성자(수정자)를 적습니다
+    LastModifyDate : 해당 SQL의 마지막 수정일을 적습니다
+    -->
+    <Information>
+      <SqlType>DynamicSQL</SqlType>
+      <Description>매장별 근무시간 가져오기</Description>
+      <SQLModifier>전상훈</SQLModifier>
+      <LastModifyDate>2016-06-03</LastModifyDate>
+    </Information>
+
+    <TemplateSQL>
+      <!-- FixedSQL : 고정된 SQL이 들어가는 곳입니다. -->
+      <FixedSQL>
+        <![CDATA[ 
+    SET NOCOUNT ON
+    /* 매장별 근무시간 가져오기 GetStoreBusinessHourList */
+    SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED
+
+    DECLARE @STORE_CODE INT = {0}
+    SELECT 
+	      A.STORE_CODE
+	    , A.SCHEDULE_TYPE
+      , AC.NAME AS SCHEDULE_TYPE_NAME
+	    , A.SCHEDULE_TYPE_DTL
+      , ISNULL(B.NAME,'') AS WEEK_NAME
+	    , A.FR_TIME
+      , dbo.[fn_GetTimeMeridiem](A.FR_TIME) AS FR_TIME2
+	    , A.TO_TIME
+      , dbo.[fn_GetTimeMeridiem](A.TO_TIME) AS TO_TIME2
+	    , A.REMARK
+	    , A.STATUS
+	    , C.NAME AS STATUS_NAME
+	    , A.INSERT_CODE
+	    , A.INSERT_DATE
+	    , A.UPDATE_CODE
+	    , A.UPDATE_DATE 
+    FROM T_STORE_BUSINESSHOURS A
+    INNER JOIN T_COMMON AC
+       ON AC.MAIN_CODE = 'S002'
+      AND AC.SUB_CODE = A.SCHEDULE_TYPE
+    LEFT JOIN T_COMMON B
+      ON B.MAIN_CODE = 'D001'
+     AND B.SUB_CODE  = A.SCHEDULE_TYPE_DTL
+    INNER JOIN T_COMMON C
+       ON C.MAIN_CODE = 'S003'
+      AND C.SUB_CODE = A.STATUS
+    WHERE 1=1
+    #[SEARCH_DATE]
+    ORDER BY  A.STORE_CODE
+	          , A.SCHEDULE_TYPE
+	          , A.SCHEDULE_TYPE_DTL
+            , A.FR_TIME
+   SET NOCOUNT OFF
+      ]]>
+      </FixedSQL>
+      <DynamicBodys>
+        <Key>SEARCH_DATE</Key>
+        <Body>  <![CDATA[ AND (A.SCHEDULE_TYPE != 5 OR (A.SCHEDULE_TYPE = 5 AND A.SCHEDULE_TYPE_DTL >= '{0}') )]]> </Body>
+      </DynamicBodys>
+    </TemplateSQL>
+  </DBAgentTemplate>
+</DBAgentMultiTemplate>

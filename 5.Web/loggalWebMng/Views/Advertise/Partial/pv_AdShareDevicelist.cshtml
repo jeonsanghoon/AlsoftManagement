@@ -1,0 +1,19 @@
+﻿@using ALT.VO.loggal;
+@using ALT.Framework;
+@using ALT.Framework.Data;
+
+@{
+    List<AD_SHARE_DEVICE_MAIN> list = (List<AD_SHARE_DEVICE_MAIN>)ViewBag.list;
+    string totCnt = (list.Count() == 0 ? "0" : list.First().TOTAL_ROWCOUNT.ToString());
+
+    <input type="hidden" id="total" value="@totCnt" />
+    foreach (AD_SHARE_DEVICE_MAIN data in list)
+    {
+        <tr>
+            <td><a href="/basic/devicereg3/@data.DEVICE_CODE">@(data.DEVICE_NAME)</a></td>
+            <td>@(data.COMPANY_NAME)</td>
+            <td>@((data.SHARE_STATUS ==0) ? "원본" : "공유")</td>
+        </tr>
+    }
+}
+

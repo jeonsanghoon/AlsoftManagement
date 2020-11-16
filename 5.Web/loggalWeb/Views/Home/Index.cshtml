@@ -1,0 +1,312 @@
+﻿
+@{
+    ViewBag.Title = "검색어 자동완성 템플릿";
+}
+@section scripts{
+    <script src="~/Common/js/Common.js" type="text/javascript"></script>
+    <script type="text/javascript">
+        $(document).ready(function () {
+            KEYNAME_KEYUP();
+            LOCALNAME_KEYUP();
+        })
+
+        var keyName = "";
+
+        function KEYNAME_KEYUP() {
+            $("#KEYWORD_NAME").focusout(function () { setTimeout('$(".easy-autocomplete").find("ul").hide()', 200); });
+            $("#KEYWORD_NAME").keyup(function (e) {
+
+                if (e.keyCode == 40) //아래 방향키
+                {
+                    if ($("#dv_KEYWORD_NAME.easy-autocomplete ul li.selected").length == 0) {
+                        $("#dv_KEYWORD_NAME.easy-autocomplete ul li:eq(0)").addClass("selected")
+                    } else {
+                        var preli = $("#dv_KEYWORD_NAME.easy-autocomplete ul li.selected");
+                        $("#dv_KEYWORD_NAME.easy-autocomplete ul li").removeClass("selected");
+                        preli.next().addClass("selected");
+                    }
+                    return;
+                }
+                else if (e.keyCode == 38) { // 위 방향키
+                    var preli = $("#dv_KEYWORD_NAME.easy-autocomplete ul li.selected");
+                    $("#dv_KEYWORD_NAME.easy-autocomplete ul li").removeClass("selected");
+                    preli.prev().addClass("selected");
+                    return;
+                }
+                else if (e.keyCode == 37 || e.keyCode == 39) {
+                    return;
+                }
+                else if (e.keyCode == 13) {
+
+                    MessageWrite($("#dv_KEYWORD_NAME.easy-autocomplete ul li.selected div").attr("keyCode") + "(" + $("#dv_KEYWORD_NAME.easy-autocomplete ul li.selected div").text() + ")로 검색합니다.");
+
+                    $("#KEYWORD_NAME").val($("#dv_KEYWORD_NAME.easy-autocomplete ul li.selected div").text());
+                    $("#dv_KEYWORD_NAME.easy-autocomplete").find("ul").hide();
+                    return;
+                }
+                $("#dv_KEYWORD_NAME.easy-autocomplete").find("ul").show();
+                var params = new Object();
+                params.KEYWORD_NAME = $(this).val();
+                keyName = params.KEYWORD_NAME;
+                params = JSON.stringify(params);
+                var url = "/home/PV_KeywordAutoList";
+
+                if ($(this).val() == "") {
+                    $("#dv_KEYWORD_NAME.easy-autocomplete").find("ul").hide();
+                }
+                ajax.GetAjax(url, params, "html", function (result) {
+                    KeyWordAutoCompleate(result);
+                });
+            });
+        }
+
+        function KeyWordAutoCompleate(result) {
+            $("#dv_KEYWORD_NAME.easy-autocomplete ul").html(result);
+            $("#dv_KEYWORD_NAME.easy-autocomplete").find("li").click(function () {
+
+                MessageWrite($(this).find("div").attr("keyCode") + "(" + $(this).find("div").text() + ")로 검색합니다.");
+
+                $("#KEYWORD_NAME").val($(this).find("div").text());
+
+                $(".easy-autocomplete").find("ul").hide();
+              
+            })
+        }
+
+
+
+
+        function LOCALNAME_KEYUP() {
+            $("#LOCALNAME").focusout(function () { setTimeout('$("#dv_LOCALNAME.easy-autocomplete").find("ul").hide()', 200); });
+            $("#LOCALNAME").keyup(function (e) {
+
+                if (e.keyCode == 40) //아래 방향키
+                {
+                    if ($("#dv_LOCALNAME.easy-autocomplete ul li.selected").length == 0) {
+                        $("#dv_LOCALNAME.easy-autocomplete ul li:eq(0)").addClass("selected")
+                    } else {
+                        var preli = $("#dv_LOCALNAME.easy-autocomplete ul li.selected");
+                        $("#dv_LOCALNAME.easy-autocomplete ul li").removeClass("selected");
+                        preli.next().addClass("selected");
+                    }
+                    return;
+                }
+                else if (e.keyCode == 38) { // 위 방향키
+                    var preli = $("#dv_LOCALNAME.easy-autocomplete ul li.selected");
+                    $("#dv_LOCALNAME.easy-autocomplete ul li").removeClass("selected");
+                    preli.prev().addClass("selected");
+                    return;
+                }
+                else if (e.keyCode == 37 || e.keyCode == 39) {
+                    return;
+                }
+                else if (e.keyCode == 13) {
+                    var msg = "지역명을 (코드 : " + $("#dv_LOCALNAME.easy-autocomplete ul li.selected div").attr("keyCode");
+                    msg += " / 코드명 : " + $("#dv_LOCALNAME.easy-autocomplete ul li.selected div").text();
+                    msg += " / 위도 : " + $("#dv_LOCALNAME.easy-autocomplete ul li.selected div").attr("LATITUDE");
+                    msg += " / 경도 : " + $("#dv_LOCALNAME.easy-autocomplete ul li.selected div").attr("LONGITUDE");
+                    msg += ")로 검색합니다."
+                    MessageWrite(msg, 2);
+                    $("#LOCALNAME").val($("#dv_LOCALNAME.easy-autocomplete ul li.selected div").text());
+                    $("#dv_LOCALNAME.easy-autocomplete").find("ul").hide();
+
+                    return;
+                }
+                $("#dv_LOCALNAME.easy-autocomplete").find("ul").show();
+                //setTimeout(SetAutoLogalName(), 300);
+                if ((e.keyCode >= 48 && e.keyCode <= 57)
+                    || (e.keyCode >= 65 && e.keyCode <= 90)
+                    || (e.keyCode >= 12592 && e.keyCode <= 12687)
+                    || (e.keyCode == 8)
+                    )
+                    BaseCommon.TimeInfo.Delay(function () {
+                        if (_localName == $("#LOCALNAME").val()) return;
+
+                    SetAutoLogalName($("#LOCALNAME").val());
+                }, 150);
+            });
+        }
+        var _localName = "";
+       
+
+        function SetAutoLogalName(localName)
+        {
+            _localName = localName;
+            var params = new Object();
+            params.NAME = localName;
+            params.CODE = 15;
+            keyName = params.NAME;
+            params = JSON.stringify(params);
+            var url = "/home/PV_LocalNameList";
+
+            if(localName == "") {
+                $("#dv_LOCALNAME.easy-autocomplete").find("ul").hide();
+            }
+            ajax.GetAjax(url, params, "html", function (result) {
+                $("#spMsg").text($("#spMsg").text() + keyName + "|");
+                LocalNameAutoCompleate(result)
+            },false);
+        }
+
+        function LocalNameAutoCompleate(result) {
+            $("#dv_LOCALNAME.easy-autocomplete ul").html(result);
+            $("#dv_LOCALNAME.easy-autocomplete").find("li").click(function () {
+
+                var msg = "지역명을 (코드 :" + $(this).find("div").attr("keyCode");
+                msg += " / 지역명 :" + $(this).find("div").text();
+                msg += " / 위도 : " + $(this).find("div").attr("LATITUDE");
+                msg += " / 경도 : " + $(this).find("div").attr("LONGITUDE");
+                msg += ")로 검색합니다."
+                MessageWrite(msg, 2);
+                $("#LOCALNAME").val($(this).find("div").text());
+
+                $("#dv_LOCALNAME.easy-autocomplete").find("ul").hide();
+            })
+        }
+
+
+        function MessageWrite(msg, type) {
+            if (type == undefined)
+                $("#spResult").html(msg);
+            else if (type >= 2) {
+                $("#spResult" + String(type)).html(msg);
+            }
+        }
+
+
+    </script>
+
+
+
+<script type="text/javascript">
+
+        function LOCAL_NAME1_KEYUP() {
+            $("#LOCAL_NAME1").focusout(function () { setTimeout('$("#dv_LOCAL_NAME1.easy-autocomplete").find("ul").hide()', 200); });
+            $("#LOCAL_NAME1").keyup(function (e) {
+
+                if (e.keyCode == 40) //아래 방향키
+                {
+                    if ($("#dv_LOCAL_NAME1.easy-autocomplete ul li.selected").length == 0) {
+                        $("#dv_LOCAL_NAME1.easy-autocomplete ul li:eq(0)").addClass("selected")
+                    } else {
+                        var preli = $("#dv_LOCAL_NAME1.easy-autocomplete ul li.selected");
+                        $("#dv_LOCAL_NAME1.easy-autocomplete ul li").removeClass("selected");
+                        preli.next().addClass("selected");
+                    }
+                    return;
+                }
+                else if (e.keyCode == 38) { // 위 방향키
+                    var preli = $("#dv_LOCAL_NAME1.easy-autocomplete ul li.selected");
+                    $("#dv_LOCAL_NAME1.easy-autocomplete ul li").removeClass("selected");
+                    preli.prev().addClass("selected");
+                    return;
+                }
+                else if (e.keyCode == 37 || e.keyCode == 39) {
+                    return;
+                }
+                else if (e.keyCode == 13) {
+			try{ var param = new Object();
+               param.CODE = $("#dv_LOCAL_NAME1.easy-autocomplete ul li.selected div").attr("keyCode");
+               param.NAME = $("#dv_LOCAL_NAME1.easy-autocomplete ul li.selected div").text();
+               param.LATITUDE = $("#dv_LOCAL_NAME1.easy-autocomplete ul li.selected div").attr("LONGITUDE");
+               param.LONGITUDE = $(this).find("div").attr("LONGITUDE");
+               LOCAL_NAME1_callback(param);
+			} catch(e){}
+                    $("#LOCAL_NAME1").val($("#dv_LOCAL_NAME1.easy-autocomplete ul li.selected div").text());
+                    $("#dv_LOCAL_NAME1.easy-autocomplete").find("ul").hide();
+
+                    return;
+                }
+                $("#dv_LOCAL_NAME1.easy-autocomplete").find("ul").show();
+                //setTimeout(SetAutoLogalName(), 300);
+                if ((e.keyCode >= 48 && e.keyCode <= 57)
+                    || (e.keyCode >= 65 && e.keyCode <= 90)
+                    || (e.keyCode >= 12592 && e.keyCode <= 12687)
+                    || (e.keyCode == 8)
+                    )
+                    BaseCommon.TimeInfo.Delay(function () {
+                        if (_LOCAL_NAME1 == $("#LOCAL_NAME1").val()) return;
+
+                    SetAutoLogalName($("#LOCAL_NAME1").val());
+                }, 150);
+            });
+        }
+        var _LOCAL_NAME1 = "";
+
+
+        function SetAutoLogalName(LOCAL_NAME1)
+        {
+            _LOCAL_NAME1 = LOCAL_NAME1;
+            var params = new Object();
+            params.NAME = LOCAL_NAME1;
+            params.CODE = 15;
+            params = JSON.stringify(params);
+            var url = "/home/PV_LocalNameList";
+
+            if(LOCAL_NAME1 == "") {
+                $("#dv_LOCAL_NAME1.easy-autocomplete").find("ul").hide();
+            }
+            ajax.GetAjax(url, params, "html", function (result) {
+                LOCAL_NAME1AutoCompleate(result)
+            },false);
+        }
+
+        function LOCAL_NAME1AutoCompleate(result) {
+            $("#dv_LOCAL_NAME1.easy-autocomplete ul").html(result);
+            $("#dv_LOCAL_NAME1.easy-autocomplete").find("li").click(function () {
+			try{ var param = new Object();
+               param.CODE =  $(this).find("div").attr("keyCode");
+               param.NAME =  $(this).find("div").text();
+               param.LATITUDE = $(this).find("div").attr("LATITUDE");
+               param.LONGITUDE = $(this).find("div").attr("LONGITUDE");
+               LOCAL_NAME1_callback(param);
+			} catch(e){}
+
+                $("#LOCAL_NAME1").val($(this).find("div").text());
+
+                $("#dv_LOCAL_NAME1.easy-autocomplete").find("ul").hide();
+            })
+        }
+</script> 
+}
+
+<div class="ui vertical stripe segment">
+    <form class="ui form">
+
+        @Html.Semantic_TITLE("템플릿페이지")
+
+        <div class="ui stackable grid fields">
+
+            <div class="one column row">
+                <div class="column">
+                    
+                   @Html.Semantic_TITLE2("검색어 자동완성 템플릿")
+                    <div id="dv_KEYWORD_NAME" class="easy-autocomplete" style="width: 184px;">
+                        <input id="KEYWORD_NAME" placeholder="검색어를 입력하세요" autocomplete="on">
+                        <div class="easy-autocomplete-container" id="eac-container-inputOne">
+                            <ul style="display:block"></ul>
+                        </div>
+                    </div>
+                    <span id="spResult" style="font-weight:bold"></span>
+                </div>
+                <div class="column">
+                    &nbsp;
+                    </div>
+                    <div class="column">
+                        @Html.Semantic_TITLE2("지역 검색어 자동완성 템플릿")
+                        
+                        <p>
+                        </p>
+                        <div id="dv_LOCALNAME" class="easy-autocomplete" style="width: 184px;">
+                            <input id="LOCALNAME" placeholder="검색어를 입력하세요" autocomplete="on">
+                            <div class="easy-autocomplete-container" id="eac-container-inputOne">
+                                <ul style="display:block"></ul>
+                            </div>
+                        </div>
+                        <span id="spResult2" style="font-weight:bold"></span>
+                    </div>
+                </div>
+            <span id="spMsg">dfsdfds</span>
+        </div>
+    </form>
+</div>

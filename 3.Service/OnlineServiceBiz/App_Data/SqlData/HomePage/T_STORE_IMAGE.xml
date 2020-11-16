@@ -1,0 +1,72 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<DBAgentMultiTemplate  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns="http://altsoft.kr/">
+
+  <DBAgentTemplate TemplateID="GetStoreImageList">
+    <!-- 
+    SqlType : SQL의 형태를 지정합니다.
+      Example 1:<SqlType>FixedSQL</SqlType> 고정적인 SQL을 지원합니다. 
+      Example 2:<SqlType>DynamicSQL</SqlType> 동적인 SQL Type1을 지원합니다.  
+    Description : 해당 SQL의 기능설명을 적습니다.
+    SQLModifier : 해당 SQL의 작성자(수정자)를 적습니다
+    LastModifyDate : 해당 SQL의 마지막 수정일을 적습니다
+    -->
+    <Information>
+      <SqlType>DynamicSQL</SqlType>
+      <Description>매장별이미지조회</Description>
+      <SQLModifier>전상훈</SQLModifier>
+      <LastModifyDate>2016-06-01</LastModifyDate>
+    </Information>
+
+    <TemplateSQL>
+      <!-- FixedSQL : 고정된 SQL이 들어가는 곳입니다. -->
+      <FixedSQL>
+        <![CDATA[ 
+    SET NOCOUNT ON
+    /* 업체별이미지조회 조회 GetStoreImageList */
+    SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED
+    
+    SELECT 
+          STORE_CODE
+	      , A.SERVICE_TYPE
+	      , A.IMAGE_TYPE
+	      , A.SEQ
+	      , A.IMAGE_URL
+	      , A.DATA1
+	      , A.DATA2
+	      , A.DATA3
+	      , A.REMARK
+	      , A.HIDE
+	      , A.INSERT_CODE
+	      , A.INSERT_DATE
+	      , A.UPDATE_CODE
+	      , A.UPDATE_DATE 
+      FROM T_STORE_IMAGE A
+     WHERE 1=1
+         #[STORE_CODE]
+         #[SERVICE_TYPE]
+         #[IMAGE_TYPE]
+     ORDER BY A.SERVICE_TYPE
+            , A.IMAGE_TYPE
+            , A.SEQ
+   SET NOCOUNT OFF
+      ]]>
+      </FixedSQL>
+      <DynamicBodys>
+        <Key>STORE_CODE</Key>
+        <Body>AND A.STORE_CODE = {0} </Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>SERVICE_TYPE</Key>
+        <Body>AND A.SERVICE_TYPE = '{0}' </Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>IMAGE_TYPE</Key>
+        <Body>AND A.IMAGE_TYPE = '{0}' </Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>HIDE</Key>
+        <Body>AND A.HIDE = '{0}' </Body>
+      </DynamicBodys>
+    </TemplateSQL>
+  </DBAgentTemplate>
+</DBAgentMultiTemplate>

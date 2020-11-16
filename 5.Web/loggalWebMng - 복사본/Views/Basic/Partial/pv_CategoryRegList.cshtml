@@ -1,0 +1,65 @@
+﻿@using ALT.VO.loggal;
+@using ALT.Framework;
+@using ALT.Framework.Data;
+
+@{
+    List<CATEGORY_PAGE_LIST> list = (List<CATEGORY_PAGE_LIST>)ViewBag.list;
+    string totCnt = (list.Count() == 0 ? "0" : list.First().TOTAL_ROWCOUNT.ToString());
+    string title = "카테고리명";
+    string tbName = string.IsNullOrEmpty( ViewBag.TABLE_NAME) ? "" : ViewBag.TABLE_NAME;
+    if (tbName == "tbl1") { title = "시/도"; }
+    else if (tbName == "tbl2") { title = "시/군/구"; }
+    else if (tbName == "tbl3") { title = "읍/면/동"; }
+
+}
+
+<input type="hidden" id="@(ViewBag.TABLE_NAME)_TOTAL" value="@totCnt" />
+<div class="mrc-fixed-table-container @(ViewBag.TABLE_NAME)">
+    <div class="header-bg"></div>
+    <div class="table-wrapper">
+        <table class="mrc-table list" id="tbList">
+            <thead>
+                <tr>
+                    <th column_name="CATEGORY_NAME"><div class="th-text">@Html.Raw(title)</div></th>
+                    <th class="hide" column_name="CATEGORY_CODE"><div class="th-text">코드</div></th>
+                    <th class="hide" column_name="CATEGORY_TYPE"><div class="th-text">분류</div></th>
+                    <th class="hide" column_name="CATEGORY_TYPE2"><div class="th-text">분류2</div></th>
+                    <th class="hide" column_name="PARENT_CATEGORY_CODE"><div class="th-text">상위코드</div></th>
+                    <th class="hide"  column_name="LEVEL_DEPTH"><div class="th-text">레벨</div></th>
+                    <th column_name="ORDER_SEQ" style="width:5em"><div class="th-text">순번</div></th>
+                    <th class="hide" column_name="SEARCH_CATEGORY_CODE"><div class="th-text">검색코드</div></th>
+                    <th display_size="pc" column_name="HIDE" ><div class="th-text">숨김</div></th>
+                    <th display_size="detail" column_name="CATEGORY_TYPE_NAME"><div class="th-text">분류1</div></th>
+                    <th display_size="detail" column_name="CATEGORY_TYPE2_NAME"><div class="th-text">분류2</div></th>
+                    <th display_size="detail"><div class="th-text">수정자</div></th>
+                    <th display_size="pc"><div class="th-text">수정시간</div></th>
+                </tr>
+            </thead>
+            <tbody id="tbList">
+                @{
+                    foreach (CATEGORY_PAGE_LIST data in list)
+                    {
+                        <tr>
+                            <td style="border-left:none;"><input type="text" value="@data.CATEGORY_NAME" style="margin-right:2em;" /></td>
+                            <td class="hide">@data.CATEGORY_CODE</td>
+                            <td class="hide">@data.CATEGORY_TYPE</td>
+                            <td class="hide">@data.CATEGORY_TYPE2</td>
+
+                            <td class="hide">@data.PARENT_CATEGORY_CODE</td>
+                            <td class="hide center">@data.LEVEL_DEPTH</td>
+                            <td class="center"><input type="text" value="@data.ORDER_SEQ" class="number" maxlength="3" /></td>
+                            <td class="hide">@data.SEARCH_CATEGORY_CODE</td>
+                            <td class="center"><input type="checkbox" @(data.HIDE == true ? "checked" : "") /></td>
+                            <td>@data.CATEGORY_TYPE_NAME</td>
+                            <td>@data.CATEGORY_TYPE2_NAME</td>
+                            <td class="center">@data.UPDATE_NAME</td>
+                            <td class="center">@data.UPDATE_DATE</td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+        </div>
+    </div>
+
+

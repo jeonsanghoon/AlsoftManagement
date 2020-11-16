@@ -1,0 +1,194 @@
+﻿
+@{
+    ViewBag.Title = "Index";
+}
+
+
+@section scripts{
+    <script type="text/javascript">
+        $(document).ready(function () {
+            validationinit();
+            $("form").submit(function (event) {
+                ChkData();
+                if ($(".ui.error.message").css("display") == "none") { }
+                event.preventDefault();
+            });
+            ComponentInit();
+        })
+
+        function ChkData() {
+           // alert(SemanticUI.CheckBox.GetVal("CHKSAME"));
+        }
+
+        function ComponentInit() {
+
+            $.datetimepicker.setLocale('kr');
+
+
+            $('#BIRTH').datetimepicker({
+                timepicker: false,
+                format: 'Y.m.d'
+            });
+
+            // $('.ui.form').submit();
+        }
+
+        function validationinit() {
+
+            $('.ui.form')
+                 .form({
+                     on: 'change',
+                     focusInvalid: true,
+                     fields: {
+                         USER_NAME: {
+                             identifier: 'USER_NAME',
+                             rules: [
+                               {
+                                   type: 'empty',
+                                   prompt: '사용자이름을 입력하여 주시기 바랍니다.' // Please enter a first name
+                               }
+                             ]
+                         }, BIRTH: {
+                             identifier: 'BIRTH',
+                             rules: [
+                               {
+                                   type: 'empty',
+                                   prompt: '생년월일(예=>1980.08.14)을 입력하여 주시기 바랍니다.' // Please enter a middle name
+                               }
+                             ]
+                         }
+                     }
+
+                 });
+        }
+
+        function doQuery() {
+        }
+
+        function doSave() {
+
+        }
+    </script>
+}
+
+<div class="ui vertical stripe segment">
+    <form class="ui form">
+        <h1 class="ui header">신규고객정보</h1>
+
+        <div class="ui stackable grid fields">
+            <div class="one column row">
+                <div class="column">
+                    <table class="ui celled table">
+                        <tbody>
+                            <tr>
+                                <td class="title">
+                                    @Html.Semantic_TITLE2("사용자구분", true)
+                                </td>
+                                <td colspan="3" class="content">
+                                    @Html.CommonCombo("USER_TYPE", new ALT.VO.Common.T_COMMON_COND { MAIN_CODE = "U001" })
+                                </td>
+
+                            </tr>
+                            <tr>
+                                <td class="title">
+                                    @Html.Semantic_TITLE2("사용자아이디", true)
+                                </td>
+                                <td class="content">
+                                    @Html.Semantic_TextBox("USER_ID", "", SemanticUIHelper.Size.mini, new { @placeholder = "카톡아이디" })
+                                    @Html.Semantic_Button("btnChkUSERID", "중복체크", SemanticUIHelper.enButtonType.Normal, SemanticUIHelper.Size.mini, new { })
+                                </td>
+                                <td class="title">
+                                    @Html.Semantic_TITLE2("암호")
+                                </td>
+                                <td class="content">
+                                    @Html.Semantic_TextBox("PASSWORD", "", SemanticUIHelper.Size.mini, new { @type = "password" })
+                                </td>
+                                <td class="title">
+                                    @Html.Semantic_TITLE2("암호확인")
+                                </td>
+                                <td class="content">
+                                    @Html.Semantic_TextBox("PASSWORD_CONFIRM", "", SemanticUIHelper.Size.mini, new { @type = "password" })
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="title">
+                                    @Html.Semantic_TITLE2("이름", true)
+                                </td>
+                                <td>
+                                    @Html.Semantic_TextBox("USER_NAME", "", SemanticUIHelper.Size.mini, new { @placeholder = "사용자 이름" })
+                                </td>
+                                <td class="title">
+                                    @Html.Semantic_TITLE2("생년월일", true)
+                                </td>
+                                <td class="content">
+                                    <div class="ui mini input " style="max-width:150px;">
+                                        @Html.Semantic_TextBox("BIRTH", "", SemanticUIHelper.Size.mini, new { @placeholder = "생년월일(클릭)", @style = "text-align:center;" })
+
+                                    </div>
+                                    @{
+                                        List<SelectListItem> genderList = new List<SelectListItem>();
+                                        genderList.Add(new SelectListItem { Value = "0", Text = "남자" });
+                                        genderList.Add(new SelectListItem { Value = "1", Text = "여자", Selected = true });
+                                    }
+                                    @Html.Semantic_YesOrNo("GENDER", genderList)
+
+                                </td>
+                                <td class="title">
+                                    @Html.Semantic_TITLE2("주거종류")
+                                </td>
+                                <td class="content ">
+                                    @Html.Semantic_TextBox("aa", "", SemanticUIHelper.Size.mini, "100%")
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="title">
+                                    @Html.Semantic_TITLE2("주민등록등본주소", true)
+                                </td>
+                                <td colspan="3">
+                                    @Html.Semantic_CheckBox("CHKSAME", "상동")
+                                    @Html.Semantic_TextBox("ZIP_CODE1", "", SemanticUIHelper.Size.mini, new { @placeholder = "", @style = "max-width:80px" })
+                                    ~@Html.Semantic_TextBox("ZIP_CODE2", "", SemanticUIHelper.Size.mini, new { @placeholder = "", @style = "max-width:80px" })
+                                </td>
+                                <td class="title">
+                                    @Html.Semantic_TITLE2("주거종류")
+                                </td>
+                                <td class="content">
+                                    @Html.Semantic_TextBox("aa")
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="title">
+                                    @Html.Semantic_TITLE2(" 소유구분", true)
+                                </td>
+                                <td>
+                                    @Html.CommonCombo("GUBUN", new ALT.VO.Common.T_COMMON_COND { MAIN_CODE = "B001" })
+                                </td>
+                                <td class="title">
+                                    @Html.Semantic_TITLE2("주거종류")
+                                </td>
+                                <td>
+                                    @Html.CommonCombo("HOUSE_TYPE", new ALT.VO.Common.T_COMMON_COND { MAIN_CODE = "B002" }, "", null, new { @style = "max-width:500px" })
+                                </td>
+                                <td class="title">
+                                    @Html.Semantic_TITLE2("주거종류")
+                                </td>
+                                <td class="content">
+                                    @Html.Semantic_TextBox("")
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            @Html.Semantic_Button("btnSubmit", "저장", SemanticUIHelper.enButtonType.Save, SemanticUIHelper.Size.medium, new { })
+
+        </div>
+    <div class="ui error message"></div>
+    </form>
+</div>
+
+
+
+
+
+

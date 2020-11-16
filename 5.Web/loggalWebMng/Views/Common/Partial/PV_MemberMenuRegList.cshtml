@@ -1,0 +1,23 @@
+﻿@using ALT.VO.Common;
+@using ALT.Framework.Data;
+@using ALT.BizService;
+@{
+    List<EMPLOYEE_INFO> list = ViewBag.list;
+
+    
+            
+    foreach (EMPLOYEE_INFO data in list)
+    {
+        <tr>
+            <td class="center">@data.USER_NAME</td>
+            <td class="hidden">@data.MEMBER_CODE</td>
+            <td>@data.DEPT_NAME</td>
+            <td>@data.COMP_TITLE_NAME</td>
+            <td class="hidden">@data.COMP_POSITION_NAME</td>
+            <td>@data.MENU_GROUP_NAME</td>
+            <td class="hide">@data.STORE_CODE</td>
+        </tr>
+    }
+}
+    
+

@@ -1,0 +1,80 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<DBAgentMultiTemplate  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns="http://altsoft.kr/">
+
+  <DBAgentTemplate TemplateID="GetCompanyList">
+    <!-- 
+    SqlType : SQL의 형태를 지정합니다.
+      Example 1:<SqlType>FixedSQL</SqlType> 고정적인 SQL을 지원합니다. 
+      Example 2:<SqlType>DynamicSQL</SqlType> 동적인 SQL Type1을 지원합니다.  
+    Description : 해당 SQL의 기능설명을 적습니다.
+    SQLModifier : 해당 SQL의 작성자(수정자)를 적습니다
+    LastModifyDate : 해당 SQL의 마지막 수정일을 적습니다
+    -->
+    <Information>
+      <SqlType>DynamicSQL</SqlType>
+      <Description>업체조회</Description>
+      <SQLModifier>전상훈</SQLModifier>
+      <LastModifyDate>2016-05-30</LastModifyDate>
+    </Information>
+
+    <TemplateSQL>
+      <!-- FixedSQL : 고정된 SQL이 들어가는 곳입니다. -->
+      <FixedSQL>
+        <![CDATA[ 
+    SET NOCOUNT ON
+    /* 업체조회 조회 GetCompanyList */
+    SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED
+
+    SELECT
+          A.COMPANY_CODE
+        , A.COMPANY_ID
+        , A.PASSWORD
+        , A.COMPANY_NAME
+        , A.COMPANY_TYPE
+        , A.PHONE
+        , A.MOBILE
+        , A.EMAIL
+        , A.ADDRESS1
+        , A.ADDRESS2
+        , A.ZIP_CODE
+        , A.OWNER_NAME
+        , A.OWNER_PHONE
+        , A.OWNER_MOBILE
+        , A.OWNER_EMAIL
+        , A.STATUS
+        , A.CULTURE_NAME
+        , A.THEME_NAME
+        , A.REMARK
+        , A.INSERT_CODE
+        , A.INSERT_DATE
+        , A.UPDATE_CODE
+        , A.UPDATE_DATE  
+      FROM T_COMPANY A
+    WHERE 1=1
+      #[COMPANY_CODE]
+      #[COMPANY_ID]
+      #[COMPANY_NAME]
+      #[STATUS]
+      ORDER BY A.COMPANY_NAME
+   SET NOCOUNT OFF
+      ]]>
+      </FixedSQL>
+      <DynamicBodys>
+        <Key>COMPANY_CODE</Key>
+        <Body>AND A.COMPANY_CODE = {0} </Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>COMPANY_ID</Key>
+        <Body>AND A.COMPANY_ID = '{0}' </Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>COMPANY_NAME</Key>
+        <Body>AND A.COMPANY_NAME LIKE '%{0}%' </Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>STATUS</Key>
+        <Body>AND A.STATUS = '{0}' </Body>
+      </DynamicBodys>
+    </TemplateSQL>
+  </DBAgentTemplate>
+</DBAgentMultiTemplate>

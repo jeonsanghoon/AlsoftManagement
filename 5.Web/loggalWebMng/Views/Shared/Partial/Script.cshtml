@@ -1,0 +1,31 @@
+﻿@using System.Web.Optimization;
+
+
+<!--[if ie]>-->
+<script src="~/Common/plugin/js/json3.js"></script>
+<!--<![endif]-->
+<script src="//cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.4.1/semantic.min.js" type="text/javascript"></script>
+<!-- Google API -->
+<script async defer src="//maps.googleapis.com/maps/api/js?key=@(Global.ConfigInfo.GoogleAppKey)"></script>
+
+
+@Scripts.Render("~/BundleScript") ;
+
+<script src="~/Common/js/Common.min.js"></script>
+<script src="~/Common/plugin/semantic-ui/semantic.pagination.min.js"></script>
+<script src="~/Common/plugin/js/jquery.uploadfile_Common.min.js"></script>
+<script src="~/Common/plugin/semantic-ui/Semantic_Common.min.js"></script>
+<script src="~/Common/plugin/js/jquery.datetimepicker/jquery.datetimepicker.full.min.js"></script>
+<script src="~/Common/plugin/js/jquery.datetimepicker/jquery.datetimepicker_Common.min.js"></script>
+<script src="/Common/plugin/js/jquery-tokeninput/jquery.tokeninput_Common.js"></script>
+<script src="~/Common/plugin/js/GoogleAPI/GoogleCommon.js"></script>
+<script src="~/Common/plugin/js/DaumApi/DaumCommon.js"></script>
+<script src="~/Common/plugin/js/MrcUI/Mrc.DataGrid.js?ver=20191213"></script>
+<script type="text/javascript">
+
+    $("document").ready(function () {
+        try {
+            $.datetimepicker.setLocale('ko');
+        } catch (e) { }
+    })
+</script>

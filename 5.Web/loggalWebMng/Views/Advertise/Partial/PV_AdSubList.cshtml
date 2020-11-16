@@ -1,0 +1,42 @@
+﻿
+@{
+    T_AD_SUB Cond = ViewBag.data;
+    IList<T_AD_SUB> list = ViewBag.list;
+    
+}
+@{
+    
+    foreach (T_AD_SUB data in list)
+    {
+        <div class="ui card">
+            <input type="hidden" name="IDX" value="@data.IDX" />
+            <input type="hidden" name="subdata" value="@Json.Encode(data)" />
+            <div class="image">
+                <img src="@data.IMG_URL" style="height:100px;margin:auto;">
+                <input type="hidden" name="IDX" value="@data.IDX" />
+                
+            </div>
+            <div class="content">
+                @*<a class="header">@data.TITLE</a>
+                <div class="meta">
+                    <span class="date">@data.RELATION</span>
+                </div>*@
+                <div class="header">
+                    @data.CONTENT
+                </div>
+            </div>
+            <div class="extra content">
+                <a>
+                    <i class="user icon"></i>
+                    @data.REG_NAME
+                    <span class="right floated">
+                        @(data.UPDATE_DATE.ToString("yyy.MM.dd"))
+                    </span>
+                </a>
+                <br />
+                @Html.Semantic_Button2("btnAdSubDel", "삭제", SemanticUIHelper.enButtonType.Del, new { @onclick = "doSaveAdSub(this,1);", @style = "margin-top:0.5em;float:right" })
+            </div>
+        </div>
+    }
+}
+

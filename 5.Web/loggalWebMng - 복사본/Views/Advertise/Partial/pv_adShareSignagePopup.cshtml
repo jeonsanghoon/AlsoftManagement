@@ -1,0 +1,117 @@
+﻿@{
+
+}
+<style>
+    #popShareSignage .column.row {
+        padding: 0.25em;
+    }
+</style>
+<div class="ui tiny modal form" id="popShareSignage">
+    <div class="header popSharetitle">사이니지</div>
+    <div class="content">
+        <div class="ui grid">
+            <div class="one column row">
+                <div class="column buttons">
+                    @Html.Semantic_TextBox("SIGNAGE_SHARE_NAME_POP", "", new { @placeholder = "기기명" })
+                    @Html.Semantic_Button2("btnSignageSelectQuery", "조회", SemanticUIHelper.enButtonType.Normal, SemanticUIHelper.Size.mini, new { onclick = "doQuery_SignageSharePop();" })
+                </div>
+            </div>
+            <div class="one column row">
+                <div class="column">
+                    <div id="dvSignageSharePop">
+                        <table id="tbSignageSharePopList" class="mrc-table">
+                            <thead>
+                                <tr>
+                                    <th column_name="SIGN_CODE" data-sort="D.SIGN_NAME" style="min-width:50px;" class="sort">사이니지명</th>
+                                    <th column_name="COMPANY_NAME" data-sort="E.COMPANY_NAME" class="sort">소유자</th>
+                                </tr>
+                            </thead>
+                            <tbody style="min-height:4em"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <div class="one column row">
+                <div id="dvpagination_signageSharePop" class="ui floated pagination menu"></div>
+            </div>
+        </div>
+        <div class="ui error message signageSharePopup" style="display:none;"><ul></ul></div>
+    </div>
+    <div class="actions">
+
+        @Html.Semantic_Button2("btnPopSignageShareClose", "닫기", SemanticUIHelper.enButtonType.Normal, new { @onclick = "PopSignageShareClose();" })
+    </div>
+</div>
+<script type="text/javascript">
+    var PARAM_SIGNAGE_SHARE_POP = {
+        PAGE_SIZE: 10
+         , PAGE_COUNT: 15
+         , PAGE: 1
+    }
+    var _pop_adCode = 0;
+    
+    function SignageSharePopOpen(adCode) {
+        _pop_adCode = adCode;
+        $('#popShareSignage').modal("show");
+        doQuery_SignageSharePop();
+    }
+    function PopSignageShareClose() {
+        $('#popShareSignage').modal("hide");
+    }
+    function errormessageClear() {
+        $(".ui.error.message.signageSharePopup").hide();
+        $(".ui.error.message.signageSharePopup ul").html("");
+    }
+
+
+
+    function doQuery_SignageSharePop(page, sort) {
+        $("#SIGN_NAME_POP").unbind("click");
+        $("#SIGN_NAME_POP").keyup(function (e) {
+            if (e.keyCode == 13) {
+                doQuery_SignageSharePop();
+            }
+        })
+
+        if (page == undefined || page < 1) page = 1;
+        PARAM_SIGNAGE_SHARE_POP.PAGE = page;
+        var params = new Object();
+        params.SIGN_NAME = $("#SIGNAGE_SHARE_NAME_POP").val();
+        params.PAGE_COUNT = PARAM_SIGNAGE_SHARE_POP.PAGE_COUNT;
+        params.PAGE = PARAM_SIGNAGE_SHARE_POP.PAGE;
+        params.AD_CODE = _pop_adCode;
+        params.SORT = sort;
+        
+        params = JSON.stringify(params);
+        ajax.GetAjax("/advertise/pv_AdShareSignagelist", params, "html", function (result) {
+            $("#dvSignageSharePop tbody").html(result);
+            $.mrc_table.Init("#dvSignageSharePop #tbSignageSharePopList", false, sort);
+
+            $("#dvpagination_signageSharePop").show();
+
+            $("#dvpagination_signageSharePop").pagination({
+                total: Number($("#dvSignageSharePop #tbSignageSharePopList #total").val()), page: PARAM_SIGNAGE_SHARE_POP.PAGE, pagesize: PARAM_SIGNAGE_SHARE_POP.PAGE_SIZE, perpage: PARAM_SIGNAGE_SHARE_POP.PAGE_COUNT
+                , onPageClick: function (item, page) {
+                    doQuery_SignageSharePop(page);
+                }
+            })
+            $("#dvpagination_signageSharePop").css("display", "");
+            //SemanticUI.Modal.CenterShow("#popShareSignage");
+        });
+     }
+    function mrcGrid_Sort(objName, datasort, orderType) {
+        mrcGrid_Sort_SignageShare(objName, datasort, orderType);
+    }
+
+    function mrcGrid_Sort_SignageShare(objName, datasort, orderType) {
+        if (objName == "#dvSignageSharePop #tbSignageSharePopList") {
+            if (datasort == "" || orderType == "") doQuery_SignageSharePop(1, "");
+            else doQuery_SignageSharePop(1, datasort + " " + orderType);
+        }
+    }
+
+    function PopSignageShareSelect() {
+        // Confirm
+        //$.mrc_table.GetCheckedData("#dvSignageSharePop table")
+    }
+</script>

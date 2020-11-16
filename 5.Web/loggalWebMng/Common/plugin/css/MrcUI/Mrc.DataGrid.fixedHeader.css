@@ -1,0 +1,97 @@
+﻿.mrc-fixed-table-container {
+    width: 100%;
+    height: 800px;
+    border: 0px solid #b2b1b1;
+    position: relative;
+    padding-top: 30px; /* header-bg height값 */
+}
+
+.mrc-fixed-table-container .header-bg {
+    background: #DFDFDF;
+    height: 30px; /* header-bg height값 */
+    position: absolute;
+    top: 0;
+    right: 0;
+    left: 0;
+    border-top: 1px solid #b2b1b1;
+    border-left: 1px solid #b2b1b1;
+    border-right: 1px solid #b2b1b1;
+    border-bottom: 1px solid #b2b1b1;
+}
+
+.mrc-fixed-table-container table.mrc-table  tr:first-child td
+,.mrc-fixed-table-container table.mrc-table  tr:first-child th
+{
+    border-top: 0px solid #b2b1b1;
+    border-bottom: 0px solid #b2b1b1;
+}
+
+.mrc-fixed-table-container .table-wrapper {
+    overflow-x: hidden;
+    overflow-y: auto;
+    height: 100%;
+    border-left: 1px solid #b2b1b1;
+    border-right: 1px solid #b2b1b1;
+    border-bottom: 1px solid #b2b1b1;
+    border-top:0px;
+}
+
+.mrc-fixed-table-container table.mrc-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top:-3em;
+}
+
+.mrc-fixed-table-container table.mrc-table td {
+    border-bottom: 0px solid #b2b1b1;
+    padding: 5px;
+}
+
+
+
+.mrc-fixed-table-container table.mrc-table th {
+    padding: 0px; /* reset */
+}
+
+.mrc-fixed-table-container table.mrc-table th .th-text {
+    position: absolute;
+    top: 0;
+    width: inherit;
+    line-height: 30px; /* header-bg height값 */
+    border-left: 1px solid #b2b1b1;
+    padding:0px;
+    margin-left:-0.1em;
+    margin-right:-0.2em;
+    text-align:center;
+    min-width:40px;
+}
+
+    .mrc-fixed-table-container table.mrc-table th:first-child, .mrc-fixed-table-container table.mrc-table td:first-child {
+        border-left:0px;
+    }
+    .mrc-fixed-table-container table.mrc-table th:last-child, .mrc-fixed-table-container table.mrc-table td:last-child {
+        border-right:0px;
+    }
+.mrc-fixed-table-container table.mrc-table th:first-child .th-text {
+    border-right: none;
+    border-left: none;
+}
+
+.mrc-fixed-table-container table.mrc-table
+{
+    border-bottom:  1px solid #b2b1b1;
+}
+
+.tablefixedheader {
+	z-index:0!important;
+}
+.tablefixedheader {
+	overflow-x: hidden !important;
+	border-bottom: 1px solid #b2b1b1;
+}
+
+.clone-column-table-wrap, .clone-head-table-wrap {
+	width: auto !important;
+	border-bottom: 1px solid #b2b1b1;
+	z-index: 0 !important;
+}

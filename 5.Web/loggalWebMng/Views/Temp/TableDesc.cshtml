@@ -1,0 +1,13 @@
+﻿
+@{
+	ViewBag.Title = "온다지 테이블명세서";
+	Layout = "";
+
+	foreach (var data in ViewBag.htmlList)
+	{
+		@Html.Raw(data);
+	}
+}
+
+
+

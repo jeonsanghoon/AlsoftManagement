@@ -1,0 +1,44 @@
+﻿@using ALT.VO.loggal;
+@{
+
+    T_SIGNAGE_COND Cond =  ViewBag.cond;
+    Cond.IS_REPRESENT = Cond.IS_REPRESENT == null ? false : Cond.IS_REPRESENT;
+    List <T_SIGNAGE> list = ViewBag.list;
+    string totCnt = (list.Count() == 0 ? "0" : list.First().TOTAL_ROWCOUNT.ToString());
+    <input type="hidden" id="total" value="@totCnt" />
+    foreach (T_SIGNAGE data in list)
+    {
+    <tr>
+        <td><a href="/basic/signagereg/@data.SIGN_CODE">@data.SIGN_NAME</a></td>
+        <td class="hide">@data.SIGN_CODE</td>
+        <td class="center">@data.IS_VERTICAL_NAME</td>
+        <td class="center hide">@(data.PLAY_TIME_NAME)</td>
+        <td>@data.ADDRESS1 @data.ADDRESS2</td>
+        <td>@data.ZIP_CODE</td>
+        <td>@data.LATITUDE</td>
+        <td>@data.LONGITUDE</td>
+        <td class="center  @(data.AUTH_NUMBER == null ? "none" : "")"><a class="authnumberpopup" href="javascript:void(0);" onclick="$('#popAutoNumberApply').modal('show');">@(data.AUTH_NUMBER == null ? "미인증" : (data.AUTH_NUMBER.ToString().Count() >= 4 ? data.AUTH_NUMBER.ToString() : data.AUTH_NUMBER.ToString().PadLeft(4, '0')))</a> </td>
+        <td class="center">@data.AD_SIGNINFO_CNT</td>
+        @*<td class="center" style="color:blue;text-decoration:underline;cursor:pointer;" onclick="subSignageReg(@data.SIGN_CODE,'@data.SIGN_NAME');">신규@(data.SUB_SIGN_CNT > 0 ? "(" + data.SUB_SIGN_CNT + ")" : "")</td>*@
+        @{
+            if (Cond.IS_REPRESENT == true)
+            {
+                <td class="center">@Html.Semantic_Button("btnSubNew", "신규", SemanticUIHelper.enButtonType.New, new { @onclick = "subSignageReg(" + data.SIGN_CODE.ToString() + ");" }) @Html.Semantic_Button("btnSubNew", "복사", SemanticUIHelper.enButtonType.Request, new { @onclick = "signageSubCopySave(" + data.SIGN_CODE.ToString() + ");" }) </td>
+                <td class="center">@data.SUB_SIGN_CNT</td>
+            }
+        }
+        <td class="center">@data.UPDATE_NAME</td>
+        <td class="center">@data.UPDATE_DATE</td>
+
+        <td class="cneter" style="text-align:center;">
+            @{
+                if (data.AUTH_NUMBER != null)
+                {
+                    <button type="button" class="ui mini button" onclick="location.href='/basic/signagecontrol/@data.SIGN_CODE'">등록</button>
+                }
+            }
+
+        </td>
+    </tr>
+    }
+}

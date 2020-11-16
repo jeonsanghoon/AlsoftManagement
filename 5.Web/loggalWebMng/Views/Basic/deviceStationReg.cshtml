@@ -1,0 +1,689 @@
+﻿@model EditTempleateModel
+
+
+@{
+    T_DEVICE_STATION data = ViewBag.data == null ? new T_DEVICE_STATION() : ViewBag.data;
+    Daum_MapMultiMarker option2 = new Daum_MapMultiMarker() { ID = "deviceloc", MAKER_MAX_COUNT = 1, default_LEVEL = 10 };
+    Daum_MapMultiMarker option3 = new Daum_MapMultiMarker() { ID = "devicelocRange", MAKER_MAX_COUNT = 1, default_LEVEL = 10, bCircle = false, bScript = false };
+}
+
+<!--<script src="http://dmaps.daum.net/map_js_init/postcode.v2.js"></script>-->
+<script src="https://ssl.daumcdn.net/dmaps/map_js_init/postcode.v2.js"></script>
+@section scripts{
+    <script type="text/javascript">
+        $(document).ready(function () {
+            componentInit();
+        });
+        var _oriAddress = "";
+        function DEVICE_addressCallBack(data) {
+            console.log("DEVICE_addressCallBack");
+            _oriAddress = data.sido + " " + data.sigungu + " " + data.bname;
+            var arrAddress = data.address.split(' ');
+
+            var address1 = "";
+            for (var i = 0; i < arrAddress.length; i++) {
+                if (i > 0) address1 += " ";
+                address1 += arrAddress[i];
+
+                if (i > 1 && arrAddress[i].charAt(arrAddress[i].length - 1) == "면") {
+                    _oriAddress = address1;
+                    break;
+                }
+            }
+
+            if (data.longitude == undefined) {
+                DaumApi.Map.addr2coord(data.address, function (result) {
+                    $("#LATITUDE").val(result.lat);
+                    $("#LONGITUDE").val(result.lng);
+                });
+            }
+        }
+
+
+        function componentInit() {
+            validationinit();
+            $(".ui.form").submit(function (event) {
+                if ($(".ui.error.message").css("display") == "none") { doSave(); }
+                event.preventDefault();
+            });
+            DeviceinDeviceStationlist();
+
+            $('.menu .item').tab();
+            $('.menu .item').click(function(){
+                switch($(this).attr("data-tab"))
+                {
+                    case "first":
+                        DeviceinDeviceStationlist();
+                        break;
+                    default:
+                        doQuery_DeviceStationPlaceList();
+                        doQuery_DeviceStationPlaceList2();
+                        break;
+
+                }
+            })
+
+            stationInit();
+
+            FileUpload();
+            $("#btnImageDel").click(function () {
+                $("#LOGO_URL").val("");
+                $("#LOGO_URL").closest("td").find(".ajax-upload-dragdrop").css("background-image", "url()");
+            })
+            $("#btnOriImage").click(function () {
+                logimagePopupOpen($("#LOGO_URL").val());
+            });
+        }
+
+        function FileUpload() {
+            var params = new Object();
+            //uploadfile_Common.js id CHECK_MENU 체크박스 값확인 이벤트있음
+            uploadFile.init("fileuploader", "/Base/FileUpload", params, false, function (result, resultType) {
+                if (resultType == undefined) {
+                    if (result.return_msg != "") {
+                        $.MessageBox(result.return_msg);
+                    } else {
+                        //$("#spurl").val(result.URL);
+                        $("#LOGO_URL").val(result.FULL_URL);
+                        $(".logo .ajax-upload-dragdrop").css("background-image", "url(" + result.FULL_URL + ")");
+                    }
+                }
+                 else if (resultType == "road") {
+                    $("#LOGO_URL").closest("td").find(".ajax-upload-dragdrop").css("background-image", "url(@data.LOGO_URL)");
+                }
+
+            });
+        }
+        function stationInit() {
+
+            if ($("#STATION_CODE").val() != "" && Number($("#STATION_CODE").val()) > 0) {
+
+                $(".tabDisplay").show();
+            }
+            else {
+                $(".tabDisplay").hide();
+            }
+            STATION_NAME_Change();
+            $("#STATION_NAME").change(function () {
+                STATION_NAME_Change();
+            })
+            DeviceinDeviceStationlist();
+        }
+        function STATION_NAME_Change() {
+            $.each($(".map_wrap"), function (i, obj) {
+                var title = "스테이션 지도등록";
+                if ($("#STATION_NAME").val() != "") {
+                    title = "스테이션(" + $("#STATION_NAME").val() + ")";
+                }
+                $(this).closest(".ui.modal").find(".header").text(title);
+            })
+        }
+        function doList() {
+            location.href = "/basic/devicestationlist";
+        }
+
+        function doNew() {
+            location.href = "/basic/devicestationreg";
+        }
+
+
+        function validationinit() {
+
+            $('.ui.form').form({
+                on: 'change',
+
+                fields: {
+                    STATION_NAME: {
+                        identifier: 'STATION_NAME',
+                        rules: [
+                          {
+                              type: 'empty',
+                              prompt: '스테이션명을 입력하여 주시기 바랍니다.'
+                          }
+                        ]
+                    }
+                    //, DEVICE_POST_CODE: {
+                    //    identifier: 'DEVICE_POST_CODE',
+                    //    rules: [
+                    //      {
+                    //          type: 'empty',
+                    //          prompt: '주소를 입력하여 주시기 바랍니다.'
+                    //      }
+                    //    ]
+                    //},
+                    //LATITUDE: {
+                    //    identifier: 'LATITUDE',
+                    //    rules: [
+                    //      {
+                    //          type: 'empty',
+                    //          prompt: '위도를 등록하여 주시기 바랍니다.'
+                    //      }
+                    //    ]
+                    //},
+                    //LONGITUDE: {
+                    //    identifier: 'LONGITUDE',
+                    //    rules: [
+                    //      {
+                    //          type: 'empty',
+                    //          prompt: '경도를 등록하여 주시기 바랍니다.'
+                    //      }
+                    //    ]
+                    //}
+                }
+
+               , onSuccess: function (event, fields) { $(".ui.error.message").html(""); $(".ui.error.message").hide(); }
+               , onFailure: function (event, fields) {
+
+                   //실패후 첫번재 에러 태그에 포커스
+                   SemanticUI.Form.Invalidation.ErrorFocus();
+               }, onInvalid: function (event) {
+                   //
+                   SemanticUI.Form.addErrorMessage(event);
+               }
+            });
+        }
+
+        function doSave(saveType) {
+            var params = BaseCommon.FormInfo.serializeJson(".ui.form");
+
+            if (saveType == undefined) saveType = "U";
+            params.SAVE_TYPE = saveType;
+            params.ZIP_CODE = $("#DEVICE_POST_CODE").val();
+            params.LOGO_URL = $("#LOGO_URL").val();
+            params.ADDRESS1 = $("#DEVICE_ADDRESS1").val();
+            params.ADDRESS2 = $("#DEVICE_ADDRESS2").val();
+            params = JSON.stringify(params);
+
+            ajax.GetAjax("/basic/deviceStationsave/", params, "json", function (result) {
+                if (result.ERROR_MESSAGE != "") {
+                    $.MessageBox(result.ERROR_MESSAGE);
+                }
+                else if (result.MESSAGE != null && result.MESSAGE != "") {
+                    $.MessageBox(result.MESSAGE).done(function () { dv_HIDE_Click(0); });
+                }
+                else {
+                    
+                    $("#STATION_CODE").val(result.DATA);
+                    stationInit();
+                }
+
+                if (saveType == "D") location.href = "/basic/devicestationlist";
+            });
+        }
+        function MessageBoxConfirm(message) {
+            return $.MessageBox({
+                buttonDone: "Yes",
+                buttonFail: "No",
+                message: message
+            });
+        }
+
+        function doDelete() {
+            MessageBoxConfirm("정말로 삭제하시겠습니까?").done(function () {
+                doSave('D');
+            });
+        }
+        var PARAM_DATA = {
+            PAGE_SIZE: 10
+         , PAGE_COUNT: 15
+         , PAGE: 1
+         , SORT:"A.DEVICE_NAME"
+        }
+        function DeviceinDeviceStationlist(page, sort) {
+            var params = new Object();
+
+            if (page == undefined || page < 1) page = 1;
+            PARAM_DATA.PAGE = page;
+            if(sort != undefined) PARAM_DATA.SORT = sort;
+
+            params.PAGE_COUNT = PARAM_DATA.PAGE_COUNT;
+            params.PAGE = PARAM_DATA.PAGE;
+            params.SORT = PARAM_DATA.SORT;
+            params.HIDE = false;
+            params.DISPLAY_MODE = "Station";
+            params.STATION_CODE = @data.STATION_CODE.ToString("0");
+
+            params = JSON.stringify(params);
+            ajax.GetAjax("/basic/PV_devicelist", params, "html", function (result) {
+                $("#tbDeviceList tbody").html(result);
+                $.mrc_table.Init("#tbDeviceList", true, sort);
+                $("#dvpagination").show();
+                $("#dvpagination").pagination({
+                    total: Number($("#tbDeviceList #total").val()), page: PARAM_DATA.PAGE, pagesize: PARAM_DATA.PAGE_SIZE, perpage: PARAM_DATA.PAGE_COUNT
+                    , onPageClick: function (item, page) {
+                        DeviceinDeviceStationlist(page);
+                    }
+                })
+                $("#dvpagination").css("display", "");
+            });
+        }
+        function doDeviceAdd()
+        {
+            DeviceSelectPopOpen(0, true);
+        }
+
+        function PopDeviceCallback(result)
+        {
+            var deviceCodes = "0";
+            $.each(result, function(i, data) {
+                deviceCodes += "," + String(data.DEVICE_CODE);
+            })
+            doDeviceAddCond(deviceCodes);
+        }
+        function doDeviceAddCond(deviceCodes) {
+            var params = new Object();
+            params.STATION_CODE = $("#STATION_CODE").val();
+            params.DEVICE_CODES = deviceCodes;
+
+            if(params.STATION_CODE == 0)
+            {
+                $.MessageBox("로컬박스를 추가할 수 없습니다.").done(function () { return; });
+                return;
+            }
+
+            deviceCodeUpdate( JSON.stringify(params));
+
+        }
+
+        function doDeviceDelete() {
+            var list = $.mrc_table.GetCheckedData("#tbDeviceList");
+            var deviceCodes = "0";
+
+            $.each(list, function(i, data) {
+                deviceCodes += "," + String(data.DEVICE_CODE);
+
+            })
+
+            if(deviceCodes == "0")
+            {
+                $.MessageBox("삭제할 로컬박스를 선택하세요").done(function () { return;
+                });
+                return;
+            }
+
+            MessageBoxConfirm("선택된 정보를 삭제하시겠습니까?").done(function () {
+                var params = new Object();
+                params.STATION_CODE = null;
+                params.DEVICE_CODES = deviceCodes;
+                deviceCodeUpdate( JSON.stringify(params));
+            });
+        }
+        function deviceCodeUpdate(params)
+        {
+            
+            ajax.GetAjax("/basic/deviceStationCodeUpdate/", params, "json", function (result) {
+                if (result.ERROR_MESSAGE != "") {
+                    $.MessageBox(result.ERROR_MESSAGE);
+                }
+                else{
+                    DeviceinDeviceStationlist();
+                }
+            });
+        }
+
+
+        function doQuery_DeviceStationPlaceList(isRange) {
+
+            if ($("#STATION_CODE").val() != "" && Number($("#STATION_CODE").val()) > 0) {
+                $(".tabDisplay").show();
+            }
+            if (isRange == undefined) isRange = true;
+
+            var params = new Object();
+            params.STATION_CODE = $("#STATION_CODE").val();
+            params.IS_RANGE = isRange;
+            var param = JSON.stringify(params);
+            ajax.GetAjax("/basic/PV_DeviceStationPlaceList", param, "html", function (result) {
+                    $("#tbList_DeviceStationPlace tbody#tbodyList_DeviceStationPlace").html(result);
+                    $.mrc_table.Init("#tbList_DeviceStationPlace");
+                    //$.mrc_table.fixedHeder("#tbList_DeviceStationPlace");
+                    $("#spRegionPlaceCnt").text(String($.mrc_table.GetData("#tbList_DeviceStationPlace").length) + "곳 선택");
+                    //$("#tbList_DeviceStationPlace").closest(".mrc-fixed-table-container").css("height", "auto");
+                    //$("#tbList_DeviceStationPlace").closest(".mrc-fixed-table-container").css("min-height", "80px");
+                    doQuery_DeviceStationPlaceList2()
+            });
+
+        }
+        var localName = "";
+        function fnDaumMapMultiMaker()
+        {
+            localName = "";
+            var lat=0,lng=0;
+
+            if($("#LOCAL_NAME3").val() != "")
+            {
+                localName = $("#LOCAL_NAME3").val() ;
+            }
+
+            if (localName != "") {
+                DaumApi.Map.addr2coord((localName == "" ? "서울시" : localName), function (result) {
+                    markerMapPopupOpen(result.lat, result.lng);
+                }, function (result) {
+                    markerMapPopupOpen(0, 0);
+                });
+            }
+            else
+                markerMapPopupOpen(0, 0);
+        }
+        function markerMapPopupOpen(lat, lng)
+        {
+            var makerlist= new Array();
+            try{
+                makerlist = JSON.parse($("#tbList_DeviceStationPlace #markerlist").val());
+            }catch(e){}
+            var position = { lat: lat, lng: lng };
+            @(option2.ID)_MapRangeOpen(makerlist, position);
+        }
+
+        function @(option2.ID)_DaumMapMarker_Callback(rtnList)
+        {
+            doSave_DeviceStationPlace(rtnList);
+        }
+
+        function doSave_DeviceStationPlace(rtnList) {
+            var param = new Object();
+            param.STATION_CODE = $("#STATION_CODE").val();
+            param.IS_RANGE = true;
+            param.list = rtnList;
+            param = JSON.stringify(param);
+            ajax.GetAjax("/basic/DeviceStationPlaceSave/", param, "json", function (result) {
+                if (result.ERROR_MESSAGE != "") {
+                    $.MessageBox(result.ERROR_MESSAGE);
+                } else {
+                    doQuery_DeviceStationPlaceList();
+                }
+            });
+        }
+
+        function fnDaumMapMultiMaker2() {
+            var lat, lng;
+            if ($.mrc_table.GetData("#tbList_DeviceStationPlace").length == 1) {
+                lat = $.mrc_table.GetData("#tbList_DeviceStationPlace")[0].LATITUDE;
+                lng = $.mrc_table.GetData("#tbList_DeviceStationPlace")[0].LONGITUDE;
+                radius = $.mrc_table.GetData("#tbList_DeviceStationPlace")[0].RADIUS;
+            }
+            else {
+                $.MessageBox("범위를 먼저 설정하세요").done(function () { fnDaumMapMultiMaker(); });
+            }
+
+
+            var makerlist= new Array();
+            try{
+                makerlist = JSON.parse($("#tbList_DeviceStationPlace2 #markerlist").val());
+            }catch(e){}
+            var position = { lat: lat, lng: lng, radius: radius };
+            @(option3.ID)_MapRangeOpen(makerlist, position);
+        }
+
+        function @(option3.ID)_DaumMapMarker_Callback(rtnList)
+        {
+            doSave_DeviceStationPlace2(rtnList);
+        }
+
+
+        function doSave_DeviceStationPlace2(rtnList) {
+            var param = new Object();
+            param.STATION_CODE = $("#STATION_CODE").val();
+            param.IS_RANGE = false;
+            param.list = rtnList;
+            param = JSON.stringify(param);
+            ajax.GetAjax("/basic/DeviceStationPlaceSave/", param, "json", function (result) {
+                if (result.ERROR_MESSAGE != "") {
+                    $.MessageBox(result.ERROR_MESSAGE);
+                } else {
+                    doQuery_DeviceStationPlaceList2();
+                }
+            });
+        }
+
+        function doQuery_DeviceStationPlaceList2() {
+
+
+
+            var params = new Object();
+            params.STATION_CODE = $("#STATION_CODE").val();
+            params.IS_RANGE = false;
+            var param = JSON.stringify(params);
+            ajax.GetAjax("/basic/PV_DeviceStationPlaceList", param, "html", function (result) {
+
+                $("#tbList_DeviceStationPlace2 tbody#tbodyList_DeviceStationPlace2").html(result);
+                $.mrc_table.Init("#tbList_DeviceStationPlace2");
+
+                $("#spRegionPlaceCnt2").text(String($.mrc_table.GetData("#tbList_DeviceStationPlace2").length) + "곳 선택");
+                //$("#tbList_DeviceStationPlace").closest(".mrc-fixed-table-container").css("height", "auto");
+                //$("#tbList_DeviceStationPlace").closest(".mrc-fixed-table-container").css("min-height", "80px");
+
+            });
+
+        }
+
+    </script>
+}
+<style>
+    .ui.grid.tabContent {
+        margin-top: -0.5rem;
+        margin-bottom: -0.5rem;
+    }
+</style>
+
+@Html.EditorFor(model => new EditTempleateModel().Kakao_MapMakerCircle_Range, new { optionmap = option2 })
+@Html.EditorFor(model => new EditTempleateModel().Kakao_MapMakerCircle_Range, new { optionmap = option3 })
+@{
+    Html.RenderPartial("/Views/Popup/OriImageP.cshtml");
+}
+<div class="ui vertical stripe segment">
+    @Html.TitleNavigation()
+    <form id="frmMember" class="ui form attached" onSubmit="return false;">
+        <div class="ui stackable grid  fields">
+            <div class="sixteen wide column right button">
+                @Html.Hidden("STATION_CODE", data.STATION_CODE)
+                @Html.Semantic_Button2("btnList", "목록", SemanticUIHelper.enButtonType.ToList, SemanticUIHelper.Size.mini, new { @onclick = "doList();" })
+                @Html.Semantic_Button2("btnNew", "신규", SemanticUIHelper.enButtonType.New, SemanticUIHelper.Size.mini, new { @onclick = "doNew();" })
+                @Html.Semantic_Button2("btnDel", "삭제", SemanticUIHelper.enButtonType.Del, SemanticUIHelper.Size.mini, new { @onclick = "doDelete();" })
+                @Html.Semantic_Button2("btnSubmit", "저장", SemanticUIHelper.enButtonType.Save, SemanticUIHelper.Size.mini, new { @type = "submit" })
+            </div>
+            <div class="sixteen wide column">
+                <table class="ui celled table">
+                    <tbody>
+                        <tr>
+                            <td class="title">
+                                @Html.Semantic_TITLE2("스테이션명", true)
+                            </td>
+                            <td class="content">@Html.Semantic_TextBox("STATION_NAME", data.STATION_NAME, SemanticUIHelper.Size.mini, new { @placeholder = "스테이션명을 등록하세요" })</td>
+                            <!-- 추가 -->
+                            @{
+                                List<SelectListItem> cboHide = new List<SelectListItem>();
+                                cboHide.Add(new SelectListItem { Value = "false", Text = "사용" });
+                                cboHide.Add(new SelectListItem { Value = "true", Text = "미사용" });
+                            }
+                            <td class="title">@Html.Semantic_TITLE2("사용여부")</td>
+                            <td>@Html.Semantic_YesOrNo("HIDE", cboHide, SemanticUIHelper.Size.mini, data.HIDE.ToString("false").ToLower())</td>
+                            <td class="title" rowspan="3">
+                                @Html.Semantic_TITLE2("썸네일")
+                            </td>
+                            <td class="content logo" rowspan="3" style="text-align:center;">
+                                @Html.Hidden("LOGO_URL",data.LOGO_URL)
+                                <!-- Upload -->
+                                <div id="fileuploader">파일</div>
+                                @Html.Semantic_Button2("btnImageDel", "초기화", SemanticUIHelper.enButtonType.Normal, new { @style = "margin-top:0.5em" })
+                                @{
+                                    if (!string.IsNullOrEmpty(data.LOGO_URL))
+                                    {
+                                        @Html.Semantic_Button2("btnOriImage", "원본보기")
+                                    }
+                                    else
+                                    {
+                                        @Html.Semantic_Button2("btnOriImage", "원본보기", SemanticUIHelper.enButtonType.Normal, new { @style = "display:none;" })
+                                    }
+                                }
+                            </td>
+                        </tr>
+                        <tr style="display:none">
+                            <td class="title" rowspan="3">
+                                @Html.Semantic_TITLE2("주소", true)
+                            </td>
+                            <td class="content address" rowspan="3" colspan="3">
+                                @Html.EditorFor(model => model.Kakao_address, new { option = new DaumAddressOption { ID = "DEVICE", POST_CODE = data.ZIP_CODE, ADDRESS1 = data.ADDRESS1, ADDRESS2 = data.ADDRESS2, LATITUDE = data.LATITUDE, LONGITUDE = data.LONGITUDE } })
+                            </td>
+                            <td class="title">@Html.Semantic_TITLE2("위도", true)</td>
+                            <td class="content">@Html.Semantic_TextBox("LATITUDE", data.LATITUDE.ToString(), SemanticUIHelper.Size.mini, new { @placeholder = "위도", @class = "size150", @maxlength = "20", @readonly = "readonly" })</td>
+                        </tr>
+                        <tr style="display:none">
+                            <td class="title">@Html.Semantic_TITLE2("경도", true)</td>
+                            <td class="content"> @Html.Semantic_TextBox("LONGITUDE", data.LONGITUDE.ToString(), SemanticUIHelper.Size.mini, new { @placeholder = "경도", @class = "size150", @maxlength = "20", @readonly = "readonly" })</td>
+                        </tr>
+
+                        <tr>
+                            <td class="title">@Html.Semantic_TITLE2("설명")</td>
+                            <td class="content" colspan="3">@Html.Semantic_TextBox("STATION_DESC", data.STATION_DESC, SemanticUIHelper.Size.mini, new { @placeholder = "설명을 등록하세요", @style = "width:100%" })</td>
+
+
+
+                        </tr>
+                        <tr>
+                            <td class="title">
+                                @Html.Semantic_TITLE2("수정자")
+                            </td>
+                            <td class="content">@Html.Semantic_TextBox("UPDATE_NAME", data.UPDATE_NAME.ToString(SessionHelper.LoginInfo.MEMBER.USER_NAME), new { @readonly = "readonly" })</td>
+                            <td class="title">
+                                @Html.Semantic_TITLE2("수정일")
+                            </td>
+                            <td class="content">
+                                @Html.Semantic_TextBox("UPDATE_DATE", data.UPDATE_DATE.ToString(DateTime.Now.ToString()), new { @readonly = "readonly" })
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="ui error message" style="display:none;width:100%"><ul></ul></div>
+            <div class="sixteen wide column  ui divider tabDisplay"></div>
+
+
+            <div class="sixteen wide column tabDisplay">
+
+                <div class="ui top attached tabular menu">
+                    <a class="active item" data-tab="first">로컬박스</a>
+                    <a class="item" data-tab="second">가상영역</a>
+                </div>
+                <div class="ui bottom attached active tab segment" data-tab="first">
+                    <div class="ui grid tabContent">
+                        <div class="sixteen wide column buttons">
+                            @Html.Semantic_Button2("btnDel", "삭제", SemanticUIHelper.enButtonType.Del, new { onclick = "doDeviceDelete()" })
+                            @Html.Semantic_Button2("btnAdd", "추가", SemanticUIHelper.enButtonType.New, new { onclick = "doDeviceAdd()" })
+                        </div>
+                        <div class="sixteen wide column">
+                            <table id="tbDeviceList" class="mrc-table">
+                                <thead>
+                                    <tr>
+                                        <th column_name="DEVICE_NAME" data-sort="A.DEVICE_NAME" style="min-width:50px;" class="sort">로컬박스명</th>
+                                        <th display_size="tablet" column_name="STATION_NAME" data-sort="A1.STATION_NAME" class="sort">로컬스테이션</th>
+                                        <th column_name="LOGO_URL">썸네일</th>
+                                        <th display_size="tablet" column_name="STORE_NAME" data-sort="B.STORE_NAME" class="sort @(SessionHelper.LoginInfo.STORE_CODE != 1 ? "hide" : "")">지점명</th>
+                                        <th display_size="detail" column_name="BUSI_TYPE_NAME" data-sort="C1.NAME" class="sort">영리구분</th>
+                                        <th display_size="detail" column_name="GROUP_NAME" data-sort="SG.GROUP_NAME" class="sort">그룹명</th>
+                                        <th display_size="tablet" column_name="BUSI_TYPE_NAME" data-sort="C1.NAME" class="sort">영리구분</th>
+                                        <th column_name="BUSI_TYPE_NAME2" data-sort="C2.NAME" class="hide sort" display_size="pc">사업구분</th>
+                                        <th display_size="tablet" column_name="CONTACT_NAME" data-sort="A.CONTACT_NAME" class="sort">담당자명</th>
+                                        <th display_size="pc" column_name="CONTACT_PHONE" data-sort="A.CONTACT_PHONE" class="sort">담당자전화</th>
+
+                                        <th column_name="ADDRESS" data-sort="A.ADDRESS1, A.ADDRESS2" display_size="pc" class="sort">주소</th>
+                                        <th column_name="UPDATE_NAME" data-sort="M.USER_NAME" display_size="pc" class="sort">수정자</th>
+                                        <th column_name="UPDATE_DATE" data-sort="A.UPDATE_DATE" display_size="pc" class="sort">수정시간</th>
+                                        <th column_name="DEVICE_CODE" data-sort="A.DEVICE_CODE" class="hide sort" display_size="pc">로컬박스코드</th>
+
+                                    </tr>
+                                </thead>
+                                <tbody style="min-height:4em"></tbody>
+                            </table>
+
+                        </div>
+                        <div class="sixteen wide column center">
+                            <div id="dvpagination" class="ui floated pagination menu"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="ui bottom attached tab segment" data-tab="second">
+                    <div class="ui grid tabContent">
+                        <div class="sixteen wide column ">
+                            <div class="ui fluid action input" style="margin:0.5em;">
+                                @Html.AutoCompleate("LOCAL_NAME3", "/basic/PV_LocalNameList", null, new { @placeholder = "지역을 선택하세요", @style = "max-width:450px" })
+
+
+                                &nbsp;@Html.Semantic_Button2("btnOpen", "장소선택", SemanticUIHelper.enButtonType.Check, new { @onclick = "fnDaumMapMultiMaker();" }) &nbsp; <b><span style="color:red"> * 총 @(option2.MAKER_MAX_COUNT)곳 중 </span><span style="color:blue" id="spRegionPlaceCnt"> </span> </b>
+                            </div>
+                            @*@Html.Semantic_Button2("btnAdRegionDel", "삭제", SemanticUIHelper.enButtonType.Del, SemanticUIHelper.Size.medium, new { @style = "float:right;padding-bottom:0.5em;", @onclick = "doDelete3();" })*@
+                        </div>
+                    </div>
+                    <div class="sixteen wide column">
+
+                        <table id="tbList_DeviceStationPlace" class="mrc-table">
+                            <thead>
+                                <tr>
+
+                                    <th column_name="JIBUN_ADDRESS">지번주소</th>
+                                    <th column_name="LATITUDE" display_size="tablet" class="center">위도</th>
+                                    <th column_name="LONGITUDE" display_size="tablet" class="center">경도</th>
+                                    <th column_name="RADIUS" display_size="tablet" class="center">반경</th>
+                                    <th column_name="ROAD_ADDRESS" display_size="pc">도로명주소</th>
+                                    <th column_name="ZIP_CODE" display_size="pc" class="center">우편번호</th>
+                                    <th column_name="REGION" display_size="detail">지역</th>
+                                    <th column_name="INSERT_NAME" display_size="detail">등록자</th>
+                                    <th column_name="INSERT_DATE" display_size="detail">등록일</th>
+                                    <th column_name="STATION_CODE" class="hide">스테이션코드</th>
+                                    <th column_name="CK_CODE" class="hide">지역카테고리키워드코드</th>
+                                    <th column_name="IDX" class="hide">광고장소코드</th>
+                                    <th column_name="IS_RANGE" class="hide">범위</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tbodyList_DeviceStationPlace"></tbody>
+                        </table>
+
+                    </div>
+                    <div class="ui grid tabContent" style="margin-top:1em">
+                        <div class="sixteen wide column ">
+                            <div class="ui fluid action input" style="margin:0.5em;">
+                                @Html.Semantic_Button2("btnOpen", "장소추가", SemanticUIHelper.enButtonType.New, new { @onclick = "fnDaumMapMultiMaker2();" }) &nbsp; <b><span style="color:red"> * 총 @(option3.MAKER_MAX_COUNT)곳 중 </span><span style="color:blue" id="spRegionPlaceCnt2"> </span> </b>
+                            </div>
+                            @*@Html.Semantic_Button2("btnAdRegionDel", "삭제", SemanticUIHelper.enButtonType.Del, SemanticUIHelper.Size.medium, new { @style = "float:right;padding-bottom:0.5em;", @onclick = "doDelete3();" })*@
+                        </div>
+                    </div>
+                    <div class="sixteen wide column">
+                        <table id="tbList_DeviceStationPlace2" class="mrc-table">
+                            <thead>
+                                <tr>
+                                    <th column_name="JIBUN_ADDRESS">지번주소</th>
+                                    <th column_name="LATITUDE" display_size="tablet" class="center">위도</th>
+                                    <th column_name="LONGITUDE" display_size="tablet" class="center">경도</th>
+                                    <th column_name="RADIUS" display_size="tablet" class="hide center">반경</th>
+                                    <th column_name="ROAD_ADDRESS" display_size="pc">도로명주소</th>
+                                    <th column_name="ZIP_CODE" display_size="pc" class="center">우편번호</th>
+                                    <th column_name="REGION" display_size="detail">지역</th>
+                                    <th column_name="INSERT_NAME" display_size="detail">등록자</th>
+                                    <th column_name="INSERT_DATE" display_size="detail">등록일</th>
+                                    <th column_name="STATION_CODE" class="hide">스테이션코드</th>
+                                    <th column_name="CK_CODE" class="hide">지역카테고리키워드코드</th>
+                                    <th column_name="IDX" class="hide">광고장소코드</th>
+                                    <th column_name="IS_RANGE" class="hide">범위</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tbodyList_DeviceStationPlace2"></tbody>
+                        </table>
+
+                        @*<center>
+                                <div id="dvpagination3" class="ui floated pagination menu" style="margin-top:0.5em;"></div>
+                            </center>*@
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        @{
+            Html.RenderPartial("/Views/Popup/DeviceListP.cshtml");
+        }
+    </form>
+    <div class="ui bottom attached warning message">
+        <span style="font-weight:bold">* 삭제를 원할 경우 등록된 로컬박스 및 가상영역을 먼저 삭제해야만 한다.</span><br />
+        <span style="font-weight:bold">* 삭제시 등록된 로컬박스 및 가상영역이 있을 경우 사용여부가 미사용으로 업데이트 된다.</span>
+    </div>
+</div>

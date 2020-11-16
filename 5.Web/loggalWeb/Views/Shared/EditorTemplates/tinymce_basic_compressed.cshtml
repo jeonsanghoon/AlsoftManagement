@@ -1,0 +1,57 @@
+﻿@{ 
+   loggalWeb.CommonCS.TinyMCEOption option = (ViewData["option"] == null) ? new loggalWeb.CommonCS.TinyMCEOption() : (loggalWeb.CommonCS.TinyMCEOption)ViewData["option"];
+}
+<script type="text/javascript">
+    if (typeof tinymce === 'undefined') {
+        document.write('<script src="@Url.Content("~/Common/plugin/js/tinymce/tinymce.min.js")" type="text/javascript"><\/script>');
+
+    }
+</script>
+
+<script type="text/javascript">
+    (function () {
+        tinymce.init({
+            setup: function (ed) {
+                ed.on("change", function (e) {
+                    try {
+                        @{
+                            if(option.ID == null) {
+                                @(ViewData.TemplateInfo.GetFullHtmlFieldId(string.Empty) + "_change();")
+                            }
+                            else
+                            {
+                                @(option.ID + "_change();")
+                            }
+                          }
+                    }
+                    catch (e) { }
+                });
+                ed.on("keyup", function () {
+                    try {
+                        @{
+                            if(option.ID == null) {
+                                @(ViewData.TemplateInfo.GetFullHtmlFieldId(string.Empty) + "_keyup();")
+                            }
+                            else
+                            {
+                                @(option.ID + "_change();")
+                            }
+                          }
+                    }
+                    catch (e) { }
+                });
+            }
+        , mode: "exact", language: "@option.LANGUAGE", selector : "#@(option.ID == null ? ViewData.TemplateInfo.GetFullHtmlFieldId(string.Empty) : option.ID)", theme: "modern", height: "@(option.ID == null ? "500px" : option.HEIGHT)", width: "@(option.ID == null ? "100%" : option.WIDTH)", plugins: ["advlist autolink lists link image charmap print preview anchor", "searchreplace visualblocks code fullscreen", "insertdatetime media table contextmenu paste"], toolbar: "insertfile undo redo | styleselect | bold italic | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | link image"
+        });
+    })();
+</script>
+@{
+    if (option.ID == null)
+    {
+        @Html.TextArea(string.Empty, ViewData.TemplateInfo.FormattedModelValue)
+    }
+    else
+    {
+        @Html.TextArea(option.ID, option.CONTENT == null ? string.Empty : option.CONTENT)
+    }
+}

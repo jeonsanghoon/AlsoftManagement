@@ -1,0 +1,140 @@
+﻿@{
+
+}
+<style>
+	#popMyDevice .column.row {
+		padding: 0.25em;
+	}
+
+	.ui.form.modal .mrc-table {
+		font-size: 1.1em;
+	}
+</style>
+<div class="ui tiny modal form" id="popMyDevice">
+	<div class="header">로컬박스</div>
+	<div class="content">
+		<div class="ui grid">
+			<div class="one column row">
+				<div class="column buttons">
+					@Html.Semantic_TextBox("DEVICE_NAME_POP", "", new { @placeholder = "로컬박스명" })
+					@Html.Semantic_Button2("btnDeviceSelectQuery", "조회", SemanticUIHelper.enButtonType.Normal, SemanticUIHelper.Size.mini, new { onclick = "doQuery_DevicePop();" })
+				</div>
+			</div>
+			<div class="one column row">
+				<div class="column">
+					<div id="dvDevicePop">
+						<table id="tbDevicePopList" class="mrc-table">
+							<thead>
+								<tr>
+									<th column_name="DEVICE_NAME" data-sort="A.DEVICE_NAME" style="min-width:50px;" class="sort">로컬박스명</th>
+									<th column_name="STORE_NAME" data-sort="A.STORE_NAME" class="sort">지점명</th>
+									<th column_name="STATUS" class="center sort" data-sort="A.STATUS" display_size="tablet">진행</th>
+									<th column_name="ADDRESS" data-sort="A.ADDRESS1, A.ADDRESS2" display_size="detail" class="sort">주소</th>
+									<th column_name="DEVICE_CODE" data-sort="A.DEVICE_CODE" class="hide sort" display_size="pc">로컬박스코드</th>
+								</tr>
+							</thead>
+							<tbody style="min-height:4em"></tbody>
+						</table>
+					</div>
+				</div>
+			</div>
+			<div class="one column row">
+				<div id="dvpagination_devicePop" class="ui floated pagination menu"></div>
+			</div>
+			<div class="one column row hide comment">
+				<div class="column">
+
+					<table class="ui table size100Percent">
+						<tr>
+							<td class="title" style="width:6em;">코멘트</td>
+							<td>@Html.TextArea("COMMENT", new { @style = "height:5em;width:100%;", @cols = "40", @rows = 2 })</td>
+						</tr>
+					</table>
+				</div>
+			</div>
+		</div>
+		<div class="ui error message devicePopup" style="display:none;"><ul></ul></div>
+	</div>
+	<div class="actions">
+		<button class="ui teal button selectbutton" onclick="PopDeviceSelect();">확인</button>
+		@Html.Semantic_Button2("btnPopDeviceClose", "취소", SemanticUIHelper.enButtonType.Normal, new { @onclick = "PopDeviceClose();" })
+	</div>
+</div>
+<script type="text/javascript">
+    var PARAM_DATA_DEVICE_POP = {
+          PAGE_SIZE: 10
+        , PAGE_COUNT: 15
+		, PAGE: 1
+    }
+	var objDevicePopupData = {
+        deviceType : 0
+		, storeCode: 0
+	}
+
+    function RelativeDeviceViewPopOpen(storeCode) {
+		$('#popMyDevice').modal("show");
+		objDevicePopupData.storeCode = storeCode;
+
+        doQuery_DevicePop(1, null);
+	}
+
+    function PopDeviceClose() {
+        $('#popMyDevice').modal("hide");
+    }
+    function errormessageClear() {
+        $(".ui.error.message.devicePopup").hide();
+        $(".ui.error.message.devicePopup ul").html("");
+    }
+
+    function doQuery_DevicePop(page, sort) {
+        $("#DEVICE_NAME_POP").unbind("click");
+        $("#DEVICE_NAME_POP").keyup(function (e) {
+            if (e.keyCode == 13) {
+                doQuery_DevicePop();
+            }
+        })
+
+        if (page == undefined || page < 1) page = 1;
+        PARAM_DATA_DEVICE_POP.PAGE = page;
+        var params = new Object();
+		params.DEVICE_NAME = $("#DEVICE_NAME_POP").val();
+		params.DEVICE_CODE = $("#DEVICE_CODE").val();
+        params.PAGE_COUNT = PARAM_DATA_DEVICE_POP.PAGE_COUNT;
+		params.PAGE = PARAM_DATA_DEVICE_POP.PAGE;
+		params.STORE_CODE = objDevicePopupData.storeCode;
+        params.SORT = sort;
+        params.DISPLAY_MODE = "Popup";
+       
+		params = JSON.stringify(params);
+
+		ajax.GetAjax("/device/pv_RelativeDevice", params, "html", function (result) {
+			$("#dvDevicePop tbody").html(result);
+			$.mrc_table.Init("#tbDevicePopList", false, "");
+
+			$("#dvpagination_devicePop").show();
+
+			$("#dvpagination_devicePop").pagination({
+				total: Number($("#dvDevicePop #tbDevicePopList #total").val()), page: PARAM_DATA_DEVICE_POP.PAGE, pagesize: PARAM_DATA_DEVICE_POP.PAGE_SIZE, perpage: PARAM_DATA_DEVICE_POP.PAGE_COUNT
+				, onPageClick: function (item, page) {
+					doQuery_DevicePop(page);
+				}
+			})
+			$("#dvpagination_devicePop").css("display", "");
+		});
+     }
+
+
+    function PopDeviceSelect() {
+        // Confirm
+        $.MessageBox({
+            buttonDone: "예",
+            buttonFail: "아니오",
+            message: "선택된 로컬박스를 적용하시겠습니까?"
+        }).done(function () {
+            try {
+                PopRelativeDeviceCallback($.mrc_table.GetActiveRowData("#dvDevicePop table"));
+            } catch (e) { }
+            PopDeviceClose();
+        });
+    }
+</script>

@@ -1,0 +1,86 @@
+﻿@using ALT.VO.Common;
+@{
+    List<T_WEBMENU> list = ViewBag.list;
+    List<T_COMMON> combolist = ViewBag.combolist;
+
+    T_COMPANY_COND CompCond = new T_COMPANY_COND { };
+    CompCond.PAGE_COUNT = 10000;
+    CompCond.SORT = "A.COMPANY_NAME";
+    string compOptionLebel = "-선택-";
+    if (SessionHelper.LoginInfo.COMPANY_CODE != 1)
+    {
+        CompCond.COMPANY_CODE = SessionHelper.LoginInfo.COMPANY_CODE;
+        compOptionLebel = null;
+    }
+    IList<T_COMPANY> complist = Service.basicService.GetCompanyList(CompCond);
+
+    T_STORE_COND StoreCond = new T_STORE_COND { DISPLAY_MODE = "Normal" };
+
+    if (SessionHelper.LoginInfo.STORE.STORE_CODE != 1)
+    {
+        StoreCond.COMPANY_CODE = SessionHelper.LoginInfo.STORE.COMPANY_CODE;
+    }
+
+    if (!(SessionHelper.LoginInfo.STORE.STORE_TYPE == 1 || SessionHelper.LoginInfo.STORE.STORE_TYPE == 4))
+    {
+        StoreCond.STORE_CODE = SessionHelper.LoginInfo.STORE.STORE_CODE;
+    }
+
+
+    IList<T_STORE> storelist = Service.basicService.GetStoreList(new T_STORE_COND());
+    var combo_MENU_TYPE = combolist.Where(w => w.MAIN_CODE.Equals("M001")).Select(s => new SelectListItem { Value = s.SUB_CODE.ToString(), Text = s.NAME }).ToList();
+    var combo_MENU_AUTH = combolist.Where(w => w.MAIN_CODE.Equals("U002")).Select(s => new SelectListItem { Value = s.SUB_CODE.ToString(), Text = s.NAME }).ToList();
+    //var combo_USER_AUTH = combolist.Where(w => w.MAIN_CODE.Equals("U003")).Select(s => new SelectListItem { Value = s.SUB_CODE.ToString(), Text = s.NAME }).ToList();
+    foreach (T_WEBMENU data in list)
+    {
+        <tr>
+
+            <td><input type="text" class="number" value="@data.SEARCH_CODE" placeholder="상위코드 + 자신의코드(2자리)로 입력" maxlength=6 /></td>
+            <td><input type="text" value="@data.NAME" /></td>
+            <td class="center"><input type="checkbox" @(@data.HIDE == true ? "checked" : "") /></td>
+            <td class="hide">@Html.CommonComboNormal("MENU_TYPE", combo_MENU_TYPE, data.MENU_AUTH.ToString("1"), "-선택-", new { @class = "size150 field" })</td>
+            <td><input type="text" value="@data.MENU_URL" /></td>
+            <td><input type="text" value="@data.MENU_CLASS" /></td>
+            <td class="center">@data.LEVEL</td>
+            <td>@Html.CommonComboNormal("MENU_AUTH", combo_MENU_AUTH, data.MENU_AUTH.ToString("1"), "-선택-", new { @class = "size120 field" })</td>
+            @{
+                if (data.MENU_AUTH == 1 || data.MENU_AUTH == 2)
+                {
+                    @:<td>@Html.CompCombo("MENU_COMPANY_CODE", complist, data.MENU_COMPANY_CODE.ToString(""), compOptionLebel, new { @class = "size150 field", @disabled = "disabled" })</td>
+                }
+                else
+                {
+                    @:<td>@Html.CompCombo("MENU_COMPANY_CODE", complist,  data.MENU_COMPANY_CODE.ToString(""), compOptionLebel, new { @class = "size150 field" })</td>
+                }
+                if (data.MENU_AUTH != 4)
+                {
+                    
+                    @:<td>@Html.StoreCombo("MENU_STORE_CODE", storelist.Where(w=>w.COMPANY_CODE == data.MENU_COMPANY_CODE).ToList(), data.MENU_STORE_CODE.ToString(""), "-선택", new { @class = "size150 field", @disabled = "disabled" })</td>
+                }
+                else
+                {
+                    @:<td>@Html.StoreCombo("MENU_STORE_CODE", storelist.Where(w=>w.COMPANY_CODE == data.MENU_COMPANY_CODE).ToList(), data.MENU_STORE_CODE.ToString(""), "-선택", new { @class = "size150 field" })</td>
+                }
+
+
+                //List<string> arrData = data.USER_AUTH.ToString("").Split(',').ToList();
+                //var cboUserAuth = from a in combo_USER_AUTH
+                //                  join b in arrData on a.Value equals b into ab
+                //                  from b in ab.DefaultIfEmpty()
+                //                  select new SelectListItem
+                //                  {
+                //                      Value = a.Value
+                //                      ,
+                //                      Text = a.Text
+                //                      ,
+                //                      Selected = string.IsNullOrEmpty(b) ? false : true
+                //                  };
+            }
+            @*<td class="center">@Html.DropDownList("USER_AUTH", cboUserAuth, new { @placeholder = "사용자권한", @multiple = "" })</td>*@
+
+            <td class="center">@data.UPDATE_NAME</td>
+            <td class="center">@data.UPDATE_DATE</td>
+            <td class="center hide">@data.MENU_CODE</td>
+        </tr>
+    }
+}

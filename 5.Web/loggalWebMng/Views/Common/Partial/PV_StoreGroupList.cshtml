@@ -1,0 +1,14 @@
+﻿
+@{
+    List<T_STORE_GROUP> list = ViewBag.list;
+    foreach (T_STORE_GROUP data in list)
+    {
+        <tr>
+            <td class="center hide">@data.STORE_CODE</td>
+            <td class="center hide">@data.GROUP_TYPE</td>
+            <td class="center hide">@data.GROUP_CODE</td>
+            <td class="center"><input type="text" maxlength="20" value="@data.GROUP_NAME" /></td>
+            <td class="center"><input type="text" style="min-width:3em;width:3em;" class="number" maxlength="1" value="@data.SEQ" /></td>
+        </tr>
+    }
+}

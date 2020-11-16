@@ -1,0 +1,225 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<DBAgentMultiTemplate  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns="http://altsoft.kr/">
+	<DBAgentTemplate TemplateID="GetPlaceItemGroupList">
+		<!-- 
+    SqlType : SQL의 형태를 지정합니다.
+      Example 1:<SqlType>FixedSQL</SqlType> 고정적인 SQL을 지원합니다. 
+      Example 2:<SqlType>DynamicSQL</SqlType> 동적인 SQL Type1을 지원합니다.  
+    Description : 해당 SQL의 기능설명을 적습니다.
+    SQLModifier : 해당 SQL의 작성자(수정자)를 적습니다
+    LastModifyDate : 해당 SQL의 마지막 수정일을 적습니다
+    -->
+		<Information>
+			<SqlType>DynamicSQL</SqlType>
+			<Description>장소상품 그룹등록조회 - T_PLACE_ITEM_GROUP 조회</Description>
+			<SQLModifier>권용현</SQLModifier>
+			<LastModifyDate>2019-11-07</LastModifyDate>
+		</Information>
+
+		<TemplateSQL>
+			<!-- FixedSQL : 고정된 SQL이 들어가는 곳입니다. -->
+			<FixedSQL>
+				<![CDATA[ 
+		SET NOCOUNT ON 
+
+		/**********************************************************************/
+	    /* 장소상품 그룹등록조회 - T_PLACE_ITEM_GROUP 조회						  */ 
+	    /**********************************************************************/
+		SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED 
+
+		   SELECT A.GROUP_CODE
+				, A.GROUP_NAME
+				, A.GROUP_SEQ
+				, A.GROUP_TYPE
+				, A.SALE_TYPE
+				, A.HIDE
+				, A.REMARK				
+				, TI.USER_NAME AS INSERT_NAME
+				, A.INSERT_DATE
+				, TU.USER_NAME AS UPDATE_NAME
+				, A.UPDATE_DATE
+			 FROM T_PLACE_ITEM_GROUP A 
+			INNER JOIN T_MEMBER AS TI
+			   ON TI.MEMBER_CODE = A.INSERT_CODE
+			INNER JOIN T_MEMBER AS TU
+			   ON TU.MEMBER_CODE = A.UPDATE_CODE
+			WHERE 1=1
+			ORDER BY {0}
+		   
+		SET NOCOUNT OFF 
+
+      ]]>
+			</FixedSQL>
+		</TemplateSQL>
+	</DBAgentTemplate>
+
+	<DBAgentTemplate TemplateID="PlaceItemGroupSave">
+		<!-- 
+    SqlType : SQL의 형태를 지정합니다.
+      Example 1:<SqlType>FixedSQL</SqlType> 고정적인 SQL을 지원합니다. 
+      Example 2:<SqlType>DynamicSQL</SqlType> 동적인 SQL Type1을 지원합니다.  
+    Description : 해당 SQL의 기능설명을 적습니다.
+    SQLModifier : 해당 SQL의 작성자(수정자)를 적습니다
+    LastModifyDate : 해당 SQL의 마지막 수정일을 적습니다
+    -->
+		<Information>
+			<SqlType>DynamicSQL</SqlType>
+			<Description>장소상품 그룹 등록</Description>
+			<SQLModifier>권용현</SQLModifier>
+			<LastModifyDate>2019-11-07</LastModifyDate>
+		</Information>
+
+		<TemplateSQL>
+			<!-- FixedSQL : 고정된 SQL이 들어가는 곳입니다. -->
+			<FixedSQL>
+				<![CDATA[ 
+	  	SET NOCOUNT ON 
+
+		/*************************************************************/
+		/* 장소상품 그룹 등록 - T_PLACE_ITEM_GROUP 저장 -  SAVE QUERY */ 
+		/*************************************************************/
+		DECLARE     @GROUP_CODE						INT					 = {0}
+				  , @GROUP_NAME                     NVARCHAR(200)        = N'{1}'
+				  , @GROUP_SEQ                      INT                  = CONVERT(INT, CASE WHEN ISNUMERIC('{2}') = 1 THEN '{2}' ELSE '0' END )
+				  , @GROUP_TYPE                     INT                  = CONVERT(INT, CASE WHEN ISNUMERIC('{3}') = 1 THEN '{3}' ELSE '0' END )
+				  , @SALE_TYPE						INT					 = {4}
+				  , @HIDE							BIT					 = {5}
+				  , @REMARK                         NVARCHAR(200)        = N'{6}'
+				  , @INSERT_CODE                    INT                  = {7}
+				  , @INSERT_DATE                    DATETIME             = GETDATE() 
+				  , @UPDATE_CODE                    INT                  = {7}
+				  , @UPDATE_DATE                    DATETIME             = GETDATE() 
+	
+		UPDATE A 
+		SET  	    GROUP_NAME                     = @GROUP_NAME                    
+				 ,  GROUP_SEQ                      = @GROUP_SEQ                     		 
+				 ,  GROUP_TYPE                     = @GROUP_TYPE 
+				 ,  SALE_TYPE					   = @SALE_TYPE	
+				 ,  HIDE						   = @HIDE		
+				 ,  REMARK                         = @REMARK                          
+				 ,  UPDATE_CODE                    = @UPDATE_CODE                   		 
+				 ,  UPDATE_DATE                    = @UPDATE_DATE                   
+		 
+		FROM T_PLACE_ITEM_GROUP A 
+		WHERE GROUP_CODE= @GROUP_CODE
+		IF @@ROWCOUNT = 0
+		BEGIN
+			 INSERT INTO T_PLACE_ITEM_GROUP
+			 (		
+			      GROUP_NAME                    		
+				, GROUP_SEQ                     		
+				, GROUP_TYPE  
+				, SALE_TYPE	
+				, HIDE		
+				, REMARK                        		
+				, INSERT_CODE                   		
+				, INSERT_DATE                   		
+				, UPDATE_CODE                   		
+				, UPDATE_DATE                   		
+			 )
+			   SELECT @GROUP_NAME                   		
+			        , @GROUP_SEQ                    	
+					, @GROUP_TYPE
+					, @SALE_TYPE	
+					, @HIDE		
+					, @REMARK                       		                         	
+					, @INSERT_CODE                  		
+					, @INSERT_DATE                  		
+					, @UPDATE_CODE                  	
+					, @UPDATE_DATE                  	
+			 SET @GROUP_CODE = IDENT_CURRENT('T_PLACE_ITEM_GROUP')
+		 END
+		 SELECT CONVERT(VARCHAR(100), @GROUP_CODE) AS DATA
+
+		SET NOCOUNT OFF
+
+      ]]>
+			</FixedSQL>
+
+		</TemplateSQL>
+	</DBAgentTemplate>
+
+
+	<DBAgentTemplate TemplateID="PlaceItemGroupDelete">
+		<!-- 
+    SqlType : SQL의 형태를 지정합니다.
+      Example 1:<SqlType>FixedSQL</SqlType> 고정적인 SQL을 지원합니다. 
+      Example 2:<SqlType>DynamicSQL</SqlType> 동적인 SQL Type1을 지원합니다.  
+    Description : 해당 SQL의 기능설명을 적습니다.
+    SQLModifier : 해당 SQL의 작성자(수정자)를 적습니다
+    LastModifyDate : 해당 SQL의 마지막 수정일을 적습니다
+    -->
+		<Information>
+			<SqlType>DynamicSQL</SqlType>
+			<Description>장소상품 그룹 삭제</Description>
+			<SQLModifier>권용현</SQLModifier>
+			<LastModifyDate>2019-11-08</LastModifyDate>
+		</Information>
+
+		<TemplateSQL> 
+			<!-- FixedSQL : 고정된 SQL이 들어가는 곳입니다. -->
+			<FixedSQL>
+				<![CDATA[ 
+	SET NOCOUNT ON 
+	    /***************************************************************/
+	    /* 장소상품 그룹 삭제 - T_PLACE_ITEM_GROUP 삭제 -  DELETE QUERY */ 
+	    /***************************************************************/
+	    DECLARE @GROUP_CODE INT = {0}
+		  	    
+	    DELETE FROM T_PLACE_ITEM_GROUP WHERE GROUP_CODE = @GROUP_CODE
+	    
+	    SELECT N'성공적으로 삭제가 완료되었습니다.' MESSAGE
+    SET NOCOUNT OFF            
+      ]]>
+			</FixedSQL>
+
+		</TemplateSQL>
+	</DBAgentTemplate>
+
+	<DBAgentTemplate TemplateID="PlaceItemGroupSeqSave">
+		<!-- 
+    SqlType : SQL의 형태를 지정합니다.
+      Example 1:<SqlType>FixedSQL</SqlType> 고정적인 SQL을 지원합니다. 
+      Example 2:<SqlType>DynamicSQL</SqlType> 동적인 SQL Type1을 지원합니다.  
+    Description : 해당 SQL의 기능설명을 적습니다.
+    SQLModifier : 해당 SQL의 작성자(수정자)를 적습니다
+    LastModifyDate : 해당 SQL의 마지막 수정일을 적습니다
+    -->
+		<Information>
+			<SqlType>DynamicSQL</SqlType>
+			<Description>장소상품 순번 등록</Description>
+			<SQLModifier>권용현</SQLModifier>
+			<LastModifyDate>2019-11-07</LastModifyDate>
+		</Information>
+
+		<TemplateSQL>
+			<!-- FixedSQL : 고정된 SQL이 들어가는 곳입니다. -->
+			<FixedSQL>
+				<![CDATA[ 
+	  	SET NOCOUNT ON 
+
+		/****************************************************************/
+		/* 장소상품 순서 등록 - T_PLACE_ITEM_GROUP_SEQ 저장 -  SAVE QUERY */ 
+		/****************************************************************/
+		DECLARE @GROUP_CODE	   INT		 = {0}
+			  , @GROUP_SEQ     INT       = {1}
+			  , @UPDATE_CODE   INT       = {2}
+			  , @UPDATE_DATE   DATETIME  = GETDATE() 
+	
+		UPDATE T_PLACE_ITEM_GROUP 
+		   SET GROUP_SEQ   = @GROUP_SEQ                        
+		     , UPDATE_CODE = @UPDATE_CODE                   		 
+		     , UPDATE_DATE = @UPDATE_DATE                   
+		  FROM T_PLACE_ITEM_GROUP
+		 WHERE GROUP_CODE = @GROUP_CODE
+
+		SELECT CONVERT(VARCHAR(100), @GROUP_CODE) AS DATA
+
+		SET NOCOUNT OFF
+      ]]>
+			</FixedSQL>
+
+		</TemplateSQL>
+	</DBAgentTemplate>
+</DBAgentMultiTemplate>
+

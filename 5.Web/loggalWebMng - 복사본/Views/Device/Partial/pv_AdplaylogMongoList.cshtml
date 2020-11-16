@@ -1,0 +1,45 @@
+﻿
+@{
+    T_AD_PLAY_LOG_MONGO_LIST viewData = ViewBag.data;
+    string totCnt = (viewData.list.Count() == 0 ? "0" : viewData.TOTAL_ROWCOUNT.ToString());
+
+
+    T_AD_PLAY_LOG_COND Cond = ViewBag.cond;
+    int? idx = (Cond.PAGE -1) * Cond.PAGE_COUNT;
+
+    <input type="hidden" id="total" value="@totCnt" />
+
+
+    foreach (T_AD_PLAY_LOG_MONGO data in viewData.list)
+    {
+        idx++;
+<tr>
+    <td class="center">@idx</td>
+    <td class="center">@data._id</td>
+    <td class="center">@data.DEVICE_KIND_NAME</td>
+    <td class="center">@data.REG_DAY</td>
+
+
+    <td style="cursor:pointer" onclick="location.href='/advertise/adreg/@data.AD_CODE'"><a>@data.TITLE</a></td>
+
+    @{
+        if (data.DEVICE_CODE == null)
+        {
+            <td>&nbsp;</td>
+        }
+        else
+        {
+            <td style="cursor:pointer" class="center" onclick="location.href='/basic/devicereg/@data.DEVICE_CODE'"><a>@data.DEVICE_NAME</a></td>
+        }
+    }
+    <td class="center">@data.BANNER_KIND_NAME</td>
+    <td class="center">@data.BANNER_TYPE2_NAME</td>
+    <td class="center">@data.FRAME_TYPE_NAME</td>
+    <td class="center">@data.PLAY_TYPE_NAME</td>
+    <td class="right">@data.PLAY_TIME.ToString("#,##0.##")</td>
+    <td>@data.REMARK</td>
+    <td class="center">@data.REG_DATE</td>
+</tr>
+    }
+
+}

@@ -1,0 +1,22 @@
+﻿
+@{
+    List<T_MEMBER_BOOKMARK> list = ViewBag.list;
+    string totCnt = (list.Count() == 0 ? "0" : list.First().TOTAL_ROWCOUNT.ToString());
+    <input type="hidden" id="total" value="@totCnt" />
+    foreach (T_MEMBER_BOOKMARK data in list)
+    {
+<tr>
+    <td class="center">@data.DEVICE_CODE</td>
+    <td class="hide">@data.BOOKMARK_CODE</td>
+    <td><a href="/basic/devicereg2/@data.DEVICE_CODE">@data.BOOKMARK_NAME</a></td>
+    <td class="center">@data.COMPANY_NAME</td>
+    <td class="center">@data.USER_ID</td>
+    <td class="center">@data.USER_NAME</td>
+    <td class="left">@data.DEVICE_ADDRESS</td>
+    <td class="center">@data.DEVICE_CNT</td>
+    <td class="center">@data.INSERT_DATE</td>
+  
+</tr>
+    }
+}
+

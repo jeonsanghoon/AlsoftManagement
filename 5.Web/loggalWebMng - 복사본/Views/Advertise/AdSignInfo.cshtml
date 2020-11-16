@@ -1,0 +1,323 @@
+﻿@using System.Linq;
+@{
+    Layout = "~/Views/Shared/_Layout_webview.cshtml";
+
+    List<T_AD_SIGNINFO_SIGNAGE> list = ViewBag.list == null ? new List<T_AD_SIGNINFO_SIGNAGE>() : ViewBag.list;
+    long? SIGN_CODE = (long?)(ViewBag.SIGN_CODE == null ? -1 : ViewBag.SIGN_CODE);
+}
+<style>
+    body, html {
+        height: 100%;
+        background-color: black;
+        background:#000000
+    }
+    
+    :-webkit-full-screen {
+        /* properties */
+    }
+
+    :-moz-full-screen {
+        /* properties */
+    }
+
+    :-ms-fullscreen {
+        /* properties */
+    }
+
+    :full-screen { /*pre-spec */
+        /* properties */
+    }
+
+    :fullscreen { /* spec */
+        /* properties */
+    }
+
+    /* deeper elements */
+    :-webkit-full-screen video {
+        width: 100%;
+        height: 100%;
+    }
+
+    /* styling the backdrop*/
+    ::backdrop {
+        /* properties */
+    }
+
+    ::-ms-backdrop {
+        /* properties */
+    }
+    img#imgPreview {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+    }
+    .playviewer {
+        background-color:black;
+    }
+</style>
+
+
+<div id="dvImage" style="display:none;height:100%;width:100%;background-color:black" class="playviewer">
+    <table style="border:0px;height:100%;width:100%;background: black">
+        <tr><td><img id="imgPreview" src="//semantic-ui.com/images/wireframe/image.png" style="width:100%; height:100%; min-height:300px; " /></td></tr>
+        <tr id="trContnt" style="height:50px;background: black;color: white;display:none;"><td style="padding:0.5em;"><center id="spContent" style="width:100%;height:20px;"><span style="font-family:Jeju Gothic;font-size:2.5em;font-weight:bold"></span></center></td></tr>
+    </table>
+</div>
+<div id="dvMovie" class="playviewer" style="width:100%;height:100%;background-color:black;display:none;">
+    <video style="height:100%;width:100%;background-color:black" id="vdoPreview" autoplay="autoplay" onended="videoend();" onerror="videoError(event);">
+        <source id="movie_src" type="video/mp4">
+    </video>
+</div>
+<div id="dvYoutube" style="width:100%;height:100%;display:none; background-color:black" class="playviewer"></div>
+
+@*<div id="dvYoutube" style="display:none;"><iframe id="ifmYoutubePreview" style="width:100%;height:100%" src="//www.youtube.com/embed/A8o3TSFlQKM?autoplay=0&playsinline=0&autohide=1&showinfo=0&controls=0&frameborder=0" allowfullscreen="allowfullscreen"></iframe></div>*@
+
+
+@*//https://www.jqueryscript.net/demo/Download-Videos-On-Page-Load-jQuery-Blobber/videos/611180814.mp4*@
+
+
+
+<script type="text/javascript">
+    var tag = document.createElement('script');
+
+    tag.src = "https://www.youtube.com/iframe_api";
+    var firstScriptTag = document.getElementsByTagName('script')[0];
+    firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+
+    var jsonList = @Html.Raw(Json.Encode(list));
+    var nAutoPlay = 0;
+    var nPlayCircle = 0;
+    var _signageControlList = [];
+
+
+
+    $("document").ready(function () {
+        setTimeout(  "try{$(document).fullScreen(true);}catch(e){}", 5000);
+       
+        try {
+            $(document).fullScreen(true); $("body").css("overflow", "hidden");
+            $("body").css("background-color", "black");
+            $("body").css("height", "100%");
+        } catch (e) { }
+        AutoPlay();
+    })
+    $(window).load(function () {
+        
+        setTimeout("getSignageControl()", 2000);
+    });
+
+    function signageControlPlay() {
+
+        if (_signageControlList.length > 0) {
+            $(".playviewer").hide();
+            for (var n = 0; n < _signageControlList.length; n++) {
+                if (BaseCommon.DateInfo.ConvertJsonToDate(_signageControlList[n].PLAY_REQ_TIME) <= new Date()) {
+                    var bChkAdd = true;
+                    $.each(jsonList, function (key, value) {
+                        if (value.IDX != undefined && _signageControlList[n].IDX == value.IDX) {
+                            bChkAdd = false;
+                        }
+                    });
+                    if (bChkAdd == true) {
+                        var param = new Object();
+                        param.IS_CONTROL = true;
+                        param.IDX = _signageControlList[n].IDX;
+                        param.SIGN_TYPE = 1;
+                        param.PLAY_FR_TIME = moment(new Date()).format("YYYY-MM-DD HH:mm:ss");
+                        param.CONTENT_URL = _signageControlList[n].CONTENT_URL;
+                        param.UPDATE_CODE = 0;
+                        param.PLAY_TIME = 10;
+                        param.CONTNET = _signageControlList[n].CONTENT;
+                        jsonList.splice(nAutoPlay, 0, param);
+                    }
+                } else {
+                    break;
+                }
+            }
+        }
+
+    }
+
+    function sleep(delay) {
+        var start = new Date().getTime();
+        while (new Date().getTime() < start + delay);
+    }
+
+    function signageControlPlayTimeUpdate(sJson) {
+        var param = JSON.parse(sJson);
+
+        param.PLAY_TO_TIME = moment(new Date()).format("YYYY-MM-DD HH:mm:ss");
+        param = JSON.stringify(param);
+        ajax.GetAjax("/basic/SignageControlPlayUpdate/", param, "json", function (result) {
+            if (result.ERROR_MESSAGE != "") {
+                $.MessageBox(result.ERROR_MESSAGE).done(function () {
+               });
+            }
+        });
+    }
+
+    function AutoPlay() {
+        $(".playviewer").hide();
+        signageControlPlay();
+
+        
+        if (jsonList.length > nAutoPlay) {
+            while (true) {
+                if (jsonList[nAutoPlay].IS_CONTROL != undefined && jsonList[nAutoPlay].IS_CONTROL == true) {
+                    if (jsonList[nAutoPlay].IS_COMPLEATED == true) {
+                        nAutoPlay++;
+                    }
+                    else {
+                        break;
+                    }
+                }
+                else break;
+            }
+        } else {
+            nAutoPlay = 0;
+            if (nPlayCircle = 4) location.reload();
+            nPlayCircle++;
+            
+        }
+
+        if (jsonList.length == 0) {
+            $.MessageBox("배너가 존재하지 않습니다.");
+            return;
+        }
+
+        if (jsonList[nAutoPlay].SIGN_TYPE == 1) {
+
+            var chkImg = new Image;
+            chkImg.src = jsonList[nAutoPlay].CONTENT_URL;
+            if (!chkImg.complete) {
+                FileSkipAfterError();
+            }
+            else {
+
+                $("#dvImage #imgPreview").attr("src", jsonList[nAutoPlay].CONTENT_URL);
+                $("#dvImage #imgPreview").css("height", "100%");
+                $("#trContnt").hide();
+                if (jsonList[nAutoPlay].IS_CONTROL != undefined && jsonList[nAutoPlay].IS_CONTROL == true) {
+                    jsonList[nAutoPlay].IS_COMPLEATED = true;
+                    $("#trContnt").show();
+                    $("#dvImage #imgPreview").css("height", $(window).height() - 50);
+                    $("#spContent span").text(jsonList[nAutoPlay].CONTNET);
+                    setTimeout("signageControlPlayTimeUpdate('" + JSON.stringify(jsonList[nAutoPlay]) + "');", jsonList[nAutoPlay].PLAY_TIME * 1000);
+                } else {
+                }
+
+                $("#dvImage").show()
+                setTimeout("AutoPlay();", jsonList[nAutoPlay].PLAY_TIME * 1000);
+                nAutoPlay++;
+            }
+
+        } else if (jsonList[nAutoPlay].SIGN_TYPE == 2) {
+          
+            var extension = jsonList[nAutoPlay].CONTENT_URL.substr(jsonList[nAutoPlay].CONTENT_URL.lastIndexOf('.') + 1);
+            $("#dvMovie source").attr("type", "video/" + extension);
+            $("#dvMovie source").attr("src", jsonList[nAutoPlay].CONTENT_URL);
+            $("#dvMovie video")[0].load();
+            $('#dvMovie video').trigger('play');
+            $("#dvMovie").show();
+
+        } else if (jsonList[nAutoPlay].SIGN_TYPE == 3) {
+            
+            
+            onYouTubePlayerAPIReady("");
+            
+            $("#dvYoutube").show();
+        }
+        setTimeout("getSignageControl()", 2000);
+    }
+    function videoend(event) {
+        nAutoPlay = nAutoPlay + 1;
+        AutoPlay();
+    }
+
+    var player;
+    function onYouTubePlayerAPIReady(fileName) {
+        try {
+            if (player == null) {
+                player = new YT.Player('dvYoutube', {
+                    height: '100%',
+                    width: '100%',
+                    playerVars: { 'autoplay': 1, 'controls': 0 }, /// { 'autoplay': 1, 'controls': 0 }
+                    videoId: jsonList[nAutoPlay].CONTENT_URL,
+                    autoplay: true,
+                    rel: 0, //0으로 해놓아야 재생 후 관련 영상이 안뜸
+                    events: {
+                        'onStateChange': onPlayerStateChange,
+                        'onError': onPlayerError
+                    }
+                });
+            } else {
+                player.loadVideoById({
+                    'videoId': jsonList[nAutoPlay].CONTENT_URL, //0으로 해놓아야 재생 후 관련 영상이 안뜸
+                    events: {
+                        'onStateChange': onPlayerStateChange,
+                        'onError': onPlayerError
+                    }
+                });
+            }
+        } catch (e) { }
+
+
+
+    }
+
+    function getSignageControl() {
+        var param = new Object();
+        param.SIGN_CODE = $("#SIGN_CODE").val();
+        param.IS_COMPLEATED = false;
+        param.SORT_ORDER = "A.PLAY_REQ_TIME";
+        param.HIDE = false;
+        param.bLoadingBar = false;
+        param = JSON.stringify(param);
+        ajax.GetAjax("/basic/GetSignageControlList/", param, "json", function (result) {
+            _signageControlList = result;
+        });
+    }
+    function onPlayerStateChange(event) {
+        if (event.data === 0) {
+            nAutoPlay = nAutoPlay + 1;
+            AutoPlay();
+        }
+    }
+    function videoError(event) {
+        FileSkipAfterError();
+    }
+    function onPlayerError(event) {
+        FileSkipAfterError();
+    }
+    function FileSkipAfterError() {
+        AdSignageHide(jsonList[nAutoPlay]);
+        jsonList = BaseCommon.ArrayInfo.Remove(jsonList, nAutoPlay);
+        //nAutoPlay = nAutoPlay + 1;
+
+        setTimeout("AutoPlay()", 100);
+    }
+
+
+    function AdSignageHide(idx) {
+        
+        var param = new Object();
+        param.SIGN_CODE = jsonList[nAutoPlay].SIGN_CODE;
+        
+        var savelist = new Array();
+        savelist.push(jsonList[nAutoPlay]);
+        savelist[0].SAVE_TYPE = "HIDE";
+
+        param.list = savelist;
+        
+        param.bLoadingBar = false;
+        param = JSON.stringify(param);
+        ajax.GetAjax("/basic/adSigninfoSignageSave/", param, "json", function (result) {
+            _signageControlList = result;
+        });
+    }
+  
+</script>
+
+

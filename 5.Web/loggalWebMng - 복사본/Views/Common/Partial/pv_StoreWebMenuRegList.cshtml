@@ -1,0 +1,21 @@
+﻿@using ALT.VO.Common;
+@{
+    List<T_STORE_WEBMENU> list = ViewBag.list;
+
+    foreach (T_STORE_WEBMENU data in list)
+    {
+        <tr>
+                
+            <td>@data.SEARCH_CODE</td>
+            <td><input type="text" value="@data.NAME" /></td>
+            <td class="center"><input type="checkbox" @(@data.HIDE == true ? "checked" : "") /></td>
+            <td>@data.MENU_URL</td>
+            <td>@data.MENU_CLASS</td>
+            <td class="center">@data.LEVEL</td>
+            <td class="center">@data.UPDATE_NAME</td>
+            <td class="center">@data.UPDATE_DATE</td>
+            <td class="center hide">@data.MENU_CODE</td>
+            <td class="center hide">@data.STORE_CODE</td>
+        </tr>
+    }
+}

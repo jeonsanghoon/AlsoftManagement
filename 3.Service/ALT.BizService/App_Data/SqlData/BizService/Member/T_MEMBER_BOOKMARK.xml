@@ -1,0 +1,150 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<DBAgentMultiTemplate  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns="http://altsoft.kr/">
+  <DBAgentTemplate TemplateID="GetMemberbookmarkList">
+    <!-- 
+    SqlType : SQL의 형태를 지정합니다.
+      Example 1:<SqlType>FixedSQL</SqlType> 고정적인 SQL을 지원합니다. 
+      Example 2:<SqlType>DynamicSQL</SqlType> 동적인 SQL Type1을 지원합니다.  
+    Description : 해당 SQL의 기능설명을 적습니다.
+    SQLModifier : 해당 SQL의 작성자(수정자)를 적습니다
+    LastModifyDate : 해당 SQL의 마지막 수정일을 적습니다
+    -->
+    <Information>
+      <SqlType>DynamicSQL</SqlType>
+      <Description>회원조회</Description>
+      <SQLModifier>전상훈</SQLModifier>
+      <LastModifyDate>2017-04-06</LastModifyDate>
+    </Information>
+
+    <TemplateSQL>
+      <!-- FixedSQL : 고정된 SQL이 들어가는 곳입니다. -->
+      <FixedSQL>
+        <![CDATA[ 
+	  
+		SET NOCOUNT ON 
+	/***************************************************************/
+	/* 회원별 북마크정보 - T_MEMBER_BOOKMARK 조회 -  SELECT QUERY */ 
+	/***************************************************************/
+	SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED 
+	SELECT 
+		  A.BOOKMARK_CODE
+		, A.MEMBER_CODE
+		, A.BOOKMARK_URL
+		, A.MEMO
+		, A.REMARK
+		, A.INSERT_DATE
+	FROM T_MEMBER_BOOKMARK A 
+ WHERE 1=1 
+     #[BOOKMARK_CODE]
+     #[MEMBER_CODE]
+     #[BOOKMARK_URL]
+	  SET NOCOUNT OFF 
+    ]]>
+      </FixedSQL>
+      <DynamicBodys>
+        <Key>BOOKMARK_CODE</Key>
+        <Body>AND A.BOOKMARK_CODE = {0} </Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>MEMBER_CODE</Key>
+        <Body>AND A.MEMBER_CODE = {0} </Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>BOOKMARK_URL</Key>
+        <Body>AND A.BOOKMARK_URL = '{0}' </Body>
+      </DynamicBodys>
+    </TemplateSQL>
+  </DBAgentTemplate>
+  <DBAgentTemplate TemplateID="MemberbookmarkSave">
+    <!-- 
+    SqlType : SQL의 형태를 지정합니다.
+      Example 1:<SqlType>FixedSQL</SqlType> 고정적인 SQL을 지원합니다. 
+      Example 2:<SqlType>DynamicSQL</SqlType> 동적인 SQL Type1을 지원합니다.  
+    Description : 해당 SQL의 기능설명을 적습니다.
+    SQLModifier : 해당 SQL의 작성자(수정자)를 적습니다
+    LastModifyDate : 해당 SQL의 마지막 수정일을 적습니다
+    -->
+    <Information>
+      <SqlType>DynamicSQL</SqlType>
+      <Description>회원조회</Description>
+      <SQLModifier>전상훈</SQLModifier>
+      <LastModifyDate>2017-04-06</LastModifyDate>
+    </Information>
+
+    <TemplateSQL>
+      <!-- FixedSQL : 고정된 SQL이 들어가는 곳입니다. -->
+      <FixedSQL>
+        <![CDATA[ 
+	SET NOCOUNT ON 
+	/*************************************************************/
+	/* 회원별 북마크정보 - T_MEMBER_BOOKMARK 저장 -  SAVE QUERY */ 
+	/*************************************************************/
+	DECLARE @BOOKMARK_CODE   INT                  = N'{0}'
+			  , @MEMBER_CODE     INT                  = CONVERT(INT, CASE WHEN ISNUMERIC('{1}') = 1 THEN '{1}' ELSE NULL END )
+			  , @BOOKMARK_URL    VARCHAR(600)         = N'{2}'
+			  , @MEMO            NVARCHAR(500)        = N'{3}'
+			  , @REMARK          NVARCHAR(100)        = N'{4}'
+			  , @INSERT_DATE     DATETIME             = GETDATE() 
+        , @USER_ID         VARCHAR(30)          = '{5}'
+        , @SAVE_MODE       VARCHAR(1)           = '{6}'
+
+      IF @SAVE_MODE  = 'D'
+      BEGIN
+            DELETE FROM T_MEMBER_BOOKMARK
+             WHERE BOOKMARK_CODE  = @BOOKMARK_CODE
+            
+        
+            SELECT ''  AS ERROR_MESSAGE
+            GOTO EXCEPTION
+      END
+      
+      IF @BOOKMARK_URL = '' 
+      BEGIN
+           SELECT N'북마크 정보가 없습니다.' ERROR_MESSAGE
+           GOTO EXCEPTION
+      END
+      IF @USER_ID <> ''
+      BEGIN
+          SELECT @MEMBER_CODE = MEMBER_CODE 
+            FROM T_MEMBER
+           WHERE USER_ID = @USER_ID
+      END
+      SELECT * FROM 
+	    UPDATE A 
+	    SET  	  MEMBER_CODE       = @MEMBER_CODE                   
+			     ,  BOOKMARK_URL      = @BOOKMARK_URL                  		 
+           ,  MEMO              = @MEMO                          
+			     ,  REMARK            = @REMARK   
+           ,  INSERT_DATE       = GETDATE()
+	    FROM T_MEMBER_BOOKMARK A 
+	    WHERE BOOKMARK_CODE= @BOOKMARK_CODE
+	    IF @@ROWCOUNT = 0
+	    BEGIN
+		        INSERT INTO T_MEMBER_BOOKMARK
+		        (		MEMBER_CODE       , BOOKMARK_URL 	, MEMO                          		
+			        , REMARK            , INSERT_DATE  		
+		        )
+		        SELECT @MEMBER_CODE , @BOOKMARK_URL                 	
+				         , @MEMO        , @REMARK        , @INSERT_DATE                  	
+			
+             SELECT CONVERT(VARCHAR(30), IDENT_CURRENT( 'T_MEMBER_BOOKMARK' ))  AS DATA
+             GOTO EXCEPTION
+	     END
+      SELECT ''  AS ERROR_MESSAGE
+    EXCEPTION:
+    SET NOCOUNT OFF
+
+
+    ]]>
+      </FixedSQL>
+      <DynamicBodys>
+        <Key>MEMBER_CODE</Key>
+        <Body>AND A.MEMBER_CODE = {0} </Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>BOOKMARK_URL</Key>
+        <Body>AND A.BOOKMARK_URL = '{0}' </Body>
+      </DynamicBodys>
+    </TemplateSQL>
+  </DBAgentTemplate>
+</DBAgentMultiTemplate>

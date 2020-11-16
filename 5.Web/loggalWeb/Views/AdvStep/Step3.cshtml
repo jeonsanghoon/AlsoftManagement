@@ -1,0 +1,326 @@
+﻿@using ALT.VO.Common;
+@using ALT.VO.loggal;
+@{
+    Layout = "~/Views/Shared/_Layout_Step.cshtml";
+
+    T_MEMBER LOGIN_MEMBER = (T_MEMBER)((SessionHelper.LoginInfo.MEMBER == null) ? new ALT.VO.Common.T_MEMBER() : SessionHelper.LoginInfo.MEMBER);
+    T_AD data = ViewBag.data;
+    if (data.STATUS < 3) { data.STATUS = 3; }
+    ViewBag.title = "loggal 광고 서비스> 일정 및 검색어 설정";
+
+}
+
+
+@section script{
+    <script src="~/Common/plugin/js/jquery-tokeninput/jquery.tokeninput_Common.js"></script>
+
+    <script src="~/Common/js/Common_Expand.js"></script>
+    <script type="text/javascript">
+        $(document).ready(function () {
+
+            validationinit();
+            $(".ui.form").submit(function (event) {
+                if (!chkSave()) {
+                    $(".ui.error.message").show();
+                }
+                if ($(".ui.error.message").css("display") == "none" || $(".ui.error.message").html() == "") { doSave(); }
+
+                event.preventDefault();
+
+            });
+            ComponentInit();
+        })
+
+        function doQuery() {
+
+            ajax.GetAjax("/account/MemberList/", param, "json", function (result) {
+            });
+
+        }
+
+        function ComponentInit() {
+
+            $.datetimepicker.setLocale('kr');
+
+
+            $('#FR_DATE').datetimepicker({
+                timepicker: false,
+                format: 'Y.m.d',
+                onShow: function (ct) {
+                    this.setOptions({
+                        maxDate: $('#TO_DATE').val() ? jQuery('#TO_DATE').val() : false
+                    })
+                }
+            });
+            $('#TO_DATE').datetimepicker({
+                timepicker: false,
+                format: 'Y.m.d',
+                onShow: function (ct) {
+                    this.setOptions({
+                        minDate: $('#FR_DATE').val() ? jQuery('#FR_DATE').val() : false
+                    })
+                }
+            });
+            $('#FR_TIME').datetimepicker({
+                datepicker: false,
+                //allowTimes: ['12:00', '13:00', '15:00', '17:00', '17:05', '17:20', '19:00', '20:00'],
+                step: 30,
+                format: 'G:i',
+                onChangeDateTime: function (dp, $input) {
+                    if ($('#FR_TIME').val() != "") $('#FR_TIME').parent().removeClass("error");
+                    Input.CheckBox.Checked("chkAllDay", false);
+                }
+            });
+
+            $('#TO_TIME').datetimepicker({
+                datepicker: false,
+                //allowTimes: ['12:00', '13:00', '15:00', '17:00', '17:05', '17:20', '19:00', '20:00'],
+                step: 30,
+                format: 'G:i',
+                onChangeDateTime: function (dp, $input) {
+                    if ($('#TO_TIME').val() != "") $('#TO_TIME').parent().removeClass("error");
+                    Input.CheckBox.Checked("chkAllDay", false);
+                }
+            });
+            $("#chkAllDay").change(function () {
+                if (Input.CheckBox.isChecked("chkAllDay")) {
+                    $("#FR_TIME").val("");
+                    $("#TO_TIME").val("");
+                    $("#FR_TIME").parent().removeClass("error")
+                    $("#TO_TIME").parent().removeClass("error")
+                }
+
+            })
+            $("#KEYWORDS").tokenInput("/Search/KeywordList?type=2", {
+                tokenValue: "CODE"
+              , propertyToSearch: "NAME"
+              , prePopulate :eval(@Html.Raw(Json.Encode(ViewBag.KeywordList)))
+            });
+            //$("#KEYWORDS").tokenInput("add",[{CODE:"111",NAME:"111"}]);
+
+
+            //$("#REP_CATEGORY_CODE").dropdown({
+            //    onChange:function(value, text, $choice){ alert(value); }
+            //});
+        }
+
+        //// 체크
+        function validationinit() {
+
+            $('.ui.form').form({
+                on: 'change',
+                focusInvalid: true,
+                fields: {
+                    FR_DATE: {
+                        identifier: 'FR_DATE',
+                        rules: [
+                          {
+                              type: 'empty',
+                              prompt: '요청일자(시작)를 입력하여 주시기 바랍니다.' // Please enter a first name
+                          }
+                        ]
+                    },
+                    TO_DATE: {
+                        identifier: 'TO_DATE',
+                        rules: [
+                          {
+                              type: 'empty',
+                              prompt: '요청일자(종료)를 입력하여 주시기 바랍니다.' // Please enter a first name
+                          }
+                        ]
+                    },
+                    /*     FR_TIME: {
+                             identifier: 'FR_TIME',
+                             rules: [
+                               {
+                                   type: 'empty',
+                                   prompt: '요청시간대(시작)를 입력하여 주시기 바랍니다.' // Please enter a first name
+                               }
+                             ]
+                         },
+                         TO_TIME: {
+                             identifier: 'TO_TIME',
+                             rules: [
+                               {
+                                   type: 'empty',
+                                   prompt: '요청시간대(종료)를 입력하여 주시기 바랍니다.' // Please enter a first name
+                               }
+                             ]
+                         },*/
+
+                    REP_CATEGORY_CODE: {
+                        identifier: 'REP_CATEGORY_CODE',
+                        rules: [
+                          {
+                              type: 'empty',
+                              prompt: '대표카테고리는 필수 선택입니다.' // Please enter a first name
+                          }
+                        ]
+                    },
+                    KEYWORDS: {
+                        identifier: 'KEYWORDS',
+                        rules: [
+                          {
+                              type: 'empty',
+                              prompt: '검색어를 등록하여 주시기 바랍니다.' // Please enter a first name
+                          }
+                        ]
+                    },
+                }, onFailure: function (event, fields) {
+
+                    //실패후 첫번재 에러 태그에 포커스
+                    SemanticUI.Form.Invalidation.ErrorFocus();
+                }, onInvalid: function (event) {
+
+                    //SemanticUI.Form.addErrorMessage(event);
+                }
+            });
+
+
+
+
+        }
+
+
+        function chkSave() {
+            var bChk = true;
+            //if (!Input.CheckBox.isChecked("chkAllDay")) {
+            //    if ($("#FR_TIME").val() == "") {
+            //        $("#FR_TIME").parent().addClass("error");
+            //      //  $("#FR_TIME").focus();
+
+            //        if ($(".ui.error.message .list li:contains('검색어')") == undefined) {
+            //            $(".ui.error.message .list").append("<li>요청시간대(시작시간) : 전일 체크가 되지 않았을 경우 요청시간대를 입력하셔야 합니다.</li>");
+            //        }
+            //        else
+            //            $(".ui.error.message .list li:contains('검색어')").before("<li>요청시간대(시작시간) : 전일 체크가 되지 않았을 경우 요청시간대를 입력하셔야 합니다.</li>");
+            //        bChk = false;
+
+            //    }
+            //    if ($("#TO_TIME").val() == "") {
+            //        $("#TO_TIME").parent().addClass("error");
+            //        //  $("#TO_TIME").focus();
+            //        if ($(".ui.error.message .list li:contains('검색어')") == undefined) {
+            //            $(".ui.error.message .list").append("<li>요청시간대(종료시간) : 전일 체크가 되지 않았을 경우 요청시간대를 입력하셔야 합니다.</li>");
+            //        }
+            //        else {
+            //            $(".ui.error.message .list li:contains('검색어')").before("<li>요청시간대(종료시간) : 전일 체크가 되지 않았을 경우 요청시간대를 입력하셔야 합니다.</li>");
+            //        }
+            //        bChk = false;
+
+            //    }
+            //}
+            return bChk;
+        }
+
+
+
+        function doSave() {
+
+            if (!chkSave()) return;
+            var params = BaseCommon.FormInfo.serializeJson(".ui.form");
+            params.AD_CODE = "@data.AD_CODE";
+            params.FR_DATE = moment($('#FR_DATE').datetimepicker('getValue')).format("YYYYMMDD");
+            params.TO_DATE = moment($('#TO_DATE').datetimepicker('getValue')).format("YYYYMMDD");
+            params.FR_TIME = ($('#FR_TIME').val()=="") ? "" : moment($('#FR_TIME').datetimepicker('getValue')).format("HH:mm");
+            params.TO_TIME = ($('#TO_TIME').val()=="") ? "" : moment($('#TO_TIME').datetimepicker('getValue')).format("HH:mm");
+            params.REP_CATEGORY_CODE =SemanticUI.ComboBox.GetVal("#REP_CATEGORY_CODE");
+            params.STATUS = @data.STATUS;
+            params.KEYWORDS = tokeninput.GetData("KEYWORDS");
+            params = JSON.stringify(params);
+            
+            ajax.GetAjax("/AdvStep/Step3Save/", params, "json", function (result) {
+                if (result.ERROR_MESSAGE != "") {
+                    $.MessageBox(result.ERROR_MESSAGE);
+                }
+                else {
+                    //  location.href = String(result.RETURN_URL).toLowerCase();
+                    var arrUrl = String(result.RETURN_URL).toLowerCase().split('?');
+                    BaseCommon.FormInfo.PostSubmit(arrUrl[0], [{ name: "id", value: arrUrl[1].split('=')[1] }]);
+                }
+            });
+        }
+
+
+        function fnGetData() {
+
+            alert($("FR_DATE").ReplaceAll('.', ""));
+            // tokeninput.GetData("KEYWORDS");
+        }
+
+    </script>
+}
+<div class="ui  vertical stripe attached segment wizard centered">
+    @{Html.RenderPartial("/Views/AdvStep/Partial/Top.cshtml"); }
+
+    <form class="ui form" onSubmit="return false;">
+        <h2 class="ui header">일정 및 검색어 설정</h2>
+
+        @{Html.RenderPartial("/Views/AdvStep/Partial/StepBar.cshtml"); }
+        <div class="ui stackable grid  fields">
+            <div class="one column row">
+                <div class="column">
+                    <table class="ui celled table">
+                        <tbody>
+
+                            <tr>
+                                <td class="title">
+                                    @Html.Semantic_TITLE2("요청일자", true)
+                                </td>
+                                <td class="content">
+                                    @Html.Semantic_TextBox("FR_DATE", data.FR_DATE.ToFormatDate("yyyy.MM.dd"), SemanticUIHelper.Size.mini, new { @placeholder = "시작일", @style = "text-align:center;max-width:100px;" })<span>~&nbsp;</span>
+                                    @Html.Semantic_TextBox("TO_DATE", data.TO_DATE.ToFormatDate("yyyy.MM.dd"), SemanticUIHelper.Size.mini, new { @placeholder = "종료일", @style = "text-align:center;max-width:100px;" })
+                                </td>
+                                <td class="title">
+                                    @Html.Semantic_TITLE2("요청시간대")
+                                </td>
+                                <td class="content">
+                                    @Html.Semantic_TextBox("FR_TIME", data.FR_TIME, SemanticUIHelper.Size.mini, new { @placeholder = "시작시간", @style = "text-align:center;max-width:100px;" })<span>~&nbsp;</span>
+                                    @Html.Semantic_TextBox("TO_TIME", data.TO_TIME, SemanticUIHelper.Size.mini, new { @placeholder = "종료시간", @style = "text-align:center;max-width:100px;" })@Html.Semantic_CheckBox("chkAllDay", "전일", "", (string.IsNullOrEmpty(data.FR_TIME) && string.IsNullOrEmpty(data.TO_TIME) ? true : false))
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="title">
+                                    <div class="field">
+                                        @Html.Semantic_TITLE2("대표카테고리", true)
+                                    </div>
+                                </td>
+                                <td class="content" colspan="3">
+                                    @{
+                                        var cboCatetgory = new loggalServiceBiz.CategoryService().GetCategoryList(new CATEGORY_COND() { CATEGORY_TYPE = 1 })
+                                                           .Select(s => new SelectListItem { Value = s.CATEGORY_CODE.ToString(), Text = s.CATEGORY_NAME, Selected = (data.REP_CATEGORY_CODE.ToString("") == s.CATEGORY_CODE.ToString() ? true : false) });
+
+                                    }
+                                    @Html.DropDownList("REP_CATEGORY_CODE", cboCatetgory, "-선택-", new { @class = "mini field" })
+
+
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="title">
+                                    @Html.Semantic_TITLE2("검색어설정", true)
+                                </td>
+                                <td class="content" colspan="3">
+                                    @Html.TextBox("KEYWORDS")
+
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <div style="float:right">
+                        <button class="ui left attached  blue disabled icon  button">
+                            <i class="chevron circle left  icon"></i>
+                            이전
+                        </button>
+                        <button class="ui right attached blue active icon  button">
+                            다음
+                            <i class="chevron circle right icon"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="ui error message"></div>
+    </form>
+</div>

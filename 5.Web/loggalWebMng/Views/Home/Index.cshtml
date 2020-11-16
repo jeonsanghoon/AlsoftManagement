@@ -1,0 +1,354 @@
+﻿
+@{
+	ViewBag.Title = "온닫이 관리자시스템";
+	List<APPROVAL_GRAPE> chart1 = ViewBag.chart1List;
+	List<APPROVAL_GRAPE> chart2 = ViewBag.chart2List;
+
+	System.Text.StringBuilder sbChart1 = new System.Text.StringBuilder();
+
+	foreach (APPROVAL_GRAPE data in chart1)
+	{
+		sbChart1.Append(",['").Append(data.STATUS_NAME).Append("', ").Append(data.CNT).Append(",").Append(data.STATUS).Append("]");
+	}
+	System.Text.StringBuilder sbChart2 = new System.Text.StringBuilder();
+	foreach (APPROVAL_GRAPE data in chart2)
+	{
+		sbChart2.Append(",['").Append(data.STATUS_NAME).Append("', ").Append(data.CNT).Append(",").Append(data.STATUS).Append("]");
+	}
+
+}
+
+@{
+	var menulist = SessionHelper.LoginInfo.WebMemu.Where(w => w.MENU_CODE == 14).ToList();
+	
+}
+
+
+@section scripts{
+	<script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+	<script type="text/javascript">
+        google.charts.load("current", { packages: ["corechart"] });
+
+        $(document).ready(function () {
+             if (!navigator.onLine) {
+                $.MessageBox("인터넷이 연결되지 않습니다. 인터넷 연결을 확인하세요!");
+                return;
+             }
+
+            if ($(window).width() >= 768) {
+                if ($(".content1").height() > $(".content2").height()) {
+                    $(".content2").height($(".content1").height());
+                }
+                else {
+                    $(".content1").height($(".content2").height());
+                }
+            }
+
+            if($(window).width() >= 768)
+            {
+                $("#donutchart").width($(window).width()/2);
+                $("#donutchart2").width($(window).width()/2);
+
+                $("#donutchart").height($(window).width() * 0.3);
+                $("#donutchart2").height($(window).width() * 0.3);
+            }
+            else{
+                $("#donutchart").width($(window).width())
+                $("#donutchart2").width($(window).width())
+                $("#donutchart").height($(window).width() * 0.4);
+                $("#donutchart2").height($(window).width() * 0.4);
+            }
+            google.charts.setOnLoadCallback(drawChart);
+            google.charts.setOnLoadCallback(drawChart2);
+            if ("@sbChart1.ToString()" == "") {
+                $("#donutchart").hide();
+            }
+
+            if ("@sbChart2.ToString()" == "") {
+                $("#donutchart2").hide();
+			}
+
+
+        })
+
+        function drawChart() {
+            var data = google.visualization.arrayToDataTable([
+              ['공유상태', '건수', '공유코드']
+              @Html.Raw(sbChart1.ToString())
+            ]);
+
+            var options = {
+                title: '@(SessionHelper.LoginInfo.COMPANY_CODE == 1 ? "내승인내역" : "요청한 내역")',
+                pieHole: 0.4,
+                is3D: true
+            };
+
+            var chart = new google.visualization.PieChart(document.getElementById('donutchart'));
+            chart.draw(data, options);
+            google.visualization.events.addListener(chart, 'select', function () {
+                var selectedItem = chart.getSelection()[0];
+                if (selectedItem) {
+                    var status = data.getValue(selectedItem.row, 2);
+                    var arrData = new Array();
+                    arrData.push({ name: "id", value: status });
+                    @{
+                        if (SessionHelper.LoginInfo.COMPANY_CODE == 1)
+                        {
+                            @:arrData.push({ name: "COMPANY_CODE", value: @SessionHelper.LoginInfo.COMPANY_CODE });
+                        }
+                        else
+                        {
+                            @:arrData.push({ name: "GUBUN", value: "1"});
+                        }
+                    }
+                    BaseCommon.FormInfo.PostSubmit('/basic/devicemainshareapprovallist', arrData);
+
+                }
+            });
+            $("#donutchart").css("cursor", "pointer");
+        }
+        function drawChart2() {
+            var data = google.visualization.arrayToDataTable([
+              ['공유상태', '건수', '공유코드']
+              @Html.Raw(sbChart2.ToString())
+            ]);
+
+            var options = {
+                title: '@(SessionHelper.LoginInfo.COMPANY_CODE == 1 ? "전체승인내역" : "요청받은 내역")',
+                pieHole: 0.4,
+                is3D: true
+            };
+
+            var chart = new google.visualization.PieChart(document.getElementById('donutchart2'));
+            chart.draw(data, options);
+            google.visualization.events.addListener(chart, 'select', function () {
+                var selectedItem = chart.getSelection()[0];
+                if (selectedItem) {
+                    var status = data.getValue(selectedItem.row, 2);
+                    var arrData = new Array();
+                    arrData.push({ name: "id", value: status });
+
+                    BaseCommon.FormInfo.PostSubmit('/basic/devicemainshareapprovallist', arrData);
+                }
+            });
+            $("#donutchart2").css("cursor", "pointer");
+        }
+
+        function SemanticUI_ComboChange(obj) {
+		    if ($(obj)[0].id == "AD_FRAME_TYPE") {
+                doQuery();
+            }
+		}
+	</script>
+
+}
+
+<style>
+</style>
+<div class="ui vertical stripe segment" style="padding-top:2em;">
+	<div class="ui stackable grid fields">
+		<div class="two column row">
+			<div class="column paddingR1">
+
+				<h2 class="ui header">@menulist.FirstOrDefault().NAME</h2>
+				<div class="ui segment content1">
+					<ul class="ui list">
+						@{
+							menulist = SessionHelper.LoginInfo.WebMemu.Where(w => w.MENU_URL.ToLower().Contains("/advertise/index")).ToList();
+							if (menulist.Count() == 1)
+							{
+								<li class="list_title">
+									<a href="/advertise/index">@menulist.First().NAME</a>
+									<ul class="list_content">
+										<li>
+											자신이 등록한 광고를 검색
+										</li>
+										<li>
+											엑셀다운
+										</li>
+									</ul>
+								</li>
+							}
+
+							menulist = SessionHelper.LoginInfo.WebMemu.Where(w => w.MENU_URL.ToLower().Contains("/advertise/adreg2")).ToList();
+							if (menulist.Count() == 1)
+							{
+								<li class="list_title">
+									<a href="/advertise/adreg2">
+										@menulist.First().NAME
+									</a>
+									<ul class="list_content">
+										<li>
+											배너를 등록/수정/삭제
+										</li>
+										<li>
+											배너시간 설정
+										</li>
+										<li>
+											배너지역 설정
+										</li>
+										<li>
+											검색어설정
+										</li>
+									</ul>
+								</li>
+							}
+
+							menulist = SessionHelper.LoginInfo.WebMemu.Where(w => w.MENU_URL.ToLower().Contains("/advertise/adondevice")).ToList();
+							if (menulist.Count() == 1)
+							{
+								<li class="list_title">
+									<a href="/advertise/adondevice">@menulist.First().NAME</a>
+									<ul class="list_content">
+										<li>
+											내배너 데이터를 보여준다
+										</li>
+										<li>
+											로컬박스에서 지정된 배너 카테고리, 배너반경을 기준으로 데이터를 보여준다
+										</li>
+									</ul>
+								</li>
+							}
+							@*
+								menulist = SessionHelper.LoginInfo.WebMemu.Where(w => w.MENU_URL.ToLower().Contains("/basic/categoryreglist")).ToList();
+								if (menulist.Count() == 1)
+								{
+									<li class="list_title">
+										<a href="/basic/categoryreglist">@menulist.First().NAME</a>
+										<ul class="list_content">
+											<li>
+												배너 카테고리 등록/수정/삭제
+											</li>
+											<li>
+												분류별 검색어 등록
+											</li>
+											<li>
+												검색어별 동의어 등록
+											</li>
+											<li>
+												초성/중성/종성별, 글자 단위별 자동등록
+											</li>
+										</ul>
+									</li>
+								}
+							*@
+						}
+					</ul>
+				</div>
+			</div>
+			<div class="column">
+				@{
+
+					menulist = SessionHelper.LoginInfo.WebMemu.Where(w => w.MENU_CODE == 27).ToList();
+				}
+				<h2 class="ui header">@menulist.FirstOrDefault().NAME</h2>
+				<div class="ui segment content2">
+					<ul class="ui list">
+						@{
+
+							menulist = SessionHelper.LoginInfo.WebMemu.Where(w => w.MENU_URL.ToLower().Contains("/basic/devicelist")).ToList();
+							if (menulist.Count() == 1)
+							{
+								<li class="list_title">
+									<a href="/basic/devicelist">@menulist.First().NAME</a>
+									<ul class="list_content">
+										<li>
+											자신이 관리하는 로컬박스 조회
+										</li>
+										<li>
+											엑셀다운
+										</li>
+									</ul>
+								</li>
+							}
+
+							menulist = SessionHelper.LoginInfo.WebMemu.Where(w => w.MENU_URL.ToLower().Contains("/basic/devicereg3")).ToList();
+							if (menulist.Count() == 1)
+							{
+								<li class="list_title">
+									<a href="/basic/devicereg3">@menulist.First().NAME</a>
+									<ul class="list_content">
+										<li>
+											로컬박스 등록/수정/삭제
+										</li>
+										<li>
+											위치등록(위도/경도)
+										</li>
+										<li>
+											Owner광고 등록
+										</li>
+									</ul>
+								</li>
+							}
+
+							menulist = SessionHelper.LoginInfo.WebMemu.Where(w => w.MENU_URL.ToLower().Contains("/basic/addevice")).ToList();
+							if (menulist.Count() == 1)
+							{
+								<li class="list_title">
+									<a href="/basic/addevice">@menulist.First().NAME</a>
+									<ul class="list_content">
+										<li>
+											자신이 관리하는 로컬박스에 광고를 등록
+										</li>
+										<li>
+											로컬박스별 광고시간 설정
+										</li>
+									</ul>
+								</li>
+							}
+
+							@*menulist = SessionHelper.LoginInfo.WebMemu.Where(w => w.MENU_URL.ToLower().Contains("/basic/categoryregionreglist")).ToList();
+								if (menulist.Count() == 1)
+								{
+									<li class="list_title">
+										<a href="/basic/categoryregionreglist">@menulist.First().NAME</a>
+										<ul class="list_content">
+											<li>
+												분류별(시/도, 시/군/구, 읍/면/동) 등록/수정/삭제
+											</li>
+											<li>
+												분류별 검색어 등록
+											</li>
+											<li>
+												지역검색어 등록
+											</li>
+											<li>
+												동의어등록
+											</li>
+										</ul>
+									</li>
+								}*@
+						}
+					</ul>
+				</div>
+			</div>
+		</div>
+		<div class="two column row">
+			<div class="column"><div id="donutchart" style="width: 900px; height: 300px;"></div></div>
+			<div class="column"><div id="donutchart2" style="width: 900px; height: 300px;"></div></div>
+		</div>
+	</div>
+	@*<div class="ui accordion field">
+			<div class="title">
+				<i class="icon dropdown"></i>
+				화면설명
+			</div>
+			<div class="content field">
+				<div class="ui segment field" style="margin-bottom:3em;position:absolute">
+					<ul class="ui list">
+						<li>모바일과 로컬박스에 광고되는 배너를 조회한다</li>
+
+						<li>
+							권한
+							<ul>
+								<li>관리자 : 등록된 모든 데이터</li>
+
+								<li>회원 : 자신이 등록한 데이터</li>
+							</ul>
+						</li>
+
+					</ul>
+				</div>
+			</div>
+		</div>*@
+</div>

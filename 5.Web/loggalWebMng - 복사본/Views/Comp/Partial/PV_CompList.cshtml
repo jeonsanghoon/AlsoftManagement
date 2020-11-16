@@ -1,0 +1,29 @@
+﻿@using ALT.Framework;
+@using ALT.VO.Common;
+@{
+    List<T_COMPANY> list = ViewBag.list;
+    string totCnt = (list.Count() == 0 ? "0" : list.First().TOTAL_ROWCOUNT.ToString());
+    <input type="hidden" id="total" value="@totCnt" />
+    foreach (T_COMPANY data in list)
+    {
+    <tr>
+        <td class="center">@data.COMPANY_CODE</td>
+        <td>@data.COMPANY_ID</td>
+        <td><a href="/comp/compreg/@data.COMPANY_CODE">@data.COMPANY_NAME</a></td>
+        <td class="center">@data.COMPANY_TYPE_NAME</td>
+        <td class="center">@data.COMPANY_TYPE_NAME2</td>
+        <td class="center">@data.PHONE</td>
+        <td class="center">@data.STATUS_NAME</td>
+        <td>@data.OWNER_NAME</td>
+        <td class="center">@data.STORE_CNT0/@data.STORE_CNT1/@data.STORE_CNT9</td>
+        <td>@data.ADDRESS1 @data.ADDRESS2</td>
+        <td class="center">@data.AD_CNT0/@data.AD_CNT1/@data.AD_CNT2</td>
+        <td class="center">@data.DEVICE_CNT0/@data.DEVICE_CNT1/@data.DEVICE_CNT2</td>
+        <td class="center">@data.UPDATE_NAME</td>
+        <td class="center">@data.UPDATE_DATE</td>
+        <td class="center">@Html.Semantic_Button2("btnStoreList", "보기", SemanticUIHelper.enButtonType.Normal, new { @onclick = "fnStoreList(" + data.COMPANY_CODE + ");" }) </td>
+    </tr>
+    }
+}
+
+

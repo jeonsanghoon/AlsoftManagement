@@ -1,0 +1,43 @@
+﻿@{
+    if (SessionHelper.LoginInfo.SHOPPING_CART != null && SessionHelper.LoginInfo.SHOPPING_CART.ITEM_LIST != null)
+    {
+        SHOPPING_CART cart = SessionHelper.LoginInfo.SHOPPING_CART;
+        foreach (SHOPPING_ITEM data in cart.ITEM_LIST)
+        {
+            <tr>
+                <td data-title="선택" class="centercolumn">
+                    <input type="checkbox" id="chk_@data.ITEM_CODE" name="chkitemList" value="@Json.Encode(data)" />
+                </td>
+                <td data-title="품목" class="cart_item">
+
+                    <div class="col-lg-2 cart_item_image">
+                        <a href="#">
+                            <img style="height:40px;" src="@data.ITEM_IMAGEURL" alt="img">
+                        </a>
+                    </div>
+                    <div class="col-lg-10  cart_item_name">
+                        <h4 class="media-heading"><a href="#">@data.ITEM_NAME</a></h4>
+                    </div>
+                </td>
+                <td data-title="가격" class="rightcolumn">@data.PRICE.ToFormatAmt()</td>
+                <td data-title="수량" class="rightcolumn">@Html.TouchSpan("cnt_" + data.ITEM_CODE, data.CNT, new TouchSpan { width = 130, min = 1 })</td>
+                <td data-title="할인금액" class="rightcolumn">@data.DISCOUNT_AMT.ToFormatAmt()</td>
+                <td data-title="판매금액" class="rightcolumn">@data.SALES_AMT.ToFormatAmt()</td>
+
+                <td data-title="삭제" class="centercolumn"><i class="fa fa-minus-square-o" aria-hidden="true" style="cursor:pointer;" onclick="DelCart('@data.ITEM_CODE');"></i></td>
+            </tr>
+        }
+        <tr style="font-weight:bold; background-color:darkgray;color:#fff">
+            <td class="mobilehide"></td>
+            <td>합계</td>
+            <td class="mobilehide"> </td>
+            <td class="rightcolumn">@cart.ITEM_CNT.ToString("#,##0")</td>
+            <td class="rightcolumn">@cart.ITEM_DISCOUNT_AMT.ToFormatAmt()</td>
+         <!--  <td class="rightcolumn" data-title="할인금액" id="pay_orderdiscount">@cart.ORDER_DISCOUNT_AMT.ToFormatAmt()</td>--> 
+            <td class="rightcolumn">@cart.TOTAL_AMT.ToFormatAmt()</td>
+            <td class="mobilehide"></td>
+        </tr>
+    }
+
+
+}

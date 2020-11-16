@@ -1,0 +1,242 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<DBAgentMultiTemplate  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns="http://altsoft.kr/">
+
+    <DBAgentTemplate TemplateID="GetAdSigninfoList">
+        <!-- 
+    SqlType : SQL의 형태를 지정합니다.
+      Example 1:<SqlType>FixedSQL</SqlType> 고정적인 SQL을 지원합니다. 
+      Example 2:<SqlType>DynamicSQL</SqlType> 동적인 SQL Type1을 지원합니다.  
+    Description : 해당 SQL의 기능설명을 적습니다.
+    SQLModifier : 해당 SQL의 작성자(수정자)를 적습니다
+    LastModifyDate : 해당 SQL의 마지막 수정일을 적습니다
+    -->
+        <Information>
+            <SqlType>DynamicSQL</SqlType>
+            <Description>로컬사인 배너리스트</Description>
+            <SQLModifier>전상훈</SQLModifier>
+            <LastModifyDate>2018-02-28</LastModifyDate>
+        </Information>
+
+      <TemplateSQL>
+        <!-- FixedSQL : 고정된 SQL이 들어가는 곳입니다. -->
+        <FixedSQL>
+          <![CDATA[ 
+  
+  SET NOCOUNT ON 
+	/***********************************************/
+	/* 로컬사인용 배너 테이블 - T_AD_SIGNINFO 조회 */
+  /* - GetAdSigninfoList  SELECT QUERY           */ 
+	/***********************************************/
+	SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED 
+  DECLARE @PAGE INT      = {0}
+         ,@PAGE_SIZE INT = {1};
+  WITH T_TABLE 
+    AS (	
+	    SELECT ROW_NUMBER() OVER(ORDER BY {2}) AS ROW_IDX 
+            , A.IDX 
+            , A.TITLE
+            , A.AD_CODE
+            , A.SEQ
+            , A.HIDE
+            , A.IS_VERTICAL
+            , A.PUBLIC_TYPE
+            , CM.NAME AS PUBLIC_TYPE_NAME
+            , B.NAME AS IS_VERTICAL_NAME
+            , A.PLAY_TIME
+            , C1.NAME AS PLAY_TIME_NAME
+            , A.SIGN_TYPE
+            , ISNULL(C.NAME, '') AS SIGN_TYPE_NAME
+            , A.CONTENT_URL
+            , A.FR_DATE
+            , A.TO_DATE
+            , A.FR_TIME
+            , A.TO_TIME
+            , A.REMARK
+            , A.INSERT_CODE
+            , D.USER_NAME + '(' + REPLACE(CONVERT(VARCHAR(200), A.INSERT_DATE, 120),'-','.') + ')' AS INSERT_NAME
+            , A.INSERT_DATE
+            , A.UPDATE_CODE
+            , E.USER_NAME + '(' + REPLACE(CONVERT(VARCHAR(200), A.UPDATE_DATE, 120),'-','.') + ')' AS UPDATE_NAME
+            , A.UPDATE_DATE
+	    FROM T_AD_SIGNINFO A 
+      INNER JOIN T_COMMON CM
+        ON CM.MAIN_CODE = 'P003'
+       AND CM.SUB_CODE = A.PUBLIC_TYPE
+       INNER JOIN T_COMMON B
+          ON B.MAIN_CODE = 'U005'
+	     AND B.SUB_CODE = A.IS_VERTICAL
+       INNER JOIN T_COMMON C
+          ON C.MAIN_CODE = 'A010'
+	       AND C.SUB_CODE  = SIGN_TYPE
+        LEFT JOIN T_COMMON C1
+          ON C1.MAIN_CODE = 'U006'
+         AND C1.SUB_CODE  = A.PLAY_TIME
+       INNER JOIN T_MEMBER D
+          ON A.INSERT_CODE = D.MEMBER_CODE
+       INNER JOIN T_MEMBER E
+          ON A.UPDATE_CODE = E.MEMBER_CODE
+       WHERE 1=1 
+        #[IDX]
+        #[AD_CODE]
+        #[EXT_SIGN_CODE]
+        #[SIGN_TYPE]
+        #[IS_VERTICAL]
+        #[PUBLIC_TYPE]
+        #[PLAY_TIME]
+        #[TITLE]
+        
+        #[HIDE]
+       ) SELECT *, (SELECT COUNT(*) FROM T_TABLE) AS TOTAL_ROWCOUNT FROM T_TABLE
+   WHERE ROW_IDX > (@PAGE-1) * @PAGE_SIZE
+	   AND ROW_IDX <= @PAGE * @PAGE_SIZE
+	SET NOCOUNT OFF 
+
+      ]]>
+        </FixedSQL>
+        <DynamicBodys>
+          <Key>IDX</Key>
+          <Body>AND A.IDX = {0} </Body>
+        </DynamicBodys>
+        <DynamicBodys>
+          <Key>AD_CODE</Key>
+          <Body>AND A.AD_CODE = {0} </Body>
+        </DynamicBodys>
+        <DynamicBodys>
+          <Key>EXT_SIGN_CODE</Key>
+          <Body>AND A.AD_CODE NOT IN (SELECT AD_CODE FROM T_AD_SIGNINFO_SIGNAGE WHERE SIGN_CODE = {0}) </Body>
+        </DynamicBodys>
+        <DynamicBodys>
+          <Key>SIGN_TYPE</Key>
+          <Body>AND A.SIGN_TYPE = {0} </Body>
+        </DynamicBodys>
+        <DynamicBodys>
+          <Key>IS_VERTICAL</Key>
+          <Body>AND A.IS_VERTICAL = {0} </Body>
+        </DynamicBodys>
+        <DynamicBodys>
+          <Key>PUBLIC_TYPE</Key>
+          <Body>AND A.PUBLIC_TYPE = {0} </Body>
+        </DynamicBodys>
+        <DynamicBodys>
+          <Key>PLAY_TIME</Key>
+          <Body>AND A.PLAY_TIME = {0} </Body>
+        </DynamicBodys>
+        <DynamicBodys>
+          <Key>TITLE</Key>
+          <Body>AND A.TITLE LIKE '%{0}%' </Body>
+        </DynamicBodys>
+        <DynamicBodys>
+          <Key>HIDE</Key>
+          <Body>AND A.HIDE = {0} </Body>
+        </DynamicBodys>
+      </TemplateSQL>
+    </DBAgentTemplate>
+    <DBAgentTemplate TemplateID="AdSigninfoSave">
+        <!-- 
+    SqlType : SQL의 형태를 지정합니다.
+      Example 1:<SqlType>FixedSQL</SqlType> 고정적인 SQL을 지원합니다. 
+      Example 2:<SqlType>DynamicSQL</SqlType> 동적인 SQL Type1을 지원합니다.  
+    Description : 해당 SQL의 기능설명을 적습니다.
+    SQLModifier : 해당 SQL의 작성자(수정자)를 적습니다
+    LastModifyDate : 해당 SQL의 마지막 수정일을 적습니다
+    -->
+        <Information>
+            <SqlType>DynamicSQL</SqlType>
+            <Description>로컬사인 정보 저장</Description>
+            <SQLModifier>전상훈</SQLModifier>
+            <LastModifyDate>2017-02-28</LastModifyDate>
+        </Information>
+
+        <TemplateSQL>
+            <!-- FixedSQL : 고정된 SQL이 들어가는 곳입니다. -->
+            <FixedSQL>
+                <![CDATA[ 
+	SET NOCOUNT ON 
+	/************************************************************/
+	/* 로컬사인용 배너 테이블 - T_AD_SIGNINFO 저장 -  SAVE QUERY */ 
+	/************************************************************/
+	DECLARE @IDX                            BIGINT               = N'{0}'
+			  , @TITLE                          NVARCHAR(200)        = N'{1}'
+			  , @AD_CODE                        BIGINT               = CONVERT(BIGINT, CASE WHEN ISNUMERIC('{2}') = 1 THEN '{2}' ELSE '0' END )
+			  , @SEQ                            INT                  = CONVERT(INT, CASE WHEN ISNUMERIC('{3}') = 1 THEN '{3}' ELSE '0' END )
+			  , @HIDE                           BIT                  = CONVERT(BIT, CASE WHEN ISNUMERIC('{4}') = 1 THEN '{4}' ELSE '0' END )
+			  , @IS_VERTICAL                    BIT                  = CONVERT(BIT, CASE WHEN ISNUMERIC('{5}') = 1 THEN '{5}' ELSE '0' END )
+			  , @PUBLIC_TYPE                    INT                  = CONVERT(INT, CASE WHEN ISNUMERIC('{6}') = 1 THEN '{6}' ELSE '3' END )
+			  , @PLAY_TIME                      INT                  = CONVERT(INT, CASE WHEN ISNUMERIC('{7}') = 1 THEN '{7}' ELSE '0' END )
+			  , @SIGN_TYPE                      INT                  = CONVERT(INT, CASE WHEN ISNUMERIC('{8}') = 1 THEN '{8}' ELSE '0' END )
+			  , @CONTENT_URL                    NVARCHAR(400)        = N'{9}'
+			  , @FR_DATE                        VARCHAR(8)           = N'{10}'
+			  , @TO_DATE                        VARCHAR(8)           = N'{11}'
+			  , @FR_TIME                        VARCHAR(5)           = N'{12}'
+			  , @TO_TIME                        VARCHAR(5)           = N'{13}'
+			  , @REMARK                         NVARCHAR(400)        = N'{14}'
+			  , @INSERT_CODE                    INT                  = {15}
+			  , @INSERT_DATE                    DATETIME             = GETDATE() 
+			  , @UPDATE_CODE                    INT                  = {15}
+			  , @UPDATE_DATE                    DATETIME             = GETDATE() 
+        
+  IF @FR_DATE = ''
+  BEGIN
+      SELECT @FR_DATE = FR_DATE, @TO_DATE = TO_DATE
+            ,@FR_TIME = FR_TIME, @TO_TIME = TO_TIME
+        FROM T_AD
+       WHERE AD_CODE = @AD_CODE
+        
+  END
+	UPDATE A 
+	SET  	  TITLE                          = @TITLE                         
+			 ,  AD_CODE                        = @AD_CODE                       		 ,  SEQ                            = @SEQ                           
+			 ,  HIDE                           = @HIDE                          		 ,  IS_VERTICAL                    = @IS_VERTICAL                   
+			 ,  PUBLIC_TYPE                    = @PUBLIC_TYPE                    		 ,  PLAY_TIME                      = @PLAY_TIME                     
+			 ,  SIGN_TYPE                      = @SIGN_TYPE                     		 ,  CONTENT_URL                    = @CONTENT_URL                   
+			 ,  FR_DATE                        = @FR_DATE                       		 ,  TO_DATE                        = @TO_DATE                       
+			 ,  FR_TIME                        = @FR_TIME                       		 ,  TO_TIME                        = @TO_TIME                       
+			 ,  REMARK                         = @REMARK                        		 ,  UPDATE_CODE                    = @UPDATE_CODE                   
+			 ,  UPDATE_DATE                    = @UPDATE_DATE                   
+	FROM T_AD_SIGNINFO A 
+	WHERE IDX= @IDX
+	IF @@ROWCOUNT = 0
+	BEGIN
+    INSERT INTO T_AD_SIGNINFO
+		(		TITLE                         		, AD_CODE                       		, SEQ                           		
+			, HIDE                          		, IS_VERTICAL                   		, PUBLIC_TYPE                       , PLAY_TIME                     		
+			, SIGN_TYPE                     		, CONTENT_URL                   		, FR_DATE                       		, TO_DATE                       		
+			, FR_TIME                       		, TO_TIME                       		, REMARK                        		, INSERT_CODE                   		
+			, INSERT_DATE                   		, UPDATE_CODE                   		, UPDATE_DATE                   		
+		)
+		SELECT @TITLE                        		, @AD_CODE                      	
+				, @SEQ                          		, @HIDE                         		, @IS_VERTICAL                  	
+				, @PUBLIC_TYPE                  		, @PLAY_TIME                    		, @SIGN_TYPE                    	
+				, @CONTENT_URL                  		, @FR_DATE                      		, @TO_DATE                      	
+				, @FR_TIME                      		, @TO_TIME                      		, @REMARK                       	
+				, @INSERT_CODE                  		, @INSERT_DATE                  		, @UPDATE_CODE                  	
+				, @UPDATE_DATE                  	           	
+          SET @IDX = IDENT_CURRENT('T_AD_SIGNINFO')
+	 END
+   
+   DECLARE @AD_TYPE INT 
+   SELECT @AD_TYPE = AD_TYPE FROM T_AD 
+    WHERE AD_CODE = @AD_CODE
+   
+   SET @AD_TYPE = CASE WHEN @HIDE = 0 AND @AD_TYPE = 1 THEN 4
+                       WHEN @HIDE = 0 AND @AD_TYPE = 2 THEN 5
+                       WHEN @HIDE = 0 AND @AD_TYPE = 3 THEN 0
+                       WHEN @HIDE = 1 AND @AD_TYPE = 0 THEN 4
+                       WHEN @HIDE = 1 AND @AD_TYPE = 4 THEN 1
+                       
+                       ELSE @AD_TYPE END
+   
+   UPDATE T_AD
+      SET AD_TYPE = @AD_TYPE
+    WHERE AD_CODE = @AD_CODE
+      AND AD_TYPE <> @AD_TYPE
+   
+     SELECT CONVERT(VARCHAR(20), @IDX) AS DATA
+SET NOCOUNT OFF
+
+
+      ]]>
+            </FixedSQL>
+        </TemplateSQL>
+    </DBAgentTemplate>
+</DBAgentMultiTemplate>

@@ -1,0 +1,27 @@
+﻿@{
+	List<T_PLACE_ITEM_GROUP> list = (List<T_PLACE_ITEM_GROUP>)ViewBag.list;
+	string totCnt = (list.Count() == 0 ? "0" : list.First().TOTAL_ROWCOUNT.ToString());
+	<input type="hidden" id="total" value="@totCnt" />
+	foreach (T_PLACE_ITEM_GROUP data in list)
+	{
+<tr>
+
+	<td id="groupCode">@data.GROUP_CODE</td>
+	<td><input type="text" value="@data.GROUP_NAME" /></td>
+	<td id="groupSeq" style="text-align:center;" readonly="readonly">@data.GROUP_SEQ</td>
+	<td>
+		@Html.CommonCombo("GROUP_TYPE", new T_COMMON_COND { MAIN_CODE = "B007" }, data.GROUP_TYPE.ToString(""), "-선택-", new { @class = "size100 field" })
+	</td>
+	<td>
+		@Html.CommonCombo("SALE_TYPE", new T_COMMON_COND { MAIN_CODE = "M004" }, data.SALE_TYPE.ToString(""), "-선택-", new { @class = "size100 field" })
+	</td>
+	<td class="center"  style="width:1em"><input type="checkbox" @(data.HIDE == true ? "checked" : "") /></td>
+	<td><input type="text" value="@data.REMARK" /></td>
+	<td class="center">@data.UPDATE_DATE</td>
+	<td>@data.INSERT_NAME</td>
+	<td>@data.INSERT_DATE</td>
+	<td>@data.UPDATE_NAME</td>
+</tr>
+	}
+}
+

@@ -1,0 +1,244 @@
+﻿@using ALT.Framework.Mvc
+@using ALT.Framework.Mvc.Helpers
+@using ALT.VO.Common
+@{
+    var imageUrl = SessionHelper.LoginInfo.StoreImageList.Where(w => w.IMAGE_TYPE == 1).FirstOrDefault();
+
+    string logoUrl = string.Empty;
+    if (logoUrl != null)
+    {
+        logoUrl = imageUrl == null ? "" : imageUrl.IMAGE_URL;
+    }
+}
+
+@{
+    string contollerName = this.ViewContext.RouteData.Values["controller"].ToString().ToLower();
+    string actionName = this.ViewContext.RouteData.Values["action"].ToString().ToLower();
+    string sUrl = string.Empty;
+}
+
+<!-- Start header section -->
+<header id="mu-header">
+    <nav class="navbar navbar-default mu-main-navbar navbar-bg" role="navigation">
+        <div class="container">
+            <div class="navbar-header">
+                <!-- FOR MOBILE VIEW COLLAPSED BUTTON -->
+                <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
+                    <span class="sr-only">Toggle navigation</span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                </button>
+                <!-- LOGO -->
+                <a class="navbar-brand" href="/"><img src="@logoUrl" alt="Logo img"></a>
+            </div>
+            <div id="navbar" class="navbar-collapse collapse">
+
+
+                <ul id="top-menu" class="nav navbar-nav navbar-right mu-main-nav">
+                    @{
+                        int nLevel = 1;
+                        IList<LOGIN_WEBMENU> list = SessionHelper.LoginInfo.WebMemu;
+                        string attrData = string.Empty;
+
+                        list = list.Where(w => w.MENU_TYPE == 1 || w.MENU_TYPE == 3).ToList();
+                        for (int i = 0; i < list.Count(); i++)
+                        {
+                            var arrData = (string.IsNullOrEmpty(list[i].MENU_URL) ? "" : list[i].MENU_URL).Split('|')[0].Split('=');
+
+
+                            for (int j = nLevel; j > (int)list[i].LEVEL; j--)
+                            {
+                                @:</ul>
+                                    @:</li>
+                                }
+                            if (list[i].MENU_URL.Contains("dropdown-toggle"))
+                            {
+
+                                attrData = "href='" + SessionHelper.LoginInfo.BASE_URL + "'";
+                                @:<li class="dropdown  @(list[i].LEVEL > 1 ? "dropdown-submenu" : "")" id="li@(list[i].SEARCH_CODE)">
+                                    @:<a class="dropdown-toggle" data-toggle="dropdown" @Html.Raw(attrData)>
+                                        @list[i].NAME
+                 if (list[i].MENU_URL.ToLower().Contains("type=cart"))
+                                {
+                                    @:- <span id="spTotAmt">@(SessionHelper.LoginInfo.SHOPPING_CART == null ? "0" : SessionHelper.LoginInfo.SHOPPING_CART.TOTAL_AMT.ToFormatAmt())</span> <i class="fa fa-shopping-cart"></i>
+                }
+                                if (list[i].LEVEL == 1)
+                                {
+                                    @:<span class='caret'></span>
+                }
+                                @:</a>
+                            @:<ul class="dropdown-menu" role="menu">
+            }
+                            else if (nLevel < (int)list[i].LEVEL)
+                            {
+
+                                if (list[i].MENU_URL.Contains("#"))
+                                { attrData = "href = '" + @arrData[1] + "'"; }
+                                else
+                                {
+                                    if (SessionHelper.LoginInfo.MEMBER == null && list[i].MENU_URL.Contains("login=true"))
+                                    {
+                                        arrData[1] = "/account/login?returnUrl=" + arrData[1];
+                                    }
+                                    attrData = "href='#' onclick=\"MenuClick('" + arrData[1] + "');\"";
+
+                                }
+                                @:
+                                <li id="li@(list[i].SEARCH_CODE)"><a @Html.Raw(attrData)>@list[i].NAME </a></li>
+
+
+                            }
+                            else
+                            {
+
+                                string url = list[i].MENU_URL;
+                                if (list[i].MENU_URL.Contains("link"))
+                                {
+                                    url = list[i].MENU_URL.Split('|').Where(w => w.Contains("link")).First().Split('=')[1];
+                                }
+                                else
+                                {
+                                    url = list[i].MENU_URL;
+                                }
+                                if (list[i].MENU_URL.Contains("#"))
+                                {
+                                    if (contollerName == "home" && actionName == "index")
+                                    {
+                                        attrData = "href = '" + url + "'";
+                                    }
+                                    else
+                                    {
+                                        attrData = "href = '" + "/" + url + "'";
+                                    }
+                                }
+                                else
+                                {
+                                    arrData = (string.IsNullOrEmpty(list[i].MENU_URL) ? "" : list[i].MENU_URL).Split('|');
+                                    var url1 = arrData[0].Split('|').Where(w => w.Contains("link")).FirstOrDefault().Split('=')[1];
+                                    if (SessionHelper.LoginInfo.MEMBER == null && list[i].MENU_URL.Contains("login=true"))
+                                    {
+
+                                        url = SessionHelper.LoginInfo.MEMBER == null ? "/account/login?returnUrl=" + url1 : url1;
+                                    }
+                                    else
+                                    {
+                                        arrData = (string.IsNullOrEmpty(list[i].MENU_URL) ? "" : list[i].MENU_URL).Split('=');
+                                        if (arrData.Count() > 0 && arrData[1].ToLower() == "link")
+                                        {
+                                            url = url1;
+                                        }
+
+
+                                    }
+                                    attrData = "href='#' onclick=\"MenuClick('" + url + "');\"";
+                                }
+
+                                <li>
+                                    <a @Html.Raw(attrData)>
+                                        @list[i].NAME
+                                    @{
+                                        if (url.ToLower().Contains("type=cart"))
+                                        {
+                                            @:- <span id="spTotAmt">@(SessionHelper.LoginInfo.SHOPPING_CART == null ? "0" : SessionHelper.LoginInfo.SHOPPING_CART.TOTAL_AMT.ToFormatAmt())</span> <i class="fa fa-shopping-cart"></i>
+                          }
+                                    }
+                                </a>
+                            </li>
+                                            }
+
+                                            nLevel = (int)list[i].LEVEL;
+                                        }
+
+                                        for (int j = nLevel; j > 1; j--)
+                                        {
+                                            @:</ul>
+                                        @:</li>
+                        }
+                    }
+
+                    @{
+                        if (SessionHelper.LoginInfo.WebMemu.Where(w => w.MENU_URL.Contains("login=true")).Count() > 0)
+                        {
+                            <li class="dropdown">
+                                @{
+                                    if (SessionHelper.LoginInfo.MEMBER == null)
+                                    {
+                                        <text>
+                                            <a class="dropdown-toggle" data-toggle="dropdown" href="@SessionHelper.LoginInfo.BASE_URL/account/login">
+                                                <span>로그인</span>&nbsp;<i class="fa fa-sign-in" aria-hidden="true"></i> <span class="caret"></span>
+                                            </a>
+                                            <ul class="dropdown-menu" role="menu">
+                                                <li><a href="@SessionHelper.LoginInfo.BASE_URL/account/login">로그인</a></li>
+                                                <li><a href="@SessionHelper.LoginInfo.BASE_URL/account/memberjoin">회원가입</a></li>
+
+                                            </ul>
+
+                                        </text>
+                                    }
+                                    else
+                                    {
+                                        <a class="dropdown-toggle" data-toggle="dropdown" href="javascript:void(0);">
+                                            <span title="로그아웃">@SessionHelper.LoginInfo.MEMBER.USER_NAME</span>&nbsp;<i class="fa fa-sign-out" aria-hidden="true"><span class="caret"></span></i>
+                                        </a>
+                                        <ul class="dropdown-menu" role="menu">
+                                            <li><a href="javascript:alert('구현중입니다.');">나의정보</a></li>
+                                            <li><a href="javacript:void(0);" onclick="doLogOut();">로그아웃</a></li>
+
+                                        </ul>
+
+                                    }
+                                }
+                            </li>
+                                    }
+                    }
+                    @*<li class="dropdown">
+                            <a class="dropdown-toggle" data-toggle="dropdown" href="blog-archive.html">PAGE <span class="caret"></span></a>
+                            <ul class="dropdown-menu" role="menu">
+                                <li><a href="blog-archive.html">BLOG</a></li>
+                                <li><a href="blog-single.html">BLOG DETAILS</a></li>
+                                <li><a href="404.html">404 PAGE</a></li>
+                            </ul>
+                        </li>*@
+                    </ul>
+                </div><!--/.nav-collapse -->
+            </div>
+        </nav>
+    </header>
+    <!-- End header section -->
+
+    <script type="text/javascript">
+    function MenuClick(url)
+    {
+
+
+        location.href =  "@SessionHelper.LoginInfo.BASE_URL" + url;
+
+    }
+    function doLogOut() {
+        ajax.GetAjax("@SessionHelper.LoginInfo.BASE_URL/account/doLogOut", "", "json", function (result) {
+            location.href = result.return_url;
+        });
+    }
+
+    $(document).ready(function () {
+
+        @{
+            var ativeMenu = SessionHelper.LoginInfo.WebMemu.Where(w => w.MENU_URL.Contains("/" + contollerName + "/" + actionName)).FirstOrDefault();
+            if(ativeMenu != null)
+            {
+
+                int maxLen = ativeMenu.SEARCH_CODE.Count();
+                @:$("#top-menu li").removeClass("active");
+                for(int j = maxLen; j>=4;  j=j-4 )
+                {
+                    @:$("#li@(ativeMenu.SEARCH_CODE.Substring(0, j))").addClass("active");
+                }
+
+            }
+        }
+    })
+
+
+
+    </script>

@@ -1,0 +1,10 @@
+﻿@using ALT.VO.loggal
+@{
+    List<CODE_DATA> list = ViewBag.list;
+    CODE_DATA Cond = ViewBag.Cond;
+    Cond.NAME = string.IsNullOrEmpty(Cond.NAME) ? string.Empty : Cond.NAME;
+    foreach (CODE_DATA data in list)
+    {
+        <li><div class="eac-item" keyCode="@data.SEARCH_CODE" LATITUDE="@data.LATITUDE" LONGITUDE="@data.LONGITUDE">@Html.Raw((string.IsNullOrEmpty(Cond.NAME) ? data.NAME : data.NAME.Replace(Cond.NAME, "<b style='color:blue'>" + Cond.NAME + "</b>")))</div></li>
+    }
+}

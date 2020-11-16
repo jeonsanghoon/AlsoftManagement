@@ -1,0 +1,527 @@
+﻿@using System.Activities.Expressions;
+@model EditTempleateModel
+@{
+    ViewBag.Title = "비콘등록";
+    T_BEACON data = (T_BEACON)(ViewBag.data == null ? new T_BEACON() { } : ViewBag.data);
+    Daum_MapMultiMarker option = new Daum_MapMultiMarker() { ID = "signage", MAKER_MAX_COUNT = 1, bScript = false };
+}
+@section scripts{
+    <script type="text/javascript">
+        $("document").ready(function () {
+            ComponentInit();
+            alert("아직개발중입니다.~~");
+        })
+
+        function ComponentInit() {
+            $("#LATITUDE").number(true, 17);
+            $("#LONGITUDE").number(true, 17);
+            $("#RADIUS").number(true, 0);
+            $("#btnlist").click(function () {
+                location.href = "/basic/signagelist";
+            })
+            $("#btnNew").click(function () {
+                location.href = "/basic/signagereg";
+            })
+            validationinit();
+            $(".ui.form").submit(function (event) {
+                if ($(".ui.error.message").css("display") == "none") { doSave(); }
+                event.preventDefault();
+            });
+            doQuery_AdSignInfo(1);
+            $('.menu .item').tab({
+                onVisible: function (tabPath) {
+                    switch (tabPath) {
+                        case "first":
+                            doQuery_AdSignInfo(1);
+                            break;
+                        case "second":
+                            doQuery_SignagePlaceList();
+                            break;
+                        default:
+                            break;
+                    }
+                }
+            });
+        }
+        function SIGNAGE_addressCallBack(data) {
+
+            if (data.longitude == undefined) {
+                DaumApi.Map.addr2coord(data.address, function (result) {
+                    $("#LATITUDE").val(result.lat);
+                    $("#LONGITUDE").val(result.lng);
+                });
+            }
+        }
+        function validationinit() {
+            $('.ui.form').form({
+                on: 'change',
+                fields: {
+                    BEACON_NAME: {
+                        identifier: 'BEACON_NAME',
+                        rules: [
+                            {
+                                type: 'empty',
+                                prompt: '사이니지명을 입력하여 주시기 바랍니다.'
+                            }
+                        ]
+                    }, IS_VERTICAL: {
+                        identifier: 'IS_VERTICAL',
+                        rules: [
+                            {
+                                type: 'empty',
+                                prompt: '디스플레이를 선택하여 주시기 바랍니다.'
+                            }
+                        ]
+
+                    }, PLAY_TIME: {
+                        identifier: 'PLAY_TIME',
+                        rules: [
+                            {
+                                type: 'empty',
+                                prompt: '실행시간을 선택하여 주시기 바랍니다.'
+                            }
+                        ]
+                    }, SIGNAGE_ADDRESS1: {
+                        identifier: 'SIGNAGE_ADDRESS1',
+                        rules: [
+                            {
+                                type: 'empty',
+                                prompt: '주소를 선택하여 주시기 바랍니다.'
+                            }
+                        ]
+                    }
+                    , LATITUDE: {
+                        identifier: 'LATITUDE',
+                        rules: [
+                            {
+                                type: 'empty',
+                                prompt: '위도를 입력하여 주시기 바랍니다.'
+                            }
+                        ]
+                    }, LONGITUDE: {
+                        identifier: 'LONGITUDE',
+                        rules: [
+                            {
+                                type: 'empty',
+                                prompt: '경도를 입력하여 주시기 바랍니다.'
+                            }
+                        ]
+                    }, RADIUS: {
+                        identifier: 'RADIUS',
+                        rules: [
+                            {
+                                type: 'empty',
+                                prompt: '반경를 입력하여 주시기 바랍니다.'
+                            }
+                        ]
+                    }
+
+                }
+                , onSuccess: function (event, fields) { $(".ui.error.message").html(""); $(".ui.error.message").hide(); }
+                , onFailure: function (event, fields) {
+
+                    //실패후 첫번재 에러 태그에 포커스
+                    SemanticUI.Form.Invalidation.ErrorFocus();
+                }, onInvalid: function (event) {
+                    //
+                    SemanticUI.Form.addErrorMessage(event);
+                }
+            });
+        }
+        function doSave(saveType) {
+            $(".ui.error.message").html("");
+
+            var params = BaseCommon.FormInfo.serializeJson(".ui.form", "SIGNAGE_");
+            params.SAVE_TYPE = saveType;
+            params.ZIP_CODE = params.POST_CODE;
+            params.IS_VERTICAL = ((params.IS_VERTICAL == "" || params.IS_VERTICAL == "0") ? "false" : "true");
+            params = JSON.stringify(params);
+
+            ajax.GetAjax("/basic/SignageSave/", params, "json", function (result) {
+                if (result.ERROR_MESSAGE != "") {
+                    $.MessageBox(result.ERROR_MESSAGE);
+                }
+                else {
+                    $("#BEACON_CODE").val(result.DATA);
+                    $(".adSignInfoCard").removeClass("hide");
+                    //$("#btnlist").trigger("click");
+                }
+            });
+        }
+
+
+        function doDelete() {
+            if (Number($("BEACON_CODE").val()) <= 0) {
+                $.MessageBox("삭제할 데이터가 없습니다.");
+                return;
+            }
+
+            $.MessageBox({
+                buttonDone: "예",
+                buttonFail: "아니오",
+                message: "정말로 삭제하시겠습니까?"
+            }).done(function () {
+                doSave('D');
+            });
+        }
+        var PARAM_DATA = {
+            PAGE_SIZE: 10
+            , PAGE_COUNT: 100
+            , PAGE: 1
+            , SORT_ORDER: "A.IDX"
+
+        }
+        function doQuery_AdSignInfo(page, order) {
+            if (page == undefined || page == null || page < 1) page = 1;
+            PARAM_DATA.PAGE = page;
+
+            var param = BaseCommon.FormInfo.serializeJson(".adSignInfoSearch");
+            param.BEACON_CODE = $("#BEACON_CODE").val();
+            param.PAGE_COUNT = PARAM_DATA.PAGE_COUNT;
+            param.PAGE = PARAM_DATA.PAGE;
+
+            if (order != undefined) {
+                PARAM_DATA.SORT_ORDER = order;
+                param.SORT_ORDER = order;
+            }
+            else if (order == undefined) {
+                param.SORT_ORDER = PARAM_DATA.SORT_ORDER;
+            }
+            
+            param = JSON.stringify(param);
+            ajax.GetAjax("/basic/pv_AdSigninfoSignageCard", param, "html", function (result) {
+
+                if (result.length < 100) result = "<center style='cursor:pointer;padding:2em;font-size:2em;font-weight:bold;color:#008aff' onclick = 'addAdSignInfo();'>추가버튼을 클릭하여 콘텐츠를 등록하세요</center>";
+                $(".ui.cards").html(result);
+                //$("#tblist.mrc-table tbody").html(result);
+                //$.mrc_table.Init("#tblist.mrc-table", false, order);
+
+
+                ////$("#dvpagination").pagination({
+                ////    total: Number($("#tblist.mrc-table #total").val()), page: PARAM_DATA.PAGE, pagesize: PARAM_DATA.PAGE_SIZE, perpage: PARAM_DATA.PAGE_COUNT
+                ////    , onPageClick: function (item, page) {
+                ////        doQuery(page);
+                ////    }
+                ////})
+                ////$("#dvpagination").css("display", "");
+                //$.mrc_table.fixedHeder("#tblist.mrc-table");
+            });
+        }
+
+        //function mrcGrid_Sort(objName, datasort, orderType) {
+        //    //_sortColumn = datasort;
+        //    //_sortOrder = orderType;
+
+        //    //        _page = 1;
+        //    if (objName == "#tblist.mrc-table") {
+        //        if (datasort == "" || orderType == "") doQuery(1, "");
+        //        else doQuery_AdSignInfo(1, datasort + " " + orderType);
+        //    }
+
+        //}
+
+        function addAdSignInfo() {
+            var isVertical = SemanticUI.ComboBox.GetVal("IS_VERTICAL");
+            var playTime = SemanticUI.ComboBox.GetVal("PLAY_TIME");
+            AdSignInfoP_Open($("#BEACON_CODE").val(), isVertical, playTime);
+        }
+
+        function AdSignInfoPopupSelected(list) {
+            var params = new Object();
+            params.BEACON_CODE = $("#BEACON_CODE").val();
+            params.list = list;
+            params = JSON.stringify(params);
+
+            ajax.GetAjax("/basic/adSigninfoSignageSave/", params, "json", function (result) {
+                if (result.ERROR_MESSAGE != "") {
+                    $.MessageBox(result.ERROR_MESSAGE);
+                }
+                else {
+                    doQuery_AdSignInfo(1);
+                }
+            });
+        }
+        function adSignInfoDel(idx) {
+            $.MessageBox({
+                buttonDone: "예",
+                buttonFail: "아니오",
+                message: "정말로 삭제하시겠습니까?"
+            }).done(function () {
+                var params = new Object();
+                params.BEACON_CODE = $("#BEACON_CODE").val();
+                params.list = [{ SAVE_TYPE: 'D', IDX: idx }];
+                params = JSON.stringify(params);
+                ajax.GetAjax("/basic/adSigninfoSignageSave/", params, "json", function (result) {
+                    if (result.ERROR_MESSAGE != "") {
+                        $.MessageBox(result.ERROR_MESSAGE);
+                    }
+                    else {
+                        doQuery_AdSignInfo(1);
+                    }
+                });
+            });
+        }
+        function doQuery_SignagePlaceList() {
+
+            if (Number($("#BEACON_CODE").val()) > 0) {
+                $("#tbRegion").show();
+            }
+            var params = new Object();
+            params.BEACON_CODE = $("#BEACON_CODE").val();
+            var param = JSON.stringify(params);
+            ajax.GetAjax("/basic/PV_SignagePlaceList", param, "html", function (result) {
+                $("#tbList_SignagePlace tbody#tbodyList_SignagePlace").html(result);
+                $.mrc_table.Init("#tbList_SignagePlace");
+                //$.mrc_table.fixedHeder("#tbList_SignagePlace");
+                $("#spRegionPlaceCnt").text(String($.mrc_table.GetData("#tbList_SignagePlace").length) + "곳 선택");
+            });
+
+        }
+     var localName = "";
+        function fnDaumMapMultiMaker()
+        {
+
+            localName = "";
+            var lat=0,lng=0;
+
+            if($("#LOCAL_NAME3").val() != "")
+            {
+                localName = $("#LOCAL_NAME3").val() ;
+            }
+
+            if (localName != "")
+            {
+                DaumApi.Map.addr2coord((localName == "" ? "서울시" : localName), function (result) {
+                    markerMapPopupOpen(result.lat, result.lng);
+                },function(result){
+                    markerMapPopupOpen(0,0);
+                });
+            }
+            else
+                markerMapPopupOpen(0, 0);
+        }
+        function markerMapPopupOpen(lat, lng)
+        {
+            var makerlist= new Array();
+            try{
+                makerlist = JSON.parse($("#tbList_SignagePlace #markerlist").val());
+            } catch (e) { }
+            var position = { lat: lat, lng: lng };
+            var fixmarkerlist = new Array();
+
+            fixmarkerlist.push({ lat: Number( $("#LATITUDE").val()), lng: Number($("#LONGITUDE").val()) });
+
+
+            @(option.ID)_MapRangeOpen(makerlist, position, "기준영역(" + $("#BEACON_NAME").val() + ")", fixmarkerlist);
+        }
+
+        function @(option.ID)_DaumMapMarker_Callback(rtnList)
+        {
+            doSave_SignagePlace(rtnList);
+        }
+
+        function doSave_SignagePlace(rtnList) {
+            var param = new Object();
+            param.BEACON_CODE = $("#BEACON_CODE").val();
+            param.list = rtnList;
+            param = JSON.stringify(param);
+            ajax.GetAjax("/basic/SignagePlaceSave/", param, "json", function (result) {
+                if (result.ERROR_MESSAGE != "") {
+                    $.MessageBox(result.ERROR_MESSAGE);
+                } else {
+                    doQuery_SignagePlaceList();
+                }
+            });
+        }
+
+
+    </script>
+}
+@Html.EditorFor(model => new EditTempleateModel().Kakao_MapMakerCircle_Range, new { optionmap = option })
+@{
+
+    Html.RenderPartial("/Views/Popup/AdSignInfoP.cshtml");
+    Html.RenderPartial("/Views/Popup/PreviewP.cshtml");
+    Html.RenderPartial("/Views/Basic/Partial/PV_AuthNumberApply.cshtml");
+}
+<style>
+    .ui.divider.deviderAdSignInfo {
+        margin: 0rem;
+    }
+
+    .adSignInfoCard.hide {
+        display: none !important;
+    }
+</style>
+<div class="ui vertical stripe segment">
+    @Html.TitleNavigation()
+    <form class="ui form" onSubmit="return false;" action="/Base/FileUpload" data-ajax="true" data-ajax-mode="replace" data-ajax-update="#dc_goal_placeholder" enctype="multipart/form-data" id="frmUpload" method="post">
+
+
+        <div class="ui stackable grid  fields">
+            <div class="one column row">
+                <div class="column buttons" style="padding:0">
+
+                    @Html.Semantic_Button2("btnlist", "목록", SemanticUIHelper.enButtonType.ToList, SemanticUIHelper.Size.medium, new { @type = "button" })
+                    @Html.Semantic_Button2("btnNew", "신규", SemanticUIHelper.enButtonType.New, SemanticUIHelper.Size.medium, new { @type = "button" })
+                    @Html.Semantic_Button2("btnlist", "삭제", SemanticUIHelper.enButtonType.Del, SemanticUIHelper.Size.medium, new { @type = "button", @onclick = "doDelete();" })
+                    @Html.Semantic_Button2("btnSave", "저장", SemanticUIHelper.enButtonType.Save, SemanticUIHelper.Size.medium, new { @type = "submit" })
+                </div>
+            </div>
+            <div class="one column row">
+                <div class="column" style="padding:0">
+                    <table class="ui celled table" style="margin:0">
+                        <tbody>
+                            <tr>
+                                @Html.Hidden("BEACON_CODE", data.BEACON_CODE)
+                                <td class="title">
+                                    @Html.Semantic_TITLE2("사이니지명", true)
+                                </td>
+                                <td class="content">
+                                    @Html.Semantic_TextBox("BEACON_NAME", data.BEACON_NAME, SemanticUIHelper.Size.mini, new { @placeholder = "사이니지명을 등록하세요", @class = "size180" })
+                                </td>
+                                <td class="title">@Html.Semantic_TITLE2("보기", true)</td>
+                                <td class="content">@Html.CommonCombo("IS_VERTICAL", new T_COMMON_COND { MAIN_CODE = "U005", HIDE = false }, data.IS_VERTICAL == false ? "0" : "1")</td>
+                                <td class="title">
+                                    @Html.Semantic_TITLE2("실행시간", true)
+                                </td>
+                                <td class="content">
+                                    @Html.CommonCombo("PLAY_TIME", new T_COMMON_COND { MAIN_CODE = "U006", HIDE = false }, data.PLAY_TIME.ToString(""))
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="title" rowspan="3">
+                                    @Html.Semantic_TITLE2("주소", true)
+                                </td>
+                                <td class="content address" rowspan="3" colspan="3">
+                                    @Html.EditorFor(model => model.Kakao_address, new { option = new DaumAddressOption { ID = "SIGNAGE", POST_CODE = data.ZIP_CODE, ADDRESS1 = data.ADDRESS1, ADDRESS2 = data.ADDRESS2 } })
+                                </td>
+                                <td class="title">
+                                    @Html.Semantic_TITLE2("위도", true)
+                                </td>
+                                <td class="content">
+                                    @Html.Semantic_TextBox("LATITUDE", data.LATITUDE.ToString(""), SemanticUIHelper.Size.mini, new { @placeholder = "위도", @class = "size100", @maxlength = "20" })
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="title">
+                                    @Html.Semantic_TITLE2("경도", true)
+                                </td>
+                                <td class="content">
+                                    @Html.Semantic_TextBox("LONGITUDE", data.LONGITUDE.ToString(""), SemanticUIHelper.Size.mini, new { @placeholder = "경도", @class = "size100", @maxlength = "20" })
+                                </td>
+                            </tr>
+
+                            @*<tr style="display:none">
+
+                                </tr>*@
+                            <tr>
+                                @*<td class="title">
+                                        <div class="field">
+                                            @Html.Semantic_TITLE2("배너수")
+                                        </div>
+                                    </td>
+                                    <td class="content">
+                                        @Html.Hidden("AD_SIGNINFO_CNT")
+                                        @Html.Semantic_Button("btnAdSignCnt", "배너보기" + (data.AD_SIGNINFO_CNT.ToString("0") == ("0") ? "" : "(총 : " + data.AD_SIGNINFO_CNT.ToString("0") + ")"))
+                                    </td>*@
+                                <td class="title">
+                                    <div class="field">
+                                        @Html.Semantic_TITLE2("배너반경", true)
+                                    </div>
+                                </td>
+                                <td class="content">
+                                    @Html.Semantic_TextBox("RADIUS", data.RADIUS.ToString(), new { @class = "size100", @style = "text-align:right", @maxlength = "10", @placeholder = "기본 3,000 m" }) m
+                                </td>
+
+                            </tr>
+                            <tr>
+                                <td class="title">
+                                    @Html.Semantic_TITLE2("인증번호")
+                                </td>
+                                <td class="content">
+                                    @Html.Hidden("DEVICE_NUMBER", data.DEVICE_NUMBER)
+                                    @Html.Hidden("AUTH_NUMBER", data.AUTH_NUMBER)
+                                    @{
+                                        if (Convert.ToInt64(data.BEACON_CODE.ToString("-1")) <= 0)
+                                        {
+                                            @Html.Semantic_Button2("btnAuthNumber", "미인증", SemanticUIHelper.enButtonType.Normal, new { @disabled = "disabled" })
+                                        }
+                                        else
+                                        {
+                                            if (data.AUTH_NUMBER == null || data.AUTH_NUMBER <= 0)
+                                            {
+                                                @Html.Semantic_Button2("btnAuthNumber", "미인증", SemanticUIHelper.enButtonType.Normal, new { })
+                                            }
+                                            else
+                                            {
+                                                @Html.Semantic_Button2("btnAuthNumber", (data.AUTH_NUMBER.ToString().Count() >= 4 ? data.AUTH_NUMBER.ToString() : data.AUTH_NUMBER.ToString().PadLeft(4, '0')), SemanticUIHelper.enButtonType.Save, new { })
+                                            }
+                                            @*<a href="javascript:void(0);" class="authnumberpopup">@(data.AUTH_NUMBER == null ? "미인증" : (data.AUTH_NUMBER.ToString().Count() >= 4 ? data.AUTH_NUMBER.ToString() : data.AUTH_NUMBER.ToString().PadLeft(4, '0')))</a>*@
+                                        }
+                                    }
+
+                                </td>
+                                <td class="title">
+                                    @Html.Semantic_TITLE2("비고")
+                                </td>
+                                <td class="content" colspan="3">
+                                    @Html.Semantic_TextBox("REMARK", data.REMARK.ToString(""), new { @style = "width:100%" })
+                                </td>
+                            </tr>
+                            <tr>
+                                @{
+                                    List<SelectListItem> cboHide = new List<SelectListItem>();
+                                    cboHide.Add(new SelectListItem { Value = "false", Text = "사용" });
+                                    cboHide.Add(new SelectListItem { Value = "true", Text = "미사용" });
+                                }
+                                <td class="title">@Html.Semantic_TITLE2("사용여부")</td>
+                                <td>@Html.Semantic_YesOrNo("HIDE", cboHide, SemanticUIHelper.Size.mini, data.HIDE.ToString())</td>
+
+                                <td class="title">
+                                    @Html.Semantic_TITLE2("등록자")
+                                </td>
+                                <td class="content">
+                                    @Html.Semantic_TextBox("INSERT_NAME", string.IsNullOrEmpty(data.INSERT_NAME) ? "" : data.INSERT_NAME + "(" + data.INSERT_DATE.ToString() + ")", new { @readonly = "readonly", @class = "size200" })
+                                </td>
+                                <td class="title">
+                                    @Html.Semantic_TITLE2("수정자")
+                                </td>
+                                <td class="content">
+                                    @Html.Semantic_TextBox("UPDATE_NAME", string.IsNullOrEmpty(data.UPDATE_NAME) ? "" : data.UPDATE_NAME + "(" + data.UPDATE_DATE.ToString() + ")", new { @readonly = "readonly", @class = "size200" })
+                                </td>
+
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="one column row adSignInfoCard @(data.BEACON_CODE > 0 ? "": "hide")">
+                <div class="ui top attached tabular menu">
+                    <a class="item first-tab active" data-tab="first">광고콘텐츠</a>
+                    <a class="item second-tab" data-tab="second">기준영역</a>
+                </div>
+                <div class="ui bottom attached tab first-tab segment active" data-tab="first">
+                    <div class="sixteen wide column dvAddAdSignInfo">
+                        <div class="ui grid">
+                            <div class="eight wide column adSignInfoSearch" style="display:none;">
+                                @Html.Semantic_TextBox("txtAdSignInfoSearch", "")
+
+                                @Html.Semantic_Button2("btnAdSignInfoSearch", "조회", SemanticUIHelper.enButtonType.Normal, new { @onclick = "doQuery_AdSignInfo();" })
+                            </div>
+                            <div class="sixteen wide column buttons" style="padding-top:0.5em;">
+                                @Html.Semantic_Button2("btnAdSignInfoAdd", "추가", SemanticUIHelper.enButtonType.New, new { @onclick = "addAdSignInfo();" })
+                            </div>
+                            <div class="ui divider sixteen wide column deviderAdSignInfo"></div>
+                            <div class="sixteen wide column">
+                                <div class="ui six doubling cards" style="min-height:10em;width:100%;">
+                                    <center style='cursor:pointer;padding:2em;font-size:2em;font-weight:bold;color:#008aff' onclick="addAdSignInfo();">추가버튼을 클릭하여 콘텐츠를 등록하세요</center>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>

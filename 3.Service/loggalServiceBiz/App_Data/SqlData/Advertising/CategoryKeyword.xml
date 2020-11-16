@@ -1,0 +1,171 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<DBAgentMultiTemplate  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns="http://altsoft.kr/">
+
+  <DBAgentTemplate TemplateID="GetCategoryKeywordList">
+    <!-- 
+    SqlType : SQL의 형태를 지정합니다.
+      Example 1:<SqlType>FixedSQL</SqlType> 고정적인 SQL을 지원합니다. 
+      Example 2:<SqlType>DynamicSQL</SqlType> 동적인 SQL Type1을 지원합니다.  
+    Description : 해당 SQL의 기능설명을 적습니다.
+    SQLModifier : 해당 SQL의 작성자(수정자)를 적습니다
+    LastModifyDate : 해당 SQL의 마지막 수정일을 적습니다
+    -->
+    <Information>
+      <SqlType>DynamicSQL</SqlType>
+      <Description>분류별 키워드테이블 - T_CATEGORY_KEYWORD 조회</Description>
+      <SQLModifier>전상훈</SQLModifier>
+      <LastModifyDate>2016-07-12</LastModifyDate>
+    </Information>
+
+    <TemplateSQL>
+      <!-- FixedSQL : 고정된 SQL이 들어가는 곳입니다. -->
+      <FixedSQL>
+        <![CDATA[ 
+ 
+		SET NOCOUNT ON 
+	  /********************************************************************/
+	  /* 카테고리와 키워드 연결 테이블 - T_CATEGORY_KEYWORD 조회 -  SELECT QUERY */ 
+	  /********************************************************************/
+	  SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED 
+	  SELECT 
+		    A.CK_CODE
+		  , A.CATEGORY_CODE
+		  , A.KEYWORD_CODE
+		  , A.KEYWORD_NAME
+		  , A.LATITUDE
+		  , A.LONGITUDE
+		  , A.REMARK
+		  , A.HIDE
+		  , A.INSERT_CODE
+		  , A.INSERT_DATE
+		  , A.UPDATE_CODE
+		  , A.UPDATE_DATE
+	  FROM T_CATEGORY_KEYWORD A 
+   WHERE 1=1
+    #[CK_CODE]
+    #[CATEGORY_CODE]
+    #[KEYWORD_CODE]
+    #[KEYWORD_NAME]
+    #[HIDE]
+	  WHERE 1=1 
+    ORDER BY KEYWORD_NAME
+	  SET NOCOUNT OFF 
+    ]]>
+      </FixedSQL>
+      <DynamicBodys>
+        <Key>CK_CODE</Key>
+        <Body>AND A.CK_CODE = {0}</Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>CATEGORY_CODE</Key>
+        <Body>AND A.CATEGORY_CODE = {0} </Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>KEYWORD_CODE</Key>
+        <Body>AND A.KEYWORD_CODE = {0} </Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>KEYWORD_NAME</Key>
+        <Body>AND A.KEYWORD_NAME LIKE N'%{0}%' </Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>HIDE</Key>
+        <Body>AND A.HIDE = {0} </Body>
+      </DynamicBodys>
+    </TemplateSQL>
+  </DBAgentTemplate>
+
+  <DBAgentTemplate TemplateID="CategoryKeywordSave">
+    <!-- 
+    SqlType : SQL의 형태를 지정합니다.
+      Example 1:<SqlType>FixedSQL</SqlType> 고정적인 SQL을 지원합니다. 
+      Example 2:<SqlType>DynamicSQL</SqlType> 동적인 SQL Type1을 지원합니다.  
+    Description : 해당 SQL의 기능설명을 적습니다.
+    SQLModifier : 해당 SQL의 작성자(수정자)를 적습니다
+    LastModifyDate : 해당 SQL의 마지막 수정일을 적습니다
+    -->
+    <Information>
+      <SqlType>DynamicSQL</SqlType>
+      <Description>분류별 키워드테이블 - T_CATEGORY_KEYWORD 조회</Description>
+      <SQLModifier>전상훈</SQLModifier>
+      <LastModifyDate>2016-07-12</LastModifyDate>
+    </Information>
+
+    <TemplateSQL>
+      <!-- FixedSQL : 고정된 SQL이 들어가는 곳입니다. -->
+      <FixedSQL>
+        <![CDATA[ 
+ 
+		SET NOCOUNT ON 
+    /*****************************************/
+    /* 검색키워드 저장 CategoryKeywordSave   */
+    /*****************************************/
+    DECLARE @CATEGORY_CODE INT = {0}
+           ,@KEYWORD_CODES VARCHAR(200)  = N'{1}' --'1,2,3'
+	         ,@REG_CODE INT = {2}
+	         ,@ERROR_MESSAGE NVARCHAR(500) = N''
+
+
+   SELECT @ERROR_MESSAGE = N'광고에 해당 검색키워드가 등록되어 있어 삭제를 할 수가 없습니다. 광고제목 : ' + F.TITLE + '|| 카테고리명 : ' + C.CATEGORY_NAME + '|| 키워드명 : ' + D.KEYWORD_NAME
+     FROM T_CATEGORY_KEYWORD A
+    INNER JOIN dbo.FN_SPLIT(@KEYWORD_CODES, ',') b
+       ON A.KEYWORD_CODE = b.VAL1
+    INNER JOIN T_CATEGORY C
+       ON A.CATEGORY_CODE = C.CATEGORY_CODE
+    INNER JOIN T_KEYWORD D
+       ON A.KEYWORD_CODE = D.KEYWORD_CODE
+    INNER JOIN T_SEARCH_KEYWORD E
+       ON A.CK_CODE = E.CK_CODE
+    INNER JOIN T_AD F
+       ON E.AD_CODE = F.AD_CODE
+    WHERE A.CATEGORY_CODE = @CATEGORY_CODE
+	  
+      
+    IF @@ROWCOUNT = 1 GOTO EXCEPTION
+
+
+  SELECT @ERROR_MESSAGE = N'로컬박스에 해당 검색키워드가 등록되어 있어 삭제를 할 수가 없습니다. 로컬박스명 : ' + F.DEVICE_NAME + '|| 카테고리명 : ' + C.CATEGORY_NAME + '|| 키워드명 : ' + D.KEYWORD_NAME
+    FROM T_CATEGORY_KEYWORD A
+   INNER JOIN dbo.FN_SPLIT(@KEYWORD_CODES, ',') b
+      ON A.KEYWORD_CODE = b.VAL1
+   INNER JOIN T_CATEGORY C
+      ON A.CATEGORY_CODE = C.CATEGORY_CODE
+   INNER JOIN T_KEYWORD D
+      ON A.KEYWORD_CODE = D.KEYWORD_CODE
+   INNER JOIN T_SEARCH_KEYWORD E
+      ON A.CK_CODE = E.CK_CODE
+   INNER JOIN T_DEVICE F
+      ON E.DEVICE_CODE = F.DEVICE_CODE
+   WHERE A.CATEGORY_CODE = @CATEGORY_CODE
+   
+    IF @@ROWCOUNT = 1 GOTO EXCEPTION
+
+
+    DELETE A 
+      FROM T_CATEGORY_KEYWORD A
+    LEFT JOIN dbo.FN_SPLIT(@KEYWORD_CODES, ',') b
+      ON A.KEYWORD_CODE = b.VAL1
+    WHERE A.CATEGORY_CODE = @CATEGORY_CODE
+      AND B.VAL1 IS NULL
+
+    INSERT INTO T_CATEGORY_KEYWORD
+    (CATEGORY_CODE, KEYWORD_CODE, KEYWORD_NAME, LATITUDE, LONGITUDE, REMARK, HIDE, INSERT_CODE, INSERT_DATE, UPDATE_CODE, UPDATE_DATE)
+    SELECT DISTINCT @CATEGORY_CODE, A.KEYWORD_CODE, A.KEYWORD_NAME, A.LATITUDE, A.LONGITUDE, '',0, @REG_CODE, GETDATE(), @REG_CODE, GETDATE()
+    FROM T_KEYWORD A
+    INNER JOIN dbo.FN_SPLIT(@KEYWORD_CODES, ',') b
+       ON A.KEYWORD_CODE = B.VAL1
+    LEFT JOIN T_CATEGORY_KEYWORD C
+       ON C.CATEGORY_CODE = @CATEGORY_CODE
+      AND C.KEYWORD_CODE  = B.VAL1 
+    WHERE C.CATEGORY_CODE IS NULL
+
+    EXCEPTION:
+
+    SELECT @ERROR_MESSAGE [ERROR_MESSAGE]
+	  SET NOCOUNT OFF 
+    ]]>
+      </FixedSQL>
+   
+    </TemplateSQL>
+  </DBAgentTemplate>
+</DBAgentMultiTemplate>

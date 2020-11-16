@@ -1,0 +1,899 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<DBAgentMultiTemplate  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns="http://altsoft.kr/">
+
+  <DBAgentTemplate TemplateID="GetLoggalBoxList">
+    <!-- 
+    SqlType : SQL의 형태를 지정합니다.
+      Example 1:<SqlType>FixedSQL</SqlType> 고정적인 SQL을 지원합니다. 
+      Example 2:<SqlType>DynamicSQL</SqlType> 동적인 SQL Type1을 지원합니다.  
+    Description : 해당 SQL의 기능설명을 적습니다.
+    SQLModifier : 해당 SQL의 작성자(수정자)를 적습니다
+    LastModifyDate : 해당 SQL의 마지막 수정일을 적습니다
+    -->
+    <Information>
+      <SqlType>DynamicSQL</SqlType>
+      <Description>loggal box 광고데이터 가져오기 거리순</Description>
+      <SQLModifier>전상훈</SQLModifier>
+      <LastModifyDate>2017-06-26</LastModifyDate>
+    </Information>
+
+    <TemplateSQL>
+      <!-- FixedSQL : 고정된 SQL이 들어가는 곳입니다. -->
+      <FixedSQL>
+        <![CDATA[ 
+   	/********************************************************************/
+    /* loggal box 광고데이터 가져오기 거리순    GetLoggalBoxList        */ 
+    /* Search Page :  /basic/addevice                                   */
+    /********************************************************************/
+	  SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED 
+	  DECLARE @DEVICE_CODE     BIGINT = {0}
+			 ,@DEVICE_NUMBER   VARCHAR(100)  = '{1}'
+			 ,@HOST_URL        NVARCHAR(100) = '{2}'
+			 ,@MANAGEMENT_URL  NVARCHAR(100) = '{3}'
+			 ,@NOW_DATE        VARCHAR(8)
+			 ,@NOW_TIME        VARCHAR(5)
+			 ,@DEVICE_NAME     NVARCHAR(200)
+			 ,@UTC_DATE        DATETIME = GETUTCDATE()
+			 ,@JIBUN_ADDRESS   NVARCHAR(200)
+      		 ,@PAGE INT       = {4}
+			 ,@PAGE_COUNT INT = {5}
+			 ,@WORKING_TIME DATETIME = CASE WHEN '{6}' = '1' THEN GETDATE() ELSE NULL END
+			 --,@BASE_FRAME_TYPE INT = 6
+	  
+DECLARE @LATITUDE NUMERIC(20,16),@LONGITUDE NUMERIC(20,16), @RADIUS INT,@AD_FRAME_TYPE INT = 1
+
+SELECT @LATITUDE      = LATITUDE,@LONGITUDE = LONGITUDE, @RADIUS=RADIUS, @AD_FRAME_TYPE = AD_FRAME_TYPE
+      ,@NOW_DATE      = CONVERT(VARCHAR(8), DATEADD(MINUTE,  A.TIME_ZONE * 60, @UTC_DATE),112)
+      ,@NOW_TIME      = CONVERT(VARCHAR(5), DATEADD(MINUTE,  A.TIME_ZONE * 60, @UTC_DATE),108)
+	  ,@DEVICE_CODE   = DEVICE_CODE
+	  ,@DEVICE_NUMBER = DEVICE_NUMBER
+FROM T_DEVICE A
+WHERE (DEVICE_CODE = @DEVICE_CODE OR DEVICE_NUMBER = @DEVICE_NUMBER);
+
+
+WITH T_TABLE
+AS
+(
+SELECT ROW_NUMBER()OVER(ORDER BY ISNULL(D.ORDER_SEQ,99999)) AS IDX
+     , A.DEVICE_CODE, A.DEVICE_NAME
+     , A.STORE_CODE
+	 , A1.STORE_NAME AS COMPANY_NAME
+	 , B.BANNER_TYPE2 AS CONTENT_TYPE
+	 , A.AD_CYCLE_TIME AS PLAY_TIME
+	 , A.AD_CYCLE_TIME
+	 , D.CATEGORY_CODE
+	 , CASE WHEN B.AD_FRAME_TYPE = 1 THEN TITLE ELSE D.CATEGORY_NAME + CASE WHEN B.BANNER_TYPE2  <> 1 THEN  '(' + TC1.NAME + ')' ELSE '' END END AS CATEGORY_NAME
+	 , D.CATEGORY_TYPE
+	 , B.BANNER_TYPE
+	 , D.ORDER_SEQ
+	 , B.AD_FRAME_TYPE AS FRAME_TYPE
+	 
+	 , B.AD_FRAME_TYPE
+	 , B.AD_CODE, B.TITLE, B.SUB_TITLE
+	 , B.CLICK_CNT
+	 , B.LOGO_URL AS BANNER_IMAGE
+	 , CASE WHEN B.BANNER_TYPE2 IN (2,3) THEN ISNULL( B.FILE_URL,B.LOGO_URL) 
+		      ELSE B.LOGO_URL END AS LOGO_URL
+     , B.FR_DATE, B.TO_DATE
+	 , B.FR_TIME, B.TO_TIME
+	 , A.LATITUDE, A.LONGITUDE
+	 , @MANAGEMENT_URL +'/advertise/contentview/' + CONVERT(VARCHAR(10), B.AD_CODE) AS CONTENT_URL
+	 , A.ADDRESS1 AS JIBUN_ADDRESS
+	 , B.STORE_CODE AS DEVICE_STORE_CODE
+	 , B.STORE_NAME AS DEVICE_STORE_NAME
+	 ,AC.REF_DATA1
+	 , B.STATUS
+
+  FROM T_DEVICE A
+  LEFT JOIN T_DEVICE_PLACE AP
+    ON A.DEVICE_CODE = AP.DEVICE_CODE
+  INNER JOIN T_STORE A1
+     ON A.STORE_CODE = A1.STORE_CODE
+     
+INNER JOIN (
+		SELECT 
+                A.AD_CODE, A.TITLE, A.SUB_TITLE,A1.STORE_NAME, B.DEVICE_CODE,AC.REF_DATA2
+               , ISNULL(PLACE_DISTANCE,0) AS PLACE_DISTANCE
+               , ISNULL(B.STATUS,9) AS STATUS
+               , A.AD_FRAME_TYPE, A.STORE_CODE, A.REP_CATEGORY_CODE, A.BANNER_TYPE, A.BANNER_TYPE2, A.CLICK_CNT
+               , A.LOGO_URL, A.FR_DATE, A.TO_DATE, A.FR_TIME, A.TO_TIME
+               , AF.FILE_URL  
+			FROM T_AD A
+			INNER JOIN T_STORE A1
+			 ON A.STORE_CODE = A1.STORE_CODE
+		   LEFT JOIN 
+		   (	SELECT AD_CODE, MIN(DBO.FN_TO_DISTANCE(@LATITUDE, @LONGITUDE, A.LATITUDE, A.LONGITUDE,'M') - A.RADIUS) AS PLACE_DISTANCE
+				  FROM T_AD_PLACE A
+				 GROUP BY AD_CODE
+		   ) AP
+			  ON A.AD_CODE = AP.AD_CODE
+		   INNER JOIN T_COMMON AC
+			  ON AC.MAIN_CODE = 'A006'
+			 AND A.AD_TYPE = AC.SUB_CODE
+	 
+			LEFT JOIN T_AD_DEVICE B
+			  ON A.AD_CODE = B.AD_CODE
+			 AND B.DEVICE_CODE = @DEVICE_CODE
+			 AND B.STATUS IN(0, 9) 
+			 AND B.HIDE = 0
+		  LEFT JOIN T_FILE AF
+				ON AF.TABLE_NAME = 'T_AD' AND AF.TABLE_KEY = CONVERT(VARCHAR(20), B.AD_CODE)
+		  WHERE  A.STATUS = 9 AND A.HIDE = 0
+			  AND (A.TO_DATE = '' OR A.TO_DATE >= @NOW_DATE)
+			   AND (A.FR_TIME = '' OR (@NOW_TIME >= A.FR_TIME 
+									 AND @NOW_TIME < A.TO_TIME))
+    
+) B ON A.AD_FRAME_TYPE = B.AD_FRAME_TYPE 
+ INNER JOIN T_COMMON AC
+	  ON AC.MAIN_CODE = 'D003'
+	 AND A.DEVICE_TYPE = AC.SUB_CODE
+ INNER JOIN T_CATEGORY D
+    ON CASE WHEN A.STORE_CODE = B.STORE_CODE AND A.DEVICE_CODE = B.DEVICE_CODE AND B.REF_DATA2 LIKE '%1%' AND  B.STATUS = 0  THEN '6336' ELSE B.REP_CATEGORY_CODE END = D.CATEGORY_CODE      
+ INNER JOIN T_COMMON TC1 
+       ON TC1.MAIN_CODE = 'A010'
+      AND TC1.SUB_CODE = B.BANNER_TYPE2
+WHERE A.DEVICE_CODE = @DEVICE_CODE
+  AND A.AD_FRAME_TYPE = @AD_FRAME_TYPE
+  AND ((A.DEVICE_TYPE IN (1,3) AND A.DEVICE_CODE = B.DEVICE_CODE AND B.STATUS = 0 )
+        OR (A.DEVICE_TYPE IN (2,3) AND AC.REF_DATA1 LIKE '%2%' AND B.REF_DATA2 LIKE '%2%' AND b.PLACE_DISTANCE <= A.RADIUS)
+      )
+)
+SELECT  (FLOOR(CASE WHEN A.CATEGORY_CODE = 6336 THEN A.IDX ELSE NULL END -1) / (CASE WHEN A.AD_FRAME_TYPE > 1 THEN  A.AD_FRAME_TYPE+ 2 ELSE A.AD_FRAME_TYPE END)) +1 GROUP_SEQ
+	   , CATEGORY_NAME  + CASE WHEN A.AD_FRAME_TYPE <> 1 THEN CONVERT(VARCHAR(10), (FLOOR(CASE WHEN A.CATEGORY_CODE = 6336 THEN A.IDX ELSE NULL END -1) / (CASE WHEN A.AD_FRAME_TYPE > 1 THEN  A.AD_FRAME_TYPE+ 2 ELSE A.AD_FRAME_TYPE END)) +1) ELSE '' END AS GROUP_NAME
+       ,A.*
+       
+       , B.NAME AS SHARE_STATUS_NAME
+       , TC.NAME AS FRAME_TYPE_NAME
+	   , TC.NAME AS AD_FRAME_TYPE_NAME
+	   , ISNULL(C.BOOKMARK_CNT,0) AS BOOKMARK_CNT
+	   , ISNULL(C.FAVORITE_CNT,0) AS FAVORITE_CNT
+	   , (SELECT COUNT(*) FROM T_TABLE) AS TOTAL_ROWCOUNT 
+  FROM T_TABLE A
+  LEFT JOIN T_COMMON B
+    ON B.MAIN_CODE = 'A009'
+   AND A.STATUS = B.SUB_CODE
+  LEFT JOIN (SELECT AD_CODE
+                  , SUM(CASE WHEN BOOKMARK_KIND = 1 THEN 1 ELSE 0 END) AS BOOKMARK_CNT 
+				  , SUM(CASE WHEN BOOKMARK_KIND = 2 THEN 1 ELSE 0 END) AS FAVORITE_CNT 
+			   FROM T_MEMBER_BOOKMARK
+	          GROUP BY AD_CODE
+			  ) C ON A.AD_CODE = C.AD_CODE
+   INNER JOIN T_COMMON TC
+	  ON TC.MAIN_CODE = 'H002'
+	 AND TC.SUB_CODE  = A.AD_FRAME_TYPE
+ WHERE A.IDX > (@PAGE-1) * @PAGE_COUNT
+   AND A.IDX <= @PAGE * @PAGE_COUNT
+
+
+IF @@ROWCOUNT > 0 AND @WORKING_TIME IS NOT NULL
+BEGIN
+    UPDATE T_DEVICE
+        SET WORKING_TIME = GETDATE()
+    WHERE DEVICE_CODE = @DEVICE_CODE
+END 
+
+ 
+	SET NOCOUNT OFF 
+      ]]>
+      </FixedSQL>
+      <DynamicBodys>
+        <Key>CATEGORY_CODE</Key>
+        <Body>
+          <![CDATA[ /*AND(( {0} = 6336 AND M.SEQ IS NOT NULL) OR  ({0} <> 6336 AND D.CATEGORY_CODE   = {0}))*/
+              AND A.CATEGORY_CODE = {0}
+          ]]>
+          </Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>TITLE</Key>
+        <Body>AND B.TITLE LIKE N'%{0}%' </Body>
+      </DynamicBodys>
+		<DynamicBodys>
+			<Key>STORE_CODE</Key>
+			<Body>AND B.STORE_CODE = '{0}' </Body>
+		</DynamicBodys>
+		<DynamicBodys>
+			<Key>AD_FRAME_TYPE</Key>
+			<Body>AND B.AD_FRAME_TYPE = {0} </Body>
+		</DynamicBodys>
+      
+    </TemplateSQL>
+  </DBAgentTemplate>
+
+
+	<DBAgentTemplate TemplateID="GetMyLoggalBoxList">
+		<!-- 
+    SqlType : SQL의 형태를 지정합니다.
+      Example 1:<SqlType>FixedSQL</SqlType> 고정적인 SQL을 지원합니다. 
+      Example 2:<SqlType>DynamicSQL</SqlType> 동적인 SQL Type1을 지원합니다.  
+    Description : 해당 SQL의 기능설명을 적습니다.
+    SQLModifier : 해당 SQL의 작성자(수정자)를 적습니다
+    LastModifyDate : 해당 SQL의 마지막 수정일을 적습니다
+    -->
+		<Information>
+			<SqlType>DynamicSQL</SqlType>
+			<Description>loggal box 내배너 가져오기</Description>
+			<SQLModifier>전상훈</SQLModifier>
+			<LastModifyDate>2019-11-26</LastModifyDate>
+		</Information>
+
+		<TemplateSQL>
+			<!-- FixedSQL : 고정된 SQL이 들어가는 곳입니다. -->
+			<FixedSQL>
+				<![CDATA[ 
+   	/********************************************************************/
+    /* loggal box 내배너 가져오기    GetMyLoggalBoxList					*/ 
+    /* Search Page :  /device/localboxview                              */
+    /********************************************************************/
+	  SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED 
+
+ 
+ DECLARE @DEVICE_CODE       BIGINT      = CASE WHEN ISNUMERIC('{0}') = 1 THEN '{0}' ELSE NULL END
+       , @DEVICE_NUMBER     VARCHAR(100)  = '{1}'
+       , @LATITUDE          NUMERIC(20,16)
+	   , @LONGITUDE         NUMERIC(20,16)
+	   , @RADIUS            INT
+	   , @AD_FRAME_TYPE     INT = 1
+	   , @STORE_CODE        INT
+	   , @DEVICE_NAME       NVARCHAR(100)
+	   , @DEVICE_TYPE       INT
+	   , @DATA_CYCLE_TIME	INT
+       , @AD_CYCLE_TIME	    INT
+       , @PAGE_WAITING_TIME	INT  
+	   , @PAGE              INT = CASE WHEN ISNUMERIC('{2}') = 1 THEN '{2}' ELSE 1 END
+	   , @PAGE_COUNT        INT = CASE WHEN ISNUMERIC('{3}') = 1 THEN '{3}' ELSE 1 END
+	   , @MANAGEMENT_URL    NVARCHAR(100) = '{4}'
+	   , @WORKING_TIME      DATETIME = CASE WHEN '{5}' = '1' THEN GETDATE() ELSE NULL END
+	   , @UTC_DATE          VARCHAR(8)		= CONVERT(VARCHAR(8), GETUTCDATE(),112)
+       , @UTC_TIME          VARCHAR(5)		= CONVERT(VARCHAR(5), GETUTCDATE(),108)
+       , @TIME_ZONE         INT = 9
+       , @RANK_CNT          NUMERIC(3,2) = 4
+
+  SELECT @LATITUDE = B.LATITUDE
+       , @LONGITUDE = B.LONGITUDE 
+       , @RADIUS = B.RADIUS
+       , @AD_FRAME_TYPE = A.AD_FRAME_TYPE
+	   , @STORE_CODE = A.STORE_CODE
+	   , @DEVICE_NAME = A.DEVICE_NAME
+	   , @DEVICE_TYPE  = A.DEVICE_TYPE
+	   , @DATA_CYCLE_TIME = A.DATA_CYCLE_TIME
+	   , @AD_CYCLE_TIME = A.AD_CYCLE_TIME
+	   , @PAGE_WAITING_TIME = A.PAGE_WAITING_TIME
+  FROM T_DEVICE A
+ INNER JOIN T_DEVICE_PLACE B
+   ON A.DEVICE_CODE = B.DEVICE_CODE
+  AND B.PLACE_TYPE = 1
+WHERE (A.DEVICE_CODE = @DEVICE_CODE 
+      OR A.DEVICE_NUMBER = @DEVICE_NUMBER)
+  AND A.DEVICE_TYPE IN (1,3)
+  #[STATUS]
+  AND A.HIDE = 0 ;
+
+WITH T_TABLE 
+AS (
+   SELECT ROW_NUMBER() OVER(ORDER BY CATEGORY_ORDER_SEQ , (floor((CATEGORY_SEQ-1) /@RANK_CNT) + 1) * 100000 + item_type, CATEGORY_SEQ) AS ROW_IDX
+        , CONVERT(INT, CASE WHEN @AD_FRAME_TYPE = 1  THEN ROW_NUMBER() OVER(ORDER BY CATEGORY_ORDER_SEQ, FLOOR((CATEGORY_SEQ -1)))  
+		 	                ELSE  CEILING(ROW_NUMBER() OVER(partition by CATEGORY_ORDER_SEQ  ORDER BY  (floor((CATEGORY_SEQ-1) /@RANK_CNT) + 1) * 100000 + item_type, CATEGORY_SEQ) / (@AD_FRAME_TYPE + 2.00))END) 
+		   AS GROUP_SEQ 
+         , A.*
+         , ISNULL(C.NAME,'') AS STATUS_NAME
+   FROM 
+   (
+        SELECT   ROW_NUMBER() OVER(PARTITION BY CT.ORDER_SEQ ORDER BY (-1 * DISPLAY_SEQ) DESC,  ( -1 * PLACE_DISTANCE) DESC) AS CATEGORY_SEQ 
+               , @DEVICE_CODE AS DEVICE_CODE
+			   , @DEVICE_NAME AS DEVICE_NAME
+               , A.AD_CODE
+      		   , A.TITLE
+			   , A.SUB_TITLE
+			   , A.ITEM_TYPE
+			   , A.FR_DATE, A.TO_DATE
+	           , A.FR_TIME, A.TO_TIME
+			   , A.LOGO_URL AS BANNER_IMAGE
+			   , CASE WHEN A.BANNER_TYPE2 IN (2,3) THEN ISNULL( AF.FILE_URL,A.LOGO_URL) 
+		              ELSE A.LOGO_URL END AS LOGO_URL
+			   , A.CLICK_CNT
+      		   , A.BANNER_TYPE
+      		   , A.BANNER_TYPE2
+      		   , A.AD_TYPE
+      		   , A.AD_FRAME_TYPE
+			   , CM2.NAME AS AD_FRAME_TYPE_NAME
+               , ISNULL(B.STATUS,99) AS STATUS /*1:내배너 9:공유배너 99:모바일배너*/ 
+      		   , ISNULL(B.DISPLAY_SEQ,99999999) AS DISPLAY_SEQ
+      		   , AP.PLACE_DISTANCE
+			   , CT.CATEGORY_CODE
+      		   , CT.CATEGORY_NAME 
+      		   , CT.ORDER_SEQ AS CATEGORY_ORDER_SEQ
+      		   , A.STORE_CODE
+      		   , C.STORE_NAME
+      		   , A.MEMBER_CODE
+      		   , D.USER_NAME AS MEMBER_NAME
+      		   , C.PHONE AS STORE_PHONE
+      		   , B.AD_DEVICE_CODE
+      		   , @DEVICE_TYPE AS DEVICE_TYPE
+      	       , @DATA_CYCLE_TIME AS DATA_CYCLE_TIME
+      	       , @AD_CYCLE_TIME AS AD_CYCLE_TIME
+      	       , @PAGE_WAITING_TIME AS PAGE_WAITING_TIME
+      		   , ISNULL(BK.BOOKMARK_CNT,0) AS BOOKMARK_CNT
+      		   , ISNULL(BK.FAVORITE_CNT,0) AS FAVORITE_CNT
+			   , @MANAGEMENT_URL +'/advertise/contentview/' + CONVERT(VARCHAR(10), A.AD_CODE) AS CONTENT_URL
+			   , B.IS_MOBILE
+		FROM T_AD A
+        LEFT JOIN 
+      		   (	SELECT AD_CODE, MIN(DBO.FN_TO_DISTANCE(@LATITUDE, @LONGITUDE, A.LATITUDE, A.LONGITUDE,'M') - A.RADIUS) - @RADIUS AS PLACE_DISTANCE
+      				  FROM T_AD_PLACE A
+      				  
+      				 GROUP BY AD_CODE
+      		   ) AP
+      		   ON A.AD_CODE = AP.AD_CODE
+		LEFT JOIN T_FILE AF
+			   ON AF.TABLE_NAME = 'T_AD' 
+			  AND AF.TABLE_KEY = CONVERT(VARCHAR(20), A.AD_CODE)
+			  AND AF.FILE_SEQ = 1
+        LEFT JOIN T_AD_DEVICE B
+          ON A.AD_CODE= B.AD_CODE
+      	AND B.DEVICE_CODE = @DEVICE_CODE
+      	AND B.HIDE = 0
+         LEFT JOIN (SELECT AD_CODE
+                       , SUM(CASE WHEN BOOKMARK_KIND = 1 THEN 1 ELSE 0 END) AS BOOKMARK_CNT 
+      				  , SUM(CASE WHEN BOOKMARK_KIND = 2 THEN 1 ELSE 0 END) AS FAVORITE_CNT 
+      			   FROM T_MEMBER_BOOKMARK
+      	          GROUP BY AD_CODE
+      			  ) BK ON A.AD_CODE = BK.AD_CODE
+       INNER JOIN T_COMMON CM
+          ON CM.MAIN_CODE = 'A006'
+      	 AND CM.SUB_CODE = A.AD_TYPE
+	   INNER JOIN T_COMMON CM2
+          ON CM2.MAIN_CODE = 'H002'
+	     AND A.AD_FRAME_TYPE = CM2.SUB_CODE
+        LEFT JOIN T_CATEGORY CT
+          ON CT.CATEGORY_CODE = CASE WHEN B.STATUS = 0 THEN 6336 ELSE A.REP_CATEGORY_CODE END
+        INNER JOIN T_STORE C
+           ON A.STORE_CODE  = C.STORE_CODE
+        INNER JOIN T_MEMBER D
+           ON A.MEMBER_CODE = D.MEMBER_CODE
+       WHERE A.AD_FRAME_TYPE = @AD_FRAME_TYPE
+         AND A.AD_TYPE NOT IN (3)
+	     AND A.STATUS = 9
+      	 AND A.HIDE = 0
+		 AND B.STATUS = 0
+		 #[CATEGORY_CODE]
+		 #[TITLE]
+		 #[STORE_CODE]
+		 #[AD_FRAME_TYPE]
+      	 AND @DEVICE_CODE IS NOT NULL
+      	 AND (@DEVICE_TYPE = 3
+      	     OR (@DEVICE_TYPE = 1 AND CT.CATEGORY_CODE = 6336)
+      		 OR (@DEVICE_TYPE = 2 AND CT.ORDER_SEQ <> 6336)
+      		)
+		AND  A.FR_DATE <= DATEADD(HOUR, ISNULL(@TIME_ZONE,9), @UTC_DATE)
+		AND A.TO_DATE >= DATEADD(HOUR, ISNULL(@TIME_ZONE,9), @UTC_DATE)
+		/*나라 마다 기준 시간이 다르기 때문에 서버 시간을 기준으로 등록한 광고 UTC시간을 더하여 24시간 기준 광고 시간을 표시한다.*/
+		AND A.FR_TIME <=  CASE WHEN ISNULL( A.FR_TIME,'') = '' THEN A.FR_TIME ELSE  CONVERT(VARCHAR(5), DATEADD(HOUR, ISNULL(@TIME_ZONE,9), @UTC_DATE + ' ' + @UTC_TIME), 108) END
+		AND A.TO_TIME >=  CASE WHEN ISNULL( A.FR_TIME,'') = '' THEN A.TO_TIME ELSE  CONVERT(VARCHAR(5), DATEADD(HOUR, ISNULL(@TIME_ZONE,9), @UTC_DATE + ' ' + @UTC_TIME), 108) END
+	) A
+	INNER JOIN T_COMMON B
+	   ON B.MAIN_CODE = 'S008'
+	  AND B.SUB_CODE = 1 /*카테고리별최대노출갯수 설정값 12개*/
+	LEFT JOIN T_COMMON C
+	  ON C.MAIN_CODE = 'A009'
+	 AND C.SUB_CODE = A.STATUS
+	WHERE A.CATEGORY_SEQ <= CONVERT(INT, B.REF_DATA1) 
+	
+)
+SELECT *, (SELECT COUNT(*) FROM T_TABLE) AS TOTAL_ROWCOUNT    FROM T_TABLE
+WHERE ROW_IDX > (@PAGE-1)  * @PAGE_COUNT
+  AND ROW_IDX <= @PAGE * @PAGE_COUNT
+ORDER BY DISPLAY_SEQ ASC
+
+
+IF @@ROWCOUNT > 0 AND @WORKING_TIME IS NOT NULL
+BEGIN
+    UPDATE T_DEVICE
+        SET WORKING_TIME = GETDATE()
+    WHERE DEVICE_CODE = @DEVICE_CODE
+END 
+
+ 
+	SET NOCOUNT OFF 
+      ]]>
+			</FixedSQL>
+			<DynamicBodys>
+				<Key>STATUS</Key>
+				<Body>AND A.STATUS = {0} </Body>
+			</DynamicBodys>
+			<DynamicBodys>
+				<Key>CATEGORY_CODE</Key>
+				<Body>AND A.REP_CATEGORY_CODE = {0} </Body>
+			</DynamicBodys>
+			<DynamicBodys>
+				<Key>TITLE</Key>
+				<Body>AND A.TITLE LIKE N'%{0}%' </Body>
+			</DynamicBodys>
+			<DynamicBodys>
+				<Key>STORE_CODE</Key>
+				<Body>AND A.STORE_CODE = '{0}' </Body>
+			</DynamicBodys>
+			<DynamicBodys>
+				<Key>AD_FRAME_TYPE</Key>
+				<Body>AND A.AD_FRAME_TYPE = {0} </Body>
+			</DynamicBodys>
+		</TemplateSQL>
+	</DBAgentTemplate>
+
+	<DBAgentTemplate TemplateID="GetLoggalBoxList2">
+		<!-- 
+    SqlType : SQL의 형태를 지정합니다.
+      Example 1:<SqlType>FixedSQL</SqlType> 고정적인 SQL을 지원합니다. 
+      Example 2:<SqlType>DynamicSQL</SqlType> 동적인 SQL Type1을 지원합니다.  
+    Description : 해당 SQL의 기능설명을 적습니다.
+    SQLModifier : 해당 SQL의 작성자(수정자)를 적습니다
+    LastModifyDate : 해당 SQL의 마지막 수정일을 적습니다
+    -->
+		<Information>
+			<SqlType>DynamicSQL</SqlType>
+			<Description>loggal box 광고데이터 가져오기 거리순</Description>
+			<SQLModifier>전상훈</SQLModifier>
+			<LastModifyDate>2019-11-26</LastModifyDate>
+		</Information>
+
+		<TemplateSQL>
+			<!-- FixedSQL : 고정된 SQL이 들어가는 곳입니다. -->
+			<FixedSQL>
+				<![CDATA[ 
+   	/********************************************************************/
+    /* loggal box 광고데이터 가져오기 거리순    GetLoggalBoxList2        */ 
+    /* Search Page :  /device/localboxview                              */
+    /********************************************************************/
+	  SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED 
+
+ 
+ DECLARE @DEVICE_CODE       BIGINT      = CASE WHEN ISNUMERIC('{0}') = 1 THEN '{0}' ELSE NULL END
+       , @DEVICE_NUMBER     VARCHAR(100)  = '{1}'
+       , @LATITUDE          NUMERIC(20,16)
+	   , @LONGITUDE         NUMERIC(20,16)
+	   , @RADIUS            INT
+	   , @AD_FRAME_TYPE     INT = 1
+	   , @STORE_CODE        INT
+	   , @DEVICE_NAME       NVARCHAR(100)
+	   , @DEVICE_TYPE       INT
+	   , @DATA_CYCLE_TIME	INT
+       , @AD_CYCLE_TIME	    INT
+       , @PAGE_WAITING_TIME	INT  
+	   , @PAGE              INT = CASE WHEN ISNUMERIC('{2}') = 1 THEN '{2}' ELSE 1 END
+	   , @PAGE_COUNT        INT = CASE WHEN ISNUMERIC('{3}') = 1 THEN '{3}' ELSE 1 END
+	   , @MANAGEMENT_URL    NVARCHAR(100) = '{4}'
+	   , @WORKING_TIME      DATETIME = CASE WHEN '{5}' = '1' THEN GETDATE() ELSE NULL END
+	   , @UTC_DATE          VARCHAR(8)		= CONVERT(VARCHAR(8), GETUTCDATE(),112)
+       , @UTC_TIME          VARCHAR(5)		= CONVERT(VARCHAR(5), GETUTCDATE(),108)
+       , @TIME_ZONE         INT = 9
+       , @RANK_CNT          NUMERIC(3,2) = 4
+
+  SELECT @LATITUDE = B.LATITUDE
+       , @LONGITUDE = B.LONGITUDE 
+       , @RADIUS = B.RADIUS
+       , @AD_FRAME_TYPE = A.AD_FRAME_TYPE
+	   , @STORE_CODE = A.STORE_CODE
+	   , @DEVICE_NAME = A.DEVICE_NAME
+	   , @DEVICE_TYPE  = A.DEVICE_TYPE
+	   , @DATA_CYCLE_TIME = A.DATA_CYCLE_TIME
+	   , @AD_CYCLE_TIME = A.AD_CYCLE_TIME
+	   , @PAGE_WAITING_TIME = A.PAGE_WAITING_TIME
+  FROM T_DEVICE A
+ INNER JOIN T_DEVICE_PLACE B
+   ON A.DEVICE_CODE = B.DEVICE_CODE
+  AND B.PLACE_TYPE = 1
+WHERE (A.DEVICE_CODE = @DEVICE_CODE 
+      OR A.DEVICE_NUMBER = @DEVICE_NUMBER)
+  AND A.DEVICE_TYPE IN (1,3)
+  #[STATUS]
+  AND A.HIDE = 0 ;
+
+WITH T_TABLE 
+AS (
+   SELECT ROW_NUMBER() OVER(ORDER BY CATEGORY_ORDER_SEQ , (floor((CATEGORY_SEQ-1) /@RANK_CNT) + 1) * 100000 + item_type, CATEGORY_SEQ) AS ROW_IDX
+        , CONVERT(INT, CASE WHEN @AD_FRAME_TYPE = 1  THEN ROW_NUMBER() OVER(ORDER BY CATEGORY_ORDER_SEQ, FLOOR((CATEGORY_SEQ -1)))  
+		 	                ELSE  CEILING(ROW_NUMBER() OVER(partition by CATEGORY_ORDER_SEQ  ORDER BY  (floor((CATEGORY_SEQ-1) /@RANK_CNT) + 1) * 100000 + item_type, CATEGORY_SEQ) / (@AD_FRAME_TYPE + 2.00))END) 
+		   AS GROUP_SEQ 
+         , A.*
+         , ISNULL(C.NAME,'') AS STATUS_NAME
+   FROM 
+   (
+        SELECT   ROW_NUMBER() OVER(PARTITION BY CT.ORDER_SEQ ORDER BY (-1 * DISPLAY_SEQ) DESC,  ( -1 * PLACE_DISTANCE) DESC) AS CATEGORY_SEQ 
+               , @DEVICE_CODE AS DEVICE_CODE
+			   , @DEVICE_NAME AS DEVICE_NAME
+               , A.AD_CODE
+      		   , A.TITLE
+			   , A.SUB_TITLE
+			   , A.ITEM_TYPE
+			   , A.FR_DATE, A.TO_DATE
+	           , A.FR_TIME, A.TO_TIME
+			   , A.LOGO_URL AS BANNER_IMAGE
+			   , CASE WHEN A.BANNER_TYPE2 IN (2,3) THEN ISNULL( AF.FILE_URL,A.LOGO_URL) 
+		              ELSE A.LOGO_URL END AS LOGO_URL
+			   , A.CLICK_CNT
+      		   , A.BANNER_TYPE
+      		   , A.BANNER_TYPE2
+      		   , A.AD_TYPE
+      		   , A.AD_FRAME_TYPE
+			   , CM2.NAME AS AD_FRAME_TYPE_NAME
+               , ISNULL(B.STATUS,99) AS STATUS /*1:내배너 9:공유배너 99:모바일배너*/ 
+      		   , ISNULL(B.DISPLAY_SEQ,99999999) AS DISPLAY_SEQ
+      		   , AP.PLACE_DISTANCE
+			   , CT.CATEGORY_CODE
+      		   , CT.CATEGORY_NAME 
+      		   , CT.ORDER_SEQ AS CATEGORY_ORDER_SEQ
+      		   , A.STORE_CODE
+      		   , C.STORE_NAME
+      		   , A.MEMBER_CODE
+      		   , D.USER_NAME AS MEMBER_NAME
+      		   , C.PHONE AS STORE_PHONE
+      		   , B.AD_DEVICE_CODE
+      		   , @DEVICE_TYPE AS DEVICE_TYPE
+      	       , @DATA_CYCLE_TIME AS DATA_CYCLE_TIME
+      	       , @AD_CYCLE_TIME AS AD_CYCLE_TIME
+      	       , @PAGE_WAITING_TIME AS PAGE_WAITING_TIME
+      		   , ISNULL(BK.BOOKMARK_CNT,0) AS BOOKMARK_CNT
+      		   , ISNULL(BK.FAVORITE_CNT,0) AS FAVORITE_CNT
+			   , @MANAGEMENT_URL +'/advertise/contentview/' + CONVERT(VARCHAR(10), A.AD_CODE) AS CONTENT_URL
+		FROM T_AD A
+        LEFT JOIN 
+      		   (	 /*
+                순위 계산은 ITEM_TYPE와 무관한 가상영역만으로 정의 함
+                 1. 가상범위 안에 있을 경우
+                   ㄱ. -1 * (반경 + 10000000000)  + 중심점으로 부터 거리
+                      => 반경안에 있으면 마이너스 데이터를 만들어 순위를 높게 정의 함
+                      =>반경이 가장 큰것 우선이며 그중 중심점으로 부터 가까운 거리에 있는 데이터를 우선 순위를 줌
+                 2. 가상범위 밖에 있을 경우
+                  ㄱ. 중심점으로 부터 거리 - 반경을 하여 가상범위에 가장 근접한 데이터에 우선순위를 줌
+               */
+					 SELECT AD_CODE, MIN(CASE WHEN DISTANCE - RADIUS <= 0 THEN  (-1 * ( RADIUS  + 10000000000)) + DISTANCE ELSE DISTANCE - RADIUS END) AS PLACE_DISTANCE, MIN(DISTANCE) AS DISTANCE
+					   FROM
+						  (
+	           				  SELECT AD_CODE
+	               				   , dbo.FN_TO_DISTANCE(@LATITUDE, @LONGITUDE, LATITUDE, LONGITUDE,'M') AS DISTANCE 
+	               				   , RADIUS
+	           				  FROM T_AD_PLACE
+					   ) AA
+					   GROUP BY AA.AD_CODE 
+      		   ) AP
+      		   ON A.AD_CODE = AP.AD_CODE
+		LEFT JOIN T_FILE AF
+			   ON AF.TABLE_NAME = 'T_AD' 
+			  AND AF.TABLE_KEY = CONVERT(VARCHAR(20), A.AD_CODE)
+			  AND AF.FILE_SEQ = 1
+        LEFT JOIN T_AD_DEVICE B
+          ON A.AD_CODE= B.AD_CODE
+      	AND B.DEVICE_CODE = @DEVICE_CODE
+      	AND B.HIDE = 0
+		#[OUT_AD_STATUS]
+         LEFT JOIN (SELECT AD_CODE
+                       , SUM(CASE WHEN BOOKMARK_KIND = 1 THEN 1 ELSE 0 END) AS BOOKMARK_CNT 
+      				  , SUM(CASE WHEN BOOKMARK_KIND = 2 THEN 1 ELSE 0 END) AS FAVORITE_CNT 
+      			   FROM T_MEMBER_BOOKMARK
+      	          GROUP BY AD_CODE
+      			  ) BK ON A.AD_CODE = BK.AD_CODE
+       INNER JOIN T_COMMON CM
+          ON CM.MAIN_CODE = 'A006'
+      	 AND CM.SUB_CODE = A.AD_TYPE
+	   INNER JOIN T_COMMON CM2
+          ON CM2.MAIN_CODE = 'H002'
+	     AND A.AD_FRAME_TYPE = CM2.SUB_CODE
+        LEFT JOIN T_CATEGORY CT
+          ON CT.CATEGORY_CODE = CASE WHEN B.STATUS = 0 THEN 6336 ELSE A.REP_CATEGORY_CODE END
+        INNER JOIN T_STORE C
+           ON A.STORE_CODE  = C.STORE_CODE
+        INNER JOIN T_MEMBER D
+           ON A.MEMBER_CODE = D.MEMBER_CODE
+       WHERE A.AD_FRAME_TYPE = @AD_FRAME_TYPE
+         AND A.AD_TYPE NOT IN (3)
+	     AND A.STATUS = 9
+      	 AND A.HIDE = 0
+		 #[CATEGORY_CODE]
+		 #[TITLE]
+		 #[STORE_CODE]
+		 #[AD_FRAME_TYPE]
+      	 AND @DEVICE_CODE IS NOT NULL
+      	 AND (@DEVICE_TYPE = 3
+      	     OR (@DEVICE_TYPE = 1 AND CT.CATEGORY_CODE = 6336)
+      		 OR (@DEVICE_TYPE = 2 AND CT.ORDER_SEQ <> 6336)
+      		)
+		AND  A.FR_DATE <= DATEADD(HOUR, ISNULL(@TIME_ZONE,9), @UTC_DATE)
+		AND A.TO_DATE >= DATEADD(HOUR, ISNULL(@TIME_ZONE,9), @UTC_DATE)
+		/*나라 마다 기준 시간이 다르기 때문에 서버 시간을 기준으로 등록한 광고 UTC시간을 더하여 24시간 기준 광고 시간을 표시한다.*/
+		AND A.FR_TIME <=  CASE WHEN ISNULL( A.FR_TIME,'') = '' THEN A.FR_TIME ELSE  CONVERT(VARCHAR(5), DATEADD(HOUR, ISNULL(@TIME_ZONE,9), @UTC_DATE + ' ' + @UTC_TIME), 108) END
+		AND A.TO_TIME >=  CASE WHEN ISNULL( A.FR_TIME,'') = '' THEN A.TO_TIME ELSE  CONVERT(VARCHAR(5), DATEADD(HOUR, ISNULL(@TIME_ZONE,9), @UTC_DATE + ' ' + @UTC_TIME), 108) END
+	) A
+	INNER JOIN T_COMMON B
+	   ON B.MAIN_CODE = 'S008'
+	  AND B.SUB_CODE = 1 /*카테고리별최대노출갯수 설정값 12개*/
+	 LEFT JOIN T_COMMON C
+	   ON C.MAIN_CODE = 'A009'
+	  AND C.SUB_CODE = A.STATUS
+    WHERE A.CATEGORY_SEQ <= CONVERT(INT, CASE WHEN  @AD_FRAME_TYPE = 6 THEN B.REF_DATA1 ELSE B.REF_DATA2 END) 
+	
+)
+SELECT *, (SELECT COUNT(*) FROM T_TABLE) AS TOTAL_ROWCOUNT    FROM T_TABLE
+WHERE ROW_IDX > (@PAGE-1)  * @PAGE_COUNT
+  AND ROW_IDX <= @PAGE * @PAGE_COUNT
+	
+
+
+IF @@ROWCOUNT > 0 AND @WORKING_TIME IS NOT NULL
+BEGIN
+    UPDATE T_DEVICE
+        SET WORKING_TIME = GETDATE()
+    WHERE DEVICE_CODE = @DEVICE_CODE
+END 
+
+ 
+	SET NOCOUNT OFF 
+      ]]>
+			</FixedSQL>
+			<DynamicBodys>
+				<Key>STATUS</Key>
+				<Body>AND A.STATUS = {0} </Body>
+			</DynamicBodys>
+			<DynamicBodys>
+				<Key>CATEGORY_CODE</Key>
+				<Body>AND A.REP_CATEGORY_CODE = {0} </Body>
+			</DynamicBodys>
+			<DynamicBodys>
+				<Key>TITLE</Key>
+				<Body>AND A.TITLE LIKE N'%{0}%' </Body>
+			</DynamicBodys>
+			<DynamicBodys>
+				<Key>STORE_CODE</Key>
+				<Body>AND A.STORE_CODE = '{0}' </Body>
+			</DynamicBodys>
+			<DynamicBodys>
+				<Key>AD_FRAME_TYPE</Key>
+				<Body>AND A.AD_FRAME_TYPE = {0} </Body>
+			</DynamicBodys>
+			<DynamicBodys>
+				<Key>OUT_AD_STATUS</Key>
+				<Body><![CDATA[ AND B.STATUS <> {0} ]]></Body>
+			</DynamicBodys>
+		</TemplateSQL>
+	</DBAgentTemplate>
+
+  <DBAgentTemplate TemplateID="GetLoggalBoxAddList2">
+    <!-- 
+    SqlType : SQL의 형태를 지정합니다.
+      Example 1:<SqlType>FixedSQL</SqlType> 고정적인 SQL을 지원합니다. 
+      Example 2:<SqlType>DynamicSQL</SqlType> 동적인 SQL Type1을 지원합니다.  
+    Description : 해당 SQL의 기능설명을 적습니다.
+    SQLModifier : 해당 SQL의 작성자(수정자)를 적습니다
+    LastModifyDate : 해당 SQL의 마지막 수정일을 적습니다
+    -->
+    <Information>
+      <SqlType>DynamicSQL</SqlType>
+      <Description>loggal box 광고데이터 추가용 데이터</Description>
+      <SQLModifier>전상훈</SQLModifier>
+      <LastModifyDate>2019-11-27</LastModifyDate>
+    </Information>
+
+    <TemplateSQL>
+      <!-- FixedSQL : 고정된 SQL이 들어가는 곳입니다. -->
+      <FixedSQL>
+        <![CDATA[ 
+         
+  SET ARITHABORT ON 
+
+				 
+SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED 
+ /********************************************************************/
+ /* loggal box 광고데이터 추가용 데이터    GetLoggalBoxAddList2      */
+ /* https://altsoft.ze.am/basic/addevice 로컬박스별배너정보에서 사용 */ 
+ /********************************************************************/
+ DECLARE @DEVICE_CODE       BIGINT      = CASE WHEN ISNUMERIC('{0}') = 1 THEN '{0}' ELSE NULL END
+       , @DEVICE_NUMBER     VARCHAR(100)  = '{1}'
+       , @LATITUDE          NUMERIC(20,16)
+	   , @LONGITUDE         NUMERIC(20,16)
+	   , @RADIUS            INT
+	   , @AD_FRAME_TYPE     INT = 1
+	   , @STORE_CODE        INT
+	   , @DEVICE_NAME       NVARCHAR(100)
+	   , @DEVICE_TYPE       INT
+	   , @DATA_CYCLE_TIME	INT
+       , @AD_CYCLE_TIME	    INT
+       , @PAGE_WAITING_TIME	INT  
+	   , @PAGE              INT = CASE WHEN ISNUMERIC('{2}') = 1 THEN '{2}' ELSE 1 END
+	   , @PAGE_COUNT        INT = CASE WHEN ISNUMERIC('{3}') = 1 THEN '{3}' ELSE 1 END
+	   , @MANAGEMENT_URL    NVARCHAR(100) = '{4}'
+	   , @WORKING_TIME      DATETIME = CASE WHEN '{5}' = '1' THEN GETDATE() ELSE NULL END
+	   , @UTC_DATE          VARCHAR(8)		= CONVERT(VARCHAR(8), GETUTCDATE(),112)
+       , @UTC_TIME          VARCHAR(5)		= CONVERT(VARCHAR(5), GETUTCDATE(),108)
+       , @TIME_ZONE         INT = 9
+       , @RANK_CNT          NUMERIC(3,2) = 4
+
+  SELECT @LATITUDE = B.LATITUDE
+       , @LONGITUDE = B.LONGITUDE 
+       , @RADIUS = B.RADIUS
+       , @AD_FRAME_TYPE = A.AD_FRAME_TYPE
+	   , @STORE_CODE = A.STORE_CODE
+	   , @DEVICE_NAME = A.DEVICE_NAME
+	   , @DEVICE_TYPE  = A.DEVICE_TYPE
+	   , @DATA_CYCLE_TIME = A.DATA_CYCLE_TIME
+	   , @AD_CYCLE_TIME = A.AD_CYCLE_TIME
+	   , @PAGE_WAITING_TIME = A.PAGE_WAITING_TIME
+  FROM T_DEVICE A
+ INNER JOIN T_DEVICE_PLACE B
+   ON A.DEVICE_CODE = B.DEVICE_CODE
+  AND B.PLACE_TYPE = 1
+WHERE (A.DEVICE_CODE = @DEVICE_CODE 
+      OR A.DEVICE_NUMBER = @DEVICE_NUMBER)
+  AND A.DEVICE_TYPE IN (1,3)
+  #[STATUS]
+  AND A.HIDE = 0;
+
+
+WITH T_TABLE
+AS
+(
+  SELECT ROW_NUMBER() OVER(ORDER BY CASE WHEN A.AD_FRAME_TYPE = @AD_FRAME_TYPE  THEN 0 ELSE 1 END, E.SUB_CODE, A.CLICK_CNT DESC ) AS ROW_IDX
+       , E.NAME AS AD_KIND_NAME
+       , A.AD_CODE, A.TITLE
+       , A.FR_DATE, A.FR_TIME
+	   , A.TO_DATE, A.TO_TIME
+	   , A.AD_FRAME_TYPE
+	   , B.NAME AS AD_FRAME_TYPE_NAME
+	   , A.LOGO_URL AS BANNER_IMAGE
+	   , C.CATEGORY_NAME
+	   , D.NAME AS STATUS_NAME
+	   , @DEVICE_CODE AS DEVICE_CODE
+	   , @DEVICE_NAME AS DEVICE_NAME
+	   --, A.CLICK_CNT
+	FROM T_AD A
+  INNER JOIN T_COMMON B
+      ON B.MAIN_CODE = 'H002'
+	 AND A.AD_FRAME_TYPE = B.SUB_CODE
+  INNER JOIN T_CATEGORY C
+     ON A.REP_CATEGORY_CODE = C.CATEGORY_CODE
+  INNER JOIN T_COMMON D
+     ON D.MAIN_CODE = 'A001'
+	AND D.SUB_CODE  = A.STATUS
+  INNER JOIN T_COMMON E
+     ON E.MAIN_CODE = 'A006'
+	AND E.SUB_CODE = CASE WHEN A.STORE_CODE = @STORE_CODE THEN 1 ELSE 2 END
+   WHERE A.AD_CODE NOT IN (
+
+
+           SELECT A.AD_CODE
+           FROM 
+           (
+            			SELECT   ROW_NUMBER() OVER(PARTITION BY CT.ORDER_SEQ ORDER BY (-1 * DISPLAY_SEQ) DESC,  ( -1 * PLACE_DISTANCE) DESC) AS CATEGORY_SEQ 
+            				   , A.AD_CODE
+            				   , B.AD_DEVICE_CODE
+            			FROM T_AD A
+            			LEFT JOIN 
+                  			   (	SELECT AD_CODE, MIN(DBO.FN_TO_DISTANCE(@LATITUDE, @LONGITUDE, A.LATITUDE, A.LONGITUDE,'M') - A.RADIUS) - @RADIUS AS PLACE_DISTANCE
+                  					  FROM T_AD_PLACE A
+                  				  
+                  					 GROUP BY AD_CODE
+                  			   ) AP
+                  			   ON A.AD_CODE = AP.AD_CODE
+            
+            			LEFT JOIN T_AD_DEVICE B
+            			  ON A.AD_CODE= B.AD_CODE
+                  		AND B.DEVICE_CODE = @DEVICE_CODE
+                  		AND B.HIDE = 0
+              
+            		   INNER JOIN T_COMMON CM
+            			  ON CM.MAIN_CODE = 'A006'
+                  		AND CM.SUB_CODE = A.AD_TYPE
+            			LEFT JOIN T_CATEGORY CT
+            			  ON CT.CATEGORY_CODE = CASE WHEN B.STATUS = 0 THEN 6336 ELSE A.REP_CATEGORY_CODE END
+                 
+            		) A
+            		INNER JOIN T_COMMON B
+            		   ON B.MAIN_CODE = 'S008'
+            		  AND B.SUB_CODE = 1 /*카테고리별최대노출갯수 설정값 12개*/
+            		WHERE (A.AD_DEVICE_CODE IS NOT NULL OR (A.AD_DEVICE_CODE IS NULL AND A.CATEGORY_SEQ <= CONVERT(INT, B.REF_DATA1)))
+           		
+           )
+	AND A.STATUS = 9
+	AND A.HIDE = 0
+	#[CATEGORY_CODE]
+	#[TITLE]
+	#[STORE_CODE]
+	#[AD_FRAME_TYPE]
+) SELECT * 
+    FROM T_TABLE A
+   INNER JOIN (
+			SELECT COUNT(*) AS TOTAL_ROWCOUNT 
+              FROM T_TABLE
+		     ) B
+     ON 1=1
+	WHERE A.ROW_IDX > (@PAGE-1) * @PAGE_COUNT
+	  AND A.ROW_IDX <= @PAGE * @PAGE_COUNT
+
+
+	
+
+
+
+ 
+	SET NOCOUNT OFF 
+      
+			
+ SET ARITHABORT OFF 
+      ]]>
+      </FixedSQL>
+			<DynamicBodys>
+				<Key>STATUS</Key>
+				<Body>AND A.STATUS = {0} </Body>
+			</DynamicBodys>
+			<DynamicBodys>
+				<Key>CATEGORY_CODE</Key>
+				<Body>AND A.REP_CATEGORY_CODE = {0} </Body>
+			</DynamicBodys>
+			<DynamicBodys>
+				<Key>TITLE</Key>
+				<Body>AND A.TITLE LIKE N'%{0}%' </Body>
+			</DynamicBodys>
+			<DynamicBodys>
+				<Key>STORE_CODE</Key>
+				<Body>AND A.STORE_CODE = '{0}' </Body>
+			</DynamicBodys>
+			<DynamicBodys>
+				<Key>AD_FRAME_TYPE</Key>
+				<Body>AND A.AD_FRAME_TYPE = {0} </Body>
+			</DynamicBodys>
+    </TemplateSQL>
+  </DBAgentTemplate>
+
+    <DBAgentTemplate TemplateID="GetLocalboxAuthNumber">
+      <!-- 
+    SqlType : SQL의 형태를 지정합니다.
+      Example 1:<SqlType>FixedSQL</SqlType> 고정적인 SQL을 지원합니다. 
+      Example 2:<SqlType>DynamicSQL</SqlType> 동적인 SQL Type1을 지원합니다.  
+    Description : 해당 SQL의 기능설명을 적습니다.
+    SQLModifier : 해당 SQL의 작성자(수정자)를 적습니다
+    LastModifyDate : 해당 SQL의 마지막 수정일을 적습니다
+    -->
+      <Information>
+        <SqlType>DynamicSQL</SqlType>
+        <Description>로컬박스 인증번호 가져오기</Description>
+        <SQLModifier>전상훈</SQLModifier>
+        <LastModifyDate>2017-07-31</LastModifyDate>
+      </Information>
+
+      <TemplateSQL>
+        <!-- FixedSQL : 고정된 SQL이 들어가는 곳입니다. -->
+        <FixedSQL>
+          <![CDATA[ 
+          
+    SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED           
+   	/**********************************************************/
+    /* 로컬박스 인증번호 가져오기    GetLocalboxAuthNumber    */
+    /**********************************************************/
+
+    DECLARE @AUTH_NUMBER BIGINT = CASE WHEN ISNUMERIC('{0}') = 1 THEN '{0}' ELSE NULL END
+          , @DEVICE_NUMBER VARCHAR(100) = '{1}'
+	        , @DEVICE_CODE   BIGINT
+          , @SIGN_CODE     BIGINT
+
+    SELECT @AUTH_NUMBER   = A.AUTH_NUMBER
+         , @DEVICE_NUMBER = A.DEVICE_NUMBER 
+         , @DEVICE_CODE   = A.DEVICE_CODE
+         , @SIGN_CODE     = A.SIGN_CODE
+      FROM T_DEVICE_AUTH_NUMBER A
+	  INNER JOIN T_DEVICE B 
+	     ON A.DEVICE_CODE = B.DEVICE_CODE
+     WHERE A.AUTH_TYPE = {2}
+       AND A.AUTH_NUMBER   = @AUTH_NUMBER
+       AND A.DEVICE_NUMBER = @DEVICE_NUMBER
+       AND A.HIDE = 0 
+	   AND B.AUTH_NUMBER IS NOT NULL
+
+    IF @@ROWCOUNT = 0 SET @AUTH_NUMBER = null
+    
+    SELECT @SIGN_CODE AS SIGN_CODE, @DEVICE_NUMBER AS DEVICE_NUMBER, @AUTH_NUMBER AS AUTH_NUMBER, @DEVICE_CODE AS DEVICE_CODE
+    
+ 
+	SET NOCOUNT OFF 
+      ]]>
+        </FixedSQL>
+      </TemplateSQL>
+    </DBAgentTemplate>
+</DBAgentMultiTemplate>

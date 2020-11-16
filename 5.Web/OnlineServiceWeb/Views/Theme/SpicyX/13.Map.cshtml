@@ -1,0 +1,54 @@
+﻿<!-- Start Map section -->
+<section id="mu-map">
+
+    <div id="map"></div>
+</section>
+
+<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCdxnGaSyxDRVaXwzJPNAHhI_mq-NKT_zw&callback=getLocation"
+        async defer></script>
+<script>
+
+        var map;
+        function initMap(locData) {
+
+            var myLatLng;
+            if (locData == null)
+            {
+                $("#map").html("");
+                return;
+            }
+            var myLatLng = { lat: locData.lat(), lng: locData.lng() };
+
+            var map = new google.maps.Map(document.getElementById('map'), {
+                zoom: 14,
+                center: myLatLng
+            });
+
+            var marker = new google.maps.Marker({
+                position: myLatLng,
+                map: map,
+                title:"@SessionHelper.LoginInfo.STORE.STORE_NAME"
+            });
+
+            var infowindow = new google.maps.InfoWindow({
+                content: '<h3>@SessionHelper.LoginInfo.STORE.STORE_NAME</h3><p>@SessionHelper.LoginInfo.STORE.ADDRESS1 @SessionHelper.LoginInfo.STORE.ADDRESS2</p>',
+                position: myLatLng
+            });
+            infowindow.open(map);
+        }
+
+
+
+    function getLocation() {
+
+        var geocoder = new google.maps.Geocoder();
+        var address = "@SessionHelper.LoginInfo.STORE.ADDRESS1 @SessionHelper.LoginInfo.STORE.ADDRESS2"
+        geocoder.geocode({ 'address': address }, function (results, status) {
+            if (status == google.maps.GeocoderStatus.OK) {
+                initMap(results[0].geometry.location);
+            } else {
+                initMap(null);
+            }
+        });
+    }
+</script>

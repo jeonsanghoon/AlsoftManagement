@@ -1,0 +1,37 @@
+﻿@using ALT.VO.loggal;
+@{
+    List<AdOnDeviceList> list = (List<AdOnDeviceList>)ViewBag.list;
+    string totCnt = (list.Count() == 0 ? "0" : list.First().TOTAL_ROWCOUNT.ToString());
+
+    <input type="hidden" id="total" value="@totCnt" />
+    foreach (AdOnDeviceList data in list)
+    {
+        data.FR_DATE = data.FR_DATE.ToFormatDate();
+        data.TO_DATE = data.TO_DATE.ToFormatDate();
+
+    <tr>
+        <td style="width:6em"><a href="/advertise/adreg/@data.AD_CODE">@data.AD_CODE</a></td>
+        <td style="width:8em"><img src="@data.LOGO_URL" class="ui mini rounded image"></td>
+
+        <td>@data.TITLE</td>
+        <td>@data.CATEGORY_NAME</td>
+        <td style="text-decoration:underline;color:blue;cursor:pointer;" onclick="javascript:location.href='/basic/devicereg2/@data.ORI_DEVICE_CODE'">@(string.IsNullOrEmpty(data.ORI_DEVICE_NAME) ? "" : "내배너-")@data.ORI_DEVICE_NAME</td>
+        <td>@data.SUB_TITLE</td>
+        <td>@data.FR_DATE ~ @data.TO_DATE</td>
+        <td>
+            @{
+                if (string.IsNullOrEmpty(data.FR_TIME) && string.IsNullOrEmpty(data.TO_TIME))
+                {
+                    @("전일광고")
+                }
+                else
+                {
+                    @(data.FR_TIME + " ~ " + data.TO_TIME)
+                }
+            }
+
+        </td>
+    </tr>
+    }
+}
+

@@ -1,0 +1,28 @@
+﻿@using ALT.VO.loggal;
+@{
+    List<DEVICE_LIST> list = (List<DEVICE_LIST>)ViewBag.list;
+    string totCnt = (list.Count() == 0 ? "0" : list.First().TOTAL_ROWCOUNT.ToString());
+
+    <input type="hidden" id="total" value="@totCnt" />
+    foreach (DEVICE_LIST data in list)
+    {
+
+<tr>
+	<td>@data.DEVICE_NAME</td>
+	<td><a href="/basic/devicereg3/@data.DEVICE_CODE">@data.DEVICE_CODE</a></td>
+	<td>@data.AD_FRAME_TYPE_NAME</td>
+	<td class="hide">@data.AD_FRAME_TYPE</td>
+	<td>@data.DEVICE_TYPE_NAME</td>
+	<td>@data.STATUS_NAME</td>
+	<td>@data.STORE_NAME</td>
+
+	<td>@data.ADDRESS</td>
+	<td>@data.JIBUN_ADDRESS</td>
+	<td>@data.LATITUDE</td>
+	<td>@data.LONGITUDE</td>
+	<td>@(data.RADIUS == null ? "" : Convert.ToInt32(data.RADIUS).ToString("#,##0") + "m")</td>
+</tr>
+    }
+}
+
+

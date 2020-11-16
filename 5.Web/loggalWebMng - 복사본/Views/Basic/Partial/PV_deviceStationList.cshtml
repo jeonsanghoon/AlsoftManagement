@@ -1,0 +1,51 @@
+﻿@using ALT.VO.loggal;
+@using ALT.Framework;
+@using ALT.Framework.Data;
+
+@{
+    T_DEVICE_STATION_COND Cond = ViewBag.Cond;
+
+    List<T_DEVICE_STATION> list = (List<T_DEVICE_STATION>)ViewBag.list;
+    string totCnt = (list.Count() == 0 ? "0" : list.First().TOTAL_ROWCOUNT.ToString());
+
+    <input type="hidden" id="total" value="@totCnt" />
+    foreach (T_DEVICE_STATION data in list)
+    {
+
+        bool bUse = (data.HIDE == true ? false : true);
+
+    <tr>
+        @{
+            if (Cond.PV_TYPE.ToString("") != "POPUP")
+            {
+                <td class="center">@(bUse == true ? "사용" : "미사용") </td>
+                <td onclick="location.href='/basic/devicestationreg/@data.STATION_CODE';"><a href="javascript:void(0);">@data.STATION_NAME</a></td>
+                <td class="center"><img src="@data.LOGO_URL" class="ui mini rounded image"></td>
+            }
+            else
+            {
+                <td>@data.STATION_NAME</td>
+                <td class="center"><img src="@data.LOGO_URL" class="ui mini rounded image"></td>
+            }
+        }
+
+        <td>@data.ADDRESS1 @data.ADDRESS2</td>
+        <td class="center">@data.ZIP_CODE</td>
+        <td>@data.LATITUDE</td>
+        <td>@data.LONGITUDE</td>
+        <td>@data.STATION_DESC</td>
+        <td class="center">@data.DEVICE_CNT</td>
+        @{if (Cond.PV_TYPE.ToString("") != "POPUP")
+            {
+                <td class="center">@data.UPDATE_NAME</td>
+                <td class="center">@data.UPDATE_DATE</td>
+            }
+            else
+            {
+                <td class="hide">@data.STATION_CODE</td>
+            }
+        }
+    </tr>
+    }
+}
+

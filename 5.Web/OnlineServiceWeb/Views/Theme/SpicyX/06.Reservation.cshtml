@@ -1,0 +1,116 @@
+﻿<!-- Start Reservation section -->
+<section id="mu-reservation">
+    <div class="container">
+        <div class="row">
+            <div class="col-md-12">
+                <div class="mu-reservation-area">
+                    <div class="mu-title">
+                        <span class="mu-subtitle">Make A</span>
+                        <h2>예약</h2>
+                        <i class="fa fa-spoon"></i>
+                        <span class="mu-title-bar"></span>
+                    </div>
+                    <div class="mu-reservation-content">
+                        <p>Lorem ipsum dolor sit amet, consectetur adipisicing elit. Ratione quidem autem iusto, perspiciatis, amet, quaerat blanditiis ducimus eius recusandae nisi aut totam alias consectetur et.</p>
+                        <form class="mu-reservation-form">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <input type="text" id="RESERVATION_NAME" name="RESERVATION_NAME"  class="form-control" placeholder="이름(필수)">
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <input type="email" id="RESERVATION_EMAIL" name="RESERVATION_EMAIL"  class="form-control" placeholder="이메일(필수)">
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <input id="RESERVATION_PHONE"  name="RESERVATION_PHONE" type="text" class="form-control" placeholder="전화번호(필수)">
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <select class="form-control" id="RESERVATION_PEOPLE_NUMBER" name="RESERVATION_PEOPLE_NUMBER">
+                                            <option value="0">인원(필수)</option>
+                                            @{
+                                                for (int i = 1; i < 100; i++)
+                                                {
+                                                    <option value="@i">@i 명</option>
+                                                }
+                                            }
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <input type="text" class="form-control datepicker" id="RESERVATION_REQUEST_DATE"  name="RESERVATION_REQUEST_DATE" placeholder="일자(필수)">
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        @*<input type="text" class="form-control" placeholder="Phone No">*@
+                                    </div>
+                                </div>
+                                <div class="col-md-12">
+                                    <div class="form-group">
+                                        <textarea id="RESERVATION_CONTENT" name="RESERVATION_CONTENT" class="form-control" cols="30" rows="10" placeholder="요청내용"></textarea>
+                                    </div>
+                                </div>
+                                <div class="col-md-12">
+                                    <button type="button" id="btnReservationSave" class="mu-readmore-btn" onclick="btnReservationSave_click();">예약하기</button>
+                                </div>
+                                </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+<!-- End Reservation section -->
+<script type="text/javascript">
+
+
+    var objTag, chkData = true;
+    function CheckSave() {
+        chkData = true;
+        $(".mu-reservation-form").find("input,select,radio").each(function () {
+            if ($(this).val() == "") {
+
+                objTag = $(this);
+                MsgBox.Alert("필수입력체크", $(this).attr("placeholder") + " 을(를) 입력하세요!", function (result) {
+                    objTag.focus(); objTag.select();
+                });
+                chkData = false;
+                return false;
+            }
+        })
+        return chkData;
+    }
+
+    function btnReservationSave_click()
+    {
+        if (!CheckSave()) return;
+       
+        var params = BaseCommon.FormInfo.serializeJson(".mu-reservation-form", "RESERVATION_");
+
+        ajax.GetAjax("@SessionHelper.LoginInfo.BASE_URL/home/StoreReservationSave", params, "json", function (result) {
+            if (result.error_message != "") {
+
+                modal({ /* https://github.com/CreativeDream/jquery.modal */
+                    type: 'warning',
+                    title: '저장에러',
+                    text: result.error_message
+                    , closeClick: false
+                    , callback: function (e) {
+
+                    }
+                });
+            } else {
+
+                $(".mu-reservation-form").each(function () { this.reset(); });
+            }
+        })
+    }
+</script>

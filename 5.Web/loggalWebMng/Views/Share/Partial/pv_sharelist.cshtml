@@ -1,0 +1,35 @@
+﻿
+@{
+    List<T_SHARE> list = ViewBag.list;
+    string totCnt = (list.Count() == 0 ? "0" : list.First().TOTAL_ROWCOUNT.ToString());
+
+    <input type="hidden" id="total" value="@totCnt" />
+    foreach (T_SHARE data in list)
+    {
+<tr>
+    <td>@data.SHARE_CODE</td>
+    @{
+        if (data.DEVICE_CODE == null || data.DEVICE_CODE <= 0)
+        {
+            <td><a href="/advertise/adreg2/@data.AD_CODE">@data.TITLE</a></td>
+        }
+        else
+        {
+            <td><a href="/basic/devicereg3/@data.DEVICE_CODE">@data.DEVICE_NAME</a></td>
+        }
+    }
+    <td>@data.SEND_MEMBER_NAME</td>
+    <td>@data.RECEIVE_MEMBER_NAMES</td>
+
+    <td>@data.COMMENT</td>
+    <td>@data.REMARK</td>
+    <td>@data.INSERT_NAME</td>
+    <td>@data.INSERT_DATE</td>
+    <td>@data.UPDATE_NAME</td>
+    <td>@data.UPDATE_DATE</td>
+</tr>
+    }
+}
+
+
+

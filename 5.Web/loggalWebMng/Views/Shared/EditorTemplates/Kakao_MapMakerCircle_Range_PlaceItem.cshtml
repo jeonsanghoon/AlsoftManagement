@@ -1,0 +1,1015 @@
+﻿
+@{
+	Daum_MapMultiMarker option = (ViewData["optionmap"] == null) ? new Daum_MapMultiMarker() { ID = "MapMakerCircle" } : (Daum_MapMultiMarker)ViewData["optionmap"];
+
+	if (option.bScript == true && (ViewData[Global.ConfigInfo.KakaoMapScript] == null || (bool)ViewData[Global.ConfigInfo.KakaoMapScript] == false))
+	{
+		<script type="text/javascript" src="//dapi.kakao.com/v2/maps/sdk.js?appkey=@Global.ConfigInfo.KakaoAppKey&libraries=services,clusterer,drawing"></script>
+		ViewData[Global.ConfigInfo.KakaoMapScript] = true;
+	}
+
+
+	var sOption = Json.Encode(option);
+}
+<style>
+	ul {
+		list-style: none;
+		padding-left: 0px;
+	}
+
+	.info {
+		position: relative;
+		top: 30px;
+		left: 5px;
+		border-radius: 6px;
+		border: 1px solid #ccc;
+		border-bottom: 2px solid #ddd;
+		font-size: 12px;
+		padding: 5px;
+		background: #fff;
+		list-style: none;
+		height: 80%;
+		margin: 0;
+	}
+
+		.info:nth-of-type(n) {
+			border: 0;
+			box-shadow: 0px 1px 2px #888;
+		}
+
+		.info .label {
+			display: inline-block;
+			width: 50px;
+		}
+
+	.number {
+		font-weight: bold;
+		color: #00a0e9;
+	}
+
+	.popKakaoMapMaker .map_wrap {
+		position: relative;
+		width: 100%;
+	}
+
+	.popKakaoMapMaker .title {
+		font-weight: bold;
+		display: block;
+		color: blue;
+		text-align: left;
+	}
+
+	.popKakaoMapMaker .hAddr {
+		position: absolute;
+		left: 10px;
+		top: 40px;
+		border-radius: 2px;
+		background: #fff;
+		background: rgba(255,255,255,0.8);
+		z-index: 1;
+		padding: 5px;
+	}
+
+	.popKakaoMapMaker .centerAddr {
+		display: block;
+		margin-top: 2px;
+		font-weight: normal;
+	}
+
+	.popKakaoMapMaker .bAddr {
+		text-overflow: ellipsis;
+		overflow: hidden;
+		white-space: nowrap;
+		z-index: 999999;
+	}
+
+	.popKakaoMapMaker .content {
+		height: 70vh !important;
+	}
+</style>
+
+
+
+<div class="ui large modal form popKakaoMapMaker" id="@(option.ID)_popKakaoMap" style="height:70%;max-height:800px;z-index:99999">
+	<div class="header">@(string.IsNullOrEmpty(option.TITLE) ? "지도 등록" : option.TITLE) </div>
+
+	@{
+		if (option.bPostSearch)
+		{
+			<div class="ui form popSearch" style="padding: 0em 1.5em 0em 1.5em;">
+				<div class="fields mobile padding5">
+					<div class="inline field">
+						@Html.Semantic_TextBox(option.ID + "_POST_CODE", "", option.Size, new { @placeholder = "우편번호", @class = "POSTCODE", @readonly = "readonly" })
+
+						@*<i class="btn fa fa-search" aria-hidden="true" onclick = "@(option.ID)_execDaumPostcode();"></i>
+							<i class="btn fa fa-map" aria-hidden="true" onclick="@(option.ID)_popKakaoMapMakerShow();"></i>*@
+						<div class="inline field addbutton">
+							@Html.Semantic_Button2("btnAddress_" + option.ID, "", SemanticUIHelper.enButtonType.Normal, option.Size, new { @onclick = (option.ID) + "_execDaumPostcode()" }, null, "search icon")
+						</div>
+					</div>
+				</div>
+
+				<div class="fields mobile padding5">
+					<div class="eight wide field">
+						@Html.Semantic_TextBox(option.ID + "_ADDRESS1", "", option.Size, new { @placeholder = "주소", @readonly = "readonly" })
+					</div>
+					<div class="eight wide field">
+						<b>위도 : </b><input type="text" id="@(option.ID)_LATITUDE" name="@(option.ID)_LATITUDE" style="max-width:10em" /> &nbsp;
+						<b>경도 : </b><input type="text" id="@(option.ID)_LONGITUDE" name="@(option.ID)_LONGITUDE" style="max-width:10em" />
+					</div>
+				</div>
+			</div>
+		}
+	}
+
+	<div class="content" style="height:100%;min-height:240px;max-height:700px;padding-top:0em;">
+		<div class="map_wrap" style="height:100%;min-height:230px;">
+
+			@{
+				if (option.bCircle)
+				{
+					<div id="@(option.ID)_map_header">
+						<ul class="ui buttons">
+						</ul>
+					</div>
+
+					<div id="@(option.ID)_map" style="width:100%;height:90%;position:relative;overflow:hidden;"></div>
+
+				}
+				else
+				{
+					<div id="@(option.ID)_map" style="width:100%;height:100%;position:relative;overflow:hidden;"></div>
+				}
+			}
+			<div class="hAddr">
+				<span class="title">지도중심기준 행정동 주소정보</span>
+				<span class="centerAddr" id="@(option.ID)_centerAddr"></span>
+			</div>
+		</div>
+
+	</div>
+
+	<div class="actions">
+
+		@{
+			if (!option.bReadOnly)
+			{
+				<div id="noneItem" class="ui error message" style="display:none;width:inherit;text-align:left;margin:0.5em;"></div>
+				<span style="font-size:1em;color:red;float:left;margin-left:0.4em"> <b>추가</b> : 클릭, <b>변경</b> : 드래그, <b>삭제</b> : 오른쪽마우스</span>
+			}
+		}
+		@*
+		<button onclick=" @(option.ID)_showMarkers()">보이기</button>
+		<button onclick="hideMarkers()">숨기기</button>
+		<button onclick=" @(option.ID)_SetMarkerInfo()">모두 저장</button>
+		<button onclick="@(option.ID)_AlldeleteMarkerInfo()">모두 삭제</button>
+		*@
+
+		@{
+			if (!option.bReadOnly)
+			{
+				@*@Html.Semantic_Button2("btnpop" + option.ID + "Confirm", "가져오기", SemanticUIHelper.enButtonType.Normal, new { @onclick = (option.ID) + "_SetMarkerInfoAll();" })*@
+				@Html.Semantic_Button2("btnpop" + option.ID + "Confirm", "확인", SemanticUIHelper.enButtonType.Save, new { @onclick = (option.ID) + "_btnPopKakaoMapConfirm();" })
+			}
+		}
+		@Html.Semantic_Button2("btnpop" + option.ID + "Close", "닫기", SemanticUIHelper.enButtonType.Normal, new { @onclick = (option.ID) + "_btnPopKakoMap_Close();" })
+	</div>
+</div>
+
+<script type="text/javascript">
+    var @(option.ID)_map = {
+        map: null
+        , lat:  @(option.default_LATITUDE)
+        , lng: @(option.default_longitude)
+        , ori_lat: @(option.default_LATITUDE)
+        , ori_lng : @(option.default_longitude)
+        , markers: []
+        , selectedMaker : null
+        , geocoder: null
+        , infowindow: null
+        , markerInfo: []
+        , circles:[]
+	};
+
+	var @(option.ID)_item_arr;
+
+    var @(option.ID)_optiondata;
+    $("document").ready(function () {
+        @(option.ID)_CompnentInit();
+    })
+
+    function @(option.ID)_CompnentInit() {
+        @(option.ID)_map = {
+            map: null
+            , lat:  @(option.default_LATITUDE)
+            , lng: @(option.default_longitude)
+            , ori_lat: @(option.default_LATITUDE)
+            , ori_lng: @(option.default_longitude)
+            , markers: []
+            , selectedMaker : null
+            , geocoder: null
+            , infowindow: new kakao.maps.InfoWindow({ zindex: 1 })
+            , markerInfo: []
+			, circles: []
+        };
+        try {
+            if ($("#@(option.ID)_LATITUDE").val() == "") {
+                if (navigator.geolocation) {
+
+                    // GeoLocation을 이용해서 접속 위치를 얻어옵니다
+                    navigator.geolocation.getCurrentPosition(function (position) {
+                    @(option.ID)_map.ori_lat = @(option.ID)_map.lat = position.coords.latitude,  // 위도
+                    @(option.ID)_map.ori_lng = @(option.ID)_map.lng = position.coords.longitude; // 경도
+                        $("#@(option.ID)_LATITUDE").val(@(option.ID)_map.lat);
+                        $("#@(option.ID)_LONGITUDE").val(@(option.ID)_map.lng);
+                    });
+                }
+
+            }
+            @*@(option.ID)_map = {
+                map: new kakao.maps.Maps(document.getElementById('@(option.ID)_map')
+                                        ,{  center: new kakao.maps.LatLng(33.450701, 126.570667), // 지도의 중심좌표
+                                            level: 3 // 지도의 확대 레벨
+                                         })
+               , markers : []
+            };*@
+            @(option.ID)_optiondata = JSON.parse('@Html.Raw(sOption)');
+            @(option.ID)_map.geocoder = new kakao.maps.services.Geocoder();
+            @(option.ID)_map.infowindow = new kakao.maps.InfoWindow({ zindex: 1 });
+        } catch (e) { }
+    }
+    var _@(option.ID)_movePosition;
+
+    function @(option.ID)_fixmarkerListSet(list, infowindow) {
+
+
+        if (!(list == undefined || list == null || list.length == 0)) {
+            var markers = $(list).map(function (i, data) {
+
+                var markerPosition = new kakao.maps.LatLng(data.lat, data.lng);
+                _@(option.ID)_movePosition = markerPosition
+                var marker = new kakao.maps.Marker({
+                    position: markerPosition
+                });
+                marker.setMap(@(option.ID)_map.map);
+                if (infowindow != undefined) infowindow.open(@(option.ID)_map.map, marker)
+                setTimeout("@(option.ID)_movePosition()",100);
+            });
+
+        }
+    }
+    function @(option.ID)_movePosition() {
+        @(option.ID)_map.map.panTo(_@(option.ID)_movePosition);
+    }
+    function @(option.ID)_MapRangeOpen_title(docTitle) {
+
+        $("#@(option.ID)_popKakaoMap .header").text(docTitle);
+        @(option.ID)_MapRangeOpen(null, null, null, docTitle);
+    }
+    function @(option.ID)_MapRangeOpen(list, position, title, fixlist, docTitle) {
+        @(option.ID)_CompnentInit();
+
+        if (!(title == undefined ||  title == "")) { $("#@(option.ID)_popKakaoMap .title").text(title); }
+
+        if (position != undefined && position.lat > 0) {
+            @(option.ID)_map.lat = position.lat;
+            @(option.ID)_map.lng = position.lng;
+
+            if (position.radius != undefined && position.radius.indexOf('km') > 0) {
+                position.radius = Number($.trim(BaseCommon.StringInfo.replaceAll(position.radius, "km", ""))) * 1000;
+            }
+        }
+
+       @(option.ID)_map.map = new kakao.maps.Map(document.getElementById('@(option.ID)_map'), {
+            center: new kakao.maps.LatLng(@(option.ID)_map.lat, @(option.ID)_map.lng), // 지도의 중심좌표
+            level: Number(@(option.default_LEVEL)) // 지도의 확대 레벨
+        });
+        @(option.ID)_map.map.setCenter(new kakao.maps.LatLng(@(option.ID)_map.lat, @(option.ID)_map.lng));
+        var circle = null;
+        if (position != null) {
+            if (!(position.radius == undefined || position.radius == null)) {
+                circle = new kakao.maps.Circle({
+                    map: @(option.ID)_map.map,
+                    center: new kakao.maps.LatLng(@(option.ID)_map.lat, @(option.ID)_map.lng),
+                    radius: position.radius,
+                    strokeColor: '#75B8FA',
+                    strokeOpacity: 1,
+                    strokeStyle: 'line',
+                    strokeWeight: 2,
+                    fillColor: '#CFE7FF',
+                    fillOpacity: 0.7,
+                });
+            }
+        }
+        // 지도를 클릭했을때 클릭한 위치에 마커를 추가하도록 지도에 클릭이벤트를 등록합니다
+		if (circle == null) {
+			kakao.maps.event.addListener( @(option.ID)_map.map, 'click', function (mouseEvent) {
+				// 클릭한 위치에 마커를 표시합니다
+				if (@(option.ID)_optiondata.MAKER_MAX_COUNT != 1) {
+					if (@(option.ID)_map.markers.length >= @(option.ID)_optiondata.MAKER_MAX_COUNT) return;
+				}
+                    @(option.ID)_searchDetailAddrFromCoords(mouseEvent.latLng, function (result, status) {
+					if (status === kakao.maps.services.Status.OK) {
+						/// 마커갯수 1개로 제한할 경우 클릭시 삭제 후 클릭된 위치 마커넣기
+						if (@(option.ID)_optiondata.MAKER_MAX_COUNT == 1) {@(option.ID)_setMarkers(null); }
+
+						// 아이템 사용 개수 체크
+						if (false === @(option.ID)_checkItemCnt()) {
+							return;
+						}
+
+						var marker = @(option.ID)_addMarker(mouseEvent.latLng);
+                        @(option.ID)_setContentMarker(result[0], mouseEvent.latLng, marker);
+                        /*이벤트*/
+                        @(option.ID)_makerEvent(marker);
+					}
+				});
+			});
+		} else {
+			kakao.maps.event.addListener(circle, 'click', function (mouseEvent) {
+				// 클릭한 위치에 마커를 표시합니다
+				if (@(option.ID)_map.markers.length >= @(option.ID)_optiondata.MAKER_MAX_COUNT) return;
+            @(option.ID)_searchDetailAddrFromCoords(mouseEvent.latLng, function (result, status) {
+				if (status === kakao.maps.services.Status.OK) {
+
+					// 아이템 사용 개수 체크
+					if (false === @(option.ID)_checkItemCnt()) {
+						return;
+					}
+
+					var marker = @(option.ID)_addMarker(mouseEvent.latLng, null, false);
+                    @(option.ID)_setContentMarker(result[0], mouseEvent.latLng, marker);
+                    /*이벤트*/
+                    @(option.ID)_makerEvent(marker);
+				}
+			});
+			});
+		}
+
+
+        $("#@(option.ID)_popKakaoMap").modal({ detachable: false }).modal('show');
+        SemanticUI.Popup.ContentResize("#@(option.ID)_popKakaoMap");
+        // 마커 클러스터러를 생성합니다
+
+        var @(option.ID)_bounds = new kakao.maps.LatLngBounds();
+        @(option.ID)_map.markerInfo = [];
+
+        if ((list == undefined || list == null || list.length == 0) &&
+                !($("#@(option.ID)_ADDRESS1").val() == undefined || String($("#@(option.ID)_ADDRESS1").val()).trim() == "")
+        ) {
+
+            list = new Array();
+            var objParam = new Object();
+            objParam.CONTENT = $("#@(option.ID)_ADDRESS1").val();
+            objParam.LATITUDE = $("#@(option.ID)_LATITUDE").val();
+            objParam.LONGITUDE = $("#@(option.ID)_LONGITUDE").val();
+            list.push(objParam);
+        }
+        if (!(list == undefined || list == null || list.length == 0)) {
+            @(option.ID)_map.markerInfo = list;
+            var markers = $(list).map(function (i, data) {
+                var marker;
+                if (String(data.LINK_URL).toLowerCase().indexOf("devicestation") > 0)/*스테이션일경우*/ {
+
+                    marker = new kakao.maps.Marker({
+                        draggable: (@(option.ID)_optiondata.bReadOnly ? false : true),
+                        position: new kakao.maps.LatLng(data.LATITUDE, data.LONGITUDE)
+                        , image: new kakao.maps.MarkerImage(location.protocol + "//" + BaseCommon.HostInfo.Host() + "/common/images/stationmarker.png", new kakao.maps.Size(35, 40)) // 마커 이미지
+
+                    });
+                }
+                else if (data.ACTIVE_YN != null && data.ACTIVE_YN != undefined && data.ACTIVE_YN == false) {
+                    marker = new kakao.maps.Marker({
+                        draggable: (@(option.ID)_optiondata.bReadOnly ? false : true),
+                        position: new kakao.maps.LatLng(data.LATITUDE, data.LONGITUDE)
+                        , image: new kakao.maps.MarkerImage(location.protocol +"//" + BaseCommon.HostInfo.Host() + "/common/images/maker_black.png", new kakao.maps.Size(40, 40)) // 마커 이미지
+
+                    });
+
+                } else {
+                    marker = new kakao.maps.Marker({
+                        draggable: (@(option.ID)_optiondata.bReadOnly ? false : true),
+                        position: new kakao.maps.LatLng(data.LATITUDE, data.LONGITUDE)
+
+                    });
+
+                }
+
+                marker.INDEX = i;
+                marker.RADIUS = data.RADIUS == undefined ? 500 : data.RADIUS;
+                @(option.ID)_map.markerInfo[i].INDEX = i;
+
+
+
+                @(option.ID)_bounds.extend(marker.getPosition());
+                return marker;
+            });
+            @(option.ID)_map.markers = markers;
+
+
+            // 클러스터러에 마커들을 추가합니다
+
+            if (@(option.ID)_optiondata.bReadOnly) {
+                var clusterer = new kakao.maps.MarkerClusterer({
+                    map: @(option.ID)_map.map, // 마커들을 클러스터로 관리하고 표시할 지도 객체
+                    averageCenter: true, // 클러스터에 포함된 마커들의 평균 위치를 클러스터 마커 위치로 설정
+                    minLevel: 10 // 클러스터 할 최소 지도 레벨
+                });
+                clusterer.addMarkers(markers);
+            }
+            @(option.ID)_map.circles = [];
+
+            for (var i = 0; i < markers.length; i++) {
+                if (!@(option.ID)_optiondata.bReadOnly)  @(option.ID)_addMarker(null, markers[i])
+                @(option.ID)_makerEvent(markers[i]);
+               // if (@(option.ID)_optiondata.bCircle) {@(option.ID)_addCircle(markers[i]) };
+            }
+
+            if (list.length > 1) {
+                @(option.ID)_map.map.setBounds(@(option.ID)_bounds);
+            }
+            else if (list.length == 1) {
+                @(option.ID)_map.map.panTo(new kakao.maps.LatLng(markers[0].getPosition().getLat(), markers[0].getPosition().getLng()));
+            }
+            else {
+                //@(option.ID)_map.map.panTo(new kakao.maps.LatLng(@(option.ID)_map.map.ori_lat, @(option.ID)_map.map.ori_lng));
+            }
+        }
+
+
+        if (@(option.ID)_optiondata.MAKER_MAX_COUNT == 1 && @(option.ID)_map.markers.length > 0) {
+
+            var marker = @(option.ID)_map.markers[0];
+
+            @(option.ID)_searchDetailAddrFromCoords(marker.getPosition(), function (result,status) {
+                if (status === kakao.maps.services.Status.OK) {
+                    @(option.ID)_setContentMarker(result[0], marker.getPosition(), marker);
+                    //@(option.ID)_SetMarkerInfoAll();
+                }
+            });
+        }
+
+
+        SemanticUI.Popup.ContentResize("#@(option.ID)_popKakaoMap");
+          try {
+              if (position != undefined && position.lat > 0) {
+                @(option.ID)_map.map.setCenter(new kakao.maps.LatLng( @(option.ID)_map.lat,  @(option.ID)_map.lng));
+                  @(option.ID)_map.map.setLevel(Number(@(option.default_LEVEL)));
+              }
+
+        } catch (e) { }
+
+          var iwContent = "<div><div style='font-weight:bold;padding:1em;white-space:nowrap;'> " + title + " </div></div>";
+              iwPosition = new kakao.maps.LatLng(33.450701, 126.570667); //인포윈도우 표시 위치입니다
+
+          // 인포윈도우를 생성합니다
+          var infowindow = new kakao.maps.InfoWindow({
+              position: iwPosition,
+              content: iwContent
+          });
+        infowindow.setContent(iwContent);
+        @(option.ID)_fixmarkerListSet(fixlist, infowindow);
+    }
+
+	function @(option.ID)_doQueryGetPlaceItem(memberCode, code, itemType, groupType) {
+		var params = new Object();
+
+		params.MEMBER_CODE = memberCode;
+		params.CODE = code;
+		params.ITEM_TYPE = itemType;
+		params.ITEM_TYPE_LIMIT = itemType * 10 - 1;
+		params.GROUP_TYPE = groupType;
+
+		params = JSON.stringify(params);
+
+		var pos = null;
+
+		if (1 === groupType) {
+			pos = "/advertise/GetPlaceItem";
+		}
+		else if (2 === groupType) {
+			pos = "/device/GetPlaceItem";
+		}
+		ajax.GetAjax(pos, params, "json", function (re) {
+			if (0 < re.length) {
+			@(option.ID)_setPlaceItem(re);
+			}
+		})
+	}
+
+	function @(option.ID)_setPlaceItem(re) {
+		var html = "<li class=\"ui button\" style=\"margin:1.0em 0.2em; overflow:hidden;\" value=\"{ITEM_TYPE}\" item_id={MEMBER_ITEM_IDX} check=0>" +
+			"{ITEM_NAME} ( <span class=\"item_use_cnt\">{ITEM_USE_CNT}</span> / <span class=\"item_max_cnt\">{ITEM_PURCHASE_CNT}</span> )</li>";
+
+		var resHtml = ''
+
+		$('#@(option.ID)_map_header ul').empty();
+		@(option.ID)_item_arr = null;
+		@(option.ID)_item_arr = new Array();
+
+		var itemUseCnt = 0;
+
+		for (var i = 0; i < re.length; i++) {
+			var data = re[i];
+
+			var item = new Object();
+
+			itemUseCnt = data.ITEM_USE_CNT
+
+			resHtml += html.replace("{ITEM_TYPE}", data.ITEM_TYPE)
+				.replace("{ITEM_NAME}", data.ITEM_NAME)
+				.replace("{ITEM_USE_CNT}", data.ITEM_USE_CNT)
+				.replace("{ITEM_PURCHASE_CNT}", data.ITEM_PURCHASE_CNT)
+				.replace("{MEMBER_ITEM_IDX}", data.MEMBER_ITEM_IDX)
+
+			@(option.ID)_item_arr.push(itemUseCnt);
+		}
+
+
+		var btnName = "btnRadius_" + '@(option.ID)';
+		var inputHtml = "<input id=\"{BTN_NAME}\" type=\"hidden\" value=\"{ITEM_TYPE}\">";
+
+		resHtml += inputHtml.replace("{BTN_NAME}", btnName)
+			.replace("{ITEM_TYPE}", re[0].ITEM_TYPE);
+
+		$('#@(option.ID)_map_header ul').append(resHtml);
+
+		var defaultName = 'ui blue button active'
+		$('.ui.buttons').children(':first').attr('class', defaultName);
+	}
+
+	$('#@(option.ID)_map_header').click(function (e) {
+		if (e.target.tagName.match('LI|SPAN')) {
+			if ('SPAN' == e.target.tagName) {
+				e.target = e.target.parentNode;
+			}
+
+			var btnName = "#btnRadius_" + '@(option.ID)';
+			$(btnName).val(e.target.value);
+
+			var len = e.target.parentNode.children.length;
+
+			for (var i = 0; i < len; i++) {
+				var child = e.target.parentNode.children[i];
+
+				child.className = "ui button";
+			}
+
+			e.target.className = "ui blue button active";
+		}
+	});
+
+    // 마커를 생성하고 지도위에 표시하는 함수입니다
+	function @(option.ID)_addMarker(position, marker1, bDragable) {
+
+        // 마커를 생성합니다
+        var marker;
+        if (bDragable == undefined) bDragable = (@(option.ID)_optiondata.bReadOnly ? false : true);
+
+        if (marker1 == undefined || marker1 == null) {
+            marker = new kakao.maps.Marker({
+                position: position, draggable: bDragable
+			});
+
+            marker.INDEX = @(option.ID)_map.markers.length;
+            marker.RADIUS = (marker.RADIUS == undefined || marker.RADIUS == null ? Number($("#btnRadius_@(option.ID)").val()) : marker.RADIUS);
+            marker.RADIUS = isNaN(marker.RADIUS) ? null : marker.RADIUS;
+            @(option.ID)_map.markers.push(marker);
+        } else {
+            marker = marker1;
+        }
+
+
+        // 마커가 지도 위에 표시되도록 설정합니다
+        marker.setMap(@(option.ID)_map.map);
+
+        // 생성된 마커를 배열에 추가합니다
+        if (@(option.ID)_optiondata.bCircle) {@(option.ID)_addCircle(marker); }
+		if (!@(option.ID)_optiondata.bReadOnly) @(option.ID)_SetMarkerInfoAll();
+
+		@(option.ID)_setUseItem('add', marker.RADIUS);
+
+        return marker;
+    }
+
+    // Drawing Manager에서 가져온 데이터 중 원을 아래 지도에 표시하는 함수입니다
+    function @(option.ID)_addCircle(marker,mode) {
+        var circle = new kakao.maps.Circle({
+            map: @(option.ID)_map.map,
+            center: new kakao.maps.LatLng(marker.getPosition().getLat(), marker.getPosition().getLng()),
+            radius: marker.RADIUS,
+            strokeColor: '#75B8FA',
+            strokeOpacity: 1,
+            strokeStyle: 'line',
+            strokeWeight:2,
+            fillColor: '#CFE7FF',
+            fillOpacity: 0.7,
+            INDEX: marker.INDEX
+        });
+        if (mode == undefined || mode == "N") @(option.ID)_map.circles.push(circle);
+        return circle;
+    }
+
+	function @(option.ID)_makerEvent(marker) {
+		kakao.maps.event.addListener(marker, 'click', function () {
+            // 마커 위에 인포윈도우를 표시합니다
+            try {
+                var link = @(option.ID)_map.markerInfo[@(option.ID)_map.selectedMaker.INDEX].LINK_URL;
+
+                if (!(link == undefined || link == "")) location.href = @(option.ID)_map.markerInfo[@(option.ID)_map.selectedMaker.INDEX].LINK_URL;
+			} catch (e) { }
+        });
+         kakao.maps.event.addListener(marker, 'mouseover', function () {
+            // 출발 마커의 드래그가 종료될 때 인포윈도우의 내용을 바꿔주면서 기존의 인포윈도우는 닫고 새 위치에 창을 열어줍니다
+             @(option.ID)_map.selectedMaker = marker;
+            @(option.ID)_searchDetailAddrFromCoords(marker.getPosition(), function (result, status) {
+
+                //
+                if (status === kakao.maps.services.Status.OK) {
+                    @(option.ID)_setContentMarker(result[0], marker.getPosition(), marker);
+                }
+            });
+        });
+
+         if ( @(option.ID)_optiondata.MAKER_MAX_COUNT > 1) {
+             // mouseout 이벤트를 등록합니다
+             kakao.maps.event.addListener(marker, 'mouseout', function () {
+            // 출발 마커의 드래그가 종료될 때 인포윈도우의 내용을 바꿔주면서 기존의 인포윈도우는 닫고 새 위치에 창을 열어줍니다
+
+            @(option.ID)_searchDetailAddrFromCoords(marker.getPosition(), function (result, status) {
+                     if (status === kakao.maps.services.Status.OK) {
+                    @(option.ID)_map.infowindow.close();
+                     }
+                 });
+             });
+         }
+
+        if (@(option.ID)_optiondata.bReadOnly) return;
+		kakao.maps.event.addListener(marker, 'rightclick', function () {
+            marker.setMap(null);
+
+            if (@(option.ID)_map.circles.length > 0) {
+                @(option.ID)_map.circles[marker.INDEX].setMap(null);
+            }
+            @(option.ID)_map.infowindow.close();
+
+            @(option.ID)_map.markerInfo = BaseCommon.ArrayInfo.Remove( @(option.ID)_map.markerInfo, marker.INDEX);
+            @(option.ID)_map.markers = BaseCommon.ArrayInfo.Remove( @(option.ID)_map.markers, marker.INDEX);
+            @(option.ID)_map.circles = BaseCommon.ArrayInfo.Remove( @(option.ID)_map.circles, marker.INDEX);
+
+            for (var i = 0; i <@(option.ID)_map.markerInfo.length; i++) {
+                @(option.ID)_map.markerInfo[i].INDEX = i;
+                @(option.ID)_map.markers[i].INDEX = i;
+                @(option.ID)_map.circles[i].INDEX = i;
+            }
+
+            @(option.ID)_SetMarkerInfoAll();
+			@(option.ID)_setUseItem('remove', marker.RADIUS)
+        });
+        kakao.maps.event.addListener(marker, 'dragstart', function () {
+            try {
+                @(option.ID)_map.circles[marker.INDEX].setMap(null);
+            } catch (e) { }
+        });
+        kakao.maps.event.addListener(marker, 'dragend', function () {
+
+            if (@(option.ID)_optiondata.bCircle) @(option.ID)_map.circles[marker.INDEX] = @(option.ID)_addCircle(marker, "U");
+            @(option.ID)_searchDetailAddrFromCoords(marker.getPosition(), function (result,status) {
+                if (status === kakao.maps.services.Status.OK) {
+                    @(option.ID)_setContentMarker(result[0], marker.getPosition(), marker);
+                    @(option.ID)_SetMarkerInfoAll();
+                }
+            });
+        });
+    }
+
+	function @(option.ID)_checkItemCnt() {
+		if ("" === $('.ui.blue.button.active').children('.item_max_cnt').text()) {
+			return true;
+		}
+
+		$('#noneItem').text("");
+		$("#noneItem").hide();
+
+		var max_cnt = Number($('.ui.blue.button.active').children('.item_max_cnt').text());
+		var use_cnt = Number($('.ui.blue.button.active').children('.item_use_cnt').text());
+
+		// 아이템 사용 개수가 초과 혹은 0개 미만이면 오류
+		if (use_cnt >= max_cnt || use_cnt < 0) {
+			if (1 === max_cnt) {
+				$('#noneItem').text("위치를 변경하시려면 마커를 드래그하세요.");
+			}
+			else {
+				$('#noneItem').text("사용할 수 있는 아이템이 없습니다.");
+			}
+			$("#noneItem").show()
+			return false;
+		}
+		return true;
+	}
+
+	function @(option.ID)_setUseItem(check, radius) {
+		var len = $('.ui.buttons li').length;
+
+		for (var i = 0; i < len; i++) {
+			if (radius === $('.ui.buttons li').eq(i).val()) {
+				var marker = $('.ui.buttons li').eq(i);
+				marker.attr('check', 1);
+
+				var cnt = Number(marker.children('.item_use_cnt').text());
+				if ('add' === check) {
+					marker.children('.item_use_cnt').text(cnt + 1);
+				} else if ('remove' === check) {
+					marker.children('.item_use_cnt').text(cnt - 1);
+				}
+
+				break;
+			}
+		}
+	}
+
+    // 배열에 추가된 마커들을 지도에 표시하거나 삭제하는 함수입니다
+	function @(option.ID)_setMarkers(map) {
+        for (var i = 0; i < @(option.ID)_map.markers.length; i++) {
+            @(option.ID)_map.markers[i].setMap(map);
+        }
+
+        if (map == null) {
+            try {
+                $.each(@(option.ID)_map.circles, function (index, data) {
+                     @(option.ID)_map.circles[index].setMap(null);
+                });
+            } catch (e) { }
+            try {
+               @(option.ID)_map.markerInfo = [];
+               @(option.ID)_map.markers = [];
+            } catch (e) { }
+
+        }
+    }
+    function @(option.ID)_searchDetailAddrFromCoords(position, callback) {
+
+        // 좌표로 법정동 상세 주소 정보를 요청합니다
+        if (position.x == undefined) { @(option.ID)_map.geocoder.coord2Address(position.getLng(), position.getLat(),callback);}
+        else
+            @(option.ID)_map.geocoder.coord2Address(position.x, position.y, callback);
+    }
+
+
+    function @(option.ID)_setContentMarker(objContent, objPosition, marker) {
+
+        try {
+            var objParam = new Object();
+            try {
+                objParam.TITLE = BaseCommon.ToDefault(@(option.ID)_map.markerInfo[marker.INDEX].TITLE, "");
+                objParam.CONTENT = BaseCommon.ToDefault(@(option.ID)_map.markerInfo[marker.INDEX].CONTENT, "");
+            } catch (e) { }
+
+
+            var radius = 500;
+            try {
+                radius = @(option.ID)_map.markers[marker.INDEX].RADIUS;
+            } catch (e) { radius = Number($("#btnRadius_@(option.ID)").val()); }
+
+            var detailAddr = "";
+            if (objContent.road_address != undefined) {
+                detailAddr += !!objContent.road_address.address_name ? '<div>도로명주소 : ' + objContent.road_address.address_name + (objContent.road_address.building == undefined || objContent.road_address.building == "" ? "" : "(" + objContent.road_address.building + ")") + '</div>' : '';
+            }
+            detailAddr += '<div>지번 주소 : ' + objContent.address.address_name + '</div>';
+
+            var content = '<div class="bAddr">';
+
+            content += '<span class="title">' + ((objParam.TITLE != null && objParam.TITLE != "") ? objParam.TITLE : "법정동 주소정보") + '</span>';
+            content += ((objParam.CONTENT == "" || objParam.CONTENT == undefined) ? "" : "[" + objParam.CONTENT + "]") + detailAddr + '</div>';
+
+
+             @{
+                 if (option.bCircle)
+                 {
+                     @:   content += "<div>반경 : " + String(Math.round(radius, 1) / 1000) + "km</div>";
+                }
+            }
+            content += "<div>위도 : " + String(Number(objPosition.getLat())) + "</div>";
+            content += "<div>경도 : " + String(Number(objPosition.getLng())) + "</div>";
+            @*marker.setPosition(objPosition);
+            marker.setMap(@(option.ID)_map.map);*@
+
+
+            @(option.ID)_map.infowindow.setContent("<div style='padding:10px;'>" + content + "</div>");
+            @(option.ID)_map.infowindow.open(@(option.ID)_map.map, marker);
+            @(option.ID)_setPostInfo(objContent, objPosition, marker, objParam);
+        } catch (e) { }
+    }
+   function @(option.ID)_setPostInfo(objContent, objPosition, marker, objParam) {
+       $("#@(option.ID)_ADDRESS1").val(objContent.address.address_name);
+       $("#@(option.ID)_LATITUDE").val(String(Number(objPosition.getLat())));
+       $("#@(option.ID)_LONGITUDE").val(String(Number(objPosition.getLng())));
+       $("#@(option.ID)_POST_CODE").val(objContent.address.zip_code);
+    }
+    function @(option.ID)_SetMarkerInfo(data, saveMode, idx) {
+        var obj = new Object();
+
+        if (saveMode == "D") {
+            @(option.ID)_map.markerInfo = BaseCommon.ArrayInfo.Remove(@(option.ID)_map.markerInfo, idx);
+            return;
+        }
+        if (saveMode == "N") { idx = @(option.ID)_map.markerInfo.length; }
+        else {
+            idx = @(option.ID)_map.markerInfo[idx].INDEX;
+        }
+
+        if (@(option.ID)_map.markers.length <= idx) return;
+        obj.INDEX = idx;
+
+        obj.LATITUDE =  @(option.ID)_map.markers[idx].getPosition().getLat();
+        obj.LONGITUDE =  @(option.ID)_map.markers[idx].getPosition().getLng();
+
+        obj.ZIP_CODE = data.address.zip_code; obj.ZIP_CODE = (data.road_address == undefined || data.road_address == null) ? data.address.zip_code : data.road_address.zone_no;
+        obj.JIBUN_ADDRESS = data.address.address_name;
+        obj.REGION = data.address.region_1depth_name + " " + data.address.region_2depth_name + " " + data.address.region_3depth_name;
+        obj.ROAD_ADDRESS = (data.road_address == undefined ? "" : (data.road_address.address_name == "" ? "" : data.road_address.address_name + (data.road_address.sub_building_no == "" ? "" : "-" + data.road_address.sub_building_no + "")));
+        obj.BUILDING = (data.road_address == undefined ? "" : data.road_address.main_building_no == "" ? "" : data.road_address.main_building_no + + (data.road_address.sub_building_no == "" ? "" : "-" + data.road_address.sub_building_no + ""));
+        obj.RADIUS = @(option.ID)_map.markers[idx].RADIUS;
+        if (saveMode == "N") @(option.ID)_map.markerInfo.push(obj);
+        if (saveMode == "U") @(option.ID)_map.markerInfo[idx] = obj;
+    }
+
+    function @(option.ID)_SetMarkerInfoAll() {
+        @(option.ID)_map.markerInfo = [];
+
+        for (var i = 0; i <  @(option.ID)_map.markers.length; i++) {
+
+            @(option.ID)_searchDetailAddrFromCoords(@(option.ID)_map.markers[i].getPosition(), function (result, status) {
+                if (status === kakao.maps.services.Status.OK) {
+
+                     @(option.ID)_SetMarkerInfo(result[0], "N");
+                }
+            });
+        }
+    }
+
+    function @(option.ID)_btnPopKakaoMapConfirm() {
+
+        try {
+            @(option.ID)_DaumMapMarker_Callback(@(option.ID)_map.markerInfo);
+       } catch (e) { }
+        @(option.ID)_btnPopKakoMap_Close()
+    }
+
+    function @(option.ID)_btnPopKakoMap_Close() {
+        $("#@(option.ID)_popKakaoMap").modal("hide");
+    }
+
+</script>
+
+
+@{
+	if (option.bPostSearch == true)
+	{
+		<!-- iOS에서는 position:fixed 버그가 있음, 적용하는 사이트에 맞게 position:absolute 등을 이용하여 top,left값 조정 필요 -->
+		<div id="@(option.ID)_layer" class="daumAddresslayer" style="z-index:9999999">
+			<img src="//i1.daumcdn.net/localimg/localimages/07/postcode/320/close.png" id="btnCloseLayer" style="cursor:pointer;position:absolute;right:-3px;top:-3px;z-index:1" onclick="closeDaumPostcode_@(option.ID)()" alt="닫기 버튼">
+		</div>
+
+		if (ViewData[Global.ConfigInfo.DaumPostScript] == null || (bool)ViewData[Global.ConfigInfo.DaumPostScript] == false)
+		{
+			<!--<script src="http://dmaps.daum.net/map_js_init/postcode.v2.js"></script>-->
+
+			<script src="https://ssl.daumcdn.net/dmaps/map_js_init/postcode.v2.js"></script>
+			ViewData[Global.ConfigInfo.DaumPostScript] = true;
+		}
+
+		<script>
+        // 우편번호 찾기 화면을 넣을 element
+            var element_layer_@(option.ID) = document.getElementById('@(option.ID)_layer');
+
+            function closeDaumPostcode_@(option.ID)() {
+                // iframe을 넣은 element를 안보이게 한다.
+                element_layer_@(option.ID).style.display = 'none';
+            }
+
+            function @(option.ID)_execDaumPostcode() {
+
+
+                new daum.Postcode({
+                    oncomplete: function (data) {
+                        // 검색결과 항목을 클릭했을때 실행할 코드를 작성하는 부분.
+
+                        // 각 주소의 노출 규칙에 따라 주소를 조합한다.
+                        // 내려오는 변수가 값이 없는 경우엔 공백('')값을 가지므로, 이를 참고하여 분기 한다.
+                        var fullAddr = data.address; // 최종 주소 변수
+                        var extraAddr = ''; // 조합형 주소 변수
+
+                        // 기본 주소가 도로명 타입일때 조합한다.
+                        if (data.addressType === 'R') {
+                            //법정동명이 있을 경우 추가한다.
+                            if (data.bname !== '') {
+                                extraAddr += data.bname;
+                            }
+                            // 건물명이 있을 경우 추가한다.
+                            if (data.buildingName !== '') {
+                                extraAddr += (extraAddr !== '' ? ', ' + data.buildingName : data.buildingName);
+                            }
+                            // 조합형주소의 유무에 따라 양쪽에 괄호를 추가하여 최종 주소를 만든다.
+                            fullAddr += (extraAddr !== '' ? ' (' + extraAddr + ')' : '');
+                        }
+
+                        // 우편번호와 주소 정보를 해당 필드에 넣는다.
+                        document.getElementById('@(option.ID)_POST_CODE').value = data.zonecode; //5자리 새우편번호 사용
+                        data.zip_code = data.zonecode;
+                        document.getElementById('@(option.ID)_ADDRESS1').value = fullAddr;
+                        // document.getElementById('@(option.ID)_ADDRESS_ENGLISH').value = data.addressEnglish;
+
+                        // iframe을 넣은 element를 안보이게 한다.
+                        // (autoClose:false 기능을 이용한다면, 아래 코드를 제거해야 화면에서 사라지지 않는다.)
+                        element_layer_@(option.ID).style.display = 'none';
+                        $.each(@(option.ID)_map.markers, function (index, data) {
+                            data.setMap(null);
+                        });
+                    @(option.ID)_map.markers = [];
+
+                        try {
+                            set_@(option.ID)_latitude_longitude(data);
+                        } catch (e) { }
+                        try { @(option.ID)_addressCallBack(data);
+
+                        }
+                        catch (e) { }
+                    },
+                    width: '100%',
+                    height: '100%'
+                }).embed(element_layer_@(option.ID));
+
+                // iframe을 넣은 element를 보이게 한다.
+                element_layer_@(option.ID).style.display = 'block';
+
+                // iframe을 넣은 element의 위치를 화면의 가운데로 이동시킨다.
+                initLayerPosition();
+            }
+            var _@(option.ID)_oriAddress = "";
+            function set_@(option.ID)_latitude_longitude(data) {
+
+                _@(option.ID)_oriAddress = String(data.sido + " " + data.sigungu + " " + data.bname).trim();
+                var arrAddress = data.address.split(' ');
+
+                var address1 = "";
+                for (var i = 0; i < arrAddress.length; i++) {
+                    if (i > 0) address1 += " ";
+                    address1 += arrAddress[i];
+
+                    if (i > 1 && arrAddress[i].charAt(arrAddress[i].length - 1) == "면") {
+                        _@(option.ID)_oriAddress = address1;
+                        break;
+                    }
+                }
+
+                if (data.longitude == undefined) {
+                    DaumApi.Map.addr2coord(data.address, function (result) {
+                        try {
+                            $("#@(option.ID)_LATITUDE").val(result.lat);
+                            $("#@(option.ID)_LONGITUDE").val(result.lng);
+                        } catch (e) { }
+                        try {
+                            $("#LATITUDE").val(result.lat);
+                            $("#LONGITUDE").val(result.lng);
+                        } catch (e) { }
+
+
+                        var latlng = new kakao.maps.LatLng(result.lat, result.lng);
+
+                        var marker = @(option.ID)_addMarker(latlng);
+                        var addressname = $("#@(option.ID)_ADDRESS1").val();
+                        var zipcode = $("#@(option.ID)_POST_CODE").val();
+                        var param = {
+                            address: { address_name: addressname, zip_code: zipcode }
+                        };
+
+                    @(option.ID)_setContentMarker(param, latlng, marker);
+                    /*이벤트*/
+                    @(option.ID)_makerEvent(marker);
+                        var @(option.ID)_bounds = new kakao.maps.LatLngBounds();
+                    @(option.ID)_bounds.extend(marker.getPosition());
+                     @(option.ID)_map.map.setBounds(@(option.ID)_bounds);
+                    });
+                }
+            }
+
+            // 브라우저의 크기 변경에 따라 레이어를 가운데로 이동시키고자 하실때에는
+            // resize이벤트나, orientationchange이벤트를 이용하여 값이 변경될때마다 아래 함수를 실행 시켜 주시거나,
+            // 직접 element_layer_@(option.ID)의 top,left값을 수정해 주시면 됩니다.
+			function initLayerPosition() {
+                var width = $(window).width() > 500 ? 500 : $(window).width() - 10; //우편번호서비스가 들어갈 element의 width
+                var height = 475; //우편번호서비스가 들어갈 element의 height
+                var borderWidth = 2; //샘플에서 사용하는 border의 두께
+
+                // 위에서 선언한 값들을 실제 element에 넣는다.
+                element_layer_@(option.ID).style.width = width + 'px';
+                element_layer_@(option.ID).style.height = height + 'px';
+                element_layer_@(option.ID).style.border = borderWidth + 'px solid';
+                // 실행되는 순간의 화면 너비와 높이 값을 가져와서 중앙에 뜰 수 있도록 위치를 계산한다.
+                element_layer_@(option.ID).style.left = (((window.innerWidth || document.documentElement.clientWidth) - width) / 2 - borderWidth) + 'px';
+                element_layer_@(option.ID).style.top = (((window.innerHeight || document.documentElement.clientHeight) - height) / 2 - borderWidth) + 'px';
+			}
+		</script>
+	}
+}

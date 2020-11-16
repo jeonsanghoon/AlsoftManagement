@@ -1,0 +1,25 @@
+﻿@using ALT.Framework;
+@using ALT.VO.loggal
+@{
+    List<T_AD_FAVORITE> list = ViewBag.list;
+    string totCnt = (list.Count() == 0 ? "0" : list.First().TOTAL_ROWCOUNT.ToString());
+    <input type="hidden" id="total" value="@totCnt" />
+    foreach (T_AD_FAVORITE data in list)
+    {
+        data.DEVICE_CODE = data.DEVICE_CODE == null ? 0 : data.DEVICE_CODE;
+        data.DEVICE_SEQ = data.DEVICE_SEQ == null ? 0 : data.DEVICE_SEQ;
+        data.AD_CODE = data.AD_CODE == null ? 0 : data.AD_CODE;
+        <tr>
+            <td class="center">@data.UPDATE_DATE</td>
+            <td>@data.FAV_TYPE_NAME</td>
+            <td>@Html.Raw(data.AD_CODE > 0 ? "<a href='" + Global.ConfigInfo.MANAGEMENT_SITE + "/advertise/contentview/" + data.AD_CODE + "' target='_blank'>" + data.AD_TITLE + "(광고)</a>" : "<a href='" + Global.ConfigInfo.MANAGEMENT_SITE + "/basic/devicemaindetail?DEVICE_CODE=" + data.DEVICE_CODE + "&SEQ=" + data.DEVICE_SEQ +"&view=1' target='_blank'>" + data.DEVICE_NAME +" (loggal 메인)</a>")</td>
+            <td>@(data.SNS_TYPE == null ? data.MOBILE : data.SNS_TYPE_NAME)</td>
+            <td class="center">@data.USER_IP</td>
+            <td class="center">@data.CNT</td>
+        </tr>
+    }
+}
+
+
+
+

@@ -1,0 +1,200 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<DBAgentMultiTemplate  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns="http://altsoft.kr/">
+
+  <DBAgentTemplate TemplateID="GetStoreGroup">
+    <!-- 
+    SqlType : SQL의 형태를 지정합니다.
+      Example 1:<SqlType>FixedSQL</SqlType> 고정적인 SQL을 지원합니다. 
+      Example 2:<SqlType>DynamicSQL</SqlType> 동적인 SQL Type1을 지원합니다.  
+    Description : 해당 SQL의 기능설명을 적습니다.
+    SQLModifier : 해당 SQL의 작성자(수정자)를 적습니다
+    LastModifyDate : 해당 SQL의 마지막 수정일을 적습니다
+    -->
+    <Information>
+      <SqlType>DynamicSQL</SqlType>
+      <Description>지점별 그룹가져오기</Description>
+      <SQLModifier>전상훈</SQLModifier>
+      <LastModifyDate>2017-03-27</LastModifyDate>
+    </Information>
+
+    <TemplateSQL>
+      <!-- FixedSQL : 고정된 SQL이 들어가는 곳입니다. -->
+      <FixedSQL>
+        <![CDATA[ 
+	SET NOCOUNT ON 
+	/*********************************************************/
+	/* 지점별 그룹관리 - T_STORE_GROUP 조회 -  SELECT QUERY */ 
+	/*********************************************************/
+	SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED 
+  
+	SELECT 
+		  A.GROUP_CODE
+    , A.STORE_CODE
+		, A.GROUP_TYPE
+		, A.GROUP_NAME
+    , A.SEQ
+		, A.REMARK
+		, A.INSERT_CODE
+		, A.INSERT_DATE
+		, A.UPDATE_CODE
+		, A.UPDATE_DATE
+	FROM T_STORE_GROUP A 
+ WHERE 1=1
+    #[GROUP_CODE]
+    #[STORE_CODE]
+    #[GROUP_TYPE]
+    
+ ORDER BY A.STORE_CODE, A.SEQ
+	SET NOCOUNT OFF 
+      ]]>
+      </FixedSQL>
+      <DynamicBodys>
+        <Key>GROUP_CODE</Key>
+        <Body>AND A.GROUP_CODE = {0} </Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>STORE_CODE</Key>
+        <Body>AND A.STORE_CODE = {0} </Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>GROUP_TYPE</Key>
+        <Body>AND A.GROUP_TYPE = {0} </Body>
+      </DynamicBodys>
+    </TemplateSQL>
+  </DBAgentTemplate>
+
+
+  <DBAgentTemplate TemplateID="StoreGroupSave">
+    <!-- 
+    SqlType : SQL의 형태를 지정합니다.
+      Example 1:<SqlType>FixedSQL</SqlType> 고정적인 SQL을 지원합니다. 
+      Example 2:<SqlType>DynamicSQL</SqlType> 동적인 SQL Type1을 지원합니다.  
+    Description : 해당 SQL의 기능설명을 적습니다.
+    SQLModifier : 해당 SQL의 작성자(수정자)를 적습니다
+    LastModifyDate : 해당 SQL의 마지막 수정일을 적습니다
+    -->
+    <Information>
+      <SqlType>DynamicSQL</SqlType>
+      <Description>지점별 그룹저장</Description>
+      <SQLModifier>전상훈</SQLModifier>
+      <LastModifyDate>2017-03-27</LastModifyDate>
+    </Information>
+
+    <TemplateSQL>
+      <!-- FixedSQL : 고정된 SQL이 들어가는 곳입니다. -->
+      <FixedSQL>
+        <![CDATA[ 
+	SET NOCOUNT ON 
+	/*******************************************************/
+	/* 지점별 그룹관리 - T_STORE_GROUP 저장 -  SAVE QUERY */ 
+	/*******************************************************/
+	DECLARE @GROUP_CODE      INT                  = CONVERT(INT, CASE WHEN ISNUMERIC('{0}') = 1 THEN '{0}' ELSE '0' END )
+			  , @STORE_CODE      INT                  = CONVERT(INT, CASE WHEN ISNUMERIC('{1}') = 1 THEN '{1}' ELSE '0' END )
+			  , @GROUP_TYPE      INT                  = CONVERT(INT, CASE WHEN ISNUMERIC('{2}') = 1 THEN '{2}' ELSE '0' END )
+			  , @GROUP_NAME      NVARCHAR(200)        = N'{3}'
+			  , @SEQ             INT                  = CONVERT(INT, CASE WHEN ISNUMERIC('{4}') = 1 THEN '{4}' ELSE '0' END )
+			  , @REMARK          NVARCHAR(200)        = N'{5}'
+			  , @INSERT_CODE     INT                  = {6}
+			  , @INSERT_DATE     DATETIME             = GETDATE() 
+			  , @UPDATE_CODE     INT                  = {6}
+			  , @UPDATE_DATE     DATETIME             = GETDATE() 
+
+	UPDATE A                                                
+	SET     STORE_CODE      = @STORE_CODE    
+			 ,  GROUP_TYPE      = @GROUP_TYPE    ,  GROUP_NAME   = @GROUP_NAME                    
+			 ,  SEQ             = @SEQ           ,  REMARK       = @REMARK                        
+			 ,  UPDATE_CODE     = @UPDATE_CODE   ,  UPDATE_DATE  = @UPDATE_DATE                   
+	
+	FROM T_STORE_GROUP A 
+ WHERE GROUP_CODE         = @GROUP_CODE
+	IF @@ROWCOUNT = 0
+	BEGIN
+		INSERT INTO T_STORE_GROUP
+		(		STORE_CODE                    		, GROUP_TYPE                    		, GROUP_NAME                    		
+			, SEQ                           		, REMARK                        		, INSERT_CODE                   		, INSERT_DATE                   		
+			, UPDATE_CODE                   		, UPDATE_DATE                   		
+		)
+		SELECT @STORE_CODE                   		, @GROUP_TYPE                   	
+				, @GROUP_NAME                   		, @SEQ                          		, @REMARK                       	
+				, @INSERT_CODE                  		, @INSERT_DATE                  		, @UPDATE_CODE                  	
+				, @UPDATE_DATE                  	
+	 END
+SET NOCOUNT OFF
+
+
+      ]]>
+      </FixedSQL>
+
+    </TemplateSQL>
+  </DBAgentTemplate>
+
+<DBAgentTemplate TemplateID="StoreGroupDelete">
+    <!-- 
+    SqlType : SQL의 형태를 지정합니다.
+      Example 1:<SqlType>FixedSQL</SqlType> 고정적인 SQL을 지원합니다. 
+      Example 2:<SqlType>DynamicSQL</SqlType> 동적인 SQL Type1을 지원합니다.  
+    Description : 해당 SQL의 기능설명을 적습니다.
+    SQLModifier : 해당 SQL의 작성자(수정자)를 적습니다
+    LastModifyDate : 해당 SQL의 마지막 수정일을 적습니다
+    -->
+    <Information>
+      <SqlType>DynamicSQL</SqlType>
+      <Description>지점별 그룹 삭제</Description>
+      <SQLModifier>전상훈</SQLModifier>
+      <LastModifyDate>2017-03-29</LastModifyDate>
+    </Information>
+
+    <TemplateSQL>
+      <!-- FixedSQL : 고정된 SQL이 들어가는 곳입니다. -->
+      <FixedSQL>
+        <![CDATA[ 
+	SET NOCOUNT ON 
+	/*******************************************************/
+	/* 지점별 그룹관리 - T_STORE_GROUP 삭제 -  DELETE QUERY */ 
+	/*******************************************************/
+    DECLARE @GROUP_CODE INT = {0}
+          , @REG_CODE   INT = {1}
+
+    IF EXISTS (SELECT * FROM T_DEVICE 
+               WHERE GROUP_CODE = @GROUP_CODE
+		       )
+    BEGIN
+
+	    SELECT N'해당 그룹을 사용하는 로컬박스가 존재하여 삭제할 수가 없습니다. >> 로컬박스명 : ' 
+	    + 
+	    STUFF(( SELECT ',' + A.DEVICE_NAME
+                  FROM T_DEVICE A
+                 WHERE A.GROUP_CODE = @GROUP_CODE
+                   FOR XML PATH ('')),1,1,'') AS [ERROR_MESSAGE]
+	    GOTO EXCEPTION
+    END
+
+    IF EXISTS (SELECT * FROM T_DEVICE 
+               WHERE GROUP_CODE = @GROUP_CODE
+		       )
+    BEGIN
+
+	    SELECT N'해당 그룹을 사용하는 광고가 존재하여 삭제할 수가 없습니다. >> 광고제목 : ' 
+	    + 
+	    STUFF(( SELECT ',' + A.TITLE
+                  FROM T_AD A
+                 WHERE A.GROUP_CODE = @GROUP_CODE
+                   FOR XML PATH ('')),1,1,'') AS [ERROR_MESSAGE]
+	    GOTO EXCEPTION
+    END
+
+    DELETE FROM T_STORE_GROUP
+     WHERE GROUP_CODE = @GROUP_CODE
+
+
+    SELECT '' AS [ERROR_MESSAGE]
+    EXCEPTION:
+SET NOCOUNT OFF
+
+
+      ]]>
+      </FixedSQL>
+
+    </TemplateSQL>
+  </DBAgentTemplate>
+</DBAgentMultiTemplate>

@@ -1,0 +1,85 @@
+﻿@using ALT.Framework.Mvc
+@using ALT.VO.Common
+@{
+    string st = ViewBag.data;
+}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>@SessionHelper.LoginInfo.STORE.STORE_NAME</title>
+
+    @{Html.RenderPartial("~/Views/Theme/SpicyX/Shared/Partial/Head.cshtml"); }
+    <style>
+        html, body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+        }
+
+        #map {
+            height: 100%;
+        }
+
+        #mu-restaurant-menu .mu-restaurant-menu-area .mu-restaurant-menu-content .mu-restaurant-menu li {
+            float: left;
+        }
+    </style>
+</head>
+<body>
+    <!-- Pre Loader -->
+    <div id="aa-preloader-area">
+        <div class="mu-preloader">
+            <img src="/common/theme/Spicyx/img/preloader.gif" alt="">
+        </div>
+    </div>
+    <!--START SCROLL TOP BUTTON -->
+    <a class="scrollToTop" href="#">
+        <i class="fa fa-angle-up"></i>
+        <span>Top</span>
+    </a>
+
+    @{
+        IList<LOGIN_WEBMENU> list = SessionHelper.LoginInfo.WebMemu;
+    }
+
+
+    <!-- END SCROLL TOP BUTTON -->
+    @{Html.RenderPartial("~/Views/Theme/SpicyX/01.Topmenu.cshtml"); }
+    @{
+        foreach (LOGIN_WEBMENU data in list)
+        {
+            if (!string.IsNullOrEmpty(data.TEMPLEATE_PAGE))
+            {
+                //   Html.RenderPartial("~/Views" + data.TEMPLEATE_PAGE + ".cshtml");
+                Html.RenderAction("DrawView", "home", new { path = "~/Views" + data.TEMPLEATE_PAGE + ".cshtml" });
+            }
+        }
+    }
+
+    @{Html.RenderPartial("~/Views/Theme/SpicyX/14.Footer.cshtml"); }
+
+    @{Html.RenderPartial("~/Views/Theme/SpicyX/99.Scripts.cshtml"); }
+    <script type="text/javascript">
+        $(document).ready(function () {
+            /* ----------------------------------------------------------- */
+            /*  1. FIXED NAVBAR
+            /* ----------------------------------------------------------- */
+            try {
+                jQuery(window).bind('scroll', function () {
+                    if (jQuery(window).scrollTop() > 200) {
+                        jQuery('.mu-main-navbar').addClass('navbar-bg');
+                        jQuery('.navbar-brand').addClass('navbar-brand-small');
+                    } else {
+                        jQuery('.mu-main-navbar').removeClass('navbar-bg');
+                        jQuery('.navbar-brand').removeClass('navbar-brand-small');
+                    }
+                });
+            } catch (e) { }
+
+        })
+    </script>
+</body>
+</html>

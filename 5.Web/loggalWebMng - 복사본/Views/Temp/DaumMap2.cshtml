@@ -1,0 +1,69 @@
+﻿@{
+    Layout = "~/Views/Shared/_Layout_blank.cshtml";
+}
+<div id="map" style="width:100%;height:350px;"></div>
+<p>
+    <button onclick="setBounds()">지도 범위 재설정 하기</button>
+</p>
+
+<script type="text/javascript" src="//dapi.kakao.com/v2/maps/sdk.js?appkey=@Global.ConfigInfo.KakaoAppKey&libraries=clusterer"></script>
+<script>
+    var mapContainer;
+    var map, points, bounds;
+    var i, marker;
+    $(document).ready(function () {
+
+        mapContainer = document.getElementById('map'), // 지도를 표시할 div
+            mapOption = {
+                center: new kakao.maps.LatLng(33.450701, 126.570667), // 지도의 중심좌표
+                level: 3 // 지도의 확대 레벨
+            };
+
+        map = new kakao.maps.Map(mapContainer, mapOption); // 지도를 생성합니다
+
+        // 버튼을 클릭하면 아래 배열의 좌표들이 모두 보이게 지도 범위를 재설정합니다
+        points = [
+            new kakao.maps.LatLng(33.452278, 126.567803),
+            new kakao.maps.LatLng(33.452671, 126.574792),
+            new kakao.maps.LatLng(33.451744, 126.572441)
+        ];
+        // 마커 클러스터러를 생성합니다
+        var clusterer = new kakao.maps.MarkerClusterer({
+            map: map, // 마커들을 클러스터로 관리하고 표시할 지도 객체
+            averageCenter: true, // 클러스터에 포함된 마커들의 평균 위치를 클러스터 마커 위치로 설정
+            minLevel: 10 // 클러스터 할 최소 지도 레벨
+        });
+
+        // 데이터에서 좌표 값을 가지고 마커를 표시합니다
+        // 마커 클러스터러로 관리할 마커 객체는 생성할 때 지도 객체를 설정하지 않습니다
+        var markers = $(points).map(function (i, position) {
+
+            return new kakao.maps.Marker({
+                position: new kakao.maps.LatLng(position.getLat(),position.getLng())
+            });
+        });
+
+        // 클러스터러에 마커들을 추가합니다
+        clusterer.addMarkers(markers);
+
+        //// 지도를 재설정할 범위정보를 가지고 있을 LatLngBounds 객체를 생성합니다
+        // bounds = new kakao.maps.LatLngBounds();
+
+
+        //for (i = 0; i < points.length; i++) {
+        //    // 배열의 좌표들이 잘 보이게 마커를 지도에 추가합니다
+        //    marker = new kakao.maps.Marker({ position: points[i] });
+        //    marker.setMap(map);
+
+        //    // LatLngBounds 객체에 좌표를 추가합니다
+        //    bounds.extend(points[i]);
+        //}
+    })
+
+
+    function setBounds() {
+        // LatLngBounds 객체에 추가된 좌표들을 기준으로 지도의 범위를 재설정합니다
+        // 이때 지도의 중심좌표와 레벨이 변경될 수 있습니다
+        map.setBounds(bounds);
+    }
+</script>

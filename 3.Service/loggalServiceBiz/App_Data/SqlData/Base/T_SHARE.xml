@@ -1,0 +1,288 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<DBAgentMultiTemplate  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns="http://altsoft.kr/">
+
+	<DBAgentTemplate TemplateID="GetShareList">
+		<!-- 
+    SqlType : SQL의 형태를 지정합니다.
+      Example 1:<SqlType>FixedSQL</SqlType> 고정적인 SQL을 지원합니다. 
+      Example 2:<SqlType>DynamicSQL</SqlType> 동적인 SQL Type1을 지원합니다.  
+    Description : 해당 SQL의 기능설명을 적습니다.
+    SQLModifier : 해당 SQL의 작성자(수정자)를 적습니다
+    LastModifyDate : 해당 SQL의 마지막 수정일을 적습니다
+    -->
+		<Information>
+			<SqlType>DynamicSQL</SqlType>
+			<Description>공유데이터조회</Description>
+			<SQLModifier>전상훈</SQLModifier>
+			<LastModifyDate>2019-10-14</LastModifyDate>
+		</Information>
+
+		<TemplateSQL>
+			<!-- FixedSQL : 고정된 SQL이 들어가는 곳입니다. -->
+			<FixedSQL>
+				<![CDATA[ 
+				
+				
+				
+	SET NOCOUNT ON 
+	/*********************************************************/
+	/* 공유테이블(배너/로컬박스) - T_SHARE 조회 -  SELECT QUERY */ 
+	/*********************************************************/
+	SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED 
+		DECLARE @PAGE INT      = {0}
+	           ,@PAGE_COUNT INT = {1};
+	WITH T_TABLE AS
+	(
+		SELECT  ROW_NUMBER() OVER(ORDER BY {2}) AS ROW_IDX 
+	         , A.SHARE_CODE
+             , A.SEND_MEMBER_CODE
+             , B.USER_NAME AS SEND_MEMBER_NAME
+			 , STUFF
+			   (
+			   	(
+			   		SELECT  ', ' + BB.USER_NAME +'(' + CC.REF_DATA4  + ')'
+			   		FROM T_SHARE_DTL AA
+			   		INNER JOIN T_MEMBER BB
+			   			ON AA.RECEIVE_MEMBER_CODE = BB.MEMBER_CODE
+			   		INNER JOIN T_COMMON CC
+			   			ON CC.MAIN_CODE = 'B003'
+			   			AND AA.IS_VIEW = CC.SUB_CODE
+			   		WHERE AA.SHARE_CODE  = A.SHARE_CODE
+			   		ORDER BY BB.USER_NAME DESC
+			   		FOR XML PATH(''), TYPE
+			   	).value('.', 'NVARCHAR(MAX)')
+			   	,1
+			   	,2 -- the "3" could also be represented as: LEN('---') for clarity
+			   	,''
+			   ) AS RECEIVE_MEMBER_NAMES
+             , A.AD_CODE
+             , D.TITLE
+             , A.DEVICE_CODE
+             , E.DEVICE_NAME
+             , A.COMMENT
+             , A.HIDE
+             , A.REMARK
+             , A.INSERT_CODE
+             , F.USER_NAME AS INSERT_NAME
+             , A.INSERT_DATE
+             , A.UPDATE_CODE
+             , G.USER_NAME AS UPDATE_NAME
+             , A.UPDATE_DATE
+          FROM T_SHARE A 
+         INNER JOIN T_MEMBER B
+            ON A.SEND_MEMBER_CODE = B.MEMBER_CODE
+          LEFT JOIN T_AD D
+            ON A.AD_CODE = D.AD_CODE
+          LEFT JOIN T_DEVICE E
+            ON A.DEVICE_CODE = E.DEVICE_CODE
+         INNER JOIN T_MEMBER F
+            ON A.INSERT_CODE = F.MEMBER_CODE
+         INNER JOIN T_MEMBER G
+            ON A.UPDATE_CODE = G.MEMBER_CODE
+            
+		WHERE 1=1 
+		    #[GUBUN]
+			#[SHARE_CODE]
+	        #[SEND_MEMBER_CODE]
+	        #[AD_CODE]
+	        #[DEVICE_CODE]
+	        #[HIDE]
+			#[TITLE]
+			#[DEVICE_NAME]
+			#[SEND_MEMBER_NAME]
+			#[RECEIVE_MEMBER_NAME]
+	 ) SELECT *, (SELECT COUNT(*) FROM T_TABLE) AS TOTAL_ROWCOUNT FROM T_TABLE 
+	 WHERE ROW_IDX > (@PAGE-1) * @PAGE_COUNT 
+	   AND ROW_IDX <= @PAGE * @PAGE_COUNT 
+	SET NOCOUNT OFF 
+
+
+      ]]>
+			</FixedSQL>
+			<DynamicBodys>
+				<Key>GUBUN</Key>
+				<Body>AND (CASE WHEN A.AD_CODE >= 0  THEN 1 ELSE 2 END = {0}) </Body>
+			</DynamicBodys>
+			<DynamicBodys>
+				<Key>SHARE_CODE</Key>
+				<Body>AND A.SHARE_CODE = {0} </Body>
+			</DynamicBodys>
+			<DynamicBodys>
+				<Key>SEND_MEMBER_CODE</Key>
+				<Body>AND A.SEND_MEMBER_CODE = {0} </Body>
+			</DynamicBodys>
+
+			<DynamicBodys>
+				<Key>AD_CODE</Key>
+				<Body>AND A.AD_CODE = {0} </Body>
+			</DynamicBodys>
+			<DynamicBodys>
+				<Key>DEVICE_CODE</Key>
+				<Body>AND A.DEVICE_CODE = {0} </Body>
+			</DynamicBodys>
+			
+			<DynamicBodys>
+				<Key>HIDE</Key>
+				<Body>AND A.HIDE = {0} </Body>
+			</DynamicBodys>
+			<DynamicBodys>
+				<Key>TITLE</Key>
+				<Body>AND D.TITLE LIKE N'%{0}%' </Body>
+			</DynamicBodys>
+			<DynamicBodys>
+				<Key>DEVICE_NAME</Key>
+				<Body>AND E.DEVICE_NAME LIKE N'%{0}%' </Body>
+			</DynamicBodys>
+			<DynamicBodys>
+				<Key>SEND_MEMBER_NAME</Key>
+				<Body>AND B.USER_NAME LIKE N'%{0}%' </Body>
+			</DynamicBodys>
+			<DynamicBodys>
+				<Key>RECEIVE_MEMBER_NAME</Key>
+				<Body>AND A.SHARE_CODE IN (SELECT A.SHARE_CODE 
+				                             FROM T_SHARE_DTL A
+											INNER JOIN T_MEMBER B
+											   ON A.RECEIVE_MEMBER_CODE = B.MEMBER_CODE
+										    WHERE B.USER_NAME LIKE N'%{0}%'
+											)
+				                             
+				</Body>
+			</DynamicBodys>
+		
+		</TemplateSQL>
+	</DBAgentTemplate>
+
+
+
+	<DBAgentTemplate TemplateID="ShareSave">
+		<!-- 
+    SqlType : SQL의 형태를 지정합니다.
+      Example 1:<SqlType>FixedSQL</SqlType> 고정적인 SQL을 지원합니다. 
+      Example 2:<SqlType>DynamicSQL</SqlType> 동적인 SQL Type1을 지원합니다.  
+    Description : 해당 SQL의 기능설명을 적습니다.
+    SQLModifier : 해당 SQL의 작성자(수정자)를 적습니다
+    LastModifyDate : 해당 SQL의 마지막 수정일을 적습니다
+    -->
+		<Information>
+			<SqlType>DynamicSQL</SqlType>
+			<Description>공유데이터저장</Description>
+			<SQLModifier>전상훈</SQLModifier>
+			<LastModifyDate>2019-10-14</LastModifyDate>
+		</Information>
+
+		<TemplateSQL>
+			<!-- FixedSQL : 고정된 SQL이 들어가는 곳입니다. -->
+			<FixedSQL>
+				<![CDATA[ 
+				
+				
+	SET NOCOUNT ON 
+	/*******************************************************/
+	/* 공유테이블(배너/로컬박스) - T_SHARE 저장 -  SAVE QUERY */ 
+	/*******************************************************/
+	DECLARE @SHARE_CODE                     BIGINT               = N'{0}'
+			  , @SEND_MEMBER_CODE               INT                  = CONVERT(INT, CASE WHEN ISNUMERIC('{1}') = 1 THEN '{1}' ELSE '0' END )
+			  , @AD_CODE                        BIGINT               = CONVERT(BIGINT, CASE WHEN ISNUMERIC('{2}') = 1 THEN '{2}' ELSE NULL END )
+			  , @DEVICE_CODE                    BIGINT               = CONVERT(BIGINT, CASE WHEN ISNUMERIC('{3}') = 1 THEN '{3}' ELSE NULL END )
+			  , @COMMENT                        NVARCHAR(400)        = N'{4}'
+			  , @HIDE                           BIT                  = CONVERT(BIT, CASE WHEN ISNUMERIC('{5}') = 1 THEN '{5}' ELSE '0' END )
+			  , @REMARK                         NVARCHAR(400)        = N'{6}'
+			  , @INSERT_CODE                    INT                  = {7}
+			  , @INSERT_DATE                    DATETIME             = GETDATE() 
+			  , @UPDATE_CODE                    INT                  = {7}
+			  , @UPDATE_DATE                    DATETIME             = GETDATE() 
+
+	UPDATE A 
+	SET  	    SEND_MEMBER_CODE               = @SEND_MEMBER_CODE              
+			 ,  AD_CODE                        = @AD_CODE                       		 ,  DEVICE_CODE                    = @DEVICE_CODE                   
+			 ,  COMMENT                        = @COMMENT                       		 ,  HIDE                           = @HIDE                          
+			 ,  REMARK                         = @REMARK                        		 ,  UPDATE_CODE                    = @UPDATE_CODE                   
+			 ,  UPDATE_DATE                    = @UPDATE_DATE                   
+	FROM T_SHARE A 
+	WHERE SHARE_CODE= @SHARE_CODE
+	IF @@ROWCOUNT = 0
+	BEGIN
+		INSERT INTO T_SHARE
+		(	SEND_MEMBER_CODE              		, AD_CODE                       		, DEVICE_CODE                   		
+			, COMMENT                       		, HIDE                          		, REMARK                        		, INSERT_CODE                   		
+			, INSERT_DATE                   		, UPDATE_CODE                   		, UPDATE_DATE                   		
+		)
+		SELECT @SEND_MEMBER_CODE             		, @AD_CODE                      	
+				, @DEVICE_CODE                  		, @COMMENT                      		, @HIDE                         	
+				, @REMARK                       		, @INSERT_CODE                  		, @INSERT_DATE                  	
+				, @UPDATE_CODE                  		, @UPDATE_DATE                  	
+		 SET @SHARE_CODE = IDENT_CURRENT('T_SHARE')
+	 END
+	SELECT CONVERT(VARCHAR(100), @SHARE_CODE) AS DATA
+	SET NOCOUNT OFF
+
+	]]>
+			</FixedSQL>
+		</TemplateSQL>
+	</DBAgentTemplate>
+
+
+	<DBAgentTemplate TemplateID="ShareDtlSave">
+		<!-- 
+    SqlType : SQL의 형태를 지정합니다.
+      Example 1:<SqlType>FixedSQL</SqlType> 고정적인 SQL을 지원합니다. 
+      Example 2:<SqlType>DynamicSQL</SqlType> 동적인 SQL Type1을 지원합니다.  
+    Description : 해당 SQL의 기능설명을 적습니다.
+    SQLModifier : 해당 SQL의 작성자(수정자)를 적습니다
+    LastModifyDate : 해당 SQL의 마지막 수정일을 적습니다
+    -->
+		<Information>
+			<SqlType>DynamicSQL</SqlType>
+			<Description>공유데이터리스트저장</Description>
+			<SQLModifier>전상훈</SQLModifier>
+			<LastModifyDate>2019-10-15</LastModifyDate>
+		</Information>
+
+		<TemplateSQL>
+			<!-- FixedSQL : 고정된 SQL이 들어가는 곳입니다. -->
+			<FixedSQL>
+				<![CDATA[ 
+				
+				
+	SET NOCOUNT ON 
+	/****************************************************************/
+	/* 공유 상세테이블(배너/로컬박스)  - T_SHARE_DTL 저장 -  SAVE QUERY */ 
+	/****************************************************************/
+	DECLARE @SHARE_CODE                         BIGINT               = CONVERT(BIGINT, CASE WHEN ISNUMERIC('{0}') = 1 THEN '{0}' ELSE NULL END )
+			  , @RECEIVE_MEMBER_CODE            INT                  = CONVERT(INT, CASE WHEN ISNUMERIC('{1}') = 1 THEN '{1}' ELSE NULL END )
+			  , @IS_VIEW                        BIT                  = CONVERT(BIT, CASE WHEN ISNUMERIC('{2}') = 1 THEN '{2}' ELSE NULL END )
+			  , @HIDE                           BIT                  = CONVERT(BIT, CASE WHEN ISNUMERIC('{3}') = 1 THEN '{3}' ELSE NULL END )
+			  , @REMARK                         NVARCHAR(400)        = N'{4}'
+			  , @INSERT_CODE                    INT                  = {5}
+			  , @INSERT_DATE                    DATETIME             = GETDATE() 
+			  , @UPDATE_CODE                    INT                  = {5}
+			  , @UPDATE_DATE                    DATETIME             = GETDATE() 
+
+	UPDATE A 
+	SET  	 IS_VIEW       = @IS_VIEW       ,  HIDE                           = @HIDE                          
+			 ,  REMARK        = @REMARK        ,  UPDATE_CODE                    = @UPDATE_CODE                   
+			 ,  UPDATE_DATE   = @UPDATE_DATE   
+	FROM T_SHARE_DTL A 
+	WHERE SHARE_CODE = @SHARE_CODE 
+	  AND RECEIVE_MEMBER_CODE = @RECEIVE_MEMBER_CODE
+	IF @@ROWCOUNT = 0
+	BEGIN
+		INSERT INTO T_SHARE_DTL
+		(	  SHARE_CODE     , RECEIVE_MEMBER_CODE  , IS_VIEW      , HIDE                          		
+			, REMARK         , INSERT_CODE          , INSERT_DATE  , UPDATE_CODE                   		
+			, UPDATE_DATE    
+		)
+		SELECT @SHARE_CODE   , @RECEIVE_MEMBER_CODE , @IS_VIEW     
+			 , @HIDE         , @REMARK              , @INSERT_CODE 
+			 , @INSERT_DATE  , @UPDATE_CODE         , @UPDATE_DATE 
+			
+	 END
+	SET NOCOUNT OFF
+
+	]]>
+			</FixedSQL>
+		</TemplateSQL>
+	</DBAgentTemplate>
+
+	
+</DBAgentMultiTemplate>

@@ -1,0 +1,56 @@
+﻿<div class="ui secondary pointing menu wizard" style="min-height:50px;">
+    @*<a class="item active">
+            Home
+        </a>
+        <a class="item">
+            Messages
+        </a>
+        <a class="item">
+            Friends
+        </a>*@
+    <div class="left menu" style="padding-top:8px;padding-left:15px; color:##587474">
+        <h2 style="cursor:pointer" onclick="jascript: location.href = '/advstep/steplist';">loggal 광고서비스</h2>
+    </div>
+    <div class="right menu" id="topMenu">
+             
+        @{
+            if (SessionHelper.LoginInfo == null || SessionHelper.LoginInfo.MEMBER == null)
+            {
+                <a class="ui item" href="/home/login?returnUrl=/advstep/step2">
+                    <span style="vertical-align:bottom">로그인 </span><i style="margin-bottom:0.2em;" class="sign in large icon"></i>
+
+                </a>
+
+            }
+            else
+            {
+                <span class="ui item">
+                    <div class="ui inline dropdown">
+                        <div class="text">
+                           @SessionHelper.LoginInfo.MEMBER.USER_NAME
+                        </div>
+                        <i class="dropdown icon"></i>
+                        <div class="menu">
+                            <div class="item" onclick="location.href = '/advstep/membermodify';" style="cursor:pointer">
+                                정보수정
+                            </div>
+                            <div class="item"  onclick="login.doLogout();" style="cursor:pointer">
+                               로그아웃
+                            </div>
+                        </div>
+                    </div>
+                </span>
+            }
+        }
+
+    </div>
+</div>
+
+<script>
+    $("document").ready(function () {
+        $("#btnPersonInfoModify").popup();
+        $("#btnPersonInfoModify").next().popup();
+        $(".secondary.pointing.menu.wizard .ui.dropdown").dropdown({ transition: 'drop', on: 'hover' });
+        ///$(".ui.item menu").hide();
+    });
+</script>

@@ -1,0 +1,44 @@
+﻿
+@using ALT.Framework.Mvc
+@using ALT.VO.Common
+@{
+    string st = ViewBag.data;
+}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>@SessionHelper.LoginInfo.STORE.STORE_NAME</title>
+
+    @{Html.RenderPartial("~/Views/Theme/SpicyX/Shared/Partial/Head_blank.cshtml"); }
+
+</head>
+<body>
+    <!-- Pre Loader -->
+    <div id="aa-preloader-area">
+        <div class="mu-preloader">
+            <img src="/common/theme/Spicyx/img/preloader.gif" alt=" loader img">
+        </div>
+    </div>
+
+
+
+
+    @RenderBody()
+
+
+ 
+    @{Html.RenderPartial("~/Views/Theme/SpicyX/Shared/Partial/Scripts_blank.cshtml"); }
+        @RenderSection("script", false)
+        <script type="text/javascript">
+            $(document).ready(function () {
+             
+                
+
+                });
+            
+        </script>
+</body>
+</html>

@@ -1,0 +1,137 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<DBAgentMultiTemplate  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns="http://altsoft.kr/">
+
+  <DBAgentTemplate TemplateID="GetAdDeviceSearchKeyword">
+    <!-- 
+    SqlType : SQL의 형태를 지정합니다.
+      Example 1:<SqlType>FixedSQL</SqlType> 고정적인 SQL을 지원합니다. 
+      Example 2:<SqlType>DynamicSQL</SqlType> 동적인 SQL Type1을 지원합니다.  
+    Description : 해당 SQL의 기능설명을 적습니다.
+    SQLModifier : 해당 SQL의 작성자(수정자)를 적습니다
+    LastModifyDate : 해당 SQL의 마지막 수정일을 적습니다
+    -->
+    <Information>
+      <SqlType>DynamicSQL</SqlType>
+      <Description>광고또는 로컬박스별별 키워드 조회하기</Description>
+      <SQLModifier>전상훈</SQLModifier>
+      <LastModifyDate>2016-09-13</LastModifyDate>
+    </Information>
+
+    <TemplateSQL>
+      <!-- FixedSQL : 고정된 SQL이 들어가는 곳입니다. -->
+      <FixedSQL>
+        <![CDATA[ 
+ 
+	SET NOCOUNT ON 
+	/***************************************************************/
+	/*광고또는 로컬박스별 키워드 조회하기-  GetAdDeviceSearchKeyword */          
+  /* - SELECT QUERY                                              */ 
+	/***************************************************************/
+	SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED 
+    
+   SELECT ISNULL(A.KEYWORD_CODE, C.KEYWORD_CODE) AS CODE, ISNULL(B.KEYWORD_NAME, C.KEYWORD_NAME) AS NAME
+    FROM T_SEARCH_KEYWORD A
+    LEFT JOIN T_KEYWORD B
+      ON A.KEYWORD_CODE = B.KEYWORD_CODE
+    LEFT JOIN T_CATEGORY_KEYWORD C
+      ON A.CK_CODE = C.CK_CODE
+  WHERE 1=1
+  #[AD_CODE]
+  #[DEVICE_CODE]
+  #[KEYWORD_TYPE]
+  ORDER BY B.KEYWORD_NAME
+	SET NOCOUNT OFF 
+
+
+      ]]>
+      </FixedSQL>
+      <DynamicBodys>
+        <Key>AD_CODE</Key>
+        <Body> AND A.AD_CODE = {0} </Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>DEVICE_CODE</Key>
+        <Body> AND A.DEVICE_CODE = {0}  </Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>KEYWORD_TYPE</Key>
+        <Body> AND B.KEYWORD_TYPE = {0}  </Body>
+      </DynamicBodys>
+    </TemplateSQL>
+  </DBAgentTemplate>
+
+<DBAgentTemplate TemplateID="SearchKeywordDelete">
+    <!-- 
+    SqlType : SQL의 형태를 지정합니다.
+      Example 1:<SqlType>FixedSQL</SqlType> 고정적인 SQL을 지원합니다. 
+      Example 2:<SqlType>DynamicSQL</SqlType> 동적인 SQL Type1을 지원합니다.  
+    Description : 해당 SQL의 기능설명을 적습니다.
+    SQLModifier : 해당 SQL의 작성자(수정자)를 적습니다
+    LastModifyDate : 해당 SQL의 마지막 수정일을 적습니다
+    -->
+    <Information>
+      <SqlType>DynamicSQL</SqlType>
+      <Description>검색 키워드 삭제</Description>
+      <SQLModifier>전상훈</SQLModifier>
+      <LastModifyDate>2016-09-13</LastModifyDate>
+    </Information>
+
+    <TemplateSQL>
+      <!-- FixedSQL : 고정된 SQL이 들어가는 곳입니다. -->
+      <FixedSQL>
+        <![CDATA[ 
+ 
+	SET NOCOUNT ON 
+	/****************************************************/
+	/*검색 키워드 삭제-  SearchKeywordDelete    Delete */ 
+	/****************************************************/
+	
+    DELETE A FROM T_SEARCH_KEYWORD A
+      LEFT JOIN T_KEYWORD B
+        ON A.KEYWORD_CODE = B.KEYWORD_CODE
+      LEFT JOIN T_CATEGORY_KEYWORD C
+        ON A.CK_CODE = C.CK_CODE
+   
+    WHERE 1=1
+      #[AD_CODE]
+      #[DEVICE_CODE]
+      #[CK_CODE]
+      #[KEYOWRD_CODE]
+      #[KEYOWRD_NAME]
+      #[KEYWORD_TYPE]
+	    SET NOCOUNT OFF 
+    ]]>
+      </FixedSQL>
+      <DynamicBodys>
+        <Key>AD_CODE</Key>
+        <Body> AND A.AD_CODE = {0} </Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>DEVICE_CODE</Key>
+        <Body>
+           <![CDATA[ 
+          AND ( A.DEVICE_CODE = 10071
+                AND B.KEYWORD_NAME <> (SELECT DEVICE_NAME FROM T_DEVICE WHERE DEVICE_CODE = 10071)
+              ) 
+          ]]>
+        </Body>
+      </DynamicBodys>
+      <DynamicBodys>
+          <Key>CK_CODE</Key>
+          <Body> AND A.CK_CODE = {0}  </Body>
+        </DynamicBodys>
+      <DynamicBodys>
+        <Key>KEYOWRD_CODE</Key>
+        <Body> AND (A.KEYOWRD_CODE = {0} OR C.KEYOWRD_CODE = {0})   </Body>
+      </DynamicBodys>
+    <DynamicBodys>
+        <Key>KEYOWRD_NAME</Key>
+        <Body> AND (B.KEYOWRD_NAME = N'{0}' OR D.KEYOWRD_NAME = N'{0}')  </Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>KEYWORD_TYPE</Key>
+        <Body> AND (B.KEYWORD_TYPE = '{0}' OR D.KEYWORD_TYPE = '{0}')  </Body>
+      </DynamicBodys>
+    </TemplateSQL>
+  </DBAgentTemplate>
+</DBAgentMultiTemplate>

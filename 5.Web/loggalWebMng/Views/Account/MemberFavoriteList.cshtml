@@ -1,0 +1,309 @@
+﻿@{
+
+}
+@section scripts{
+
+    <script type="text/javascript">
+
+        $(document).ready(function () {
+
+            doQuery(1);
+
+            ComponentInit();
+        }); //End document.ready
+
+        function ComponentInit() {
+            $('.menu .item').tab();
+            $("#TITLE").keyup(function (e) {
+                var code = (e.keyCode ? e.keyCode : e.which);
+                if (code == 13) {
+                    doQuery();
+                }
+            });
+            $("#DEVICE_NAME").keyup(function (e) {
+                var code = (e.keyCode ? e.keyCode : e.which);
+                if (code == 13) {
+                    doQuery2();
+                }
+            });
+        }
+        var PARAM_DATA = {
+            PAGE_SIZE: 5
+          , PAGE_COUNT: 10
+          , PAGE: 1
+          , SORT_ORDER: " A.BOOKMARK_CODE DESC "
+        }
+        function doQuery(page, order) {
+            PARAM_DATA = $.mrc_table.SetPageSize(PARAM_DATA, ".ui.table.search:eq(0)");
+            if (page == undefined || page == null || page < 1) page = 1;
+            PARAM_DATA.PAGE = page;
+
+            var param = BaseCommon.FormInfo.serializeJson(".ui.form");
+
+            param.PAGE_COUNT = PARAM_DATA.PAGE_COUNT;
+            param.PAGE = PARAM_DATA.PAGE;
+            param.BOOKMARK_KIND = 2;
+            if (order != undefined) {
+                PARAM_DATA.SORT_ORDER = order;
+                param.SORT_ORDER = order;
+            }
+            else if (order == undefined) {
+                param.SORT_ORDER = PARAM_DATA.SORT_ORDER;
+            }
+            param.USER_NAME = $("#USER_NAME").val();
+
+            param = JSON.stringify(param);
+            ajax.GetAjax("/account/pv_memberbookmark_adlist", param, "html", function (result) {
+                $("#dvTable table tbody").html(result);
+                $.mrc_table.Init("#dvTable table.mrc-table", true, order);
+                $("#dvpagination").show();
+                $("#dvpagination").pagination({
+                    total: Number($("#dvTable #total").val()), page: PARAM_DATA.PAGE, pagesize: PARAM_DATA.PAGE_SIZE, perpage: PARAM_DATA.PAGE_COUNT
+                    , onPageClick:function(item, page) {
+                        doQuery(page);
+                    }
+                })
+                $("#dvpagination").css("display", "");
+                $("#dvTable table tbody").find("tr[disabled=disabled]").find("input[type=checkbox]").attr("disabled", "disabled");
+            });
+        }
+
+        var PARAM_DATA2 = {
+            PAGE_SIZE: 5
+         , PAGE_COUNT: 10
+         , PAGE: 1
+         , SORT_ORDER: " A.BOOKMARK_CODE DESC "
+        }
+        function doQuery2(page, order) {
+            PARAM_DATA2 = $.mrc_table.SetPageSize(PARAM_DATA2, ".ui.table.search:eq(1)");
+            if (page == undefined || page == null || page < 1) page = 1;
+            PARAM_DATA2.PAGE = page;
+
+            var param = BaseCommon.FormInfo.serializeJson(".ui.form");
+
+            param.PAGE_COUNT = PARAM_DATA2.PAGE_COUNT;
+            param.PAGE = PARAM_DATA2.PAGE;
+            param.BOOKMARK_KIND = 2;
+            if (order != undefined) {
+                PARAM_DATA2.SORT_ORDER = order;
+                param.SORT_ORDER = order;
+            }
+            else if (order == undefined) {
+                param.SORT_ORDER = PARAM_DATA2.SORT_ORDER;
+            }
+            param.USER_NAME = $("#USER_NAME2").val();
+            param.BOOKMARK_TYPE = 2; /*북마크유형(A007) 1:웹페이지, 2:로컬박스 3:배너*/
+            param = JSON.stringify(param);
+            ajax.GetAjax("/account/pv_memberbookmark_boxlist", param, "html", function (result) {
+                $("#dvTable2 table tbody").html(result);
+                $.mrc_table.Init("#dvTable2 table.mrc-table", false, order);
+                $("#dvpagination2").show();
+                $("#dvpagination2").pagination({
+                    total: Number($("#dvTable2 #total").val()), page: PARAM_DATA2.PAGE, pagesize: PARAM_DATA2.PAGE_SIZE, perpage: PARAM_DATA2.PAGE_COUNT
+                    , onPageClick: function (item, page) {
+                        doQuery(page);
+                    }
+                })
+                $("#dvpagination2").css("display", "");
+            });
+        }
+
+        function mrcGrid_Sort(objName, datasort, orderType) {
+            //_sortColumn = datasort;
+            //_sortOrder = orderType;
+            //        _page = 1;
+            if (objName == "#dvTable table.mrc-table") {
+                if (datasort == "" || orderType == "") doQuery(1, "");
+                else doQuery(1, datasort + " " + orderType);
+
+                $("#btnBannerShare").show();
+            }
+            else {
+                if (datasort == "" || orderType == "") doQuery2(1, "");
+                else doQuery2(1, datasort + " " + orderType);
+                $("#btnBannerShare").hide();
+            }
+        }
+
+        function BannerShare() {
+            var list = $.mrc_table.GetCheckedData("#dvTable #tbList");
+            if (list.length == 0) {
+                $.MessageBox("공유할 배너를 선택하여 주시기 바랍니다.");
+                return;
+            }
+            DeviceSelectPopOpen(0);
+        }
+        function PopDeviceCallback(result) {
+            BannerShareSave(result)
+        }
+        function BannerShareSave(list) {
+
+            var param = new Object();
+            var arrDeviceCode = new Array();
+            for(var j=0; j < list.length; j++)
+            {
+                arrDeviceCode.push(list[j].DEVICE_CODE);
+            }
+            var adlist = $.mrc_table.GetCheckedData("#tbList");
+            for (var i = 0; i < adlist.length; i++)
+            {
+                adlist[i].SAVE_TYPE = "N";
+                adlist[i].STATUS = 1;
+                adlist[i].DEVICE_CODE = arrDeviceCode;
+                adlist[i].REG_CODE = @SessionHelper.LoginInfo.MEMBER.MEMBER_CODE;
+            }
+
+            
+            param = JSON.stringify(adlist);
+            ajax.GetAjax("/account/AdShareRequestSave/", param, "json", function (result) {
+                if (result.ERROR_MESSAGE != "") {
+                    $.MessageBox(result.ERROR_MESSAGE);
+                } else {
+                    $("#tbList").find("tbody .editableCheck").each(function () {
+                        $(this).find(".chkEditMode").prop("checked", false);
+                    });
+                }
+            });
+        }
+    </script>
+}
+<style>
+    .ui.checkbox {
+        margin-top: 0.5em;
+    }
+    .ui.table.search
+    {
+       table-layout:fixed!important;
+       width:100%!important;
+    }
+    #dvpagination, #dvpagination2 {
+        margin-top: 1em;
+    }
+    .ui.table.search td.title {
+        width:100px;
+    }
+   
+</style>
+@{ 
+    Html.RenderPartial("/Views/Popup/DeviceListP.cshtml");
+}
+<div class="ui vertical stripe segment">
+    @Html.TitleNavigation()
+    <form class="ui form">
+        <div class="ui top attached tabular menu">
+            <a class="item active" data-tab="first" onclick="doQuery(1)">배너</a>
+            <a class="item" data-tab="second" onclick="doQuery2(1)">로컬박스</a>
+        </div>
+        <div class="ui bottom attached tab segment active" data-tab="first">
+            <div class="ui grid">
+                <div class="one column row">
+                    <div class="column">
+                        <table class="ui table search">
+                            <tbody>
+                                <tr>
+                                    <td class="title">
+                                        @Html.Semantic_TITLE2("제목")
+                                    </td>
+                                    <td class="content">
+                                        @Html.Semantic_TextBox("TITLE", "", SemanticUIHelper.Size.mini, new { @placeholder = "제목을 입력하세요" })
+                                    </td>
+                                    <td class="title">
+                                        @Html.Semantic_TITLE2("등록자명")
+                                    </td>
+                                    <td class="content">
+                                        @Html.Semantic_TextBox("USER_NAME", "", SemanticUIHelper.Size.mini, new { @placeholder = "등록자를 입력하세요", @class = "size150" })
+                                    </td>
+                                    <td class="buttons" style="text-align:right;"><i id="btnBannerShare" class="share2 alternate icon big teal" style="cursor:pointer;margin-right:1em;" onclick="BannerShare()"></i>@Html.Semantic_Button2("btnSearch", "조회", SemanticUIHelper.enButtonType.ToList, SemanticUIHelper.Size.medium, new { onclick = "doQuery();" })</td>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                    </div>
+                </div>
+                <div class="one column row">
+                    <div class="column" id="dvTable">
+                        <table class="mrc-table search" id="tbList">
+                            <thead>
+                                <tr>
+                                    <th class="sort" column_name="AD_CODE" data-sort="A.AD_CODE" style="width:50px;">배너코드</th>
+                                    <th class="sort" column_name="TITLE" data-sort="A.TITLE">제목</th>
+                                    <th display_size="tablet">썸네일</th>
+
+                                    <th class="sort hide" column_name="BOOKMARK_CODE" data-sort="A.BOOKMARK_CODE">북마크코드</th>
+                                    <th display_size="tablet" class="sort" column_name="USER_ID" data-sort="A.USER_ID">아이디</th>
+                                    <th display_size="pc" class="sort" column_name="USER_NAME" data-sort="A.USER_NAME">등록자</th>
+                                    <th display_size="tablet" class="sort" data-sort="A.AD_TYPE_NAME">광고구분</th>
+                                    <th display_size="tablet" class="sort" data-sort="A.BANNER_TYPE_NAME">배너구분</th>
+                                    <th display_size="tablet" class="sort" data-sort="A.AD_CNT">북마크수</th>
+                                    <th display_size="detail">시작일자</th>
+                                    <th display_size="detail">종료일자</th>
+                                    <th display_size="detail">시작시간</th>
+                                    <th display_size="detail">종료시간</th>
+                                    <th display_size="pc" class="sort" data-sort="A.INSERT_DATE">등록시간</th>
+
+
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="one column row">
+                    <div id="dvpagination" class="ui floated pagination menu"></div>
+                </div>
+            </div>
+        </div>
+        <div class="ui bottom attached tab segment" data-tab="second">
+            <div class="ui grid">
+                <div class="one column row">
+                    <div class="column">
+                        <table class="ui table search">
+                            <tbody>
+                                <tr>
+                                    <td class="title">
+                                        @Html.Semantic_TITLE2("로컬박스명")
+                                    </td>
+                                    <td class="content">
+                                        @Html.Semantic_TextBox("DEVICE_NAME", "", SemanticUIHelper.Size.mini, new { @placeholder = "로컬박스명을 입력하세요" })
+                                    </td>
+                                    <td class="title">
+                                        @Html.Semantic_TITLE2("등록자명")
+                                    </td>
+                                    <td class="content">
+                                        @Html.Semantic_TextBox("USER_NAME2", "", SemanticUIHelper.Size.mini, new { @placeholder = "등록자를 입력하세요", @class = "size150" })
+                                    </td>
+                                    <td class="buttons" colspan="4" style="text-align:right;">@Html.Semantic_Button2("btnSearch", "조회", SemanticUIHelper.enButtonType.ToList, SemanticUIHelper.Size.medium, new { onclick = "doQuery2();" })</td>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                    </div>
+                </div>
+                <div class="one column row">
+                    <div class="column" id="dvTable2">
+                        <table class="mrc-table search" id="tbList2">
+                            <thead>
+                                <tr>
+                                    <th class="sort" column_name="DEVICE_CODE" data-sort="A.DEVICE_CODE" style="width:7em;">로컬박스코드</th>
+                                    <th class="sort hide" column_name="BOOKMARK_CODE" data-sort="A.BOOKMARK_CODE">북마크코드</th>
+                                    <th class="sort" column_name="DEVICE_NAME" data-sort="A.DEVICE_NAME">로컬박스명</th>
+                                    <th display_size="tablet" class="sort" data-sort="A.COMPANY_NAME">회사명</th>
+                                    <th display_size="tablet" class="sort" column_name="USER_ID" data-sort="A.USER_ID">아이디</th>
+                                    <th class="sort" column_name="USER_NAME" data-sort="USER_NAME">등록자</th>
+                                    <th display_size="pc">주소</th>
+                                    <th display_size="pc" class="sort" data-sort="A.DEVICE_CNT">북마크수</th>
+                                    <th display_size="detail">등록시간</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="one column row">
+                    <div id="dvpagination2" class="ui floated pagination menu"></div>
+                </div>
+            </div>
+        </div>
+
+    </form>
+</div>

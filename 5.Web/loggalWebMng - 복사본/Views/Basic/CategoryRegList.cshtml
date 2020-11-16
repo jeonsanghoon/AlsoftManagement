@@ -1,0 +1,524 @@
+﻿@using ALT.VO.Common;
+@using ALT.BizService;
+@{
+
+    int? STORE_CODE = Convert.ToInt32(ViewBag.STORE_CODE);
+}
+<style>
+    .mrc-fixed-table-container {
+        height: 100%;
+    }
+
+    .mrc-table tr.TRkeywordActive.mrcrow td {
+        background-color: #c6f6f7;
+    }
+</style>
+@section scripts{
+
+    <script type="text/javascript">
+
+        $(document).ready(function () {
+            doQuery();
+            ComponentInit();
+            $(" .mrc-table .TRkeywordActive td").css("background-color", "blue")
+        }); //End document.ready
+
+        function ComponentInit() {
+            $("#CATEGORY_NAME").keypress(function (e) {
+                if (e.keyCode == 13) {
+                    doQuery(1);
+                }
+            })
+            $("#KEYWORD_NAME").keypress(function (e) {
+                if (e.keyCode == 13) {
+                    doQuery_KEYWORD(1);
+                }
+            })
+        }
+        function SemanticUI_ComboChange(obj) {
+            if ($(obj)[0].id == "STORE_CODE") {
+                location.href = "/common/groupmemberreg/" + $("#STORE_CODE").val();
+            }
+        }
+
+        var PARAM_DATA = {
+            PAGE_SIZE: ($("window").width() < 768 ? 5 : 10)
+          , PAGE_COUNT: 15
+          , PAGE: 1
+          , TABLE_NAME: "tbl"
+        }
+
+        function doQuery(page) {
+            if (page == undefined) PARAM_DATA.PAGE == 1;
+            else PARAM_DATA.PAGE = page;
+            var param = new Object();
+            param.PAGE_COUNT = PARAM_DATA.PAGE_COUNT;
+
+            param.PAGE = PARAM_DATA.PAGE;
+            param.CATEGORY_TYPE = "1";
+            param.CATEGORY_TYPE2 = "1";
+            param.CATEGORY_NAME = $("#CATEGORY_NAME").val();
+            param.TABLE_NAME = PARAM_DATA.TABLE_NAME;
+            param = JSON.stringify(param);
+            ajax.GetAjax("/basic/pv_CategoryRegList", param, "html", function (result) {
+                BaseCommon.SetHtml(document.all.dvTable, result);
+                $.mrc_table.Init("#dvTable table.list", true);
+
+                Input.TextBox.onlyNumber("#dvTable table.list .number");
+                $.mrc_table.fixedHeder("#dvTable table.list");
+                doQuery_KEYWORD(1)
+                $("#dvpagination").pagination({
+                    total: Number($("#" + PARAM_DATA.TABLE_NAME + "_TOTAL").val()), page: PARAM_DATA.PAGE, pagesize: PARAM_DATA.PAGE_SIZE, perpage: PARAM_DATA.PAGE_COUNT
+                  , onPageClick: function (item, page) {
+                      doQuery(page);
+                  }
+                })
+            });
+        }
+
+        function mrc_table_trClick(objName, param) {
+            if (objName == "#dvTable table.list") {
+                SetCategoryKeyword(param.CATEGORY_CODE, param.CATEGORY_NAME);
+                doQuery_KEYWORD(1, "A.KEYWORD_NAME");
+            }
+        }
+
+
+        function SetCategoryKeyword(categoryCode, categoryName) {
+            var params = new Object();
+            var htmlattribute = new Object();
+            htmlattribute.class = "mini";
+
+            $("#title_category").html("[<span style='color:blue'>" + categoryName + "</span>] 의 검색어");
+
+            params.name = "CATEGORY_KEYWORD";
+            htmlattribute.multiple = "multiple";
+
+            params.CATEGORY_TYPE = "1";
+            params.KEYWORD_TYPE = "";
+            params.CATEGORY_CODE = categoryCode;
+            params.HIDE = 0;
+            params.htmlAttributes = JSON.stringify(htmlattribute);
+            params = JSON.stringify(params);
+
+            ajax.GetAjax("/basic/CategoryKeywordCombo", params, "html", function (result) {
+                $("#td_CATEGORY_CODE").html(result);
+                SemanticUI.ComponentInit($("#td_CATEGORY_CODE"));
+
+                $("#CATEGORY_KEYWORD").parent().find(".ui.label").click(function () {
+                    var val = $(this).attr("data-value");
+                    var text = $(this).text();
+
+                    doQuery_KEYWORD(1, PARAM_DATA_KEYWORD.SORT, val);
+                });
+
+            })
+        }
+
+        function doAdd() {
+            var arrData = $.mrc_table.GetData("#dvTable table.list");
+
+            var orderSeq = (arrData.length > 0 ? Number(arrData[arrData.length - 1].ORDER_SEQ) + 1 : 1);
+
+            var addHtml = '<tr class="new">                                       ';
+            addHtml += '      <td ><input type="text" value="" style="width:95%"/></td>                   ';
+            addHtml += '      <td class="hide">0</td>													     ';
+            addHtml += '      <td class="hide">1</td>													     ';
+            addHtml += '      <td class="hide">1</td>												     ';
+
+            addHtml += '      <td class="hide"></td>											     ';
+            addHtml += '      <td class="hide center">1</td>													     ';
+            addHtml += '      <td class="center"><input type="text"  class="number" maxlength="3"  value="' + String(orderSeq) + '"/></td>						     ';
+            addHtml += '      <td class="hide">""</td>											     ';
+            addHtml += '      <td class="center"><input type="checkbox" /></td>	     ';
+            addHtml += '      <td></td>															     ';
+            addHtml += '      <td></td>														     ';
+            addHtml += '      <td class="center">@SessionHelper.LoginInfo.MEMBER.USER_NAME</td>													     ';
+            addHtml += '      <td class="center">@DateTime.Now</td>													     ';
+
+
+            addHtml += '</tr>                                                          ';
+
+            $.mrc_table.AddRowHtml("#dvTable table.list", addHtml);
+
+            $.mrc_table.Init("#dvTable table.list", true, "", "new");
+
+            Input.TextBox.onlyNumber("#dvTable table.list .number");
+        }
+
+        function doAdd2() {
+
+            var addHtml = "";
+            addHtml += '  <tr class="new">       ';
+            addHtml += '      <td><input type="text" value=""  /></td>  ';
+            addHtml += '      <td class="hide">0</td>    ';
+            addHtml += '      <td class="hide">' + String(PARAM_DATA_KEYWORD.KEYWORD_TYPE) + '</td> ';
+            addHtml += '      <td class="hide">0</td> ';
+            addHtml += '      <td class="hide" ><input type="checkbox" checked /></td> ';
+            addHtml += '      <td class="center"></td> ';
+            addHtml += '      <td class="hide"><input type="text" value="" /></td> ';
+            addHtml += '      <td class="hide"><input type="text" value="" /></td> ';
+            addHtml += '      <td>@Html.Raw(Html.CommonCombo("STATUS1", new T_COMMON_COND { MAIN_CODE="K001", HIDE=false }, "9", null, new { @class = "size100 field" }).ToHtmlString().Replace("\r\n", "").Trim())</td> ';
+            addHtml += '      <td class="center">@SessionHelper.LoginInfo.MEMBER.USER_NAME</td>  ';
+            addHtml += '      <td class="center">@DateTime.Now</td> ';
+            addHtml += '  </tr> ';
+
+            $.mrc_table.AddRowHtml("#dvTable_KEYWORD table.list", addHtml);
+
+            $.mrc_table.Init("#dvTable_KEYWORD table.list", true, PARAM_DATA_KEYWORD.SORT, "new");
+
+            Input.TextBox.onlyNumber("#dvTable_KEYWORD table.list tr.new .number");
+        }
+
+        var PARAM_DATA_KEYWORD = {
+            PAGE_SIZE: 5
+            , PAGE_COUNT: 5
+            , PAGE: 1
+            , TABLE_NAME: "tbl2"
+            , CATEGORY_CODE: 0
+            , SORT: "A.KEYWORD_NAME"
+            , KEYWORD_TYPE: 2
+        }
+        function doQuery_KEYWORD(page, sSort, keywordCode) {
+            var arrdata = $.mrc_table.GetActiveRowData("#dvTable table");
+            if (arrdata.length > 0) {
+                PARAM_DATA_KEYWORD.CATEGORY_CODE = arrdata[0].CATEGORY_CODE;
+                //$.MessageBox("카테고리(좌측리스트)를 선택하세요");
+                //return;
+            }
+            else {
+                PARAM_DATA_KEYWORD.CATEGORY_CODE = -1;
+            }
+            if (sSort != undefined) PARAM_DATA_KEYWORD.SORT = sSort;
+            var param = new Object();
+
+
+            if (page == undefined) PARAM_DATA_KEYWORD.PAGE = 1;
+            else PARAM_DATA_KEYWORD.PAGE = page;
+            param.KEYWORD_TYPE = 2;
+            param.IS_SYNONYM = false;
+            param.KEYWORD_NAME = $("#KEYWORD_NAME").val();
+
+            param.STATUS = $("#SEARCH_STATUS").val();
+            param.TABLE_NAME = PARAM_DATA_KEYWORD.TABLE_NAME;
+            param.CATEGORY_CODE = PARAM_DATA_KEYWORD.CATEGORY_CODE;
+            if (keywordCode != undefined) param.KEYWORD_CODE = keywordCode;
+            param.PAGE_COUNT = PARAM_DATA_KEYWORD.PAGE_COUNT;
+            param.PAGE = PARAM_DATA_KEYWORD.PAGE;
+            param.SORT = PARAM_DATA_KEYWORD.SORT;
+            param = JSON.stringify(param);
+            ajax.GetAjax("/basic/pv_CategoryRegList2", param, "html", function (result) {
+                $("#dvTable_KEYWORD table tbody").html(result);
+                $.mrc_table.Init("#dvTable_KEYWORD table.list", true, PARAM_DATA_KEYWORD.SORT);
+                if (Number($("#" + PARAM_DATA_KEYWORD.TABLE_NAME + "_TOTAL").val()) > 0)
+                    $("#dvpagination_KEYWORD").show();
+                else
+                    $("#dvpagination_KEYWORD").hide();
+                $("#dvpagination_KEYWORD").pagination({
+                    total: Number($("#" + PARAM_DATA_KEYWORD.TABLE_NAME + "_TOTAL").val()), page: PARAM_DATA_KEYWORD.PAGE, pagesize: PARAM_DATA_KEYWORD.PAGE_SIZE, perpage: PARAM_DATA_KEYWORD.PAGE_COUNT
+                  , onPageClick: function (item, page) {
+                      doQuery_KEYWORD(page);
+                  }
+                })
+            });
+        }
+
+        function doSave() {
+
+            var arrSaveData = $.mrc_table.GetSaveData("#dvTable table.list");
+            var param = JSON.stringify(arrSaveData);
+            ajax.GetAjax("/basic/CategorySave", param, "json", function (result) {
+                if (result.ERROR_MESSAGE != "") {
+                    $.MessageBox(result.ERROR_MESSAGE);
+                }
+                else {
+                    $.MessageBox("저장되었습니다.");
+                    //var data1 = $.mrc_table.GetActiveRowData("#dvTable_KEYWORD table.list")[0];
+                    doQuery(1);
+
+                    doQuery_KEYWORD(1);
+
+                    SetCategoryKeyword("-1", "");
+                }
+
+            });
+        }
+
+        function doDel() {
+            var arrDel = $.mrc_table.GetCheckedData("#dvTable table.list", "D");
+
+            if (arrDel.length == 0) {
+                $.MessageBox("삭제할 데이터가 없습니다.");
+                return;
+            }
+            $.MessageBox({
+                buttonDone: "예",
+                buttonFail: "아니오",
+                message: "정말로 삭제하시겠습니까?"
+            }).done(function () {
+                var param = JSON.stringify(arrDel);
+                ajax.GetAjax("/basic/CategorySave", param, "json", function (result) {
+                    if (result.ERROR_MESSAGE != "") {
+                        $.MessageBox(result.ERROR_MESSAGE);
+                    }
+                    else {
+                        $.MessageBox("삭제되었습니다.");
+                        //var data1 = $.mrc_table.GetActiveRowData("#dvTable_KEYWORD table.list")[0];
+                        doQuery(1);
+
+                    }
+                });
+            });
+        }
+
+
+        function doSave2() {
+            var arrSaveData = $.mrc_table.GetSaveData("#dvTable_KEYWORD table.list");
+            var param = JSON.stringify(arrSaveData);
+            ajax.GetAjax("/basic/KeywordSave", param, "json", function (result) {
+                if (result.ERROR_MESSAGE != "") {
+                    $.MessageBox(result.ERROR_MESSAGE);
+                }
+                else {
+                    $.MessageBox("저장되었습니다.");
+                    //var data1 = $.mrc_table.GetActiveRowData("#dvTable_KEYWORD table.list")[0];
+                    doQuery_KEYWORD(1, "A.UPDATE_DATE DESC");
+                }
+            });
+        }
+
+        function doDel2() {
+            var arrDel = $.mrc_table.GetCheckedData("#dvTable_KEYWORD table.list", "D");
+
+            if (arrDel.length == 0) {
+                $.MessageBox("삭제할 데이터가 없습니다.");
+                return;
+            }
+            $.MessageBox({
+                buttonDone: "예",
+                buttonFail: "아니오",
+                message: "정말로 삭제하시겠습니까?"
+            }).done(function () {
+                var param = JSON.stringify(arrDel);
+                ajax.GetAjax("/basic/KeywordSave", param, "json", function (result) {
+                    if (result.ERROR_MESSAGE != "") {
+                        $.MessageBox(result.ERROR_MESSAGE);
+                    }
+                    else {
+                        $.MessageBox("삭제되었습니다.");
+                        //var data1 = $.mrc_table.GetActiveRowData("#dvTable_KEYWORD table.list")[0];
+                        doQuery_KEYWORD(1);
+                    }
+                });
+            });
+        }
+        function doCategoryKeywordAdd() {
+            var arrData = $.mrc_table.GetActiveRowData("#dvTable table");
+
+            if (arrData.length == 0) {
+                $.MessageBox("카테고리(좌측리스트)를 선택하여 주시기 바랍니다.");
+                return;
+            }
+            arrData = $.mrc_table.GetCheckedData("#dvTable_KEYWORD table.list");
+            if (arrData.length == "") {
+                $.MessageBox("검색어(우측리스트)를 선택하여 주시기바랍니다.");
+                return;
+            }
+            var keyNames = "";
+            for (var i = 0; i < arrData.length; i++) {
+                if (arrData[i].KEYWORD_CODE <= 0) {
+                    if (keyNames != "") keyNames += ", "
+                    keyNames += arrData[i].KEYWORD_NAME;
+
+                }
+            }
+            if (keyNames != "") {
+                $.MessageBox("선택된 데이터에 신규데이터가 있습니다. 저장 후 추가하여 주시기 바랍니다.\n신규 검색어명 : " + keyNames);
+                return;
+            }
+
+
+            for (var i = 0; i < arrData.length; i++) {
+                if (arrData[i].KEYWORD_NAME.length > 0) {
+                    SemanticUI.ComboBox.AddItem("#CATEGORY_KEYWORD", arrData[i].KEYWORD_CODE, arrData[i].KEYWORD_NAME, true);
+                }
+            }
+
+
+            Input.CheckBox.CheckedAll("chkEditMode", false);
+
+        }
+        function doCategoryKeywordSave() {
+            var arrdata = $.mrc_table.GetActiveRowData("#dvTable table");
+
+            if (arrdata.length == 0) {
+                $.MessageBox("카테고리(좌측리스트)를 선택하여 주시기 바랍니다.");
+                return;
+            }
+            var param = new Object();
+            param.CATEGORY_CODE = arrdata[0].CATEGORY_CODE;
+            param.KEYWORD_CODES = SemanticUI.ComboBox.GetValuesToString("CATEGORY_KEYWORD");
+            param = JSON.stringify(param);
+            ajax.GetAjax("/basic/CategoryKeywordSave", param, "json", function (result) {
+                if (result.ERROR_MESSAGE != "") {
+                    $.MessageBox(result.ERROR_MESSAGE);
+                }
+                else {
+                    $.MessageBox("저장되었습니다.");
+                    //var data1 = $.mrc_table.GetActiveRowData("#dvTable_KEYWORD table.list")[0];
+                    doQuery_KEYWORD(1, "A.KEYWORD_NAME");
+                }
+            });
+        }
+
+        function mrcGrid_Sort(gridName, columnName, orderType) {
+
+            if (gridName == "#dvTable_KEYWORD table.list") {
+                var sSort = (orderType == undefined || orderType == "") ? "A.KEYWORD_NAME DESC" : columnName + " " + orderType;
+                doQuery_KEYWORD(1, sSort);
+
+            }
+        }
+    </script>
+}
+<style>
+    .ui.checkbox {
+        margin-top: 0.5em;
+    }
+
+    #dvTable, #dvTable_KEYWORD {
+        min-height: 100px;
+        width: 100%;
+        margin-bottom: 1em;
+    }
+</style>
+@{Html.RenderPartial("/Views/Basic/Partial/PV_Pop_Synonym.cshtml"); }
+<div class="ui vertical stripe segment">
+    @Html.TitleNavigation()
+    <form class="ui medium  form">
+        <div class="ui stackable two column grid" style="margin-top:2em;">
+            <div class="column">
+                <div class="ui grid">
+                    <div class="one column row">
+                        <div class="column">
+                            <table class="ui table search">
+                                <tbody>
+                                    <tr>
+                                        <td class="title size90">
+                                            카테고리명
+                                        </td>
+                                        <td class="content inline">
+                                            @Html.Semantic_TextBox("CATEGORY_NAME", "", SemanticUIHelper.Size.mini, new { @placeholder = "카테고리명", @class = "size120" }) @Html.Semantic_Button2("btnSearch", "조회", SemanticUIHelper.enButtonType.ToList, SemanticUIHelper.Size.mini, new { @onclick = "doQuery(1);" })
+                                        </td>
+
+                                        <td class="conetent buttons">
+                                            
+                                            @Html.Semantic_Button2("btnClear", "삭제", SemanticUIHelper.enButtonType.Del, SemanticUIHelper.Size.mini, new { onclick = "doDel();" })
+                                            @Html.Semantic_Button2("btnAdd", "추가", SemanticUIHelper.enButtonType.New, SemanticUIHelper.Size.mini, new { onclick = "doAdd();" })
+                                            @Html.Semantic_Button2("btnSave", "저장", SemanticUIHelper.enButtonType.Save, SemanticUIHelper.Size.mini, new { onclick = "doSave();" })
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="one column row">
+                        <div class="column">
+                            <div id="dvTable"></div>
+                        </div>
+                    </div>
+                    <div class="one column row" style="padding-top:0em;padding-bottom:0em;">
+                        <div class="column">
+                            <div id="dvpagination" class="ui floated pagination menu" style="margin-top:0.5em;margin-bottom:3em;"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="column">
+                <div class="ui grid">
+                    <div class="one column row">
+                        <div class="column">
+
+                            <table class="ui table search">
+                                <tbody>
+                                    <tr>
+                                        <td class="title size90">
+                                            @Html.CommonCombo("SEARCH_STATUS", new T_COMMON_COND { MAIN_CODE = "K001", HIDE = false }, "", "-상태-", new { @class = "size80 field" })
+                                        </td>
+                                        <td class="content inline">
+                                            @Html.Semantic_TextBox("KEYWORD_NAME", "", new { @class = "size120" })@Html.Semantic_Button2("btnSearch", "조회", SemanticUIHelper.enButtonType.ToList, SemanticUIHelper.Size.mini, new { @onclick = "doQuery_KEYWORD(1);" })
+                                        </td>
+
+                                        <td class="content buttons">
+                                            @Html.Semantic_Button2("btnDel2", "삭제", SemanticUIHelper.enButtonType.Del, SemanticUIHelper.Size.mini, new { onclick = "doDel2();" })
+                                            @Html.Semantic_Button2("btnAdd2", "추가", SemanticUIHelper.enButtonType.New, SemanticUIHelper.Size.mini, new { onclick = "doAdd2();" })
+                                            @Html.Semantic_Button2("btnSave2", "저장", SemanticUIHelper.enButtonType.Save, SemanticUIHelper.Size.mini, new { onclick = "doSave2();" })
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="one column row">
+                        <div class="column">
+                            <div id="dvTable_KEYWORD">
+                                <table class="mrc-table list">
+                                    <thead>
+                                        <tr>
+                                            <th column_name="KEYWORD_NAME" class="sort" data-sort="A.KEYWORD_NAME">검색어명</th>
+                                            <th class="hide" column_name="BASE_CODE">코드</th>
+                                            <th class="hide" column_name="KEYWORD_TYPE">검색어유형</th>
+                                            <th class="hide" column_name="KEYWORD_CODE">검색어코드</th>
+                                            <th class="hide" column_name="IS_SYNONYM">동의어여부</th>
+                                            <th column_name="SYNONYM_NAMES">동의어</th>
+                                            <th column_name="LATITUDE" display_size="detail">위도</th>
+                                            <th column_name="LONGITUDE" display_size="detail">경도</th>
+                                            <th column_name="STATUS" display_size="pc">상태</th>
+                                            <th column_name="UPDATE_NAME" display_size="detail">수정자</th>
+                                            <th column_name="UPDATE_DATE" display_size="pc" class="sort" data-sort="A.UPDATE_DATE">수정시간</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="one column row" style="padding-top:0em;padding-bottom:0em;">
+                        <div class="column">
+                            <div id="dvpagination_KEYWORD" class="ui floated pagination menu" style="display:none;"></div>
+                        </div>
+                    </div>
+                    <div class="one column row">
+                        <div class="column">
+                            <center>
+                                <i class="arrow circle down icon teal huge" title="검색어 추가" style="cursor:pointer" onclick="doCategoryKeywordAdd();"></i>
+                                @*<i class="fa fa-arrow-circle-down fa-4x " style="cursor:pointer" aria-hidden="true" title="검색어 추가" onclick="doCategoryKeywordAdd();"></i>*@
+                            </center>
+                        </div>
+                    </div>
+                    <div class="one column row">
+                        <div class="column">
+
+                            <table class="ui  table">
+                                <tbody>
+                                    <tr>
+                                        <td><h3 id="title_category">검색어</h3></td>
+                                        <td class="buttons">@Html.Semantic_Button2("btnSave", "저장", SemanticUIHelper.enButtonType.Save, SemanticUIHelper.Size.mini, new { onclick = "doCategoryKeywordSave();" })</td>
+                                    </tr>
+                                    <tr>
+                                        <td id="td_CATEGORY_CODE" colspan="2"><select id="CATEGORY_KEYWORD" multiple="multiple" style="width:100%"></select></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+
+
+
+

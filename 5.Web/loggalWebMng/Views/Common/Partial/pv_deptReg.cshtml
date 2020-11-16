@@ -1,0 +1,26 @@
+﻿@using ALT.VO.Common;
+@{
+    List<T_STORE_DEPT> list = ViewBag.list;
+    List<SelectListItem> deptCombo = new List<SelectListItem>();
+    if (list.Count() > 0)
+    {
+        deptCombo = new ALT.BizService.CommonService().GetDept(new T_STORE_DEPT { STORE_CODE = list[0].STORE_CODE }).Select(s=> new SelectListItem { Value=s.DEPT_CODE.ToString(), Text=s.DEPT_NAME }).ToList();
+    }
+
+    foreach (T_STORE_DEPT data in list)
+    {
+
+        <tr>
+            <td><input type="text" value="@data.DEPT_SEARCH" placeholder="상위코드 + 자신의코드(2자리)로 입력" /></td>
+            <td>@Html.CommonComboNormal("DEPT_CODE", (List<SelectListItem>)deptCombo, data.PARENT_DEPT_CODE.ToString(), "-선택-", new { @class = "mini size150", @onchange = "SetParentMemberCombo();" })</td>
+            <td><input type="text" value="@data.DEPT_NAME" /></td>
+            <td class="center">@data.LEVEL</td>
+            <td class="center"><input type="checkbox" name="chkUse" @(data.HIDE == false ? "checked='checked'" : "") /> </td>
+            <td><input type="text" value="@data.REMARK" /></td>
+            <td class="center">@data.UPDATE_NAME</td>
+            <td class="center">@data.UPDATE_DATE</td>
+            <td class="hide">@data.STORE_CODE</td>
+            <td class="hide">@data.DEPT_CODE</td>
+        </tr>
+    }
+}

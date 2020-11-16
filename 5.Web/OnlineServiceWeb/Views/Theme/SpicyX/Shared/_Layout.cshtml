@@ -1,0 +1,217 @@
+﻿
+@using ALT.Framework.Mvc
+@using ALT.VO.Common
+@{
+    string st = ViewBag.data;
+}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>@SessionHelper.LoginInfo.STORE.STORE_NAME</title>
+
+    @{Html.RenderPartial("~/Views/Theme/SpicyX/Shared/Partial/Head.cshtml"); }
+    <style>
+         
+            
+	/* 
+	Generic Styling, for Desktops/Laptops 
+	*/
+	table { 
+		width: 100%; 
+		border-collapse: collapse; 
+	}
+	/* Zebra striping */
+	tr:nth-of-type(odd) { 
+		background: #eee; 
+	}
+	th { 
+		background: #333; 
+		color: white; 
+		font-weight: bold; 
+	}
+	td, th { 
+		padding: 6px; 
+		border: 1px solid #ccc; 
+		text-align: left; 
+	}
+
+    .datepicker-days table th{
+        background-color:white;
+        color:black;
+    }
+    .datepicker-days table td {
+         background-color:white;
+    }
+    .cart_reservation{
+        margin-top:20px;
+    }
+    @@media (min-width: 1025px) {
+        .rightcolumn{
+            text-align:right;
+        }
+        .centercolumn{
+            text-align:center;
+        }
+        .mobileshow{
+            display:
+        }
+    }
+      
+            @@media only screen and (max-width: 760px), (min-device-width: 768px) and (max-device-width: 1024px) {
+
+                #table_cart .mobilehide
+                {
+                    display:none;
+                }
+                /* Force table to not be like tables anymore */
+                #table_cart, #table_cart thead, #table_cart tbody, #table_cart th, #table_cart td,#table_cart tr {
+                    display: block;
+                }
+
+                    /* Hide table headers (but not display: none;, for accessibility) */
+                 #table_cart thead tr {
+                        position: absolute;
+                        top: -9999px;
+                        left: -9999px;
+                    }
+
+                #table_cart tr {
+                    border: 1px solid #ccc;
+                }
+
+                #table_cart td {
+                    /* Behave  like a "row" */
+                    border: none;
+                    border-bottom: 1px solid #eee;
+                    position: relative;
+                    padding-left: 50%;
+                }
+
+                #table_cart td:before {
+                        /* Now like a table header */
+                        position: absolute;
+                        /* Top/left values mimic padding */
+                        top: 6px;
+                        left: 6px;
+                        width: 45%;
+                        padding-right: 10px;
+                        white-space: nowrap;
+                        content: attr(data-title);
+                    }
+
+                    /*
+            Label the data
+            */
+
+                #table_cart td:before {
+                    /* Now like a table header */
+                    position: absolute;
+                    /* Top/left values mimic padding */
+                    top: 1px;
+                    left: 6px;
+                    width: 45%;
+                    padding-right: 10px;
+                    white-space: nowrap;
+                    text-align:left;
+                    font-weight: bold;
+                    }
+                    /*td:nth-of-type(1):before {
+                        content: "First Name";
+                    }
+
+                    td:nth-of-type(2):before {
+                        content: "Last Name";
+                    }
+
+                    td:nth-of-type(3):before {
+                        content: "Job Title";
+                    }
+
+                    td:nth-of-type(4):before {
+                        content: "Favorite Color";
+                    }
+
+                    td:nth-of-type(5):before {
+                        content: "Wars of Trek?";
+                    }
+
+                    td:nth-of-type(6):before {
+                        content: "Porn Name";
+                    }
+
+                    td:nth-of-type(7):before {
+                        content: "Date of Birth";
+                    }
+
+                    td:nth-of-type(8):before {
+                        content: "Dream Vacation City";
+                    }
+
+                    td:nth-of-type(9):before {
+                        content: "GPA";
+                    }
+
+                    td:nth-of-type(10):before {
+                        content: "Del"
+                        
+                    }*/
+            }
+             #table_cart #cart_item{
+                    width:30%;
+                }
+             .cart_item_image{padding-left:0px;}
+             .cart_item_name{padding-left:0px;padding-top:8px;}
+            /* Smartphones (portrait and landscape) ----------- */
+            @@media only screen and (min-device-width : 320px) and (max-device-width : 480px) {
+                body {
+                    padding: 0;
+                    margin: 0;
+                    
+                }
+                
+            }
+
+            /* iPads (portrait and landscape) ----------- */
+            @@media only screen and (min-device-width: 768px) and (max-device-width: 1024px) {
+                body {
+                    width: 495px;
+                }
+            }
+          
+      
+
+    </style>
+</head>
+<body>
+    <!-- Pre Loader -->
+    <div id="aa-preloader-area">
+        <div class="mu-preloader">
+            <img src="/common/theme/Spicyx/img/preloader.gif" alt=" loader img">
+        </div>
+    </div>
+    <!--START SCROLL TOP BUTTON -->
+    <a class="scrollToTop" href="#">
+        <i class="fa fa-angle-up"></i>
+        <span>Top</span>
+    </a>
+
+    <!-- END SCROLL TOP BUTTON -->
+    @{Html.RenderPartial("~/Views/Theme/SpicyX/01.Topmenu.cshtml"); }
+
+
+    @RenderBody()
+
+
+    @{Html.RenderPartial("~/Views/Theme/SpicyX/14.Footer.cshtml"); }
+    @{Html.RenderPartial("~/Views/Theme/SpicyX/Shared/Partial/Scripts.cshtml"); }
+    @RenderSection("script", false)
+    <script type="text/javascript">
+        $(document).ready(function () {
+
+        })
+    </script>
+</body>
+</html>

@@ -1,0 +1,192 @@
+﻿<DBAgentMultiTemplate  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns="http://altsoft.kr/">
+
+  <DBAgentTemplate TemplateID="GetFileList">
+    <!-- 
+    SqlType : SQL의 형태를 지정합니다.
+      Example 1:<SqlType>FixedSQL</SqlType> 고정적인 SQL을 지원합니다. 
+      Example 2:<SqlType>DynamicSQL</SqlType> 동적인 SQL Type1을 지원합니다.  
+    Description : 해당 SQL의 기능설명을 적습니다.
+    SQLModifier : 해당 SQL의 작성자(수정자)를 적습니다
+    LastModifyDate : 해당 SQL의 마지막 수정일을 적습니다
+    -->
+    <Information>
+      <SqlType>DynamicSQL</SqlType>
+      <Description>파일
+      조회</Description>
+      <SQLModifier>전상훈</SQLModifier>
+      <LastModifyDate>2018-10-12</LastModifyDate>
+    </Information>
+
+    <TemplateSQL>
+      <!-- FixedSQL : 고정된 SQL이 들어가는 곳입니다. -->
+      <FixedSQL>
+        <![CDATA[ 
+
+	SET NOCOUNT ON 
+	/******************************************/
+	/* 파일정보 - T_FILE 조회 -  SELECT QUERY */ 
+	/******************************************/
+	SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED 
+	SELECT 
+		  A.TABLE_NAME
+		, A.TABLE_KEY
+		, A.FILE_SEQ
+    , A.FILE_TYPE
+		, A.FILE_NAME
+		, A.FILE_EXT
+		, A.FILE_URL
+		, A.REF_DATA1
+		, A.REF_DATA2
+		, A.REMARK
+		, A.INSERT_CODE
+		, A.INSERT_DATE
+	FROM T_FILE A 
+	WHERE 1=1 	
+  #[TABLE_NAME]
+  #[TABLE_KEY]
+  #[FILE_SEQ]
+  SET NOCOUNT OFF 
+
+
+
+]]>
+      </FixedSQL>
+      <DynamicBodys>
+        <Key>TABLE_NAME</Key>
+        <Body>AND A.TABLE_NAME = '{0}'</Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>TABLE_KEY</Key>
+        <Body>AND A.TABLE_KEY = '{0}'</Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>FILE_SEQ</Key>
+        <Body>AND A.FILE_SEQ = {0}</Body>
+      </DynamicBodys>
+    </TemplateSQL>
+  </DBAgentTemplate>
+
+  <DBAgentTemplate TemplateID="FileSave">
+    <!-- 
+    SqlType : SQL의 형태를 지정합니다.
+      Example 1:<SqlType>FixedSQL</SqlType> 고정적인 SQL을 지원합니다. 
+      Example 2:<SqlType>DynamicSQL</SqlType> 동적인 SQL Type1을 지원합니다.  
+    Description : 해당 SQL의 기능설명을 적습니다.
+    SQLModifier : 해당 SQL의 작성자(수정자)를 적습니다
+    LastModifyDate : 해당 SQL의 마지막 수정일을 적습니다
+    -->
+    <Information>
+      <SqlType>DynamicSQL</SqlType>
+      <Description>파일 저장</Description>
+      <SQLModifier>전상훈</SQLModifier>
+      <LastModifyDate>2018-10-12</LastModifyDate>
+    </Information>
+
+    <TemplateSQL>
+      <!-- FixedSQL : 고정된 SQL이 들어가는 곳입니다. -->
+      <FixedSQL>
+        <![CDATA[ 
+  SET NOCOUNT ON 
+	/****************************************/
+	/* 파일정보 - T_FILE 저장 -  SAVE QUERY */ 
+	/****************************************/
+	DECLARE @TABLE_NAME                     VARCHAR(30)          = N'{0}'
+			  , @TABLE_KEY                      VARCHAR(20)          = N'{1}'
+			  , @FILE_SEQ                       INT                  = N'{2}'
+			  , @FILE_TYPE                      INT                  = CONVERT(INT, CASE WHEN ISNUMERIC('{3}') = 1 THEN '{3}' ELSE '0' END )
+			  , @FILE_NAME                      NVARCHAR(100)        = N'{4}'
+			  , @FILE_EXT                       VARCHAR(30)          = N'{5}'
+			  , @FILE_URL                       NVARCHAR(200)        = N'{6}'
+			  , @REF_DATA1                      NVARCHAR(200)        = N'{7}'
+			  , @REF_DATA2                      NVARCHAR(200)        = N'{8}'
+			  , @REMARK                         NVARCHAR(50)         = N'{9}'
+			  , @INSERT_CODE                    INT                  = {10}
+			  , @INSERT_DATE                    DATETIME             = GETDATE() 
+
+  IF @FILE_SEQ  <= 0
+    BEGIN
+      SELECT @FILE_SEQ = ISNULL(MAX(FILE_SEQ),0) + 1 FROM T_FILE
+       WHERE TABLE_NAME = @TABLE_NAME 
+         AND TABLE_KEY = @TABLE_KEY 
+    END
+  
+	UPDATE A 
+	SET  	  FILE_TYPE                      = @FILE_TYPE                     
+			 ,  FILE_NAME                      = @FILE_NAME                     		 ,  FILE_EXT                       = @FILE_EXT                      
+			 ,  FILE_URL                       = @FILE_URL                      		 ,  REF_DATA1                      = @REF_DATA1                     
+			 ,  REF_DATA2                      = @REF_DATA2                     		 ,  REMARK                         = @REMARK                        
+	
+	FROM T_FILE A 
+	WHERE TABLE_NAME= @TABLE_NAME	  AND TABLE_KEY= @TABLE_KEY	  AND FILE_SEQ= @FILE_SEQ
+	IF @@ROWCOUNT = 0
+	BEGIN
+		INSERT INTO T_FILE
+		(		TABLE_NAME                    		, TABLE_KEY                     		, FILE_SEQ                      		, FILE_TYPE                     		
+			, FILE_NAME                     		, FILE_EXT                      		, FILE_URL                      		, REF_DATA1                     		
+			, REF_DATA2                     		, REMARK                        		, INSERT_CODE                   		, INSERT_DATE                   		
+			
+		)
+		SELECT @TABLE_NAME                   		, @TABLE_KEY                    		, @FILE_SEQ                     	
+				, @FILE_TYPE                    		, @FILE_NAME                    		, @FILE_EXT                     	
+				, @FILE_URL                     		, @REF_DATA1                    		, @REF_DATA2                    	
+				, @REMARK                       		, @INSERT_CODE                  		, @INSERT_DATE                  	
+			
+	 END
+   SELECT @FILE_SEQ AS FILE_SEQ
+	SET NOCOUNT OFF
+
+
+
+
+]]>
+      </FixedSQL>
+    </TemplateSQL>
+  </DBAgentTemplate>
+
+  <DBAgentTemplate TemplateID="FileDelete">
+    <!-- 
+    SqlType : SQL의 형태를 지정합니다.
+      Example 1:<SqlType>FixedSQL</SqlType> 고정적인 SQL을 지원합니다. 
+      Example 2:<SqlType>DynamicSQL</SqlType> 동적인 SQL Type1을 지원합니다.  
+    Description : 해당 SQL의 기능설명을 적습니다.
+    SQLModifier : 해당 SQL의 작성자(수정자)를 적습니다
+    LastModifyDate : 해당 SQL의 마지막 수정일을 적습니다
+    -->
+    <Information>
+      <SqlType>DynamicSQL</SqlType>
+      <Description>파일 저장</Description>
+      <SQLModifier>전상훈</SQLModifier>
+      <LastModifyDate>2018-10-12</LastModifyDate>
+    </Information>
+
+    <TemplateSQL>
+      <!-- FixedSQL : 고정된 SQL이 들어가는 곳입니다. -->
+      <FixedSQL>
+        <![CDATA[ 
+
+	SET NOCOUNT ON 
+	/******************************************/
+	/* 파일정보 - T_FILE 삭제 -  Delete QUERY */ 
+	/******************************************/
+	DECLARE @TABLE_NAME                     VARCHAR(30)          = N'{0}'
+			  , @TABLE_KEY                      VARCHAR(20)          = N'{1}'
+			  , @FILE_SEQ                       INT                  = N'{2}'
+			 
+ 
+
+  DELETE A 
+	FROM T_FILE A 
+	WHERE TABLE_NAME= @TABLE_NAME	  AND TABLE_KEY= @TABLE_KEY	  AND FILE_SEQ= @FILE_SEQ
+	
+   
+  SELECT @FILE_SEQ AS FILE_SEQ
+   
+	SET NOCOUNT OFF
+
+
+
+]]>
+      </FixedSQL>
+    </TemplateSQL>
+  </DBAgentTemplate>
+</DBAgentMultiTemplate>

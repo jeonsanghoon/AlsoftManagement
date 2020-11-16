@@ -1,0 +1,192 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.29324.140
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "1.Reference", "1.Reference", "{417DE0B5-A454-437B-93AA-3DC53DD90F52}"
+	ProjectSection(SolutionItems) = preProject
+		..\01.Reference\ClientDependency.Core.dll = ..\01.Reference\ClientDependency.Core.dll
+		..\01.Reference\ClientDependency.Core.Mvc.dll = ..\01.Reference\ClientDependency.Core.Mvc.dll
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "XSS", "XSS", "{37FBCC9B-843C-4255-9D17-C9CEF2EA6BAD}"
+	ProjectSection(SolutionItems) = preProject
+		..\01.Reference\XSS\AntiXSSLibrary.dll = ..\01.Reference\XSS\AntiXSSLibrary.dll
+		..\01.Reference\XSS\AntiXSSLibrary.xml = ..\01.Reference\XSS\AntiXSSLibrary.xml
+		..\01.Reference\XSS\HtmlSanitizationLibrary.dll = ..\01.Reference\XSS\HtmlSanitizationLibrary.dll
+		..\01.Reference\XSS\HtmlSanitizationLibrary.xml = ..\01.Reference\XSS\HtmlSanitizationLibrary.xml
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "2.Framework", "2.Framework", "{27CFCE15-FB71-4239-83C0-30E7081E9B23}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ALT.Framework.MVC", "2.Framework\ALT.Framework.MVC\ALT.Framework.MVC.csproj", "{A33C1FF2-8FA9-4B01-8F64-36E5263B34B8}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ALT.Framework", "2.Framework\ALT.Framework\ALT.Framework.csproj", "{B09020B4-4077-428B-BD75-2AB5838D9EAA}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "3.Service", "3.Service", "{8F7D71F1-B0D4-4A7D-BB1E-28F76D5C21B3}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "4.VO", "4.VO", "{4D10B896-F0E1-4F74-A44A-C0A5580E3E4F}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ALT.VO.Common", "4.Vo\ALT.VO.Common\ALT.VO.Common.csproj", "{54388F82-34D2-4FAB-9A40-0EEEC151DF66}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "5.Web", "5.Web", "{88FFE344-0577-4C66-BA56-F5EABBE6F573}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OnlineServiceBiz", "3.Service\OnlineServiceBiz\OnlineServiceBiz.csproj", "{4877D44D-5C0F-4771-84D1-3A060397C34A}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OnlineServiceWeb", "5.Web\OnlineServiceWeb\OnlineServiceWeb.csproj", "{5F793D41-A62B-4EE7-A555-E5B50B1F3FFD}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "SQL", "SQL", "{FD179AB3-C799-4C66-87A0-C5C10C26A654}"
+	ProjectSection(SolutionItems) = preProject
+		01.Reference\SQL\ALTSOFT_ONLINESERVICE_backup_20180911.zip = 01.Reference\SQL\ALTSOFT_ONLINESERVICE_backup_20180911.zip
+		01.Reference\SQL\ALTSOFT_ONLINESERVICE_backup_20181026.zip = 01.Reference\SQL\ALTSOFT_ONLINESERVICE_backup_20181026.zip
+		01.Reference\SQL\광고기기등록쿼리.sql = 01.Reference\SQL\광고기기등록쿼리.sql
+		01.Reference\SQL\로컬박스별 배너조회.sql = 01.Reference\SQL\로컬박스별 배너조회.sql
+		01.Reference\SQL\알트소프트 테이블 스크립트.sql = 01.Reference\SQL\알트소프트 테이블 스크립트.sql
+		01.Reference\SQL\웹메뉴 쿼리.sql = 01.Reference\SQL\웹메뉴 쿼리.sql
+		01.Reference\SQL\지역명 조회 쿼리_20160721.sql = 01.Reference\SQL\지역명 조회 쿼리_20160721.sql
+		01.Reference\SQL\추가 스크립트.txt = 01.Reference\SQL\추가 스크립트.txt
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "개발자료", "개발자료", "{B0AB9A44-99A7-432E-A3B9-7F9D864A6FA7}"
+	ProjectSection(SolutionItems) = preProject
+		01.Reference\개발자료\구글API.txt = 01.Reference\개발자료\구글API.txt
+	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "loggalWeb", "5.Web\loggalWeb\loggalWeb.csproj", "{8EE00B24-66F9-474E-AF09-8C9A4DC16C48}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ALT.VO.loggal", "4.Vo\ALT.VO.Loggal\ALT.VO.loggal.csproj", "{CD580826-AF2D-4469-AA99-B8E1476C670D}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "광고", "광고", "{9E2FF69C-6102-4858-A692-4949C3C95ABB}"
+	ProjectSection(SolutionItems) = preProject
+		01.Reference\SQL\광고검색쿼리.sql = 01.Reference\SQL\광고검색쿼리.sql
+	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "loggalServiceBiz", "3.Service\loggalServiceBiz\loggalServiceBiz.csproj", "{558FE777-AE5C-4844-86CC-8F3FA66FE19B}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "loggalWebMng", "5.Web\loggalWebMng\loggalWebMng.csproj", "{15CBB437-F43E-4B10-99E1-7315CC024A08}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "loggalMngServiceBiz", "3.Service\loggalMngServiceBiz\loggalMngServiceBiz.csproj", "{FB6D2A41-C7D4-4A2E-A065-8538AAC958C3}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ALT.BizService", "3.Service\ALT.BizService\ALT.BizService.csproj", "{673D4DA0-ED3D-4131-9A70-7F9CC1960609}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "백업관련", "백업관련", "{2D95AC88-D2C0-4248-9E2C-EC901B415B50}"
+	ProjectSection(SolutionItems) = preProject
+		D:\altsoft\altsoft_onlineservice_20180831.zip = D:\altsoft\altsoft_onlineservice_20180831.zip
+		01.Reference\SQL\백업관련\backup.sql = 01.Reference\SQL\백업관련\backup.sql
+		01.Reference\SQL\백업관련\daily_db_backup.bat = 01.Reference\SQL\백업관련\daily_db_backup.bat
+		01.Reference\SQL\백업관련\sp_backup_database.sql = 01.Reference\SQL\백업관련\sp_backup_database.sql
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "6.Window", "6.Window", "{EAC30639-0EB2-49DB-99E6-AA3ABA76B7B5}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LanguageToExcel", "6.Window\LanguageToExcel\LanguageToExcel.csproj", "{2F517A7E-BD62-440C-B6ED-2A7C7FBFD093}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GeoJsonToData", "6.Window\GeoJsonToData\GeoJsonToData.csproj", "{AC61A1EF-310D-4760-BE28-4548FE7F63FB}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestForm", "6.Window\TestForm\TestForm.csproj", "{B1AF7534-C830-4C3E-87B0-198154424AD5}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MongoDBUpdateScheduling", "6.Window\MongoDBUpdateSheduling\MongoDBUpdateScheduling.csproj", "{8694508D-5C15-4C0B-BEF5-C8A97D78749F}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "loggalApi2", "5.Web\loggalApi2\loggalApi2.csproj", "{1472FB64-1947-4479-90A8-7CBC25DAC687}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{A33C1FF2-8FA9-4B01-8F64-36E5263B34B8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A33C1FF2-8FA9-4B01-8F64-36E5263B34B8}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A33C1FF2-8FA9-4B01-8F64-36E5263B34B8}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A33C1FF2-8FA9-4B01-8F64-36E5263B34B8}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B09020B4-4077-428B-BD75-2AB5838D9EAA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B09020B4-4077-428B-BD75-2AB5838D9EAA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B09020B4-4077-428B-BD75-2AB5838D9EAA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B09020B4-4077-428B-BD75-2AB5838D9EAA}.Release|Any CPU.Build.0 = Release|Any CPU
+		{54388F82-34D2-4FAB-9A40-0EEEC151DF66}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{54388F82-34D2-4FAB-9A40-0EEEC151DF66}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{54388F82-34D2-4FAB-9A40-0EEEC151DF66}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{54388F82-34D2-4FAB-9A40-0EEEC151DF66}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4877D44D-5C0F-4771-84D1-3A060397C34A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4877D44D-5C0F-4771-84D1-3A060397C34A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4877D44D-5C0F-4771-84D1-3A060397C34A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4877D44D-5C0F-4771-84D1-3A060397C34A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5F793D41-A62B-4EE7-A555-E5B50B1F3FFD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5F793D41-A62B-4EE7-A555-E5B50B1F3FFD}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5F793D41-A62B-4EE7-A555-E5B50B1F3FFD}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5F793D41-A62B-4EE7-A555-E5B50B1F3FFD}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8EE00B24-66F9-474E-AF09-8C9A4DC16C48}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8EE00B24-66F9-474E-AF09-8C9A4DC16C48}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8EE00B24-66F9-474E-AF09-8C9A4DC16C48}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8EE00B24-66F9-474E-AF09-8C9A4DC16C48}.Release|Any CPU.Build.0 = Release|Any CPU
+		{CD580826-AF2D-4469-AA99-B8E1476C670D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CD580826-AF2D-4469-AA99-B8E1476C670D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CD580826-AF2D-4469-AA99-B8E1476C670D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CD580826-AF2D-4469-AA99-B8E1476C670D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{558FE777-AE5C-4844-86CC-8F3FA66FE19B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{558FE777-AE5C-4844-86CC-8F3FA66FE19B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{558FE777-AE5C-4844-86CC-8F3FA66FE19B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{558FE777-AE5C-4844-86CC-8F3FA66FE19B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{15CBB437-F43E-4B10-99E1-7315CC024A08}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{15CBB437-F43E-4B10-99E1-7315CC024A08}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{15CBB437-F43E-4B10-99E1-7315CC024A08}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{15CBB437-F43E-4B10-99E1-7315CC024A08}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FB6D2A41-C7D4-4A2E-A065-8538AAC958C3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FB6D2A41-C7D4-4A2E-A065-8538AAC958C3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FB6D2A41-C7D4-4A2E-A065-8538AAC958C3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FB6D2A41-C7D4-4A2E-A065-8538AAC958C3}.Release|Any CPU.Build.0 = Release|Any CPU
+		{673D4DA0-ED3D-4131-9A70-7F9CC1960609}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{673D4DA0-ED3D-4131-9A70-7F9CC1960609}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{673D4DA0-ED3D-4131-9A70-7F9CC1960609}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{673D4DA0-ED3D-4131-9A70-7F9CC1960609}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2F517A7E-BD62-440C-B6ED-2A7C7FBFD093}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2F517A7E-BD62-440C-B6ED-2A7C7FBFD093}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2F517A7E-BD62-440C-B6ED-2A7C7FBFD093}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2F517A7E-BD62-440C-B6ED-2A7C7FBFD093}.Release|Any CPU.Build.0 = Release|Any CPU
+		{AC61A1EF-310D-4760-BE28-4548FE7F63FB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{AC61A1EF-310D-4760-BE28-4548FE7F63FB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{AC61A1EF-310D-4760-BE28-4548FE7F63FB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{AC61A1EF-310D-4760-BE28-4548FE7F63FB}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B1AF7534-C830-4C3E-87B0-198154424AD5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B1AF7534-C830-4C3E-87B0-198154424AD5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B1AF7534-C830-4C3E-87B0-198154424AD5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B1AF7534-C830-4C3E-87B0-198154424AD5}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8694508D-5C15-4C0B-BEF5-C8A97D78749F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8694508D-5C15-4C0B-BEF5-C8A97D78749F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8694508D-5C15-4C0B-BEF5-C8A97D78749F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8694508D-5C15-4C0B-BEF5-C8A97D78749F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1472FB64-1947-4479-90A8-7CBC25DAC687}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1472FB64-1947-4479-90A8-7CBC25DAC687}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1472FB64-1947-4479-90A8-7CBC25DAC687}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1472FB64-1947-4479-90A8-7CBC25DAC687}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{37FBCC9B-843C-4255-9D17-C9CEF2EA6BAD} = {417DE0B5-A454-437B-93AA-3DC53DD90F52}
+		{A33C1FF2-8FA9-4B01-8F64-36E5263B34B8} = {27CFCE15-FB71-4239-83C0-30E7081E9B23}
+		{B09020B4-4077-428B-BD75-2AB5838D9EAA} = {27CFCE15-FB71-4239-83C0-30E7081E9B23}
+		{54388F82-34D2-4FAB-9A40-0EEEC151DF66} = {4D10B896-F0E1-4F74-A44A-C0A5580E3E4F}
+		{4877D44D-5C0F-4771-84D1-3A060397C34A} = {8F7D71F1-B0D4-4A7D-BB1E-28F76D5C21B3}
+		{5F793D41-A62B-4EE7-A555-E5B50B1F3FFD} = {88FFE344-0577-4C66-BA56-F5EABBE6F573}
+		{FD179AB3-C799-4C66-87A0-C5C10C26A654} = {417DE0B5-A454-437B-93AA-3DC53DD90F52}
+		{B0AB9A44-99A7-432E-A3B9-7F9D864A6FA7} = {417DE0B5-A454-437B-93AA-3DC53DD90F52}
+		{8EE00B24-66F9-474E-AF09-8C9A4DC16C48} = {88FFE344-0577-4C66-BA56-F5EABBE6F573}
+		{CD580826-AF2D-4469-AA99-B8E1476C670D} = {4D10B896-F0E1-4F74-A44A-C0A5580E3E4F}
+		{9E2FF69C-6102-4858-A692-4949C3C95ABB} = {FD179AB3-C799-4C66-87A0-C5C10C26A654}
+		{558FE777-AE5C-4844-86CC-8F3FA66FE19B} = {8F7D71F1-B0D4-4A7D-BB1E-28F76D5C21B3}
+		{15CBB437-F43E-4B10-99E1-7315CC024A08} = {88FFE344-0577-4C66-BA56-F5EABBE6F573}
+		{FB6D2A41-C7D4-4A2E-A065-8538AAC958C3} = {8F7D71F1-B0D4-4A7D-BB1E-28F76D5C21B3}
+		{673D4DA0-ED3D-4131-9A70-7F9CC1960609} = {8F7D71F1-B0D4-4A7D-BB1E-28F76D5C21B3}
+		{2D95AC88-D2C0-4248-9E2C-EC901B415B50} = {FD179AB3-C799-4C66-87A0-C5C10C26A654}
+		{2F517A7E-BD62-440C-B6ED-2A7C7FBFD093} = {EAC30639-0EB2-49DB-99E6-AA3ABA76B7B5}
+		{AC61A1EF-310D-4760-BE28-4548FE7F63FB} = {EAC30639-0EB2-49DB-99E6-AA3ABA76B7B5}
+		{B1AF7534-C830-4C3E-87B0-198154424AD5} = {EAC30639-0EB2-49DB-99E6-AA3ABA76B7B5}
+		{8694508D-5C15-4C0B-BEF5-C8A97D78749F} = {EAC30639-0EB2-49DB-99E6-AA3ABA76B7B5}
+		{1472FB64-1947-4479-90A8-7CBC25DAC687} = {88FFE344-0577-4C66-BA56-F5EABBE6F573}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {6A5F121B-CF32-487C-B925-39CC9D24E128}
+	EndGlobalSection
+EndGlobal

@@ -1,0 +1,189 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<DBAgentMultiTemplate  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns="http://altsoft.kr/">
+  <DBAgentTemplate TemplateID="GetAdPlayLogList">
+    <!-- 
+    SqlType : SQL의 형태를 지정합니다.
+      Example 1:<SqlType>FixedSQL</SqlType> 고정적인 SQL을 지원합니다. 
+      Example 2:<SqlType>DynamicSQL</SqlType> 동적인 SQL Type1을 지원합니다.  
+    Description : 해당 SQL의 기능설명을 적습니다.
+    SQLModifier : 해당 SQL의 작성자(수정자)를 적습니다
+    LastModifyDate : 해당 SQL의 마지막 수정일을 적습니다
+    -->
+    <Information>
+      <SqlType>DynamicSQL</SqlType>
+      <Description>기기별 광고 플레이 로그 조회</Description>
+      <SQLModifier>전상훈</SQLModifier>
+      <LastModifyDate>2019-04-25</LastModifyDate>
+    </Information>
+
+    <TemplateSQL>
+      <!-- FixedSQL : 고정된 SQL이 들어가는 곳입니다. -->
+      <FixedSQL>
+        <![CDATA[ 
+  SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED 
+	SET NOCOUNT ON 
+	/********************************************************************/
+	/* 로컬박스별 광고 플레이 로그 - T_AD_PLAY_LOG 조회 -  GetAdPlayLogList */ 
+	/***************************************************************/
+	SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED 
+  DECLARE @PAGE INT = {0}
+       ,@PAGE_COUNT INT = {1};
+  WITH T_TABLE
+  AS
+  (	
+	    SELECT 
+		       ROW_NUMBER() OVER(ORDER BY {2}) ROW_IDX
+         , A.IDX
+		     , A.REG_DATE
+		     , A.DEVICE_KIND
+         , CM.NAME AS DEVICE_KIND_NAME
+		     , A.DEVICE_CODE
+		     , A.AD_CODE
+         , B.TITLE
+         , C.DEVICE_NAME
+		     , A.PLAY_TIME
+		     , A.REMARK
+		     , A.INSERT_CODE
+         , D.USER_NAME AS INSERT_NAME
+         , CM2.NAME AS BANNER_TYPE2_NAME
+	    FROM T_AD_PLAY_LOG A 
+     INNER JOIN T_AD B
+        ON A.AD_CODE = B.AD_CODE
+     INNER JOIN T_COMMON CM
+        ON CM.MAIN_CODE = 'L003'
+       AND CM.SUB_CODE  =  A.DEVICE_KIND                                     
+      LEFT JOIN T_DEVICE C
+        ON A.DEVICE_CODE = C.DEVICE_CODE
+     INNER JOIN T_MEMBER D
+        ON A.INSERT_CODE = D.MEMBER_CODE
+	  INNER JOIN T_COMMON CM2
+	     ON CM2.MAIN_CODE = 'A010'
+		  AND CM2.SUB_CODE = B.BANNER_TYPE2        
+   
+     WHERE 1=1 	
+       #[FR_DATE]
+       #[TO_DATE]
+       #[DEVICE_KIND]
+       #[AD_CODE]
+       #[DEVICE_CODE]
+       #[TITLE]
+       #[DEVICE_NAME]
+    ) SELECT * ,(SELECT COUNT(*) FROM T_TABLE) AS TOTAL_ROWCOUNT 
+     FROM T_TABLE
+	WHERE ROW_IDX > (@PAGE -1) * @PAGE_COUNT
+	  AND ROW_IDX <= @PAGE * @PAGE_COUNT
+  SET NOCOUNT OFF 
+
+
+ 
+      ]]>
+      </FixedSQL>
+      <DynamicBodys>
+        <Key>FR_DATE</Key>
+        <Body> AND A.REG_DATE >= CONVERT(DATETIME, '{0}')</Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>TO_DATE</Key>
+        <Body>
+          <![CDATA[  AND A.REG_DATE < DATEADD(DAY, 1, CONVERT(DATETIME, '{0}')) ]]>
+        </Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>DEVICE_KIND</Key>
+        <Body> AND A.DEVICE_KIND = {0}</Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>AD_CODE</Key>
+        <Body> AND A.AD_CODE = {0}</Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>DEVICE_CODE</Key>
+        <Body> AND A.DEVICE_CODE = {0}</Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>TITLE</Key>
+        <Body> AND B.TITLE LIKE N'%{0}%'</Body>
+      </DynamicBodys>
+    <DynamicBodys>
+        <Key>DEVICE_NAME</Key>
+        <Body> AND C.DEVICE_NAME LIKE N'%{0}%'</Body>
+      </DynamicBodys>
+    </TemplateSQL>
+  </DBAgentTemplate>
+
+  <DBAgentTemplate TemplateID="AdPlayLogSave">
+    <!-- 
+    SqlType : SQL의 형태를 지정합니다.
+      Example 1:<SqlType>FixedSQL</SqlType> 고정적인 SQL을 지원합니다. 
+      Example 2:<SqlType>DynamicSQL</SqlType> 동적인 SQL Type1을 지원합니다.  
+    Description : 해당 SQL의 기능설명을 적습니다.
+    SQLModifier : 해당 SQL의 작성자(수정자)를 적습니다
+    LastModifyDate : 해당 SQL의 마지막 수정일을 적습니다
+    -->
+    <Information>
+      <SqlType>DynamicSQL</SqlType>
+      <Description>기기별 광고 플레이 로그 저장</Description>
+      <SQLModifier>전상훈</SQLModifier>
+      <LastModifyDate>2018-04-25</LastModifyDate>
+    </Information>
+
+    <TemplateSQL>
+      <!-- FixedSQL : 고정된 SQL이 들어가는 곳입니다. -->
+      <FixedSQL>
+        <![CDATA[ 
+ 
+		SET NOCOUNT ON 
+	/*****************************************************************/
+	/* 로컬박스별 광고 플레이 로그 - T_AD_PLAY_LOG 저장 -  AdPlayLogSave */ 
+	/*****************************************************************/
+	DECLARE @IDX                            BIGINT               = N'{0}'
+			  , @REG_DATE                       DATETIME             = CASE WHEN ISDATE('{1}') = 1 THEN '{1}' ELSE GETDATE() END
+			  , @DEVICE_KIND                    INT                  = CONVERT(INT, CASE WHEN ISNUMERIC('{2}') = 1 THEN '{2}' ELSE '0' END )
+			  , @DEVICE_CODE                    BIGINT               = CONVERT(BIGINT, CASE WHEN ISNUMERIC('{3}') = 1 THEN '{3}' ELSE NULL END )
+			  , @AD_CODE                        BIGINT               = CONVERT(BIGINT, CASE WHEN ISNUMERIC('{4}') = 1 THEN '{4}' ELSE '0' END )
+			  , @FRAME_TYPE                     INT                  = CONVERT(INT, CASE WHEN ISNUMERIC('{5}') = 1 THEN '{5}' ELSE '0' END )
+			  , @PLAY_TYPE                      INT                  = CONVERT(INT, CASE WHEN ISNUMERIC('{6}') = 1 THEN '{6}' ELSE '0' END )
+			  , @PLAY_TIME                      NUMERIC(7,3)         = CONVERT(NUMERIC(7,3), CASE WHEN ISNUMERIC('{7}') = 1 THEN '{7}' ELSE '0' END )
+			  , @REMARK                         NVARCHAR(200)        = N'{8}'
+			  , @INSERT_CODE                    INT                  = CASE WHEN ISNUMERIC('{9}') = 1 THEN '{9}' ELSE 0 END
+
+/*UPDATE A 
+	SET  	  REG_DATE     = @REG_DATE                      
+			 ,  DEVICE_KIND  = @DEVICE_KIND ,  DEVICE_CODE = @DEVICE_CODE                   
+			 ,  AD_CODE      = @AD_CODE     ,  PLAY_TIME   = @PLAY_TIME
+       ,  PLAY_TIME    = @PLAY_TIME   ,  REMARK      = @REMARK      
+	FROM T_AD_PLAY_LOG A 
+  WHERE IDX = @IDX
+*/
+
+  /*클릭 했을 경우 60초로 등록*/
+  SET @PLAY_TIME = CASE WHEN @PLAY_TIME = 0 AND @PLAY_TYPE  = 2 THEN 60 ELSE @PLAY_TIME  END
+  UPDATE A 
+	SET  	PLAY_TIME                      = @PLAY_TIME                    
+	FROM T_AD_PLAY_LOG A 
+  WHERE IDX = @IDX
+	IF @@ROWCOUNT = 0
+	BEGIN
+		INSERT INTO T_AD_PLAY_LOG
+		(		REG_DATE                      		, DEVICE_KIND                   		, DEVICE_CODE                   		
+			, AD_CODE                       		, FRAME_TYPE                    		, PLAY_TYPE                     		, PLAY_TIME                     		
+			, REMARK                        		, INSERT_CODE                   		
+		)
+		SELECT @REG_DATE                     		, @DEVICE_KIND                  	
+				, @DEVICE_CODE                  		, @AD_CODE                      		, @FRAME_TYPE                   	
+				, @PLAY_TYPE                    		, @PLAY_TIME                    		, @REMARK                       	
+				, @INSERT_CODE                  	
+        
+		 SET @IDX = IDENT_CURRENT('T_AD_PLAY_LOG')
+	 END
+	SELECT CONVERT(VARCHAR(100), @IDX) AS DATA
+	SET NOCOUNT OFF
+
+
+ 
+      ]]>
+      </FixedSQL>
+    
+    </TemplateSQL>
+  </DBAgentTemplate>
+</DBAgentMultiTemplate>

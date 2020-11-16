@@ -1,0 +1,43 @@
+﻿@using ALT.VO.loggal;
+@{
+    List<T_AD_SIGNINFO> list = (List<T_AD_SIGNINFO>)ViewBag.list;
+    string totCnt = (list.Count() == 0 ? "0" : list.First().TOTAL_ROWCOUNT.ToString());
+    
+    <input type="hidden" id="total" value="@totCnt" />
+    foreach (T_AD_SIGNINFO data in list)
+    {
+
+    <tr>
+        @*<td>
+            @{
+            switch (data.SIGN_TYPE)
+            {
+                case 1:
+                    @:<img src="@data.CONTENT_URL" style="height:30px;width:auto" />
+                break;
+            case 2:
+                <text>
+                    <video style="width:300px;height:auto" id="vdoPreview" autoplay="autoplay" controls>
+                        <source id="movie_src" type="video/mp4" src="@data.CONTENT_URL" />
+                    </video>
+                </text>
+            break;
+        case 3:
+            @:<iframe name="ifmYoutubePreview" style="width:300px; height:auto" src="//www.youtube.com/embed/@data.CONTENT_URL?autoplay=0&playsinline=0&autohide=1&showinfo=0&controls=0&frameborder=0" allowfullscreen="allowfullscreen"></iframe>
+        break;
+}
+            }
+
+        </td>*@
+        <td><a href="javascript:void(0);" onclick="AdSigninfoPreview(@data.SIGN_TYPE,'@data.CONTENT_URL')">@data.TITLE</a></td>
+        <td class="center">@data.SIGN_TYPE_NAME</td>
+        <td class="center">@data.IS_VERTICAL_NAME</td>
+        <td class="center">@data.PLAY_TIME_NAME</td>
+        <td class="hide">@data.AD_CODE</td>
+        <td class="hide">@ViewBag.SIGN_CODE</td>
+        <td class="center">@data.UPDATE_NAME.Split('(')[0]</td>
+        <td class="center">@data.UPDATE_DATE</td>
+    </tr>
+    }
+                }
+

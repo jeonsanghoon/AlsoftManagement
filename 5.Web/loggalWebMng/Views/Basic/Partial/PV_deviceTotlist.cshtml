@@ -1,0 +1,50 @@
+﻿@using ALT.VO.loggal;
+@{
+    List<DEVICE_LIST> list = ViewBag.list;
+    string DISPLAY_MODE = (ViewBag.DISPLAY_MODE == null ? "Normal" : ViewBag.DISPLAY_MODE);
+    string totCnt = (list.Count() == 0 ? "0" : list.First().TOTAL_ROWCOUNT.ToString());
+    <input type="hidden" id="total" value="@totCnt" />
+    foreach (DEVICE_LIST data in list)
+    {
+<tr>
+	@if (DISPLAY_MODE == "Normal")
+	{
+		<td title="수정화면으로 이동"><a href="devicereg/@data.DEVICE_CODE">@data.DEVICE_NAME</a></td>
+	}
+	else if (DISPLAY_MODE == "Popup")
+	{
+		<td>@data.DEVICE_NAME</td>
+	}
+	<td>@data.STATION_NAME</td>
+	@if (null != data.VIRTUAL_DEVICE_NAME)
+	{
+		<td title="수정화면으로 이동"><a href="/basic/deviceVirtualReg/@data.PARENT_DEVICE_CODE">@data.VIRTUAL_DEVICE_NAME</a></td>
+	}
+	else
+	{
+		<td title="수정화면으로 이동"></td>
+	}
+	<td data-value="@data.STORE_CODE" class="@(SessionHelper.LoginInfo.STORE_CODE != 1 ? "hide" : "")">@data.STORE_NAME</td>
+	@if (DISPLAY_MODE == "Normal")
+	{
+
+		<td>@data.GROUP_NAME</td>
+		<td>@data.BUSI_TYPE_NAME</td>
+		<td class="hide">@data.BUSI_TYPE_NAME2</td>
+		<td>@data.CONTACT_NAME</td>
+		<td>@data.CONTACT_PHONE</td>
+		<td class="center  @(data.AUTH_NUMBER == null ? "none" : "")">@(data.AUTH_NUMBER == null ? "미인증" : (data.AUTH_NUMBER.ToString().Count() >= 4 ? data.AUTH_NUMBER.ToString() : data.AUTH_NUMBER.ToString().PadLeft(4, '0'))) </td>
+		<td class="center"><i style="color:@(data.WORKING_DIFF < 30 ? "#3333ff" : "lightgrey")" class="fa fa-circle fa-2x" aria-hidden="true"></i></td>
+		<td class="center">@data.WORKING_TIME</td>
+	}
+	<td>@data.ADDRESS</td>
+	@if (DISPLAY_MODE == "Normal")
+	{
+		<td>@data.UPDATE_NAME</td>
+		<td class="center">@data.UPDATE_DATE</td>
+	}
+	<td class="hide">@data.DEVICE_CODE</td>
+
+</tr>
+    }
+}

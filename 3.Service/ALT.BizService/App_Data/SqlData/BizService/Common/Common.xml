@@ -1,0 +1,351 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<DBAgentMultiTemplate  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns="http://altsoft.kr/">
+  <DBAgentTemplate TemplateID="GetCommon">
+    <!-- 
+    SqlType : SQL의 형태를 지정합니다.
+      Example 1:<SqlType>FixedSQL</SqlType> 고정적인 SQL을 지원합니다. 
+      Example 2:<SqlType>DynamicSQL</SqlType> 동적인 SQL Type1을 지원합니다.  
+    Description : 해당 SQL의 기능설명을 적습니다.
+    SQLModifier : 해당 SQL의 작성자(수정자)를 적습니다
+    LastModifyDate : 해당 SQL의 마지막 수정일을 적습니다
+    -->
+    <Information>
+      <SqlType>DynamicSQL</SqlType>
+      <Description>공통코드조회</Description>
+      <SQLModifier>전상훈</SQLModifier>
+      <LastModifyDate>2016-08-17</LastModifyDate>
+    </Information>
+
+    <TemplateSQL>
+      <!-- FixedSQL : 고정된 SQL이 들어가는 곳입니다. -->
+      <FixedSQL>
+        <![CDATA[ 
+   	/******************************/
+    /* 공통코드 조회 GetCommon    */
+    /******************************/
+	SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED 
+	SELECT  
+		  A.IDX
+    , A.MAIN_CODE
+		, A.SUB_CODE
+		, A.NAME
+		, A.LANGUAGE_CODE
+		, A.ORDER_SEQ
+		, A.REF_DATA1
+		, A.REF_DATA2
+		, A.REF_DATA3
+		, A.REF_DATA4
+		, A.HIDE
+		, A.INSERT_CODE
+    , B.USER_NAME AS INSERT_NAME
+		, A.INSERT_DATE
+		, A.UPDATE_CODE
+    , C.USER_NAME AS UPDATE_NAME
+		, A.UPDATE_DATE
+	FROM T_COMMON A 
+  INNER JOIN T_MEMBER B
+     ON A.INSERT_CODE = B.MEMBER_CODE
+  INNER JOIN T_MEMBER C
+     ON A.UPDATE_CODE = C.MEMBER_CODE  
+  WHERE 1=1
+  #[MAIN_CODE]
+  #[SUB_CODE]
+  #[NAME]
+  #[REF_DATA1]
+  #[REF_DATA2]
+  #[REF_DATA3]
+  #[REF_DATA4]
+  #[ADD_COND]
+  #[HIDE]
+  ORDER BY A.MAIN_CODE, A.ORDER_SEQ
+	SET NOCOUNT OFF 
+      ]]>
+      </FixedSQL>
+      <DynamicBodys>
+        <Key>MAIN_CODE</Key>
+        <Body>AND A.MAIN_CODE LIKE '{0}%' </Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>SUB_CODE</Key>
+        <Body>AND A.SUB_CODE = '{0}' </Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>NAME</Key>
+        <Body>AND A.NAME LIKE N'%{0}%' </Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>REF_DATA1</Key>
+        <Body>AND A.REF_DATA1 = '{0}' </Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>REF_DATA2</Key>
+        <Body>AND A.REF_DATA2 = '{0}' </Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>REF_DATA3</Key>
+        <Body>AND A.REF_DATA3 = '{0}' </Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>REF_DATA4</Key>
+        <Body>AND A.REF_DATA4 = '{0}' </Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>HIDE</Key>
+        <Body>AND A.HIDE = '{0}' </Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>ADD_COND</Key>
+        <Body>{0} </Body>
+      </DynamicBodys>
+    </TemplateSQL>
+  </DBAgentTemplate>
+
+  <DBAgentTemplate TemplateID="GetCommonPageList">
+    <!-- 
+    SqlType : SQL의 형태를 지정합니다.
+      Example 1:<SqlType>FixedSQL</SqlType> 고정적인 SQL을 지원합니다. 
+      Example 2:<SqlType>DynamicSQL</SqlType> 동적인 SQL Type1을 지원합니다.  
+    Description : 해당 SQL의 기능설명을 적습니다.
+    SQLModifier : 해당 SQL의 작성자(수정자)를 적습니다
+    LastModifyDate : 해당 SQL의 마지막 수정일을 적습니다
+    -->
+    <Information>
+      <SqlType>DynamicSQL</SqlType>
+      <Description>공통코드페이지조회</Description>
+      <SQLModifier>전상훈</SQLModifier>
+      <LastModifyDate>2017-01-24</LastModifyDate>
+    </Information>
+
+    <TemplateSQL>
+      <!-- FixedSQL : 고정된 SQL이 들어가는 곳입니다. -->
+      <FixedSQL>
+        <![CDATA[ 
+   	/****************************************/
+    /* 공통코드페이지조회 GetCommonPageList */
+    /****************************************/
+    
+	SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED 
+  DECLARE @PAGE INT       = {0}
+         ,@PAGE_COUNT INT = {1};
+  WITH T_TABLE AS
+  (
+	  SELECT
+	        ROW_NUMBER() OVER(ORDER BY {2} ,A.MAIN_CODE,A.SUB_CODE) AS SEQ  
+		  , A.IDX
+		  , A.MAIN_CODE
+		  , A.SUB_CODE
+		  , A.NAME
+		  , A.LANGUAGE_CODE
+		  , A.ORDER_SEQ
+		  , A.REF_DATA1
+		  , A.REF_DATA2
+		  , A.REF_DATA3
+		  , A.REF_DATA4
+		  , A.HIDE
+		  , A.INSERT_CODE
+		  , B.USER_NAME AS INSERT_NAME
+		  , A.INSERT_DATE
+		  , A.UPDATE_CODE
+		  , C.USER_NAME AS UPDATE_NAME
+		  , A.UPDATE_DATE
+	  FROM T_COMMON A 
+    INNER JOIN T_MEMBER B
+       ON A.INSERT_CODE = B.MEMBER_CODE
+    INNER JOIN T_MEMBER C
+       ON A.UPDATE_CODE = C.MEMBER_CODE  
+    WHERE 1=1
+    #[MAIN_CODE]
+    #[SUB_CODE]
+    #[NAME]
+    #[REF_DATA1]
+    #[REF_DATA2]
+    #[REF_DATA3]
+    #[REF_DATA4]
+    #[ADD_COND]
+    #[HIDE]
+  ) 
+  SELECT *, (SELECT COUNT(1) FROM T_TABLE) TOTAL_ROWCOUNT FROM T_TABLE
+  WHERE SEQ > (@PAGE -1) * @PAGE_COUNT
+    AND SEQ <= (@PAGE) * @PAGE_COUNT
+	SET NOCOUNT OFF 
+      ]]>
+      </FixedSQL>
+      <DynamicBodys>
+        <Key>MAIN_CODE</Key>
+        <Body>AND A.MAIN_CODE LIKE '{0}%' </Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>SUB_CODE</Key>
+        <Body>AND A.SUB_CODE = '{0}' </Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>NAME</Key>
+        <Body>AND A.NAME LIKE N'%{0}%' </Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>REF_DATA1</Key>
+        <Body>AND A.REF_DATA1 = '{0}' </Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>REF_DATA2</Key>
+        <Body>AND A.REF_DATA2 = '{0}' </Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>REF_DATA3</Key>
+        <Body>AND A.REF_DATA3 = '{0}' </Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>REF_DATA4</Key>
+        <Body>AND A.REF_DATA4 = '{0}' </Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>HIDE</Key>
+        <Body>AND A.HIDE = '{0}' </Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>ADD_COND</Key>
+        <Body>{0} </Body>
+      </DynamicBodys>
+    </TemplateSQL>
+  </DBAgentTemplate>
+  <DBAgentTemplate TemplateID="CommonSave">
+    <!-- 
+    SqlType : SQL의 형태를 지정합니다.
+      Example 1:<SqlType>FixedSQL</SqlType> 고정적인 SQL을 지원합니다. 
+      Example 2:<SqlType>DynamicSQL</SqlType> 동적인 SQL Type1을 지원합니다.  
+    Description : 해당 SQL의 기능설명을 적습니다.
+    SQLModifier : 해당 SQL의 작성자(수정자)를 적습니다
+    LastModifyDate : 해당 SQL의 마지막 수정일을 적습니다
+    -->
+    <Information>
+      <SqlType>DynamicSQL</SqlType>
+      <Description>공통코드저장</Description>
+      <SQLModifier>전상훈</SQLModifier>
+      <LastModifyDate>2017-01-24</LastModifyDate>
+    </Information>
+
+    <TemplateSQL>
+      <!-- FixedSQL : 고정된 SQL이 들어가는 곳입니다. -->
+      <FixedSQL>
+        <![CDATA[ 
+
+
+/*****************************************************************************/
+/* 공통코드 테이블(항상 첫번째 데이터는 SUB_CODE가 *이고 필드 설명이 들어감) */
+/* - T_COMMON 저장 -  SAVE QUERY                                             */ 
+/*****************************************************************************/
+SET NOCOUNT ON 
+DECLARE @IDX                            INT                  = N'{0}'
+			, @MAIN_CODE                      VARCHAR(4)           = N'{1}'
+			, @SUB_CODE                       INT                  = CONVERT(INT, CASE WHEN ISNUMERIC('{2}') = 1 THEN '{2}' ELSE '0' END )
+			, @NAME                           NVARCHAR(200)        = N'{3}'
+			, @LANGUAGE_CODE                  BIGINT               = CONVERT(BIGINT, CASE WHEN ISNUMERIC('{4}') = 1 THEN '{4}' ELSE NULL END )
+			, @ORDER_SEQ                      INT                  = CONVERT(INT, CASE WHEN ISNUMERIC('{5}') = 1 THEN '{5}' ELSE '0' END )
+			, @REF_DATA1                      NVARCHAR(200)        = N'{6}'
+			, @REF_DATA2                      NVARCHAR(200)        = N'{7}'
+			, @REF_DATA3                      NVARCHAR(200)        = N'{8}'
+			, @REF_DATA4                      NVARCHAR(200)        = N'{9}'
+			, @HIDE                           BIT                  = CONVERT(BIT, CASE WHEN ISNUMERIC('{10}') = 1 THEN '{10}' ELSE '0' END )
+			, @INSERT_CODE                    INT                  = {11}
+			, @INSERT_DATE                    DATETIME             = GETDATE() 
+			, @UPDATE_CODE                    INT                  = {11}
+			, @UPDATE_DATE                    DATETIME             = GETDATE() 
+
+SET @HIDE =  CASE WHEN @SUB_CODE = -1 THEN 1 ELSE @HIDE END
+SET @ORDER_SEQ  =  CASE WHEN @SUB_CODE = -1 THEN 1 ELSE @ORDER_SEQ END
+IF @SUB_CODE != '-1'  
+        AND NOT EXISTS (SELECT * FROM T_COMMON 
+                WHERE MAIN_CODE = @MAIN_CODE
+				    AND SUB_CODE = -1
+			)
+BEGIN
+	SELECT N'그룹코드 설명이 없습니다. 상세코드 -1로 등록하세요' AS [ERROR_MESSAGE]
+	GOTO EXCEPTION
+END
+
+iF LEN(@MAIN_CODE) <> 4
+BEGIN
+  SELECT N'그룹코드는 4자리여야만 합니다.' AS [ERROR_MESSAGE]
+	GOTO EXCEPTION
+END
+
+UPDATE A 
+   SET MAIN_CODE      = @MAIN_CODE      
+   	 , SUB_CODE       = @SUB_CODE       , NAME         = @NAME                          
+   	 , LANGUAGE_CODE  = @LANGUAGE_CODE  , ORDER_SEQ    = @ORDER_SEQ                     
+   	 , REF_DATA1      = @REF_DATA1      , REF_DATA2    = @REF_DATA2                     
+   	 , REF_DATA3      = @REF_DATA3      , REF_DATA4    = @REF_DATA4                     
+   	 , HIDE           = @HIDE           , UPDATE_CODE  = @UPDATE_CODE                   
+   	 , UPDATE_DATE    = @UPDATE_DATE    
+ FROM T_COMMON A 
+WHERE IDX= @IDX
+IF @@ROWCOUNT = 0
+BEGIN
+	INSERT INTO T_COMMON
+	(		MAIN_CODE         , SUB_CODE       , NAME         
+		, LANGUAGE_CODE     , ORDER_SEQ      , REF_DATA1    , REF_DATA2                     		
+		, REF_DATA3         , REF_DATA4      , HIDE         , INSERT_CODE                   		
+		, INSERT_DATE       , UPDATE_CODE    , UPDATE_DATE  
+	)
+	SELECT @MAIN_CODE     , @SUB_CODE      
+		 	 , @NAME          , @LANGUAGE_CODE , @ORDER_SEQ   
+		 	 , @REF_DATA1     , @REF_DATA2     , @REF_DATA3   
+		 	 , @REF_DATA4     , @HIDE          , @INSERT_CODE 
+		 	 , @INSERT_DATE   , @UPDATE_CODE   , @UPDATE_DATE 
+END
+SELECT '' AS [ERROR_MESSAGE]
+EXCEPTION:
+
+SET NOCOUNT OFF
+      ]]>
+      </FixedSQL>
+    </TemplateSQL>
+  </DBAgentTemplate>
+  <DBAgentTemplate TemplateID="CommonDelete">
+    <!-- 
+    SqlType : SQL의 형태를 지정합니다.
+      Example 1:<SqlType>FixedSQL</SqlType> 고정적인 SQL을 지원합니다. 
+      Example 2:<SqlType>DynamicSQL</SqlType> 동적인 SQL Type1을 지원합니다.  
+    Description : 해당 SQL의 기능설명을 적습니다.
+    SQLModifier : 해당 SQL의 작성자(수정자)를 적습니다
+    LastModifyDate : 해당 SQL의 마지막 수정일을 적습니다
+    -->
+    <Information>
+      <SqlType>DynamicSQL</SqlType>
+      <Description>공통코드삭제</Description>
+      <SQLModifier>전상훈</SQLModifier>
+      <LastModifyDate>2017-01-24</LastModifyDate>
+    </Information>
+
+    <TemplateSQL>
+      <!-- FixedSQL : 고정된 SQL이 들어가는 곳입니다. -->
+      <FixedSQL>
+        <![CDATA[ 
+
+
+/*****************************************************************************/
+/* 공통코드 테이블(항상 첫번째 데이터는 SUB_CODE가 *이고 필드 설명이 들어감) */
+/* - T_COMMON 저장 - SAVE QUERY                                              */ 
+/*****************************************************************************/
+SET NOCOUNT ON 
+  DECLARE @IDX                            INT                  = N'{0}'
+	
+  IF EXISTS (SELECT * FROM T_COMMON
+              WHERE IDX = @IDX AND DATEDIFF(MINUTE, INSERT_DATE, GETDATE())  >= 30
+            )
+  BEGIN
+      SELECT N'등록한지 30분이상 지난 데이터는 삭제를 할 수가 없습니다.' AS [ERROR_MESSAGE]
+      GOTO EXCEPTION
+  END
+  
+  DELETE FROM T_COMMON
+  WHERE IDX = @IDX
+	SELECT '' AS [ERROR_MESSAGE]
+EXCEPTION:
+
+SET NOCOUNT OFF
+      ]]>
+      </FixedSQL>
+    </TemplateSQL>
+  </DBAgentTemplate>
+</DBAgentMultiTemplate>

@@ -1,0 +1,441 @@
+﻿@using ALT.Framework.MVC.Helpers;
+@{
+
+    Layout = "~/Views/Theme/SpicyX/Shared/_Layout_blank.cshtml";
+}
+<style>
+    .card-container.card {
+        width: 350px;
+        padding: 40px 40px;
+    }
+
+    .btn {
+        font-weight: 700;
+        height: 36px;
+        -moz-user-select: none;
+        -webkit-user-select: none;
+        user-select: none;
+        cursor: default;
+    }
+
+    /*
+    * Card component
+    */
+    .card {
+        background-color: #fff;
+        /* just in case there no content*/
+        padding: 20px 25px 30px;
+        margin: 0 auto 25px;
+        margin-top: 100px;
+        /* shadows and rounded borders */
+        -moz-border-radius: 2px;
+        -webkit-border-radius: 2px;
+        border-radius: 2px;
+        -moz-box-shadow: 0px 2px 2px rgba(0, 0, 0, 0.3);
+        -webkit-box-shadow: 0px 2px 2px rgba(0, 0, 0, 0.3);
+        box-shadow: 0px 0px 2px rgba(0, 0, 0, 0.3);
+    }
+
+    @@media only screen and (max-width: 760px), (min-device-width: 768px) and (max-device-width: 1024px) {
+        .card {
+            margin-top: 50px;
+        }
+    }
+
+    .profile-img-card {
+        width: 96px;
+        height: 96px;
+        margin: 0 auto 10px;
+        display: block;
+        -moz-border-radius: 50%;
+        -webkit-border-radius: 50%;
+        border-radius: 50%;
+    }
+
+    /*
+    * Form styles
+    */
+    .profile-name-card {
+        font-size: 16px;
+        font-weight: bold;
+        text-align: center;
+        margin: 10px 0 0;
+        min-height: 1em;
+    }
+
+    .reauth-email {
+        display: block;
+        color: #404040;
+        line-height: 2;
+        margin-bottom: 10px;
+        font-size: 14px;
+        text-align: center;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        -moz-box-sizing: border-box;
+        -webkit-box-sizing: border-box;
+        box-sizing: border-box;
+    }
+
+    .form-memberjoin #inputEmail,
+    .form-memberjoin #inputPassword {
+        direction: ltr;
+        height: 44px;
+        font-size: 16px;
+    }
+
+    .form-memberjoin input[type=email],
+    .form-memberjoin input[type=password],
+    .form-memberjoin input[type=text],
+    .form-memberjoin button {
+        width: 100%;
+        display: block;
+        margin-bottom: 0px;
+        z-index: 1;
+        position: relative;
+        -moz-box-sizing: border-box;
+        -webkit-box-sizing: border-box;
+        box-sizing: border-box;
+    }
+
+    .form-memberjoin .form-control:focus {
+        border-color: #0685FF;
+        outline: 0;
+        -webkit-box-shadow: inset 0 1px 1px rgba(0,0,0,.075),0 0 8px #0066CC;
+        box-shadow: inset 0 1px 1px rgba(0,0,0,.075),0 0 8px #0066CC;
+    }
+
+    .btn-memberjoin {
+        /*background-color: #4d90fe; */
+        background-color: #0066CC;
+        /* background-color: linear-gradient(rgb(104, 145, 162), rgb(12, 97, 33));*/
+        padding: 0px;
+        font-weight: 700;
+        font-size: 14px;
+        height: 36px;
+        -moz-border-radius: 3px;
+        -webkit-border-radius: 3px;
+        border-radius: 3px;
+        border: none;
+        -o-transition: all 0.218s;
+        -moz-transition: all 0.218s;
+        -webkit-transition: all 0.218s;
+        transition: all 0.218s;
+    }
+
+
+    .btn-memberConfirm {
+        background-color: #54aaa1;
+        color: #fff;
+        /* background-color: linear-gradient(rgb(104, 145, 162), rgb(12, 97, 33));*/
+        padding: 0px;
+        font-weight: 700;
+        font-size: 14px;
+        height: 36px;
+        -moz-border-radius: 3px;
+        -webkit-border-radius: 3px;
+        border-radius: 3px;
+        -o-transition: all 0.218s;
+        -moz-transition: all 0.218s;
+        -webkit-transition: all 0.218s;
+        transition: all 0.218s;
+    }
+
+    .btn-memberjoin:hover,
+    .btn-memberjoin:active,
+    .btn-memberjoin:focus {
+        background-color: #0685FF;
+    }
+
+    .forgot-password {
+        color: #0685FF;
+    }
+
+        .forgot-password:hover,
+        .forgot-password:active,
+        .forgot-password:focus {
+            color: #004e99;
+        }
+
+    .login-or {
+        position: relative;
+        font-size: 18px;
+        color: #aaa;
+        margin-top: 10px;
+        margin-bottom: 10px;
+        padding-top: 10px;
+        padding-bottom: 10px;
+    }
+
+    .hr-or {
+        background-color: #cdcdcd;
+        height: 1px;
+        margin-top: 0px !important;
+        margin-bottom: 0px !important;
+    }
+
+    hr {
+        margin-top: 20px;
+        margin-bottom: 20px;
+        border: 0;
+        border-top: 1px solid #eee;
+    }
+
+    hr {
+        height: 0;
+        -moz-box-sizing: content-box;
+        box-sizing: content-box;
+    }
+
+    .span-or {
+        display: block;
+        position: absolute;
+        left: 50%;
+        top: -2px;
+        margin-left: -25px;
+        background-color: #fff;
+        width: 50px;
+        text-align: center;
+    }
+
+    .col-lg-4, .col-lg-8, .col-lg-12 {
+        padding-right: 0px;
+        padding-left: 0px;
+        margin-bottom: 10px;
+    }
+</style>
+@section script{
+    <script type="text/javascript">
+        var bSave = false;
+        $(document).ready(function () {
+
+            $(".form-memberjoin").submit(function (event) {
+                if ($(".has-error").length == 0) {
+                    if ($("#USER_ID").val() != "" && _chkID == false) {
+                        MsgBox.Alert("사용자아이디", "중복확인이 필요합니다.", function (result) { });
+                        return;
+                    }
+                    if (bSave == false) doSave_MemberAdd();
+                }
+
+                event.preventDefault();
+                return false;
+            });
+            validator_init();
+            $("#USER_ID").change(function () { _chkID = false; })
+        });
+        var _chkID = false;
+        //// 사용자아이디 중복 체크
+        function chkUserID() {
+            if ($("#USER_ID").val() == "") {
+                MsgBox.Alert("사용자아이디", "사용자아이디를 입력하여 주시기 바랍니다.", function (result) {
+                    $("#USER_ID").val("");
+                    $("#USER_ID").focus();
+                });
+                _chkID = false;
+                return;
+            }
+            var params = new Object();
+            params.USER_TYPE = 2;
+            params.USER_ID = $("#USER_ID").val();
+            params = JSON.stringify(params);
+            ajax.GetAjax("@SessionHelper.LoginInfo.BASE_URL/account/MemberList", params, "json", function (result) {
+                if (result.list.length == 1) {
+                    MsgBox.Alert("사용자아이디", "등록된 아이디가 존재합니다. 새로운 아이디로 입력하세요", function (result) {
+                        $("#USER_ID").val("");
+                        $("#USER_ID").focus();
+                    });
+                }
+                else {
+                    MsgBox.Alert("사용자아이디", "등록가능한 아이디 입니다.", function (result) {
+                        $("#PASSWORD").focus();
+                        _chkID = true;
+                    });
+                }
+
+            });
+        }
+        function validator_init() {
+            $('.form-memberjoin').bootstrapValidator({
+                message: '데이터가 잘못되었습니다.',
+                feedbackIcons: {
+                    valid: 'glyphicon glyphicon-ok',
+                    invalid: 'glyphicon glyphicon-remove',
+                    validating: 'glyphicon glyphicon-refresh'
+                },
+                fields: {
+
+                    USER_ID: {
+                        validators: {
+                            notEmpty: {
+                                message: '사용자아이디(이메일)은 필수 입력입니다.'
+                            },
+                            emailAddress: {
+                                message: '이메일형식에 맞지 않습니다.'
+                            },
+                            different: {
+                                field: 'PASSWORD',
+                                message: '사용자아이디와 비밀번호가 같을 수 없습니다.'
+                            }
+                        }
+                    },
+                    USER_NAME: {
+                        message: '사용자이름이 잘못입력되었습니다.',
+                        validators: {
+                            notEmpty: {
+                                message: '사용자이름은 필수입력입니다.'
+                            }
+                        }
+                    },
+                    PASSWORD: {
+                        validators: {
+                            notEmpty: {
+                                message: '비밀번호는 필수입력입니다.'
+                            },
+                            different: {
+                                field: 'username',
+                                message: '비밀번호가 사용자아이디와 같을 수 없습니다.'
+                            },
+                            callback: {
+                                callback: function (value, validator) {
+                                    // Check the password strength
+                                    if (value.length < 6) {
+                                        return {
+                                            valid: false,
+                                            message: '비밀번호는 6자리이상이어야 합니다.'
+                                        }
+                                    }
+
+                                    if (value === value.toLowerCase()) {
+                                        return {
+                                            valid: false,
+                                            message: '비밀번호는 한자리이상이 대문자가 포함되어야 합니다.'
+                                        }
+                                    }
+                                    if (value === value.toUpperCase()) {
+                                        return {
+                                            valid: false,
+                                            message: '비밀번호는 한자리이상 소문자가 포함되어야 합니다.'
+                                        }
+                                    }
+                                    if (value.search(/[0-9]/) < 0) {
+                                        return {
+                                            valid: false,
+                                            message: '비밀번호는 숫자가 포함되어야 합니다.'
+                                        }
+                                    }
+
+                                    return true;
+                                }
+                            }
+                        }
+                    }
+                    , PASSWORD_CONFIRM: {
+                        validators: {
+                            notEmpty: {
+                                message: '비밀번호확인은 필수입력입니다.'
+                            },
+                            identical: {
+                                field: 'PASSWORD',
+                                message: '비밀번호와 비밀번호확인 값이 다릅니다.'
+                            }
+                        }
+                    }
+                    , PHONE: {
+                        validators: {
+                            required: true,
+                            notEmpty: {
+                                message: '전화번호는 필수입력입니다.'
+                            }
+                        }
+                    }
+
+                }
+            });
+        }
+
+        function doSave_MemberAdd() {
+
+
+            var params = BaseCommon.FormInfo.serializeJson(".form-memberjoin", "");
+            params.MEMBER_CODE = -1;
+            params.USER_TYPE = 2;
+            params.EMAIL = params.USER_ID;
+            params.MOBILE = params.PHONE;
+            params.HIDE = 0;
+            params = JSON.stringify(params);
+
+            ajax.GetAjax("@SessionHelper.LoginInfo.BASE_URL/account/SaveAddMember", params, "json", function (result) {
+                if (result.error_message != "") {
+                    MsgBox.Warning("저장에러", result.error_message, function (result) { });
+
+                } else {
+                    bSave = true;
+                    location.href = "@SessionHelper.LoginInfo.BASE_URL/account/login";
+                }
+            })
+        }
+
+
+    </script>
+}
+<!--
+    you can substitue the span of reauth email for a input with the email and
+    include the remember me checkbox
+    -->
+<div class="container">
+    <div class="card card-container">
+        <!-- <img class="profile-img-card" src="//lh3.googleusercontent.com/-6V8xOA6M7BA/AAAAAAAAAAI/AAAAAAAAAAA/rzlHcD0KYwo/photo.jpg?sz=120" alt="" /> -->
+        <img id="profile-img" class="profile-img-card" src="//ssl.gstatic.com/accounts/ui/avatar_2x.png" />
+        <p id="profile-name" class="profile-name-card">사용자정보를 입력하세요</p>
+        <form class="form-memberjoin" onSubmit="return false;">
+            <span id="reauth-email" class="reauth-email"></span>
+            <div class="form-group">
+                <label class="control-label"></label>
+                <div class="col-lg-12">
+                    @Html.TextBox("USER_ID", "", new { @type = "email", @class = "form-control", @placeholder = "사용자아이디(이메일)", @autofocus = true, @required = true })
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="control-label"></label>
+                <div class="col-lg-12">
+                    <button class="btn btn-lg btn-default btn-block btn-memberConfirm" type="button" onclick="chkUserID();" >중복확인</button>
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="control-label"></label>
+                <div class="col-lg-12">
+                    @Html.Password("PASSWORD", "", new { @class = "form-control", @placeholder = "비밀번호", @required = true })
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="control-label"></label>
+                <div class="col-lg-12">
+                    @Html.Password("PASSWORD_CONFIRM", "", new { @class = "form-control", @placeholder = "비밀번호확인", @required = true })
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="control-label"></label>
+                <div class="col-lg-12">
+                    @Html.TextBox("USER_NAME", "", new { @class = "form-control", @placeholder = "사용자이름", @required = true })
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="control-label"></label>
+                <div class="col-lg-12">
+                    @Html.TextBox("PHONE", "", new { @type = "phone", @class = "form-control", @placeholder = "전화번호" })
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="control-label"></label>
+                <div class="col-lg-12">
+                    <button class="btn btn-lg btn-primary btn-block btn-memberjoin" type="submit" >회원가입</button>
+                </div>
+            </div>
+        </form><!-- /form -->
+
+
+    </div><!-- /card-container -->
+</div><!-- /container -->

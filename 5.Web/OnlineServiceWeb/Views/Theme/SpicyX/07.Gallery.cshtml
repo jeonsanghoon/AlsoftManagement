@@ -1,0 +1,93 @@
+﻿@{ 
+    List<T_STORE_IMAGE> list = SessionHelper.LoginInfo.StoreImageList.Where(w => w.IMAGE_TYPE == 4).ToList();
+}    
+<!-- Start Gallery -->
+<section id="mu-gallery">
+    <div class="container">
+        <div class="row">
+            <div class="col-md-12">
+                <div class="mu-gallery-area">
+                    <div class="mu-title">
+                        <span class="mu-subtitle">Discover</span>
+                        <h2>Our Gallery</h2>
+                        <i class="fa fa-spoon"></i>
+                        <span class="mu-title-bar"></span>
+                    </div>
+                    <div class="mu-gallery-content">
+                        <div class="mu-gallery-top">
+                            <!-- Start gallery menu -->
+                            <ul>
+                                @{ 
+
+                                  var groupList = list.Select(s => new { GROUPNAME = s.DATA2 }).Distinct().ToList();
+                                }
+                                <li class="filter active" data-filter="all">ALL</li>
+                                @{
+                                    foreach (var sData in groupList)
+                                    {
+                                        <li class="filter" data-filter=".@sData.GROUPNAME.ToLower()">@sData.GROUPNAME</li>
+                                    }
+                                }
+                              
+                            </ul>
+                        </div>
+
+
+                        <!-- Start gallery image -->
+                        <div class="mu-gallery-body" id="mixit-container">
+
+                            @{ 
+                                foreach(T_STORE_IMAGE data in list)
+                                {
+                            <!-- start single gallery image -->
+                            <div class="mu-single-gallery col-md-4 mix @data.DATA2.ToLower()">
+                                <div class="mu-single-gallery-item">
+                                    <figure class="mu-single-gallery-img">
+                                        <a href="#"><img alt="img" src="@data.IMAGE_URL"></a> <!--small image-->
+                                    </figure>
+                                    <div class="mu-single-gallery-info">
+                                        <a href="@data.DATA3" data-fancybox-group="gallery" class="fancybox"><!--big image-->
+                                            <img src="/common/theme/Spicyx/img/plus.png" alt="plus icon img">
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                                }
+                            }
+                            <!-- End single gallery image -->
+                                                          
+                            @*<!-- start single gallery image -->
+                            <div class="mu-single-gallery col-md-4 mix food">
+                                <div class="mu-single-gallery-item">
+                                    <figure class="mu-single-gallery-img">
+                                        <a href="#"><img alt="img" src="/common/theme/Spicyx/img/gallery/small/1.jpg"></a>
+                                    </figure>
+                                    <div class="mu-single-gallery-info">
+                                        <a href="/common/theme/Spicyx/img/gallery/big/1.jpg" data-fancybox-group="gallery" class="fancybox">
+                                            <img src="/common/theme/Spicyx/img/plus.png" alt="plus icon img">
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- End single gallery image -->*@
+                            
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+<!-- End Gallery -->
+<script type="text/javascript">
+
+    $("document").ready(function () {
+        /* ----------------------------------------------------------- */
+        /*  8. MIXIT FILTER (FOR GALLERY) 
+        /* ----------------------------------------------------------- */
+
+        jQuery(function () {
+            jQuery('#mixit-container').mixItUp();
+        });
+    })
+</script>

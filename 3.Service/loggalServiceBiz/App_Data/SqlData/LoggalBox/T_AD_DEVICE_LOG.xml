@@ -1,0 +1,230 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<DBAgentMultiTemplate  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns="http://altsoft.kr/">
+
+	<DBAgentTemplate TemplateID="GetAdDeviceLogList">
+		<!-- 
+    SqlType : SQL의 형태를 지정합니다.
+      Example 1:<SqlType>FixedSQL</SqlType> 고정적인 SQL을 지원합니다. 
+      Example 2:<SqlType>DynamicSQL</SqlType> 동적인 SQL Type1을 지원합니다.  
+    Description : 해당 SQL의 기능설명을 적습니다.
+    SQLModifier : 해당 SQL의 작성자(수정자)를 적습니다
+    LastModifyDate : 해당 SQL의 마지막 수정일을 적습니다
+    -->
+		<Information>
+			<SqlType>DynamicSQL</SqlType>
+			<Description>광고,단말기 로그 조회</Description>
+			<SQLModifier>권용현</SQLModifier>
+			<LastModifyDate>2019-10-25</LastModifyDate>
+		</Information>
+
+		<TemplateSQL>
+			<!-- FixedSQL : 고정된 SQL이 들어가는 곳입니다. -->
+			<FixedSQL>
+				<![CDATA[ 
+
+	SET NOCOUNT ON 
+	/********************************************************************/
+	/* 광고&단말기테이블 로그 - T_AD_DEVICE_LOG 조회 -  SELECTPAGE QUERY */ 
+	/********************************************************************/
+	SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED 
+	DECLARE @PAGE_COUNT INT      = {0}
+	       ,@PAGE INT            = {1};
+	WITH T_TABLE AS
+	(
+		SELECT ROW_NUMBER() OVER(ORDER BY {2}) AS ROW_IDX 
+			 , A.IDX
+			 , A.AD_CODE
+			 , A.DEVICE_CODE
+			 , AD.TITLE
+			 , A.FR_DATE
+			 , A.TO_DATE
+			 , AD.AD_FRAME_TYPE
+			 , DE.DEVICE_NAME
+			 , A.CLICK_CNT
+			 , CM.NAME AS STATUS
+			 , A.REMARK
+			 , A.REMARK2
+			 , A.UPDATE_DATE
+			 , AST.STORE_NAME AS AD_STORE_NAME
+			 , DST.STORE_NAME AS DEVICE_STORE_NAME
+		FROM T_AD_DEVICE_LOG A
+	   INNER JOIN T_COMMON CM
+		  ON CM.MAIN_CODE = 'A009'
+		 AND CM.SUB_CODE = A.STATUS
+	   INNER JOIN T_AD AD
+		  ON AD.AD_CODE = A.AD_CODE
+	   INNER JOIN T_DEVICE DE
+		  ON DE.DEVICE_CODE = A.DEVICE_CODE
+	   INNER JOIN T_STORE AST
+		  ON AST.STORE_CODE = AD.STORE_CODE
+	   INNER JOIN T_STORE DST
+	      ON DST.STORE_CODE = DE.STORE_CODE
+	   INNER JOIN T_MEMBER ME
+	      ON ME.MEMBER_CODE = A.UPDATE_CODE
+
+       WHERE 1=1
+		 #[AD_CODE]
+		 #[TITLE]
+		 #[DEVICE_CODE]
+		 #[DEVICE_NAME]
+		 #[STATUS]
+		 #[AD_STORE_CODE]
+		 #[DEVICE_STORE_CODE]
+		 #[USER_ID]
+		 #[USER_NAME]
+		 #[FR_DATE]
+		 #[TO_DATE]
+	 ) SELECT *, (SELECT COUNT(*) FROM T_TABLE) AS TOTAL_ROWCOUNT 
+	     FROM T_TABLE 
+	    WHERE ROW_IDX > (@PAGE-1) * @PAGE_COUNT 
+	      AND ROW_IDX <= @PAGE * @PAGE_COUNT 
+	
+	 SET NOCOUNT OFF 
+
+
+]]>
+			</FixedSQL>
+			<DynamicBodys>
+				<Key>AD_CODE</Key>
+				<Body>AND A.AD_CODE = {0}</Body>
+			</DynamicBodys>
+			<DynamicBodys>
+				<Key>TITLE</Key>
+				<Body>AND AD.TITLE LIKE N'%{0}%'</Body>
+			</DynamicBodys>
+			<DynamicBodys>
+				<Key>DEVICE_CODE</Key>
+				<Body>AND A.DEVICE_CODE = {0}</Body>
+			</DynamicBodys>
+			<DynamicBodys>
+				<Key>DEVICE_NAME</Key>
+				<Body>AND DE.DEVICE_NAME LIKE N'%{0}%'</Body>
+			</DynamicBodys>
+			<DynamicBodys>
+				<Key>STATUS</Key>
+				<Body>AND A.STATUS = {0}</Body>
+			</DynamicBodys>
+			<DynamicBodys>
+				<Key>AD_STORE_CODE</Key>
+				<Body>AND AD.STORE_CODE = {0}</Body>
+			</DynamicBodys>
+			<DynamicBodys>
+				<Key>DEVICE_STORE_CODE</Key>
+				<Body>AND DE.STORE_CODE = {0}</Body>
+			</DynamicBodys>
+			<DynamicBodys>
+				<Key>USER_ID</Key>
+				<Body>AND ME.USER_ID = '{0}'</Body>
+			</DynamicBodys>
+			<DynamicBodys>
+				<Key>USER_NAME</Key>
+				<Body>AND ME.USER_NAME LIKE N'%{0}%'</Body>
+			</DynamicBodys>
+			<DynamicBodys>
+				<Key>FR_DATE</Key>
+				<Body>
+					<![CDATA[ AND A.UPDATE_DATE >= '{0}' ]]>
+				</Body>
+			</DynamicBodys>
+			<DynamicBodys>
+				<Key>TO_DATE</Key>
+				<Body>
+					<![CDATA[ AND A.UPDATE_DATE < DATEADD(DAY, 1, '{0}') ]]>
+				</Body>
+			</DynamicBodys>
+		</TemplateSQL>
+	</DBAgentTemplate>
+
+	<DBAgentTemplate TemplateID="AdDeviceLogSave">
+		<!-- 
+    SqlType : SQL의 형태를 지정합니다.
+      Example 1:<SqlType>FixedSQL</SqlType> 고정적인 SQL을 지원합니다. 
+      Example 2:<SqlType>DynamicSQL</SqlType> 동적인 SQL Type1을 지원합니다.  
+    Description : 해당 SQL의 기능설명을 적습니다.
+    SQLModifier : 해당 SQL의 작성자(수정자)를 적습니다
+    LastModifyDate : 해당 SQL의 마지막 수정일을 적습니다
+    -->
+		<Information>
+			<SqlType>DynamicSQL</SqlType>
+			<Description>광고,단말기 로그 저장</Description>
+			<SQLModifier>권용현</SQLModifier>
+			<LastModifyDate>2019-10-25</LastModifyDate>
+		</Information>
+
+		<TemplateSQL>
+			<!-- FixedSQL : 고정된 SQL이 들어가는 곳입니다. -->
+			<FixedSQL>
+				<![CDATA[ 
+
+	SET NOCOUNT ON 
+	/**************************************************************/
+	/* 광고&단말기테이블 로그 - T_AD_DEVICE_LOG 저장 -  SAVE QUERY */ 
+	/**************************************************************/
+	DECLARE @IDX                            BIGINT               = N'{0}'
+			  , @AD_DEVICE_CODE                 BIGINT               = CONVERT(BIGINT, CASE WHEN ISNUMERIC('{1}') = 1 THEN '{1}' ELSE '0' END )
+			  , @AD_CODE                        BIGINT               = CONVERT(BIGINT, CASE WHEN ISNUMERIC('{2}') = 1 THEN '{2}' ELSE NULL END )
+			  , @DEVICE_CODE                    BIGINT               = CONVERT(BIGINT, CASE WHEN ISNUMERIC('{3}') = 1 THEN '{3}' ELSE NULL END )
+			  , @FR_DATE                        VARCHAR(8)           = N'{4}'
+			  , @TO_DATE                        VARCHAR(8)           = N'{5}'
+			  , @FR_TIME                        VARCHAR(5)           = N'{6}'
+			  , @TO_TIME                        VARCHAR(5)           = N'{7}'
+			  , @FR_UTC_DATE                    VARCHAR(8)           = N'{8}'
+			  , @TO_UTC_DATE                    VARCHAR(8)           = N'{9}'
+			  , @FR_UTC_TIME                    VARCHAR(5)           = N'{10}'
+			  , @TO_UTC_TIME                    VARCHAR(5)           = N'{11}'
+			  , @CLICK_CNT                      INT                  = CONVERT(INT, CASE WHEN ISNUMERIC('{12}') = 1 THEN '{12}' ELSE NULL END )
+			  , @APPROVAL_COMPANY_CODE          INT                  = CONVERT(INT, CASE WHEN ISNUMERIC('{13}') = 1 THEN '{13}' ELSE NULL END )
+			  , @STATUS                         INT                  = CONVERT(INT, CASE WHEN ISNUMERIC('{14}') = 1 THEN '{14}' ELSE NULL END )
+			  , @HIDE                           BIT                  = CONVERT(BIT, CASE WHEN ISNUMERIC('{15}') = 1 THEN '{15}' ELSE NULL END )
+			  , @REMARK                         NVARCHAR(200)        = N'{16}'
+			  , @REMARK2                        NVARCHAR(400)        = N'{17}'
+			  , @INSERT_CODE                    INT                  = {18}
+			  , @INSERT_DATE                    DATETIME             = GETDATE() 
+			  , @UPDATE_CODE                    INT                  = {18}
+			  , @UPDATE_DATE                    DATETIME             = GETDATE() 
+
+	UPDATE A 
+	SET  	  AD_DEVICE_CODE                 = @AD_DEVICE_CODE                
+			 ,  AD_CODE                        = @AD_CODE                       		 ,  DEVICE_CODE                    = @DEVICE_CODE                   
+			 ,  FR_DATE                        = @FR_DATE                       		 ,  TO_DATE                        = @TO_DATE                       
+			 ,  FR_TIME                        = @FR_TIME                       		 ,  TO_TIME                        = @TO_TIME                       
+			 ,  FR_UTC_DATE                    = @FR_UTC_DATE                   		 ,  TO_UTC_DATE                    = @TO_UTC_DATE                   
+			 ,  FR_UTC_TIME                    = @FR_UTC_TIME                   		 ,  TO_UTC_TIME                    = @TO_UTC_TIME                   
+			 ,  CLICK_CNT                      = @CLICK_CNT                     		 ,  APPROVAL_COMPANY_CODE          = @APPROVAL_COMPANY_CODE         
+			 ,  STATUS                         = @STATUS                        		 ,  HIDE                           = @HIDE                          
+			 ,  REMARK                         = @REMARK                        		 ,  REMARK2                        = @REMARK2                       
+			 ,  UPDATE_CODE                    = @UPDATE_CODE                   		 ,  UPDATE_DATE                    = @UPDATE_DATE                   
+	
+	FROM T_AD_DEVICE_LOG A 
+	WHERE IDX= @IDX
+	IF @@ROWCOUNT = 0
+	BEGIN
+		INSERT INTO T_AD_DEVICE_LOG
+		(	  AD_DEVICE_CODE                		, AD_CODE                       		, DEVICE_CODE                   		
+			, FR_DATE                       		, TO_DATE                       		, FR_TIME                       		, TO_TIME                       		
+			, FR_UTC_DATE                   		, TO_UTC_DATE                   		, FR_UTC_TIME                   		, TO_UTC_TIME                   		
+			, CLICK_CNT                     		, APPROVAL_COMPANY_CODE         		, STATUS                        		, HIDE                          		
+			, REMARK                        		, REMARK2                       		, INSERT_CODE                   		, INSERT_DATE                   		
+			, UPDATE_CODE                   		, UPDATE_DATE                   		
+		)
+		SELECT @AD_DEVICE_CODE               		, @AD_CODE                      	
+			, @DEVICE_CODE                  		, @FR_DATE                      		, @TO_DATE                      	
+			, @FR_TIME                      		, @TO_TIME                      		, @FR_UTC_DATE                  	
+			, @TO_UTC_DATE                  		, @FR_UTC_TIME                  		, @TO_UTC_TIME                  	
+			, @CLICK_CNT                    		, @APPROVAL_COMPANY_CODE        		, @STATUS                       	
+			, @HIDE                         		, @REMARK                       		, @REMARK2                      	
+			, @INSERT_CODE                  		, @INSERT_DATE                  		, @UPDATE_CODE                  	
+			, @UPDATE_DATE                  	
+		 SET @IDX = IDENT_CURRENT('T_AD_DEVICE_LOG')
+	 END
+	SELECT CONVERT(VARCHAR(100), @IDX) AS DATA
+	SET NOCOUNT OFF
+
+
+
+
+]]>
+			</FixedSQL>
+		</TemplateSQL>
+	</DBAgentTemplate>
+</DBAgentMultiTemplate>

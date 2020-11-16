@@ -1,0 +1,125 @@
+﻿@using ALT.VO.loggal;
+@using ALT.Framework;
+@using ALT.Framework.Data;
+@{
+    List<T_AD> list = (List<T_AD>)ViewBag.list;
+    int nCnt = list.Count;
+    string totCnt = (list.Count() == 0 ? "0" : list.First().TOTAL_ROWCOUNT.ToString());
+
+    <input type="hidden" id="total" value="@totCnt" />
+    foreach (T_AD data in list)
+    {
+
+
+        string sStyle = "";
+        if (data.FR_DATE.Length == 8 && data.TO_DATE.Length == 8)
+        {
+            int nowDate = Convert.ToInt32(DateTime.Now.ToString("yyyyMMdd"));
+            if (data.FR_DATE.ToDate() > DateTime.Now)
+            {
+                sStyle = "style=background-color:LightCyan;";
+            }
+            else if (!(data.FR_DATE.ToDate() <= DateTime.Now && data.TO_DATE.ToDate() >= DateTime.Now))
+            {
+                sStyle = "style=background-color:grey;";
+            }
+
+
+        }
+
+        data.FR_DATE = data.FR_DATE.ToFormatDate();
+        data.TO_DATE = data.TO_DATE.ToFormatDate();
+    <tr>
+        <td @sStyle>@data.AD_CODE</td>
+        <td @sStyle>@data.COMPANY_NAME</td>
+        <td @sStyle>@data.STORE_NAME</td>
+        <td @sStyle class="hide">@data.GROUP_NAME</td>
+        <td @sStyle class="center"><img src="@data.LOGO_URL" class="ui mini rounded image"></td>
+        <td @sStyle>@data.REP_CATEGORY_NAME</td>
+        <td @sStyle><a href="/advertise/adreg/@data.AD_CODE"><div class="dvTitle">@data.TITLE</div></a></td>
+        @{
+            if (data.STATUS == 9)
+            {
+                <td @sStyle class="center">
+                    @Html.Semantic_Button("btnStatus", data.STATUS_NAME, SemanticUIHelper.enButtonType.Normal, new { @class="size120" ,@onclick="statusChange(" + data.AD_CODE.ToString() + "," + data.STATUS.ToString() + ");"  })
+                </td>
+            }
+            else
+            {
+                <td @sStyle class="center blue"> @Html.Semantic_Button("btnStatus", data.STATUS_NAME, SemanticUIHelper.enButtonType.New, new { @class = "size120", @onclick = "statusChange(" + data.AD_CODE.ToString() + "," + data.STATUS.ToString() + ");" })</td>
+            }
+        }
+        <td @sStyle class="center">
+            @data.AD_TYPE_NAME
+        </td>
+        <td @sStyle class="center">@data.BANNER_TYPE_NAME</td>
+        @{
+            if (data.AD_TYPE2 == 2)
+            {
+                <td @sStyle class="center" style="color:red;font-weight:bold">@data.AD_TYPE2_NAME</td>
+            }
+            else
+            {
+                <td @sStyle class="center">@data.AD_TYPE2_NAME</td>
+            }
+        }
+
+        <td @sStyle class="center">@data.FR_DATE</td>
+        <td @sStyle class="center">@data.TO_DATE</td>
+        <td @sStyle class="center">@data.FR_TIME</td>
+        <td @sStyle class="center">@data.TO_TIME</td>
+        <td @sStyle class="center">@data.UPDATE_NAME</td>
+        <td @sStyle class="center">@data.UPDATE_DATE</td>
+        <td @sStyle class="center">@data.HIDE_NAME</td>
+
+
+        <td @sStyle class="center">
+            @{
+                if (data.AD_SHARE_CNT > 0)
+                {
+                    <a href="javascript:void(0)" onclick="DeviceSharePopOpen(@data.AD_CODE, 1);">@data.AD_SHARE_CNT</a>
+                }
+            }
+        </td>
+        <td @sStyle class="center"><a href="javascript:void(0);" onclick="deviceContainAdPopup(@data.AD_CODE);">@data.DEVICE_CNT</a></td>
+        @*<td @sStyle class="center">@(data.SIGN_CNT > 0 ? "등록" : "미등록") @(string.IsNullOrEmpty(data.PUBLIC_TYPE_NAME) ? "" : "(" + data.PUBLIC_TYPE_NAME + ")")</td>*@
+        <td @sStyle class="center">
+            @{
+                if (data.DEVICE_CODE == null)
+                {
+                    @:@data.DEVICE_NAME
+                }
+                else
+                {
+                    @:<a href="/basic/devicereg2/@data.DEVICE_CODE">@(data.DEVICE_NAME)</a>
+                }
+
+                <span style="color:@(data.SHARE_CNT > 0 ? "red" : "gray");font-weight:bold">
+                    @{
+                        if (data.SHARE_CNT > 0)
+                        {
+                            <a href="javascript:void(0)" onclick="DeviceSharePopOpen(@data.AD_CODE);">(@data.SHARE_CNT)</a>
+                        }
+
+                    }
+                </span>
+            }
+        </td>
+        <td @sStyle class="center hide">
+            @(data.SIGN_NAME)
+            @{
+                if (data.SIGN_CNT > 0)
+                {
+                    @:<a href="javascript:void(0)" onclick="SignageSharePopOpen(@data.AD_CODE, 1);">@(string.IsNullOrEmpty(data.SIGN_NAME) ? "" : "(" + data.SIGN_CNT.ToString("") + ")")</a>
+                }
+            }
+        </td>
+
+        <td @sStyle>@(data.PLACE_DISTINCE)  * 0보다 작을 경우 검색 반경안에 포함됨</td>
+
+    </tr>
+    }
+}
+
+
+

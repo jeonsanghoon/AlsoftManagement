@@ -1,0 +1,9 @@
+﻿@using ALT.VO.loggal
+@{
+    List<CODE_DATA> list = ViewBag.list;
+    KEYWORD_COND Cond = ViewBag.Cond;
+    foreach (CODE_DATA data in list)
+    {
+        <li><div class="eac-item" keyCode="@data.CODE">@Html.Raw(data.NAME.Replace(Cond.KEYWORD_NAME, "<b style='color:blue'>" + Cond.KEYWORD_NAME + "</b>"))</div></li>
+    }
+}

@@ -1,0 +1,227 @@
+﻿
+@{
+	ViewBag.Title = "ShoppingCart";
+	Layout = "~/Views/Shared/_Layout_blank.cshtml";
+}
+<style>
+	.ui.cards.mini.drag .dvCheck {
+		position: absolute;
+		top: 0.2em;
+		right: 0.2em;
+		z-index: 1;
+	}
+
+	.ui.cards.mini .card {
+		z-index: 100;
+		width: 170px;
+		height: auto;
+		font-size: 0.95em;
+		cursor: move;
+	}
+</style>
+<div class="ui vertical stripe segment">
+	@Html.TitleNavigation()
+	<form class="ui form">
+		<div class="ui grid">
+			<div class="two column row">
+				<div class="column" style="background-color:aquamarine; padding:1.2em;">
+					<div class="ui mini link cards drag">
+						<div class="card">
+							<div class="dvCheck">
+								<input name="ckData" type="checkbox" value='{"image":"https://semantic-ui.com/images/avatar2/large/matthew.png"
+						,"name":"Matt Giampietro"
+						,"type":"Friends"
+						,"desc":"Matthew is an interior designer living in New York."
+						}' />
+							</div>
+							<div class="image">
+								<img src="https://semantic-ui.com/images/avatar2/large/matthew.png">
+							</div>
+							<div class="content">
+								<div class="header">Matt Giampietro</div>
+								<div class="meta">
+									<a>Friends</a>
+								</div>
+								<div class="description">
+									Matthew is an interior designer living in New York.
+								</div>
+							</div>
+							<div class="extra content">
+								<span class="right floated">
+									Joined in 2013
+								</span>
+								<span>
+									<i class="user icon"></i>
+									75 Friends
+								</span>
+							</div>
+						</div>
+						<div class="card">
+							<div class="dvCheck">
+								<input name="ckData" type="checkbox" value='{ "image":"https://semantic-ui.com/images/avatar2/large/molly.png"
+						,"name":"Molly"
+						,"type":"Coworker"
+						,"desc":"Molly is a personal assistant living in Paris."
+						}' />
+							</div>
+
+							<div class="image">
+								<img src="https://semantic-ui.com/images/avatar2/large/molly.png">
+							</div>
+							<div class="content">
+								<div class="header">Molly</div>
+								<div class="meta">
+									<span class="date">Coworker</span>
+								</div>
+								<div class="description">
+									Molly is a personal assistant living in Paris.
+								</div>
+							</div>
+							<div class="extra content">
+								<span class="right floated">
+									Joined in 2011
+								</span>
+								<span>
+									<i class="user icon"></i>
+									35 Friends
+								</span>
+							</div>
+						</div>
+						<div class="card">
+							<div class="dvCheck">
+								<input name="ckData" type="checkbox" value='{
+						"image":"https://semantic-ui.com/images/avatar2/large/elyse.png"
+						,"name" :"Elyse"
+						,"type" :"Coworker"
+						,"desc" :"Elyse is a copywriter working in New York."
+						}' />
+							</div>
+
+							<div class="image">
+								<img src="https://semantic-ui.com/images/avatar2/large/elyse.png">
+							</div>
+							<div class="content">
+								<div class="header">Elyse</div>
+								<div class="meta">
+									<a>Coworker</a>
+								</div>
+								<div class="description">
+									Elyse is a copywriter working in New York.
+								</div>
+							</div>
+							<div class="extra content">
+								<span class="right floated">
+									Joined in 2014
+								</span>
+								<span>
+									<i class="user icon"></i>
+									151 Friends
+								</span>
+							</div>
+						</div>
+					</div>
+				</div>
+
+				<div class="column">
+
+					<div class="ui grid" style="width:100%;height:100%;">
+
+						<div class="two wide column" style="top:10em">
+							<i id="btnAdd" class="arrow alternate circle right  huge icon" style="cursor:pointer"></i>
+						</div>
+						<div class="fourteen wide  column">
+							<div class="ui mini link cards drop" style="background:gray;height:100%;width:100%;">
+								<table class="mrc-table">
+									<thead>
+										<tr>
+											<th column_name="name">이름</th>
+											<th column_name="type">관계</th>
+											<th column_name="desc">설명</th>
+										</tr>
+									</thead>
+									<tbody>
+										<tr><td>이민호</td><td>친구</td><td>초등학생친구다</td></tr>
+										<tr><td>송중기</td><td>친구</td><td>중학생친구다</td></tr>
+										<tr><td>배수지</td><td>후배</td><td>초등학생후배이다</td></tr>
+										<tr><td>신민아</td><td>후배</td><td>중학생후배이다</td></tr>
+
+									</tbody>
+								</table>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+
+	</form>
+</div>
+
+
+<script>
+
+	$("document").ready(function () {
+		$.getMultiScripts(["/Common/plugin/js/jquery.ui.touch.js", "//code.jquery.com/ui/1.12.0/jquery-ui.min.js"]).done(function () {
+
+			// jQuery UI Draggable
+			$(".ui.cards.drag .card").draggable({
+
+				// brings the item back to its place when dragging is over
+				revert: true,
+				start: function (event, ui) { $(this).css("z-index", 1); },
+				// once the dragging starts, we decrease the opactiy of other items
+				// Appending a class as we do that with CSS
+				drag: function () {
+					$(this).addClass("active");
+					$(this).closest("#product").addClass("active");
+				},
+
+				// removing the CSS classes once dragging is over.
+				stop: function () {
+					$(this).removeClass("active").closest("#product").removeClass("active");
+				}
+			});
+		});
+
+
+		var objInit = {
+			objName: ".mrc-table"
+			, isDrag: true
+			, isDrop: true
+			, callback: function (response) {
+				if (response.callbackType == "dropCallback") {
+					var data = response.draggableObj.data;
+
+					if (data != undefined) {
+						$(response.draggableObj.obj).remove();//drop 된 객체 삭제
+						addRow(objInit, data);
+					}
+				}
+			}
+		};
+
+		$.mrc_table.InitObject(objInit);
+
+		$("#btnAdd").click(function () {
+
+			var arrData = Input.CheckBox.CheckedValues("ckData")
+			$.each(arrData, function (idx, val) {
+				addRow(objInit, JSON.parse(val));
+			})
+			$("input[name='ckData']:checked").closest(".card").remove();
+		})
+		$(".ui.cards.drag .card").css("cursor", "move");
+	})
+
+	function addRow(objInit, data) {
+
+		var trHtml = "<tr><td>" + data.name + "</td><td>" + data.type + "</td><td>" + data.desc + "</td></tr>";
+		objInit.addClass = "new";
+		$.mrc_table.AddRowHtmlObject({ objName: objInit.objName, trHtml: trHtml, initObj: objInit });
+
+
+
+	}
+
+
+</script>

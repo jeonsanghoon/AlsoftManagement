@@ -1,0 +1,64 @@
+﻿
+@{
+	List<T_DEVICE_PLACE> list = ViewBag.list;
+	int nCnt = 0;
+	foreach (T_DEVICE_PLACE data in list)
+	{
+		<tr>
+			@*<td class="center">
+				@{
+					@:<div>
+						if (nCnt > 1)
+						{
+							<i class="fa fa-arrow-circle-up fa-3x" aria-hidden="true" style="color:#d34e4e;cursor:pointer;" onclick="DevicePlaceSeqChange(@data.IDX, @list[nCnt - 1].SEQ, @data.SEQ);"></i>
+					}
+					else if (nCnt == 1)
+					{
+							<i class="fa fa-arrow-circle-up fa-3x" aria-hidden="true" style="color:grey!important;"></i>
+					}
+					if (nCnt < list.Count() - 1)
+					{
+							<i class="fa fa-arrow-circle-down fa-3x" aria-hidden="true" style="color:#6390ee;cursor:pointer;" onclick="DevicePlaceSeqChange(@data.IDX, @data.SEQ,@list[nCnt + 1].SEQ);"></i>
+					}
+					else if (nCnt >= 1)
+					{
+							<i class="fa fa-arrow-circle-down fa-3x" aria-hidden="true" style="color:grey!important;"></i>
+					}
+					@:</div>
+				}
+			</td>*@
+			<td>
+				@data.JIBUN_ADDRESS
+			</td>
+			<td class="center">@data.LATITUDE</td>
+			<td class="center">@data.LONGITUDE</td>
+			<td class="center">@(data.RADIUS / 1000.0) km</td>
+			<td style="min-width:15em;">@data.ROAD_ADDRESS</td>
+			<td class="center">@data.ZIP_CODE</td>
+			<td>@data.REGION</td>
+			<td>@data.INSERT_NAME</td>
+			<td>@data.INSERT_DATE</td>
+			@*<td>
+				@if (data.PLACE_TYPE == 1)
+				{@Html.Semantic_Button2("btnSetBase", "기본변경", SemanticUIHelper.enButtonType.Save) }
+				else
+				{
+				@data.PLACE_TYPE_NAME
+				}
+
+			</td>*@
+			<td class="hide">@data.DEVICE_CODE</td>
+			<td class="hide">@data.CK_CODE</td>
+			<td class="hide">@data.IDX</td>
+			<td class="hide">@data.JIBUN_ADDRESS</td>
+			<td class="hide">@data.ROAD_ADDRESS</td>
+			<td class="hide">@data.BUILDING</td>
+
+
+		</tr>
+
+		nCnt++;
+	}
+
+    @Html.Hidden("markerlist", Json.Encode(list.Select(s => new DAUM_MAPLIST { TITLE = "", CONTENT = "", LINK_URL = "", LATITUDE = s.LATITUDE, LONGITUDE = s.LONGITUDE, RADIUS = s.RADIUS }).ToList()))
+}

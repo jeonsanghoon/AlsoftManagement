@@ -1,0 +1,337 @@
+﻿@using ALT.Framework.MVC.Helpers;
+@{
+
+    Layout = "~/Views/Theme/SpicyX/Shared/_Layout_blank.cshtml";
+}
+<style>
+    
+.card-container.card {
+    width: 350px;
+    padding: 40px 40px;
+}
+
+.btn {
+    font-weight: 700;
+    height: 36px;
+    -moz-user-select: none;
+    -webkit-user-select: none;
+    user-select: none;
+    cursor: default;
+}
+
+/*
+ * Card component
+ */
+.card {
+    background-color: #fff;
+    /* just in case there no content*/
+    padding: 20px 25px 30px;
+    margin: 0 auto 25px;
+    margin-top: 100px;
+    /* shadows and rounded borders */
+    -moz-border-radius: 2px;
+    -webkit-border-radius: 2px;
+    border-radius: 2px;
+    -moz-box-shadow: 0px 2px 2px rgba(0, 0, 0, 0.3);
+    -webkit-box-shadow: 0px 2px 2px rgba(0, 0, 0, 0.3);
+    box-shadow: 0px 0px 2px rgba(0, 0, 0, 0.3);
+}
+@@media only screen and (max-width: 760px), (min-device-width: 768px) and (max-device-width: 1024px) {
+    .card {
+        margin-top: 50px;
+    }
+}
+
+.profile-img-card {
+    width: 96px;
+    height: 96px;
+    margin: 0 auto 10px;
+    display: block;
+    -moz-border-radius: 50%;
+    -webkit-border-radius: 50%;
+    border-radius: 50%;
+}
+
+/*
+ * Form styles
+ */
+.profile-name-card {
+    font-size: 16px;
+    font-weight: bold;
+    text-align: center;
+    margin: 10px 0 0;
+    min-height: 1em;
+}
+
+.reauth-email {
+    display: block;
+    color: #404040;
+    line-height: 2;
+    margin-bottom: 10px;
+    font-size: 14px;
+    text-align: center;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    -moz-box-sizing: border-box;
+    -webkit-box-sizing: border-box;
+    box-sizing: border-box;
+}
+
+.form-signin #inputEmail,
+.form-signin #inputPassword {
+    direction: ltr;
+    height: 44px;
+    font-size: 16px;
+}
+
+.form-signin input[type=email],
+.form-signin input[type=password],
+.form-signin input[type=text],
+.form-signin button {
+    width: 100%;
+    display: block;
+    margin-bottom: 10px;
+    z-index: 1;
+    position: relative;
+    -moz-box-sizing: border-box;
+    -webkit-box-sizing: border-box;
+    box-sizing: border-box;
+}
+
+.form-signin .form-control:focus {
+    border-color: #0685FF;
+    outline: 0;
+    -webkit-box-shadow: inset 0 1px 1px rgba(0,0,0,.075),0 0 8px #0066CC;
+    box-shadow: inset 0 1px 1px rgba(0,0,0,.075),0 0 8px #0066CC;
+}
+
+.btn-signin {
+    /*background-color: #4d90fe; */
+    background-color: #0066CC;
+    /* background-color: linear-gradient(rgb(104, 145, 162), rgb(12, 97, 33));*/
+    padding: 0px;
+    font-weight: 700;
+    font-size: 14px;
+    height: 36px;
+    -moz-border-radius: 3px;
+    -webkit-border-radius: 3px;
+    border-radius: 3px;
+    border: none;
+    -o-transition: all 0.218s;
+    -moz-transition: all 0.218s;
+    -webkit-transition: all 0.218s;
+    transition: all 0.218s;
+}
+
+.btn-signin:hover,
+.btn-signin:active,
+.btn-signin:focus {
+    background-color: #0685FF;
+}
+
+.forgot-password {
+    color: #0685FF;
+}
+
+.forgot-password:hover,
+.forgot-password:active,
+.forgot-password:focus{
+    color: #004e99;
+}
+.login-or {
+    position: relative;
+    font-size: 18px;
+    color: #aaa;
+    margin-top: 10px;
+    margin-bottom: 10px;
+    padding-top: 10px;
+    padding-bottom: 10px;
+}
+.hr-or {
+    background-color: #cdcdcd;
+    height: 1px;
+    margin-top: 0px !important;
+    margin-bottom: 0px !important;
+}
+hr {
+    margin-top: 20px;
+    margin-bottom: 20px;
+    border: 0;
+    border-top: 1px solid #eee;
+}
+hr {
+    height: 0;
+    -moz-box-sizing: content-box;
+    box-sizing: content-box;
+}
+.span-or {
+    display: block;
+    position: absolute;
+    left: 50%;
+    top: -2px;
+    margin-left: -25px;
+    background-color: #fff;
+    width: 50px;
+    text-align: center;
+}
+</style>
+@section script{
+    <script type="text/javascript">
+        $(document).ready(function () {
+           
+            $("#LOGIN_USER_ID,#LOGIN_PASSWORD").keyup(function (e) {
+                if (e.which == 13) {/* 13 == enter key@ascii */
+                    setTimeout("doLogin()");
+                    
+                    return false;
+                }
+            });
+        });
+        function chkLogin()
+        {
+            if ($("#LOGIN_USER_ID").val() == "") {
+                modal({ /* https://github.com/CreativeDream/jquery.modal */
+                    type: 'info',
+                    title: '로그인',
+                    text: "사용자아이디를 입력하여 주세요"
+                      , closeClick: false
+                      , callback: function (e) {
+                          $("#LOGIN_USER_ID").focus();
+                          $("#LOGIN_USER_ID").select();
+                      }
+                });
+                return false;
+            }
+            if ($("#LOGIN_PASSWORD").val() == "")
+            {
+                modal({ /* https://github.com/CreativeDream/jquery.modal */
+                    type: 'info',
+                    title: '로그인',
+                    text: "비밀번호를 입력하여 주세요"
+                    , closeClick: false
+                    , callback: function (e) {
+                        $("#LOGIN_PASSWORD").focus();
+                        $("#LOGIN_PASSWORD").select();
+                    }
+                });
+                return false;
+            }
+          
+            return true;
+        }
+        function doLogin() {
+            if (!chkLogin()) return;
+
+            var params = BaseCommon.FormInfo.serializeJson(".form-signin", "LOGIN_");
+            params.returnUrl = "@ViewBag.returnUrl";
+            params = JSON.stringify(params);
+
+            ajax.GetAjax("@SessionHelper.LoginInfo.BASE_URL/account/doLogin", params, "json", function (result) {
+                if (result.error_message != "") {
+
+                    modal({ /* https://github.com/CreativeDream/jquery.modal */
+                        type: 'warning',
+                        title: '저장에러',
+                        text: result.error_message
+                        , closeClick: false
+                        , callback: function (e) {
+                            $("#" + result.focus_input).focus();
+                            $("#" + result.focus_input).select();
+                        }
+                    });
+                } else {
+                    location.href = "@SessionHelper.LoginInfo.BASE_URL" +  result.return_url;
+
+                }
+            })
+        }
+       
+
+        function MembershipJoin()
+        {
+            location.href="@SessionHelper.LoginInfo.BASE_URL/account/memberjoin"
+        }
+
+        function FindMemberInfo()
+        {
+            MsgBox.Alert("아이디/비밀번호 찾기", "구현중입니다.", function (result) {
+
+            });
+        }
+
+        function FacebookLogin() {
+            MsgBox.Alert("페이스북로그인", "구현중입니다.", function (result) {
+
+            });
+        }
+
+        function GoogleLogin() {
+            MsgBox.Alert("구글로그인", "구현중입니다.", function (result) {
+
+            });
+        }
+    </script>
+}
+<!--
+    you can substitue the span of reauth email for a input with the email and
+    include the remember me checkbox
+    -->
+<div class="container">
+    <div class="card card-container">
+        <!-- <img class="profile-img-card" src="//lh3.googleusercontent.com/-6V8xOA6M7BA/AAAAAAAAAAI/AAAAAAAAAAA/rzlHcD0KYwo/photo.jpg?sz=120" alt="" /> -->
+        <img id="profile-img" class="profile-img-card" src="//ssl.gstatic.com/accounts/ui/avatar_2x.png" />
+        <p id="profile-name" class="profile-name-card">로그인정보를 입력하세요</p>
+        <form class="form-signin">
+            <span id="reauth-email" class="reauth-email"></span>
+            @Html.TextBox("LOGIN_USER_ID", "", new { @type = "email",  @class="form-control", @placeholder="사용자아이디(이메일)", @autofocus = true, @required=true })
+            @Html.Password("LOGIN_PASSWORD", "", new {  @class = "form-control", @placeholder = "비밀번호", @required = true })
+      
+            <div id="remember" class="checkbox">
+                <label>
+                    @Html.CheckBox("LOGIN_chkRemberID", false, new { @value = "remember-me" }) 아이디기억
+                </label>
+            </div>
+            <button class="btn btn-lg btn-primary btn-block btn-signin" type="button" onclick="doLogin();">로그인</button>
+            <button class="btn btn-lg btn-primary btn-block btn-signin" type="button" onclick="MembershipJoin();">회원가입</button>
+          
+        </form><!-- /form -->
+        <a href="javascript:void(0);" class="forgot-password" onclick="FindMemberInfo();">
+            아이디/비밀번호 찾기
+        </a>
+        <div class="login-or">
+            <hr class="hr-or">
+            <span class="span-or">OR</span>
+        </div>
+
+        @*<a class="btn btn-block btn-social btn-twitter">
+            <span class="fa fa-twitter"></span> Sign in with Twitter
+        </a>*@
+        <a class="btn btn-block btn-social btn-facebook" onclick="FacebookLogin();">
+            <span class="fa fa-facebook"></span> 페이스북 로그인
+        </a>
+        <a class="btn btn-block btn-social btn-google" onclick="GoogleLogin();" >
+            <span class="fa fa-google"></span> 구글 로그인
+        </a>
+<div class="container">
+                            <div class="row">
+                                <div class='col-sm-6'>
+                                    <div class="form-group">
+                                        <div class='input-group date' id='datetimepicker1'>
+                                            <input type='text' class="form-control" />
+                                            <span class="input-group-addon">
+                                                <span class="glyphicon glyphicon-calendar"></span>
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <script type="text/javascript">
+                            $(document).ready(function () {
+                                $('#datetimepicker1').datetimepicker();
+                            });
+                                </script>
+                            </div>
+                        </div>
+    </div><!-- /card-container -->
+</div><!-- /container -->
+

@@ -1,0 +1,42 @@
+﻿
+@{
+    List<T_HARDWARE> list = ViewBag.list;
+    T_HARDWARE_COND Cond = ViewBag.Cond;
+    string displayMode = Cond.DISPLAY_MODE.ToString("");
+    string totCnt = (list.Count() == 0 ? "0" : list.First().TOTAL_ROWCOUNT.ToString());
+    <input type="hidden" id="total" value="@totCnt" />
+
+    foreach (T_HARDWARE data in list)
+    {
+    <tr>
+        <td class="center">@data.HARDWARE_CODE</td>
+
+        @{
+            if (displayMode != "Popup")
+            {
+                <td><a href="/device/hardwarereg/@data.HARDWARE_CODE">@data.HARDWARE_NAME</a></td>
+                <td class="center">@(string.IsNullOrEmpty(data.PURCHASE_DATE) ? "" : data.PURCHASE_DATE.ToFormatDate())</td>
+            }
+            else
+            {
+                <td>@data.HARDWARE_NAME</td>
+            }
+        }
+        <td class="center">@data.BRAND_NAME</td>
+        <td class="center">@data.MODEL_NAME</td>
+        <td class="center">@data.DISPLAY_RESOLUTION_NAME</td>
+        @{
+            if (displayMode != "Popup")
+            {
+                <td class="center">@data.UPDATE_NAME</td>
+                <td class="center">@data.UPDATE_DATE</td>
+                <td class="center">@data.HIDE_NAME</td>
+                <td class="center"><a href="/basic/devicereg/@data.DEVICE_CODE">@data.DEVICE_NAME</a></td>
+            }
+        }
+    </tr>
+    }
+}
+
+
+

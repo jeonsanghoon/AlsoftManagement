@@ -1,0 +1,312 @@
+﻿@using ALT.Framework.Data;
+@using ALT.VO.Common;
+@using ALT.BizService;
+@{
+
+    int STORE_CODE = ViewBag.STORE_CODE;
+}
+@{
+    List<T_STORE_WEBMENU_GROUP> list = ViewBag.list;
+
+
+    List<SelectListItem> cboDept = new List<SelectListItem>();
+    IList<T_STORE_DEPT> deptList = Service.employeeService.GetStoreDept(new T_STORE_DEPT() { STORE_CODE = STORE_CODE });
+    if (deptList != null)
+    {
+        cboDept = deptList.Select(x => new SelectListItem() { Text = x.DEPT_NAME, Value = x.DEPT_CODE.ToString() }).ToList();
+    }
+
+    List<SelectListItem> cboCompPosition = new List<SelectListItem>();
+    List<SelectListItem> cboCompTitle = new List<SelectListItem>();
+    IList<T_STORE_POSITION> positionList = Service.employeeService.GetStorePosition(new T_STORE_POSITION() { STORE_CODE = STORE_CODE, HIDE = false });
+    if (positionList != null)
+    {
+        cboCompPosition = positionList.Where(x => x.POSITION_TYPE == 1).Select(x => new SelectListItem() { Text = x.NAME, Value = x.POSITION_CODE.ToString() }).ToList();  //직급
+        cboCompTitle = positionList.Where(x => x.POSITION_TYPE == 2).Select(x => new SelectListItem() { Text = x.NAME, Value = x.POSITION_CODE.ToString() }).ToList();  //직책
+    }
+
+}
+<style>
+    #dvTable .mrc-fixed-table-container {
+        height: 200px;
+    }
+
+    #dvTable2 .mrc-fixed-table-container .table-wrapper {
+        border: 0px;
+    }
+</style>
+@section scripts{
+
+    <script type="text/javascript">
+
+        $(document).ready(function () {
+            doQuery();
+            var nSearchHeight = 0;
+            $(".search").each(function (index) {
+                nSearchHeight += $(this).height();
+            })
+            //alert(nSearchHeight);
+            if ($(window).width() >= 768) {
+                $("#dvTable2 .mrc-fixed-table-container").height($(window).height() - ($(".cd-main-header").height() + Number($(".ui.vertical.stripe").css("padding-top").replace("px", "")) + $(".ui.header").height() + nSearchHeight + 170 + $(".ui.footer").height() + $("#dvTable .mrc-fixed-table-container").height()));
+            }
+            else {
+                $("#dvTable2 .mrc-fixed-table-container").height($(window).height() - ($(".cd-main-header").height() + Number($(".ui.vertical.stripe").css("padding-top").replace("px", "")) + $(".ui.header").height() + nSearchHeight + 70 + $(".ui.footer").height() + $("#dvTable .mrc-fixed-table-container").height()));
+            }
+
+        }); //End document.ready
+
+        function SemanticUI_ComboChange(obj) {
+            if ($(obj)[0].id == "STORE_CODE") {
+                location.href = "/common/menugroupreglist/" + $("#STORE_CODE").val();
+            }
+        }
+        function doQuery() {
+            var param = new Object();
+            param.STORE_CODE = $("#STORE_CODE").val();
+            param = JSON.stringify(param);
+            ajax.GetAjax("/common/pv_menuGroupRegList", param, "html", function (result) {
+                $("#dvTable table tbody").html(result);
+                $.mrc_table.Init("#dvTable table.list", true);
+                SemanticUI.ComponentInit("#dvTable table.list"); // 시맨틱 UI 일경우 초기화 초가
+                if (_grid1RowIndex > 0) {
+                    $.mrc_table.SetActiveIndex("#dvTable table.list", _grid1RowIndex - 1);
+                    _grid1RowIndex = -1;
+                }
+                Input.TextBox.onlyNumber("#dvTable table.list .number");
+                $.mrc_table.fixedHeder("#dvTable table.list");
+            });
+        }
+        function mrc_table_trClick(objName, param) {
+            if (objName == "#dvTable table.list") {
+                doQuery2(param.STORE_CODE, param.GROUP_CODE);
+            }
+        }
+        var _groupCode = 0;
+        function doQuery2(storeCode, groupCode) {
+            if (_groupCode == groupCode) return;
+            _groupCode = groupCode;
+            var param = new Object();
+            param.STORE_CODE = storeCode;
+            param.GROUP_CODE = groupCode
+            param = JSON.stringify(param);
+            ajax.GetAjax("/common/pv_menuGroupRegList2", param, "html", function (result) {
+                $("#dvTable2 table tbody").html(result);
+                $.mrc_table.Init("#dvTable2 table.list", true);
+                $("#dvTable2 table.list th:first-child").hide();
+                $("#dvTable2 table.list td:nth-child(1)").hide();
+                $("#dvTable2 table.list tbody tr.trInputHIde").each(function () {
+                    $(this).find("td:eq(1) input").hide();
+
+                });
+                $.mrc_table.fixedHeder("#dvTable2 table.list");
+            });
+
+
+        }
+        var _grid1RowIndex = -1;
+        function doSave() {
+
+            var arrSaveData = $.mrc_table.GetSaveData("#dvTable table.list");
+
+            if (arrSaveData.length == 0) {
+                $.MessageBox("저장할 데이터가 없습니다.");
+                return;
+            }
+            var param = JSON.stringify(arrSaveData);
+            ajax.GetAjax("/common/menuGroupSave", param, "json", function (result) {
+                if (result.ERROR_MESSAGE != "") {
+                    $.MessageBox(result.ERROR_MESSAGE);
+                }
+                else {
+                    _grid1RowIndex = $.mrc_table.GetActiveIndex("#dvTable table.list");
+
+                    doQuery();
+
+                }
+            });
+        }
+
+        function doSave2() {
+
+            var arrSaveData = $.mrc_table.GetSaveData("#dvTable2 table");
+            if (arrSaveData.length == 0) {
+                $.MessageBox("저장할 데이터가 없습니다.");
+                return;
+            }
+            var param = JSON.stringify(arrSaveData);
+
+            ajax.GetAjax("/common/GroupMenuSave", param, "json", function (result) {
+                if (result.ERROR_MESSAGE != "") {
+                    $.MessageBox(result.ERROR_MESSAGE);
+                }
+                else {
+                    var grd1ActiveData = $.mrc_table.GetActiveRowData("#dvTable table.list")[0];
+                    doQuery2(grd1ActiveData.STORE_CODE, grd1ActiveData.GROUP_CODE);
+                }
+            });
+        }
+        function doAdd() {
+            var grdData = $.mrc_table.GetData("#dvTable table.list");
+            var nNextSeq = 0;
+            if (grdData.length > 0)
+                nNextSeq = grdData[grdData.length - 1].ORDER_SEQ;
+            nNextSeq = Number(nNextSeq) + 1;
+
+
+
+            var addHtml = '';
+            addHtml += '    <tr class="mrcrow">                                                                                                                   ';
+            addHtml += '        <td class="center">-1</td>                                                                                                        ';
+            addHtml += '        <td><input type="text" value="" /></td>                                                                                           ';
+            addHtml += '        <td class="center"><input type="text" style="min-width:3em;width:3em;" class="number ORDER_SEQ" maxlength="1" value="' + String(nNextSeq) + '"/></td>     ';
+            addHtml += '        <td class="center"><input type="checkbox" /></td>                                                                                 ';
+            addHtml += '        <td>@Html.Raw(Html.DropDownList("DEPT_AUTH", cboDept, new { @placeholder = "부서선택", @multiple = "" }).ToHtmlString().Replace("\r\n", "").Trim())</td>                              ';
+            addHtml += '        <td>@Html.Raw(Html.DropDownList("COMP_POSITION_AUTH", cboCompPosition, new { @placeholder = "직급선택", @multiple = "" }).ToHtmlString().Replace("\r\n","").Trim())</td>             ';
+            addHtml += '        <td>@Html.Raw(Html.DropDownList("COMP_TITLE_AUTH", cboCompTitle, new { @placeholder = "직급선택", @multiple = "" }).ToHtmlString().Replace("\r\n", "").Trim())</td>                   ';
+            addHtml += '        <td class="center"></td>                                                                                                          ';
+            addHtml += '        <td class="center"></td>                                                                                                          ';
+            addHtml += '    </tr>                                                                                                                                 ';
+            $.mrc_table.AddRowHtml("#dvTable table.list", addHtml);
+            $.mrc_table.Init("#dvTable table.list", true);
+            Input.TextBox.onlyNumber("#dvTable table.list .number");
+
+
+
+            SemanticUI.ComponentInit("#dvTable table.list"); // 시맨틱 UI 일경우 초기화 초가
+            $.mrc_table.fixedHeder("#dvTable table.list");
+        }
+        function doDel() {
+            var arrDel = $.mrc_table.GetCheckedData("#dvTable table.list", "D");
+            if (arrDel.length == 0) {
+                $.MessageBox("삭제할 데이터가 없습니다.");
+                return;
+            }
+
+
+            $.MessageBox({
+                buttonDone: "예",
+                buttonFail: "아니오",
+                message: "정말로 삭제하시겠습니까?"
+            }).done(function () {
+                var param = JSON.stringify(arrDel);
+                // alert(param);
+                ajax.GetAjax("/common/menuGroupSave", param, "json", function (result) {
+                    if (result.ERROR_MESSAGE != "") {
+                        $.MessageBox(result.ERROR_MESSAGE);
+                    }
+                    else
+                        doQuery();
+                });
+            }).fail(function () {
+
+            });
+
+        }
+    </script>
+}
+<style>
+    .ui.checkbox {
+        margin-top: 0.5em;
+    }
+
+    #dvTable, #dvTable2 {
+        min-height: 100px;
+    }
+</style>
+<div class="ui vertical stripe segment">
+    <form class="ui form">
+        @Html.TitleNavigation()
+        <div class="one column row search">
+            <div class="column">
+                <table class="ui table search">
+                    <tbody>
+                       
+                     
+                        <tr>
+                            <td class="title">
+                                @Html.Semantic_TITLE2("지점")
+                            </td>
+                            <td class="content frtodate">
+                                @Html.StoreCombo("STORE_CODE", new T_STORE_COND { COMBO_DISPLAY = 1 }, STORE_CODE.ToString(), null, new { @class = "size200" })
+                            </td>
+                            <td class="buttons" colspan="3">
+
+                                @Html.Semantic_Button2("btnClear", "삭제", SemanticUIHelper.enButtonType.Del, SemanticUIHelper.Size.medium, new { onclick = "doDel();" })
+                                @Html.Semantic_Button2("btnAdd", "추가", SemanticUIHelper.enButtonType.New, SemanticUIHelper.Size.medium, new { onclick = "doAdd();" })
+                                @Html.Semantic_Button2("btnSave", "저장", SemanticUIHelper.enButtonType.Save, SemanticUIHelper.Size.medium, new { onclick = "doSave();" })
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+
+            </div>
+        </div>
+        <div class="one column row">
+            <div class="column" id="dvTable">
+                <div class="mrc-fixed-table-container">
+                    <div class="header-bg"></div>
+                    <div class="table-wrapper">
+                        <table class="mrc-table list">
+                            <thead>
+                                <tr>
+                                    <th column_name="GROUP_CODE" style="min-width:50px;">그룹코드</th>
+                                    <th column_name="GROUP_NAME">그룹명</th>
+                                    <th column_name="ORDER_SEQ" style="min-width:30px;">순번</th>
+                                    <th display_size="pc" column_name="HIDE">숨김</th>
+                                    <th display_size="tablet" column_name="DEPT_AUTH" style="min-width:150px;">부서</th>
+                                    <th display_size="pc" column_name="COMP_POSITION_AUTH" style="min-width:150px;">직급</th>
+                                    <th display_size="tablet" column_name="COMP_TITLE_AUTH" style="min-width:150px;">직책</th>
+                                    <th display_size="pc">수정자</th>
+                                    <th display_size="pc" style="width:180px;">수정시간</th>
+                                    <th column_name="STORE_CODE" class="hide">매장코드</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="one column row">
+            <div class="column">
+                <table class="ui table search">
+                    <tbody>
+                        <tr>
+                            <td class="buttons">@Html.Semantic_Button2("btnSave", "저장", SemanticUIHelper.enButtonType.Save, SemanticUIHelper.Size.medium, new { onclick = "doSave2();" })</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div class="one column row">
+            <div class="column" id="dvTable2">
+                <div class="mrc-fixed-table-container">
+                    <div class="header-bg"></div>
+                    <div class="table-wrapper">
+                        <table class="mrc-table list">
+                            <thead>
+                                <tr>
+                                    <th column_name="HIDE" style="width:60px;"><input type="checkbox" id="chkAll" /></th>
+                                    <th class="hidden" column_name="GROUP_CODE">메뉴코드</th>
+                                    <th class="hidden" column_name="MENU_CODE">메뉴코드</th>
+                                    <th column_name="SEARCH_CODE">메뉴코드</th>
+                                    <th column_name="NAME">메뉴명</th>
+                                    <th display_size="tablet" column_name="INSERT_AUTH">등록</th>
+                                    <th display_size="tablet" column_name="UPDATE_AUTH">수정</th>
+                                    <th display_size="tablet" column_name="EXCEL_AUTH">엑셀</th>
+                                    <th display_size="tablet" column_name="PRINT_AUTH">인쇄</th>
+                                    <th display_size="pc">수정자</th>
+                                    <th display_size="pc" style="width:180px;">수정시간</th>
+                                    <th column_name="PROJECT_SITE" class="hide">사이트구분</th>
+                                    <th column_name="STORE_CODE" class="hide">매장코드</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tbList"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>

@@ -1,0 +1,30 @@
+﻿
+@{
+    List<BOOKMARK_AD_LIST> list = ViewBag.list;
+    string totCnt = (list.Count() == 0 ? "0" : list.First().TOTAL_ROWCOUNT.ToString());
+    <input type="hidden" id="total" value="@totCnt" />
+    foreach (BOOKMARK_AD_LIST data in list)
+    {
+<tr @(data.STATUS == 0 ? "disabled=disabled" : "")>
+    <td class="center"><a href="/Advertise/adreg/@data.AD_CODE">@data.AD_CODE</a></td>
+    <td><a href="@data.CONTENT_URL">@data.TITLE</a></td>
+    
+    <td class="center"><img src="@data.LOGO_URL" class="ui mini rounded image"></td>
+    
+    <td class="hide">@data.BOOKMARK_CODE</td>
+    <td class="center">@data.USER_ID</td>
+    <td class="center">@data.USER_NAME</td>
+    <td class="center">@data.AD_TYPE_NAME</td>
+    <td class="center">@data.BANNER_TYPE_NAME</td>
+    <td class="center">@data.AD_CNT</td>
+    <td class="center">@data.FR_DATE.ToFormatDate()</td>
+    <td class="center">@data.TO_DATE.ToFormatDate()</td>
+    <td class="center">@data.FR_TIME</td>
+    <td class="center">@data.TO_TIME</td>
+    <td class="center">@data.INSERT_DATE</td>
+    
+
+</tr>
+    }
+}
+

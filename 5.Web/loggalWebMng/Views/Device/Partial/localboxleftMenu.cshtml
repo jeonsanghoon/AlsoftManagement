@@ -1,0 +1,58 @@
+﻿
+@{
+    /**/
+
+
+    List<LOGGAL_BOX_INFO>
+    BannerGroupList = ViewBag.BannerGroupList;
+    int nCnt = 0;
+    foreach (LOGGAL_BOX_INFO data in BannerGroupList)
+    {
+   // data.CATEGORY_NAME = (string.IsNullOrEmpty(data.CATEGORY_NAME)) ? data.list[0].TITLE : data.CATEGORY_NAME;
+    <div class="item banner_1_@(nCnt +1)" onclick="localboxLeftMenuClick(this,@(nCnt))">
+        <h3>@data.CATEGORY_NAME @(data.SEQ > 1 ? data.SEQ.ToString() : "")</h3>
+    </div>
+
+    nCnt++;
+    }
+
+
+    <style>
+        .ui.sidebar.menu .close {
+            padding: 1em;
+        }
+
+            .ui.sidebar.menu .close h3 {
+                color: salmon;
+                font-size: 1.4em;
+                font-weight: bold;
+            }
+		
+    </style>
+    List<LOGGAL_BOX_INFO>
+        myGroupList = ViewBag.GroupList;
+        if (myGroupList.Count() > 0)
+        {
+        nCnt = 0;
+        <div class="menu">
+            <h3 style="padding-top:0.5em;margin-left:1em;color:white;">내배너</h3>
+            @{
+            foreach (LOGGAL_BOX_INFO data in myGroupList)
+            {
+            <a class="item main_1_@(nCnt +1)" onclick="localboxMyBnnerLeftMenuClick(this,@(nCnt))">
+                <h4>&nbsp;&nbsp;&nbsp;@(string.IsNullOrEmpty(data.CATEGORY_NAME) ? "제목없음" : data.CATEGORY_NAME + (data.GROUP_SEQ == null ? "" : (data.FRAME_TYPE != 1 ? "_" + data.GROUP_SEQ.ToString():"") )) </h4>
+			</a>
+            nCnt++;
+            }
+            }
+        </div>
+        }
+
+        <div class="close" onclick="localboxClose();">
+            <h3>앱종료</h3>
+        </div>
+
+        }
+
+
+

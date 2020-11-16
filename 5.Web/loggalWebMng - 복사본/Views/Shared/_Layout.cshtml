@@ -1,0 +1,77 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+
+    <title>@Html.Title()</title>
+    @{Html.RenderPartial("/Views/Shared/Partial/Header.cshtml"); }
+    @*<link rel="stylesheet" href="~/Common/plugin/css/responsive-sidebar-navigation/reset.css">
+    <link rel="stylesheet" href="~/Common/plugin/css/responsive-sidebar-navigation/style.css?ver=20161123">*@
+</head>
+<body>
+ 
+    @*
+    *@
+
+
+
+    <!-- Page Contents -->
+    <div class="cd-main">
+        @*<div class="ui inverted vertical masthead center aligned segment">
+                @{Html.RenderPartial("/Views/Shared/Partial/TopMenu.cshtml"); }
+            </div>*@
+        @{Html.RenderPartial("/Views/Shared/Partial/Top.cshtml"); }
+        @{Html.RenderPartial("/Views/Shared/Partial/Side.cshtml"); }
+        <main class="cd-main-content">
+            <div class="content-wrapper">
+                @RenderBody()
+            </div> <!-- .content-wrapper -->
+        </main>
+        
+
+        @{Html.RenderPartial("/Views/Shared/Partial/Footer.cshtml"); }
+        @{Html.RenderPartial("/Views/Shared/Partial/loader.cshtml"); }
+        @{Html.RenderPartial("/Views/Shared/Partial/Script.cshtml"); }
+        @RenderSection("scripts", required: false)
+    </div>
+
+
+    <script type="text/javascript">
+        var currentmenuName = "@SessionHelper.LoginInfo.CURRENT_MENU_NAME";
+        $(document).ready(function () {
+
+            layoutInit();
+        });
+
+        function layoutInit() {
+            //try {
+            //    // fix menu when passed
+            //    $('.masthead')
+            //      .visibility({
+            //          once: false,
+            //          onBottomPassed: function () {
+            //              $('.fixed.menu').transition('fade in');
+            //          },
+            //          onBottomPassedReverse: function () {
+            //              $('.fixed.menu').transition('fade out');
+            //          }
+            //      });
+
+            //    // create sidebar and attach to menu open
+            //    $('.ui.sidebar').sidebar('attach events', '.toc.item');
+            //} catch (e) { }
+
+            @{ 
+                if (SessionHelper.LoginInfo.EDIT_MODE == enEditMode.READ)
+                {
+                    @:$('form input').each(function() { $(this).attr('readonly', true); });
+                }
+            }
+        }
+    </script>
+    <script src="~/Common/plugin/js/responsive-sidebar-navigation/jquery.menu-aim.js"></script>
+    <script src="~/Common/plugin/js/responsive-sidebar-navigation/main.js?ver=20180612"></script>
+    @{Html.RenderPartial("/Views/Shared/Partial/Analytics.cshtml"); }
+</body>
+</html>

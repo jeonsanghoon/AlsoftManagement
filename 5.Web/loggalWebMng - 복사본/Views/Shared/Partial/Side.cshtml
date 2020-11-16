@@ -1,0 +1,123 @@
+﻿<!-- Sidebar Menu -->
+@*<div class="ui vertical inverted sidebar menu">
+        <a class="active item">Home</a>
+        <a class="item">Work</a>
+        <a class="item">Company</a>
+        <a class="item">Careers</a>
+        <a class="item">Login</a>
+        <a class="item" href="/home/login">Signup</a>
+    </div>*@
+
+
+
+
+    <nav class="cd-side-nav is-fixed" style="">
+        <ul>
+            @{
+                if (SessionHelper.LoginInfo.WebMemu != null)
+                {
+                    var menuList = SessionHelper.LoginInfo.WebMemu;
+                    for (int i = 0; i < menuList.Count(); i++)
+                    {
+                        if (i > 0 && menuList[i - 1].LEVEL < menuList[i].LEVEL)
+                        {
+                            @:<ul>
+                        }
+                        if (i < menuList.Count() - 1 && menuList[i].LEVEL < menuList[i + 1].LEVEL)
+                        {
+                            @:<li class="has-children  @menuList[i].MENU_CLASS ">
+                    }
+                    else
+                    { @:<li class="@menuList[i].MENU_CLASS">
+                    }
+
+                        @:<a href="@(string.IsNullOrEmpty(menuList[i].MENU_URL) ? "#" : menuList[i].MENU_URL) ">@menuList[i].NAME</a>
+
+
+                        if (i < menuList.Count() - 1 && menuList[i + 1].LEVEL <= menuList[i].LEVEL)
+                        {
+                            @:</li>
+                            if (menuList[i + 1].LEVEL < menuList[i].LEVEL)
+                            {
+                                @:</ul>
+                            }
+                        }
+                    }
+                }
+                @:</li>
+                @:</ul>
+            @:</li>
+            }
+            @*<li class="cd-label">Main</li>
+
+            <li class="has-children active ">
+                <a href="# ">기본정보</a>
+                <ul>
+                    <li class="">
+                        <a href="/basic/devicelist">기기조회</a>
+                    </li>
+                    <li class="">
+                        <a href="/basic/devicereg">기기등록</a>
+                    </li>
+                </ul>
+            </li>*@
+            @*<li class="has-children">
+        <a href="# ">웹메뉴관리</a>
+        <ul>
+            <li class="">
+                <a href="/common/menureglist ">메뉴등록</a>
+            </li>
+            <li class="">
+                <a href="/common/menugroupreglist ">그룹등록</a>
+            </li>
+            <li class="">
+                <a href="# ">그룹별직원메뉴부여</a>
+            </li>
+            <li class="">
+                <a href="# ">직원별메뉴관리</a>
+            </li>
+        </ul>
+    </li>
+    <li class="has-children  ">
+        <a href="# ">직원관리</a>
+        <ul>
+            <li class="">
+                <a href="/Customer/CustomerList ">직원조회</a>
+            </li>
+            <li class="">
+                <a href="/Customer/CustomerReg ">직원등록</a>
+            </li>
+        </ul>
+    </li>
+    <li class="has-children  ">
+        <a href="# ">고객관리</a>
+        <ul>
+            <li class="">
+                <a href="/Customer/CustomerList ">고객조회</a>
+            </li>
+            <li class="">
+                <a href="/Customer/CustomerReg ">고객등록</a>
+            </li>
+        </ul>
+    </li>
+    <li class="has-children">
+        <a href="# ">통계</a>
+        <ul>
+            <li class="">
+                <a href="# ">통계1</a>
+            </li>
+            <li class="">
+                <a href="# ">통계2</a>
+            </li>
+        </ul>
+    </li>
+
+    }
+            *@
+
+            @*<ul>
+                <li class="cd-label">Action</li>
+                <li class="action-btn"><a href="#0">+ Button</a></li>
+            </ul>*@
+        </ul>
+    </nav>

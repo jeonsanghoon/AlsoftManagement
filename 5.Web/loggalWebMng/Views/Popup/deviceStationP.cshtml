@@ -1,0 +1,179 @@
+﻿@{
+    int nhideType;
+    string placeHolder = "업체명,지점명,아이디,이름으로 검색";
+    if (SessionHelper.LoginInfo.STORE_CODE == 1)
+    {
+        nhideType = 1;
+    }
+    else if (SessionHelper.LoginInfo.STORE.STORE_TYPE == 1 || SessionHelper.LoginInfo.STORE.STORE_TYPE == 4)
+    {
+        placeHolder = "지점명,아이디,이름으로 검색";
+        nhideType = 2;
+    }
+    else
+    {
+        placeHolder = "이름으로 검색";
+        nhideType = 3;
+    }
+
+
+}
+<style>
+    #dvDeviceStationPopup .column.row {
+        padding: 0.25em;
+    }
+
+
+</style>
+<div class="ui modal form" id="dvDeviceStationPopup">
+    <div class="header">스테이션선택</div>
+    <div class="content">
+        <div class="ui grid">
+            <div class="one column row">
+                <div class="column">
+                    <div class="ui grid">
+                        <div class="eight wide column">
+                            @Html.Semantic_TextBox("P_STATION_NAME", "", new { @style = "width:100%", @placeholder = "스테이션명을 입력하세요" })
+                        </div>
+                        <div class="eight wide column buttons">
+                            @{ 
+                                if (SessionHelper.LoginInfo.EMPLOYEE.EMP_AUTH == 1)/*전체권한*/
+                                {
+                            @Html.Semantic_Button2("btnDeviceStationReg2", "등록으로 이동", SemanticUIHelper.enButtonType.ToList, SemanticUIHelper.Size.mini, new { onclick = "deviceStationRegMove();" })
+                                    }
+                                }
+                            @Html.Semantic_Button2("btnStoreGroupAdd", "조회", SemanticUIHelper.enButtonType.Normal, SemanticUIHelper.Size.mini, new { onclick = "doQuery_DeviceStationP();" })
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="one column row">
+                <div class="column">
+                    <div id="dvDeviceStationP">
+                        <table id="tbList" class="mrc-table">
+                            <thead>
+                                <tr>
+
+                                    <th column_name="STATION_NAME" data-sort="A.STATION_NAME" style="min-width:50px;" class="sort">스테이션명</th>
+                                    <th column_name="LOGO_URL">로고</th>
+                                    <th column_name="ADDRESS" data-sort="A.ADDRESS1, A.ADDRESS2" display_size="pc" class="sort">주소</th>
+                                    <th column_name="ZIP_CODE" display_size="detail" class="sort">우편번호</th>
+                                    <th column_name="LATITUDE" display_size="detail" class="sort">위도</th>
+                                    <th column_name="LONGITUDE" display_size="detail" class="sort">경도</th>
+                                    <th column_name="STATION_DESC" display_size="pc" class="sort">설명</th>
+                                    <th column_name="DEVICE_CNT" display_size="detail">로컬박스수</th>
+                                    <th column_name="STATION_CODE" class="hide">코드</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                        <center style="padding-top:0.5em">
+                            <div id="dvpagination_deviceStation" class="ui floated pagination menu"></div>
+                        </center>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+    </div>
+    <div class="actions">
+        @Html.Semantic_Button2("btnDeviceStationPSel", "확인", SemanticUIHelper.enButtonType.Save, new { @onclick = "DeviceStationPConfirm();" })
+        @Html.Semantic_Button2("btnDeviceStationPDel", "닫기", SemanticUIHelper.enButtonType.Normal, new { @onclick = "DeviceStationPClose();" })
+    </div>
+</div>
+
+<script type="text/javascript">
+    
+    function DeviceStationPOpen() {
+        
+        $('#dvDeviceStationPopup').modal('setting', {
+            autofocus:false,
+            onShow: function () {
+                setTimeout("DeviceStationP_Init()", 1000);
+            }
+        }).modal("show");
+        doQuery_DeviceStationP();
+        $("#P_STATION_NAME").keydown(function (e) {
+            if (e.keyCode == 13) doQuery_DeviceStationP();
+        });
+        //$("#dvDeviceStationPopup").css("margin-top", "-300px");
+
+    }
+    function DeviceStationP_Init() {
+        $("#P_STATION_NAME").focus();
+        $("#P_STATION_NAME").select();
+    }
+    function DeviceStationPClose() {
+        $('#dvDeviceStationPopup').modal("hide");
+    }
+    function errormessageClear() {
+        $(".ui.error.message").hide();
+        $(".ui.error.message ul").html("");
+    }
+
+    function mrc_table_trClick(objName, result) {
+
+        if (objName == "#dvDeviceStationP table")
+        {
+           // DeviceStationPopupSelected(result);
+           // DeviceStationPClose();
+        }
+    }
+
+    function DeviceStationPConfirm() {
+        var list = $.mrc_table.GetActiveRowData("#dvDeviceStationP table");
+        if (list.length == 0) $.MessageBox("선택된 데이터가 없습니다.");
+        DeviceStationPopupSelected($.mrc_table.GetActiveRowData("#dvDeviceStationP table")[0]);
+        DeviceStationPClose();
+    }
+    var PARAM_DATA_DEVICE_P = {
+        PAGE_SIZE: 5
+        , PAGE_COUNT: 7
+        , PAGE: 1
+        , SORT: "A.STATION_NAME"
+    }
+    function doQuery_DeviceStationP(page, sort) {
+        if (page == undefined || page < 1) page = 1;
+        PARAM_DATA_DEVICE_P.PAGE = page;
+        var params = new Object();
+        params.STATION_NAME = $("#P_STATION_NAME").val();
+        params.PV_TYPE = "POPUP";
+        params.PAGE_COUNT = PARAM_DATA_DEVICE_P.PAGE_COUNT;
+        params.PAGE = PARAM_DATA_DEVICE_P.PAGE;
+        if (!(sort == undefined || sort == null)) PARAM_DATA_DEVICE_P.SORT = sort;
+        params.SORT = PARAM_DATA_DEVICE_P.SORT;
+        params = JSON.stringify(params);
+        ajax.GetAjax("/Basic/PV_deviceStationList", params, "html", function (result) {
+            $("#dvDeviceStationP table tbody").html(result);
+            $.mrc_table.Init("#dvDeviceStationP table", false, PARAM_DATA_DEVICE_P.SORT);
+            $("#dvpagination_deviceStation").show();
+
+            $("#dvpagination_deviceStation").pagination({
+                total: Number($("#dvDeviceStationP #total").val()), page: PARAM_DATA_DEVICE_P.PAGE, pagesize: PARAM_DATA_DEVICE_P.PAGE_SIZE, perpage: PARAM_DATA_DEVICE_P.PAGE_COUNT
+                , onPageClick: function (item, page) {
+                    doQuery_DeviceStationP(page);
+                }
+            })
+        });
+    }
+
+    function mrcGrid_Sort(gridName, columnName, orderType) {
+        if (gridName == "#dvDeviceStationP table") {
+            var sSort = (orderType == undefined || orderType == "") ? "D.USER_NAME" : columnName + " " + orderType;
+            doQuery_DeviceStationP(1, sSort)
+        } else {
+            try {
+                mrcGrid_Sort_After(gridName, columnName, orderType);
+            } catch (e) { }
+        }
+    }
+
+    function deviceStationRegMove() {
+        
+        var openNewWindow = window.open("about:blank");
+
+        
+        openNewWindow.location.href = "/basic/devicestationreg";
+    }
+</script>

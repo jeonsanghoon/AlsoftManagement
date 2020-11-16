@@ -1,0 +1,254 @@
+﻿@{
+
+}
+<!--<script src="https://dmaps.daum.net/map_js_init/postcode.v2.js"></script>-->
+<script src="https://ssl.daumcdn.net/dmaps/map_js_init/postcode.v2.js"></script>
+@section scripts{
+
+    <script type="text/javascript">
+        var PARAM_DATA = {
+            PAGE_SIZE: ($("window").width() < 768 ? 5 : 10)
+            , PAGE_COUNT: 15
+            , PAGE: 1
+        }
+        $(document).ready(function () {
+            var pageCount = ($(window).height() - $(".cd-main-header").outerHeight() + $(".ui.header").outerHeight() + $(".ui.grid.search").outerHeight() + $(".ui.footer").outerHeight() - 450) / 30;
+
+            PARAM_DATA.PAGE_COUNT = Number(Math.floor(pageCount));
+            doQuery(1);
+            // $("#STORE_CODE").dropdown
+
+            ComponentInit();
+        }); //End document.ready
+        function ComponentInit() {
+            $(".ui.form .search input").keyup(function (e) {
+                var code = (e.keyCode ? e.keyCode : e.which);
+                if (code == 13) {
+                    doQuery();
+                }
+            });
+        }
+        function doQuery(page, sort) {
+            if (page == undefined || page < 1) page = 1;
+            PARAM_DATA.PAGE = page;
+            var params = BaseCommon.FormInfo.serializeJson(".ui.form");
+            var objStore = GetCompanyStoreCode(params.STORE_CODE);
+            params.COMPANY_CODE = objStore.COMPANY_CODE;
+            params.STORE_CODE = objStore.STORE_CODE;
+
+            params.PAGE_COUNT = PARAM_DATA.PAGE_COUNT;
+            params.PAGE = PARAM_DATA.PAGE;
+            params.SORT = sort;
+            params.DISPLAY_MODE = "Total";
+            params = JSON.stringify(params);
+            ajax.GetAjax("/basic/PV_devicelist", params, "html", function (result) {
+                $("#dvTable tbody").html(result);
+                $.mrc_table.Init("#tbList", false, sort);
+
+                $("#dvpagination").show();
+
+                $("#dvpagination").pagination({
+                    total: Number($("#total").val()), page: PARAM_DATA.PAGE, pagesize: PARAM_DATA.PAGE_SIZE, perpage: PARAM_DATA.PAGE_COUNT
+                    , onPageClick: function (item, page) {
+                        doQuery(page);
+                    }
+                })
+                $("#dvpagination").css("display", "");
+
+                //$(".authnumberpopup").click(function () {
+                //    $("#popAutoNumberApply").modal("show");
+                //})
+
+            });
+        }
+
+        function GetCompanyStoreCode(code) {
+            var rtn = new Object();
+            rtn.COMPANY_CODE = "";
+            rtn.STORE_CODE = "";
+            if (!(code == undefined || code == "")) {
+                rtn.COMPANY_CODE = code.split('|')[0];
+                rtn.STORE_CODE = code.split('|')[1];
+            }
+            return rtn;
+        }
+
+        function SemanticUI_ComboChange(obj) {
+
+            if ($(obj)[0].id == "STORE_CODE") {
+                SetStoreGroupCombo();
+                doQuery();
+            }
+
+        }
+
+        function SetStoreGroupCombo() {
+
+            var params = new Object();
+            var htmlattribute = new Object();
+            htmlattribute.class = "mini size200";
+            params.name = "GROUP_CODE";
+            var objStore = GetCompanyStoreCode(params.STORE_CODE);
+            params.COMPANY_CODE = objStore.COMPANY_CODE;
+            params.STORE_CODE = objStore.STORE_CODE;
+
+            params.GROUP_TYPE = 2;
+            params.selectedValue = $("#GROUP_CODE").val();
+            params.optionLabel = "-선택-";
+            params.htmlAttributes = JSON.stringify(htmlattribute);
+            params = JSON.stringify(params);
+            ajax.GetAjax("/common/StoreGroupCombo", params, "html", function (result) {
+                $("#dvGroupCode").html(result);
+                SemanticUI.ComponentInit($("#dvGroupCode"));
+            })
+
+        }
+
+        function mrc_table_trClick(objName, param) {
+
+            if (objName == "#tbList")
+                popAutoNumberApplyShow(param);
+        }
+        function btnNewClick() {
+            location.href = "devicereg2";
+        }
+
+        function mrcGrid_Sort(gridName, columnName, orderType) {
+            var sSort = (orderType == undefined || orderType == "") ? "A.UPDATE_DATE DESC" : columnName + " " + orderType;
+            doQuery(1, sSort)
+        }
+
+        function ExcelDown() {
+            var params = BaseCommon.FormInfo.serializeJson(".ui.form");
+            params.DISPLAY_MODE = "Total";
+            var arrData = new Array();
+            $.each(params, function (key, val) {
+                //display the key and value pair
+
+                arrData.push({ name: key, value: val });
+            });
+            BaseCommon.FormInfo.PostSubmit('/basic/DeviceExcelReport', arrData);
+        }
+
+        function DeviceStationPopupSelected(data) {
+            $("#STATION_CODE").val(data.STATION_CODE);
+            $("#STATION_NAME").val(data.STATION_NAME);
+        }
+        function STATION_NAME_keyUp() {
+            $("#STATION_CODE").val("");
+        }
+
+/**/</script>
+}
+<style>
+    .ui.checkbox {
+        margin-top: 0.5em;
+    }
+</style>
+@{
+
+    Daum_MapMultiMarker optionmap = new Daum_MapMultiMarker() { ID = "device", bReadOnly = true, MAKER_MAX_COUNT = SessionHelper.LoginInfo.EMPLOYEE.MAKER_MAX_COUNT, bCircle = false };
+}
+
+@Html.EditorFor(model => new EditTempleateModel().Kakao_MapMakerCircle, new { optionmap = optionmap })
+<div class="ui vertical stripe segment">
+    @Html.TitleNavigation()
+    <form class="ui form" onSubmit="return false;" action="/Base/FileUpload" data-ajax="true" data-ajax-mode="replace" data-ajax-update="#dc_goal_placeholder" enctype="multipart/form-data" id="frmUpload" method="post">
+
+        @*@Html.TitleHeader()*@
+
+        <div class="ui grid search " style="height:100%;">
+
+            <div class="eight wide mobile four wide tablet two wide computer column">
+                @Html.CompanyStoreCombo("STORE_CODE", new T_STORE_COND { COMBO_DISPLAY = 1, DISPLAY_MODE = "Total" }, "", "-지점선택-", new { @class = "size200" })
+            </div>
+            <div class="eight wide mobile four wide tablet two wide computer column" id="dvGroupCode">
+                @{
+                    var groupCombo = new loggalServiceBiz.StoreService().GetStoreGroup(new T_STORE_GROUP { GROUP_TYPE = 2 })
+                    .Select(s => new SelectListItem { Value = s.GROUP_CODE.ToString(), Text = s.GROUP_NAME }).ToList();
+                    @Html.CommonComboNormal("GROUP_CODE", groupCombo, "", "-그룹선택-", new { @class = "size200" })
+                }
+            </div>
+            <div class="eight wide mobile four wide tablet two wide computer column">
+                @Html.Semantic_TextBox("DEVICE_NAME", "", new { @placeholder = "기기명", @class = "medium size180" })
+            </div>
+            <div class="eight wide mobile four wide tablet two wide computer column">
+                @Html.CommonCombo("STATUS", new T_COMMON_COND { MAIN_CODE = "S006" }, "", "-진행-", new { @class = "size180" })
+            </div>
+            <div class="eight wide mobile four wide tablet two wide computer column">
+                @Html.CommonCombo("AUTH_YN", new T_COMMON_COND { MAIN_CODE = "B003" }, "", "-인증여부-", new { @class = "size180" })
+            </div>
+            <div class="eight wide mobile four wide tablet two wide computer column">@Html.CommonCombo("BUSI_TYPE", new T_COMMON_COND { MAIN_CODE = "B001" }, "", "-영리구분-", new { @class = "size180" })</div>
+            <div class="eight wide mobile four wide tablet two wide computer column">@Html.CommonCombo("BUSI_TYPE2", new T_COMMON_COND { MAIN_CODE = "B002" }, "", "-사업구분-", new { @class = "size180" })</div>
+            <div class="sixteen wide mobile eight wide tablet eight wide computer column">
+                <div class="ui icon input">
+                    @Html.Hidden("STATION_CODE", "")
+                    <input id="STATION_NAME" name="STATION_NAME" type="text" placeholder="스테이션" value="" data-content="팝업버튼을 클릭하여 스테이션을 선택하세요" onkeyup="STATION_NAME_keyUp();">
+                    <i class="inverted circular search link icon" onclick="DeviceStationPOpen();"></i>
+                </div>
+            </div>
+            <div class="sixteen wide mobile eight wide tablet eight wide computer column buttons">
+
+                @Html.Semantic_Button2("btnOpen", "지도보기", SemanticUIHelper.enButtonType.Normal, new { @onclick = "markerMapPopupOpen();" })
+
+                <script>
+                    function markerMapPopupOpen() {
+                        var params = new Array();
+                        params.TITLE = $("#DEVICE_NAME").val();
+                        params = JSON.stringify(params);
+                        ajax.GetAjax("/basic/GetDeviceMapList", params, "json", function (result) {
+
+                           // @(optionmap.ID)_DaumMapMaker_Open(result, 0, 0, "", 1, true);
+                            @(optionmap.ID)_MapOpen(result);
+                        });
+
+                    }
+                </script>
+                @Html.Semantic_Button2("btnSearch", "조회", SemanticUIHelper.enButtonType.ToList, SemanticUIHelper.Size.medium, new { @onclick = "doQuery(1);" })
+                @Html.Semantic_Button2("btnExcel", "엑셀", SemanticUIHelper.enButtonType.Excel, SemanticUIHelper.Size.medium, new { @onclick = "ExcelDown();" })
+                @Html.Semantic_Button2("btnNew", "신규", SemanticUIHelper.enButtonType.New, SemanticUIHelper.Size.medium, new { @onclick = "btnNewClick();" })
+            </div>
+
+        </div>
+        <div class="ui grid " style="height:100%;">
+            <div class="one column row">
+                <div class="column" id="dvTable">
+                    <table id="tbList" class="mrc-table">
+                        <thead>
+                            <tr>
+                                <th column_name="DEVICE_NAME" data-sort="A.DEVICE_NAME" style="min-width:50px;" class="sort">기기명</th>
+                                <th display_size="tablet" column_name="STATION_NAME" data-sort="A1.STATION_NAME" class="sort">로컬스테이션</th>
+                                <th column_name="LOGO_URL">로고</th>
+                                <th display_size="tablet" column_name="STORE_NAME" data-sort="B.STORE_NAME" class="sort @(SessionHelper.LoginInfo.STORE_CODE != 1 ? "hide" : "")">지점명</th>
+                                <th display_size="detail" column_name="GROUP_NAME" data-sort="SG.GROUP_NAME" class="sort ">그룹명</th>
+                                <th column_name="DEVICE_TYPE" data-sort="A.DEVICE_TYPE" class="sort" display_size="pc">구분</th>
+
+                                <th display_size="tablet" column_name="BUSI_TYPE_NAME" data-sort="C1.NAME" class="sort">영리구분</th>
+                                <th column_name="BUSI_TYPE_NAME2" data-sort="C2.NAME" class="hide sort" display_size="pc">사업구분</th>
+                                <th display_size="tablet" column_name="CONTACT_NAME" data-sort="A.CONTACT_NAME" class="sort">담당자명</th>
+                                <th display_size="pc" column_name="CONTACT_PHONE" data-sort="A.CONTACT_PHONE" class="sort">담당자전화</th>
+                                <th column_name="STATUS" data-sort="C3.ORDER_SEQ" class="sort" display_size="pc">진행</th>
+                                <th column_name="ADDRESS" data-sort="A.ADDRESS1, A.ADDRESS2" display_size="pc" class="sort">주소</th>
+                                <th column_name="UPDATE_NAME" data-sort="M.USER_NAME" display_size="pc" class="sort">수정자</th>
+                                <th column_name="UPDATE_DATE" data-sort="A.UPDATE_DATE" display_size="pc" class="sort">수정시간</th>
+                                <th column_name="DEVICE_CODE" data-sort="A.DEVICE_CODE" class="hide sort" display_size="pc">기기코드</th>
+                                <th column_name="HARDWARE_NAME" data-sort="AH1.HARDWARE_NAME" class="sort" display_size="pc">하드웨어</th>
+                                <th column_name="MODEL_NAME" data-sort="AH1.MODEL_NAME" class="sort" display_size="detail">모델명</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="one column row">
+                <div id="dvpagination" class="ui floated pagination menu"></div>
+            </div>
+        </div>
+        @{
+            Html.RenderPartial("/Views/Popup/deviceStationP.cshtml");
+            Html.RenderPartial("/Views/Basic/Partial/PV_AuthNumberApply.cshtml");
+        }
+    </form>
+</div>
+
+

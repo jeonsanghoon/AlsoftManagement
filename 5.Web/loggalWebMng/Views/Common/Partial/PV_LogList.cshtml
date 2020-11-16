@@ -1,0 +1,29 @@
+﻿@using ALT.VO.Common;
+@{
+    List<T_LOG> list = (ViewBag.list == null) ? new List<T_LOG>() : ViewBag.list;
+    string totCnt = (list.Count() == 0 ? "0" : list.First().TOTAL_ROWCOUNT.ToString());
+    <input type="hidden" id="total" value="@totCnt" />
+    foreach (T_LOG data in list)
+    {
+<tr>
+    <td class="center">@data.LOG_DATE.Substring(0,10)</td>
+    <td class="left">@data.COMPANY_NAME</td>
+    <td class="center">@data.STORE_NAME</td>
+    <td class="left">@data.DEPT_NAME</td>
+
+    <td class="center">@data.LOG_TYPE_NAME</td>
+
+    <td>@data.LOG_DATA2</td>
+    <td>@data.LOG_DATA1</td>
+    @*<td >@data.LOG_DATA3</td>*@
+    <td><textarea rows="2" readonly="readonly">@data.LOG_DESC</textarea></td>
+    <td>@data.USE_IP</td>
+    <td>@data.INSERT_ID</td>
+    <td class="center">@data.INSERT_NAME</td>
+    <td class="center">@data.LOG_DATE</td>
+</tr>
+    }
+}
+
+
+

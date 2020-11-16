@@ -1,0 +1,281 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<DBAgentMultiTemplate  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns="http://altsoft.kr/">
+  <DBAgentTemplate TemplateID="GetSignagePlaceList">
+    <!-- 
+    SqlType : SQL의 형태를 지정합니다.
+      Example 1:<SqlType>FixedSQL</SqlType> 고정적인 SQL을 지원합니다. 
+      Example 2:<SqlType>DynamicSQL</SqlType> 동적인 SQL Type1을 지원합니다.  
+    Description : 해당 SQL의 기능설명을 적습니다.
+    SQLModifier : 해당 SQL의 작성자(수정자)를 적습니다
+    LastModifyDate : 해당 SQL의 마지막 수정일을 적습니다
+    -->
+    <Information>
+      <SqlType>DynamicSQL</SqlType>
+      <Description>로컬사인 장소 조회</Description>
+      <SQLModifier>전상훈</SQLModifier>
+      <LastModifyDate>2017-07-13</LastModifyDate>
+    </Information>
+
+    <TemplateSQL>
+      <!-- FixedSQL : 고정된 SQL이 들어가는 곳입니다. -->
+      <FixedSQL>
+        <![CDATA[ 
+ 
+	SET NOCOUNT ON 
+	/*************************************************/
+	/* 로컬사인장소 - T_SIGNAGE_PLACE 조회 -  SELECT QUERY    */ 
+  /* GetSignagePlaceList                                */
+	/*************************************************/
+	SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED 
+	SELECT 
+		   A.IDX
+		 , A.SIGN_CODE
+     , A.PLACE_TYPE
+		 , A.CK_CODE
+		 , A.REGION
+		 , A.JIBUN_ADDRESS
+		 , A.ROAD_ADDRESS
+		 , A.BUILDING
+     , A.ZIP_CODE
+     , A.LATITUDE
+     , A.LONGITUDE
+     , A.RADIUS
+     , A.REMARK
+		 , A.INSERT_CODE
+     , B.USER_NAME AS INSERT_NAME
+		 , A.INSERT_DATE
+	FROM T_SIGNAGE_PLACE A 
+ INNER JOIN T_MEMBER B
+    ON A.INSERT_CODE = B.MEMBER_CODE
+  WHERE 1=1 
+   #[IDX]
+   #[SIGN_CODE]
+   #[PLACE_TYPE]
+   #[CK_CODE]
+   #[REGION]
+   #[JIBUN_ADDRESS]
+   #[ROAD_ADDRESS]
+   #[ROAD_ADDRESS]
+   #[BUILDING]
+   #[ZIP_CODE]
+   ORDER BY A.JIBUN_ADDRESS
+	SET NOCOUNT OFF 
+
+
+  ]]>
+      </FixedSQL>
+      <DynamicBodys>
+        <Key>IDX</Key>
+        <Body>
+          <![CDATA[ AND A.IDX = {0}]]>
+        </Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>SIGN_CODE</Key>
+        <Body>
+          <![CDATA[ AND A.SIGN_CODE = {0}]]>
+        </Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>PLACE_TYPE</Key>
+        <Body>
+          <![CDATA[ AND A.PLACE_TYPE = {0}]]>
+        </Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>CK_CODE</Key>
+        <Body>
+          <![CDATA[ AND A.CK_CODE = {0}]]>
+        </Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>REGION</Key>
+        <Body>
+          <![CDATA[ AND A.REGION LIKE N'%{0}%']]>
+        </Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>JIBUN_ADDRESS</Key>
+        <Body>
+          <![CDATA[ AND A.JIBUN_ADDRESS LIKE N'%{0}%']]>
+        </Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>ROAD_ADDRESS</Key>
+        <Body>
+          <![CDATA[ AND A.ROAD_ADDRESS LIKE N'%{0}%']]>
+        </Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>BUILDING</Key>
+        <Body>
+          <![CDATA[ AND A.BUILDING LIKE N'%{0}%']]>
+        </Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>ZIP_CODE</Key>
+        <Body>
+          <![CDATA[ AND A.ZIP_CODE = N'{0}']]>
+        </Body>
+      </DynamicBodys>
+    </TemplateSQL>
+  </DBAgentTemplate>
+
+  <DBAgentTemplate TemplateID="SignagePlaceSave">
+    <!-- 
+    SqlType : SQL의 형태를 지정합니다.
+      Example 1:<SqlType>FixedSQL</SqlType> 고정적인 SQL을 지원합니다. 
+      Example 2:<SqlType>DynamicSQL</SqlType> 동적인 SQL Type1을 지원합니다.  
+    Description : 해당 SQL의 기능설명을 적습니다.
+    SQLModifier : 해당 SQL의 작성자(수정자)를 적습니다
+    LastModifyDate : 해당 SQL의 마지막 수정일을 적습니다
+    -->
+    <Information>
+      <SqlType>DynamicSQL</SqlType>
+      <Description>로컬사인 장소 저장</Description>
+      <SQLModifier>전상훈</SQLModifier>
+      <LastModifyDate>2017-07-13</LastModifyDate>
+    </Information>
+
+    <TemplateSQL>
+      <!-- FixedSQL : 고정된 SQL이 들어가는 곳입니다. -->
+      <FixedSQL>
+        <![CDATA[ 
+ 
+	SET NOCOUNT ON 
+	/**********************************************/
+	/* 로컬사인장소 - T_SIGNAGE_PLACE 저장 -  SAVE QUERY */ 
+	/**********************************************/
+	DECLARE @IDX             BIGINT               = N'{0}'
+			  , @SIGN_CODE       BIGINT               = CONVERT(BIGINT, CASE WHEN ISNUMERIC('{1}') = 1 THEN '{1}' ELSE NULL END )
+			  , @PLACE_TYPE      INT                  = CONVERT(INT, CASE WHEN ISNUMERIC('{2}') = 1 THEN '{2}' ELSE NULL END )
+			  , @CK_CODE         INT                  = CONVERT(INT, CASE WHEN ISNUMERIC('{3}') = 1 THEN '{3}' ELSE NULL END )
+			  , @REGION          NVARCHAR(100)        = N'{4}'
+			  , @JIBUN_ADDRESS   NVARCHAR(200)        = N'{5}'
+			  , @ROAD_ADDRESS    NVARCHAR(200)        = N'{6}'
+			  , @BUILDING        NVARCHAR(50)         = N'{7}'
+			  , @ZIP_CODE        VARCHAR(5)           = N'{8}'
+			  , @LATITUDE        NUMERIC(20,16)       = CONVERT(NUMERIC(20,16), CASE WHEN ISNUMERIC('{9}') = 1 THEN '{9}' ELSE NULL END )
+			  , @LONGITUDE       NUMERIC(20,16)       = CONVERT(NUMERIC(20,16), CASE WHEN ISNUMERIC('{10}') = 1 THEN '{10}' ELSE NULL END )
+			  , @RADIUS          INT                  = CONVERT(INT, CASE WHEN ISNUMERIC('{11}') = 1 THEN '{11}' ELSE NULL END )
+			  , @REMARK          NVARCHAR(200)        = N'{12}'
+			  , @INSERT_CODE     INT                  = {13}
+			  , @INSERT_DATE     DATETIME             = GETDATE() 
+  
+  /*지역 정보 유무 확인 후 없으면 추가 후 T_CATEGORY_KEYWORD 의 CK_CODE 리턴*/
+  EXEC SP_ADD_CK_DATA @REGION, @INSERT_CODE, @CK_CODE OUTPUT
+	
+	UPDATE A 
+	SET  	  SIGN_CODE                      = @SIGN_CODE                     
+			 ,  PLACE_TYPE                     = @PLACE_TYPE                    		 ,  CK_CODE                        = @CK_CODE                       
+			 ,  REGION                         = @REGION                        		 ,  JIBUN_ADDRESS                  = @JIBUN_ADDRESS                 
+			 ,  ROAD_ADDRESS                   = @ROAD_ADDRESS                  		 ,  BUILDING                       = @BUILDING                      
+			 ,  ZIP_CODE                       = @ZIP_CODE                      		 ,  LATITUDE                       = @LATITUDE                      
+			 ,  LONGITUDE                     = @LONGITUDE                    		 ,  RADIUS                         = @RADIUS                        
+			 ,  REMARK                         = @REMARK                        
+	FROM T_SIGNAGE_PLACE A 
+	WHERE IDX= @IDX
+	IF @@ROWCOUNT = 0
+	BEGIN
+		INSERT INTO T_SIGNAGE_PLACE
+		(		SIGN_CODE                     		, PLACE_TYPE                    		, CK_CODE                       		
+			, REGION                        		, JIBUN_ADDRESS                 		, ROAD_ADDRESS                  		, BUILDING                      		
+			, ZIP_CODE                      		, LATITUDE                      		, LONGITUDE                    		, RADIUS                        		
+			, REMARK                        		, INSERT_CODE                   		, INSERT_DATE                   		
+		)
+		SELECT @SIGN_CODE                    		, @PLACE_TYPE                   	
+				, @CK_CODE                      		, @REGION                       		, @JIBUN_ADDRESS                	
+				, @ROAD_ADDRESS                 		, @BUILDING                     		, @ZIP_CODE                     	
+				, @LATITUDE                     		, @LONGITUDE                   		, @RADIUS                       	
+				, @REMARK                       		, @INSERT_CODE                  		, @INSERT_DATE                  	
+			
+		 SET @IDX = IDENT_CURRENT('T_SIGNAGE_PLACE')
+	 END
+	
+   
+  UPDATE T_SEARCH_KEYWORD
+     SET UPDATE_CODE = @INSERT_CODE
+        ,UPDATE_DATE = @INSERT_DATE
+   WHERE SIGN_CODE = @SIGN_CODE
+     AND CK_CODE = @CK_CODE
+  IF NOT EXISTS (SELECT * FROM T_SEARCH_KEYWORD
+                  WHERE SIGN_CODE = @SIGN_CODE
+                    AND CK_CODE = @CK_CODE
+     )
+  BEGIN
+      INSERT INTO T_SEARCH_KEYWORD
+      (SIGN_CODE, CK_CODE, INSERT_CODE, INSERT_DATE, UPDATE_CODE, UPDATE_DATE)
+      SELECT @SIGN_CODE, @CK_CODE, @INSERT_CODE, GETDATE() , @INSERT_CODE, GETDATE()
+  END
+   
+  SELECT CONVERT(VARCHAR(100), @IDX) AS DATA, ''  AS ERROR_MESSAGE
+EXCEPTION:
+SET NOCOUNT OFF
+
+
+
+
+  ]]>
+      </FixedSQL>
+
+    </TemplateSQL>
+  </DBAgentTemplate>
+
+
+  <DBAgentTemplate TemplateID="SignagePlaceDelete">
+    <!-- 
+    SqlType : SQL의 형태를 지정합니다.
+      Example 1:<SqlType>FixedSQL</SqlType> 고정적인 SQL을 지원합니다. 
+      Example 2:<SqlType>DynamicSQL</SqlType> 동적인 SQL Type1을 지원합니다.  
+    Description : 해당 SQL의 기능설명을 적습니다.
+    SQLModifier : 해당 SQL의 작성자(수정자)를 적습니다
+    LastModifyDate : 해당 SQL의 마지막 수정일을 적습니다
+    -->
+    <Information>
+      <SqlType>DynamicSQL</SqlType>
+      <Description>로컬사인 장소 삭제</Description>
+      <SQLModifier>전상훈</SQLModifier>
+      <LastModifyDate>2018-03-23</LastModifyDate>
+    </Information>
+
+    <TemplateSQL>
+      <!-- FixedSQL : 고정된 SQL이 들어가는 곳입니다. -->
+      <FixedSQL>
+        <![CDATA[ 
+ 
+	SET NOCOUNT ON 
+	/**********************************************/
+	/* 로컬사인장소 - T_SIGNAGE_PLACE 삭제 - DELETE  QUERY */ 
+	/**********************************************/
+	DECLARE @SIGN_CODE BIGINT = {0}
+   BEGIN TRY
+     DELETE C 
+       FROM T_SIGNAGE_PLACE A
+      INNER JOIN T_SEARCH_KEYWORD B
+              ON A.SIGN_CODE = B.SIGN_CODE
+             AND A.CK_CODE = B.CK_CODE
+      INNER JOIN T_CATEGORY_KEYWORD C
+              ON B.CK_CODE = C.CK_CODE
+      WHERE A.SIGN_CODE = @SIGN_CODE
+         #[PLACE_TYPE]
+ 	END TRY
+	BEGIN CATCH
+	END CATCH
+  
+  DELETE A FROM T_SIGNAGE_PLACE A
+   WHERE A.SIGN_CODE = @SIGN_CODE
+       #[PLACE_TYPE]
+       
+   SELECT '' AS ERROR_MESSAGE
+  
+  ]]>
+      </FixedSQL>
+      <DynamicBodys>
+        <Key>PLACE_TYPE</Key>
+        <Body>
+          <![CDATA[ AND A.PLACE_TYPE = {0}]]>
+        </Body>
+      </DynamicBodys>
+    </TemplateSQL>
+  </DBAgentTemplate>
+</DBAgentMultiTemplate>

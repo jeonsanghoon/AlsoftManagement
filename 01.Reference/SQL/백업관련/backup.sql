@@ -1,0 +1,1 @@
+EXEC sp_BackUP_Database  N'G:\Database\Daily\',  N'ALTSOFT_ONLINESERVICE'

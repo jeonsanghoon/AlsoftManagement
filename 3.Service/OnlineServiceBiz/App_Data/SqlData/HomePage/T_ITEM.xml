@@ -1,0 +1,186 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<DBAgentMultiTemplate  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns="http://altsoft.kr/">
+
+  <DBAgentTemplate TemplateID="GetItemGroupList">
+    <!-- 
+    SqlType : SQL의 형태를 지정합니다.
+      Example 1:<SqlType>FixedSQL</SqlType> 고정적인 SQL을 지원합니다. 
+      Example 2:<SqlType>DynamicSQL</SqlType> 동적인 SQL Type1을 지원합니다.  
+    Description : 해당 SQL의 기능설명을 적습니다.
+    SQLModifier : 해당 SQL의 작성자(수정자)를 적습니다
+    LastModifyDate : 해당 SQL의 마지막 수정일을 적습니다
+    -->
+    <Information>
+      <SqlType>DynamicSQL</SqlType>
+      <Description>품목그룹조회</Description>
+      <SQLModifier>전상훈</SQLModifier>
+      <LastModifyDate>2016-06-02</LastModifyDate>
+    </Information>
+
+    <TemplateSQL>
+      <!-- FixedSQL : 고정된 SQL이 들어가는 곳입니다. -->
+      <FixedSQL>
+        <![CDATA[ 
+    SET NOCOUNT ON
+    /* 품목그룹 조회 GetItemGroupList */
+    SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED
+
+    SELECT A.STORE_CODE
+        , C.STORE_NAME
+	      , A.GROUP_CODE
+	      , A.GROUP_TYPE
+	      , B.NAME AS GROUP_TYPE_NAME
+	      , A.PARENT_GROUP_CODE
+	      , A.LEVEL_DEPTH
+        , A.GROUP_NAME
+	      , A.GROUP_NAME_DISPLAY
+	      , A.ORDER_SEQ
+	      , A.IMAGE_URL
+	      , A.GROUP_DESC
+	      , A.REMARK
+	      , A.HIDE
+	      , A.INSERT_CODE
+	      , A.INSERT_DATE
+	      , A.UPDATE_CODE
+	      , A.UPDATE_DATE 
+    FROM T_ITEM_GROUP A
+    INNER JOIN T_COMMON B
+       ON B.MAIN_CODE = 'I001'
+      AND B.SUB_CODE = A.GROUP_TYPE
+    INNER JOIN T_STORE C
+       ON A.STORE_CODE = C.STORE_CODE
+    WHERE 1=1 
+      #[STORE_CODE]
+      #[GROUP_CODE]
+      #[GROUP_TYPE]
+      #[GROUP_NAME]
+      #[LEVEL_DEPTH]
+      #[HIDE]
+ 
+    ORDER BY A.ORDER_SEQ
+
+   SET NOCOUNT OFF
+      ]]>
+      </FixedSQL>
+      <DynamicBodys>
+        <Key>STORE_CODE</Key>
+        <Body>AND A.STORE_CODE = {0} </Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>GROUP_CODE</Key>
+        <Body>AND A.GROUP_CODE = {0} </Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>GROUP_TYPE</Key>
+        <Body>AND A.GROUP_TYPE = {0} </Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>GROUP_NAME</Key>
+        <Body>AND A.GROUP_NAME LIKE N'%{0}%' </Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>LEVEL_DEPTH</Key>
+        <Body>AND A.LEVEL_DEPTH = '{0}' </Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>HIDE</Key>
+        <Body>AND A.HIDE = '{0}' </Body>
+      </DynamicBodys>
+    </TemplateSQL>
+  </DBAgentTemplate>
+
+  <DBAgentTemplate TemplateID="GetItemList">
+    <!-- 
+    SqlType : SQL의 형태를 지정합니다.
+      Example 1:<SqlType>FixedSQL</SqlType> 고정적인 SQL을 지원합니다. 
+      Example 2:<SqlType>DynamicSQL</SqlType> 동적인 SQL Type1을 지원합니다.  
+    Description : 해당 SQL의 기능설명을 적습니다.
+    SQLModifier : 해당 SQL의 작성자(수정자)를 적습니다
+    LastModifyDate : 해당 SQL의 마지막 수정일을 적습니다
+    -->
+    <Information>
+      <SqlType>DynamicSQL</SqlType>
+      <Description>품목조회</Description>
+      <SQLModifier>전상훈</SQLModifier>
+      <LastModifyDate>2016-06-02</LastModifyDate>
+    </Information>
+
+    <TemplateSQL>
+      <!-- FixedSQL : 고정된 SQL이 들어가는 곳입니다. -->
+      <FixedSQL>
+        <![CDATA[ 
+    SET NOCOUNT ON
+    /* 품목조회 조회 GetItemList */
+    SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED
+
+
+    SELECT A.STORE_CODE
+        , A.STORE_NAME
+	    , B.GROUP_CODE
+	    , B.GROUP_NAME
+	    , B.GROUP_TYPE
+	    , BC.NAME AS GROUP_TYPE_NAME
+      , C.ITEM_CODE
+	    , C.ITEM_NAME
+	    , C.ITEM_NAME_DISPLAY
+	    , C.COST
+	    , C.TAX
+	    , C.TAX2
+	    , C.TAX3
+	    , C.PRICE
+	    , C.ORDER_SEQ
+	    , C.IMAGE_URL
+	    , C.ITEM_DESC
+	    , C.REMARK
+	    , C.HIDE
+	    , C.INSERT_CODE
+	    , C.INSERT_DATE
+	    , C.UPDATE_CODE
+	    , C.UPDATE_DATE
+     FROM T_STORE A
+    INNER JOIN T_ITEM_GROUP B
+       ON A.STORE_CODE = B.STORE_CODE
+    INNER JOIN T_COMMON BC
+       ON BC.MAIN_CODE = 'I001'
+      AND BC.SUB_CODE =B.GROUP_TYPE
+    INNER JOIN T_ITEM C
+       ON B.GROUP_CODE = C.GROUP_CODE
+    WHERE 1=1
+        #[STORE_CODE]
+        #[GROUP_CODE]
+        #[GROUP_TYPE]
+        #[ITEM_CODE]
+        #[ITEM_NAME]
+        #[HIDE]
+    ORDER BY B.ORDER_SEQ, C.ORDER_SEQ
+   SET NOCOUNT OFF
+      ]]>
+      </FixedSQL>
+      <DynamicBodys>
+        <Key>STORE_CODE</Key>
+        <Body>AND A.STORE_CODE = {0} </Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>GROUP_CODE</Key>
+        <Body>AND B.GROUP_CODE = {0} </Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>GROUP_TYPE</Key>
+        <Body>AND B.GROUP_TYPE = {0} </Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>ITEM_CODE</Key>
+        <Body>AND C.ITEM_CODE LIKE '{0}%' </Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>ITEM_NAME</Key>
+        <Body>AND C.ITEM_NAME LIKE N'%{0}%' </Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>HIDE</Key>
+        <Body>AND C.HIDE = '{0}' </Body>
+      </DynamicBodys>
+      
+    </TemplateSQL>
+  </DBAgentTemplate>
+</DBAgentMultiTemplate>

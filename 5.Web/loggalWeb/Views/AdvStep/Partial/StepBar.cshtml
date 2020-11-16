@@ -1,0 +1,97 @@
+﻿@using ALT.VO.loggal;
+@using ALT.VO.Common;
+@using loggalServiceBiz;
+@{
+
+    T_AD data = (ViewBag.data == null) ? new T_AD() { AD_CODE = 0, STATUS = 1 } : (T_AD)ViewBag.data;
+
+    List<T_COMMON> commList = new BaseService().GetCommon(new T_COMMON_COND { MAIN_CODE = "A001", REF_DATA3 = "Y", HIDE = false }).OrderBy(o => o.ORDER_SEQ).ToList();
+
+    var order_data = commList.Where(w => w.SUB_CODE == data.STATUS).FirstOrDefault();
+
+    int ad_order = 5;
+
+    if(order_data != null && order_data.ORDER_SEQ < 5 )
+    {
+        ad_order = (int)order_data.ORDER_SEQ;
+    }
+
+
+    string sUrl = ("/" + this.ViewContext.RouteData.Values["controller"].ToString() + "/" + this.ViewContext.RouteData.Values["action"].ToString()).ToLower();
+    int nPageCode = (int)commList.Where(w => w.REF_DATA1.ToLower().Contains(sUrl + "|")).First().SUB_CODE;
+    if (ad_order < 5)
+    {
+        ad_order = (int)commList.Where(w => w.ORDER_SEQ > ad_order).First().ORDER_SEQ;
+    }
+    else { ad_order = 6; }
+}
+<div class="ui five top attached mini steps">
+
+    @{
+        string sLinkUrl = "/advstep/step1/";
+        foreach (T_COMMON commData in commList)
+        {
+            string sClass = string.Empty;
+            string sLinkEvent = string.Empty;
+
+            if(commData.SUB_CODE > ad_order || commData.SUB_CODE > 1 && SessionHelper.LoginInfo.MEMBER == null)
+            {
+                sClass = "disabled";
+            }
+            else if (nPageCode > 1 && commData.SUB_CODE == 1)
+            {
+                sClass = "disabled";
+            }
+            else if (commData.SUB_CODE == nPageCode)
+            {
+                sClass = "active";
+            }
+
+            else if (commData.ORDER_SEQ > ad_order || (commData.SUB_CODE > 2 && data.AD_CODE <= 0))
+            {
+                sClass = "disabled";
+            }
+
+            else if (commData.ORDER_SEQ <= ad_order && nPageCode > 1)
+            {
+                if (commData.ORDER_SEQ == 5 && ad_order == 6)
+                {
+                    sLinkEvent = "style=\"cursor:pointer\" onclick='stepMove(\"/advstep/steplist\");'";
+                }
+                else
+                {
+                    sLinkEvent = "style=\"cursor:pointer\" onclick='stepMove(\"" + sLinkUrl + "\", " + data.AD_CODE.ToString() + ");'";
+                }
+            }
+
+            sLinkUrl = commData.REF_DATA1.Split('|')[1];
+            <div class="@sClass step" title="@commData.NAME" @Html.Raw(sLinkEvent)>
+
+                @{if (ad_order == 6 && commData.ORDER_SEQ == 5)
+                    {
+                        <i class="list layout icon"></i>
+                        <div class="image content">
+                            <div class="title">목록보기</div>
+                        </div>
+                    }
+                    else
+                    { <i class="@commData.REF_DATA4"></i>
+                    <div class="image content">
+                        <div class="title">@Html.Raw(commData.NAME.Replace("및", "및</br>")) </div>
+                    </div>
+                    }
+                }
+                @*<div class="description">Choose your shipping options</div>*@
+
+            </div>
+                    }
+    }
+
+</div>
+<script type="text/javascript">
+    function stepMove(url, adCode) {
+        BaseCommon.FormInfo.PostSubmit(url, [{ name: "id", value: adCode }]);
+
+    }
+
+</script>

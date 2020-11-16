@@ -1,0 +1,301 @@
+﻿@using ALT.VO.loggal;
+
+@{
+    Layout = "~/Views/Shared/_Layout_Step.cshtml";
+
+
+    T_AD data = (ViewBag.data == null) ? new T_AD() { AD_CODE = 0, STATUS = 2 } : (T_AD)ViewBag.data;
+    ViewBag.title = "loggal 광고 서비스> 광고작성";
+}
+<style>
+
+    #btnOriImage{
+        margin-top:1em;
+    }
+    .ui.celled.table tr td.content.logo{
+        text-align:center;
+    }
+    .ui.modal.oriImage {
+        width: auto;
+        height: auto;
+        margin: auto;
+    }
+
+</style>
+@section script{
+    <script type="text/javascript">
+        $(document).ready(function () {
+
+            validationinit();
+            $(".ui.form").submit(function (event) {
+                $(".ui.field").removeClass("error");
+                if ($(".ui.error.message").css("display") == "none") { doSave(); }
+
+                event.preventDefault();
+
+            });
+            ComponentInit();
+
+        })
+
+
+
+
+        function ComponentInit() {
+
+
+            FileUpload();
+            //$(".ajax-file-upload").hide();
+
+            $(".ajax-upload-dragdrop").addClass("logo");
+
+            @*//$(".ajax-upload-dragdrop span").html("Click <br/>Or " + $(".ajax-upload-dragdrop span").text());
+            $(".ajax-upload-dragdrop.logo span").css("width","100%").css("height","100%");
+
+            $(".ajax-upload-dragdrop.logo span").click(function () {
+
+                $("input[type='file']").trigger("click");
+
+            })
+            
+
+            $(".ajax-upload-dragdrop.logo .ajax-file-upload").before($(".ajax-file-upload").next());
+
+            $(".ajax-upload-dragdrop.logo .ajax-file-upload").css("margin-top", "30px");
+
+
+
+            $(".ajax-file-upload").hide();*@
+            //$(".ajax-file-upload").css("cursor","pointer").css("position","initial");
+            $(".ajax-upload-dragdrop").css("background-image", "url(@Html.Raw(data.LOGO_URL))");
+            $("#btnOriImage").click(function () {
+                $('.ui.modal').modal({
+                    onApprove: function (e) {
+                        //alert("");
+                    },
+                }).modal('show')
+            });
+
+        }
+
+
+        function FileUpload() {
+            var params = new Object();
+            params.FolderName = $("#FolderName").val();
+            //uploadfile_Common.js id CHECK_MENU 체크박스 값확인 이벤트있음
+            uploadFile.init("fileuploader", "/Base/FileUpload", params, false, function (result) {
+
+                if (result.return_msg != undefined && result.return_msg != "") {
+                    {
+                        
+                       // alert(result.return_msg);
+                    }
+                } else {
+                    //$("#spurl").val(result.URL);
+                    $("#LOGO_URL").val(result.FULL_URL);
+
+                    $(".ajax-upload-dragdrop").css("background-image", "url(" + result.FULL_URL + ")");
+                }
+            });
+
+
+
+        }
+
+        //// 체크
+        function validationinit() {
+            $('.ui.form').form({
+                on: 'change',
+                focusInvalid: true,
+                fields: {
+                    TITLE: {
+                        identifier: 'TITLE',
+                        rules: [
+                          {
+                              type: 'empty',
+                              prompt: '제목를 입력하여 주시기 바랍니다.' // Please enter a first name
+                          }
+                        ]
+                    },
+                    SUB_TITLE: {
+                        identifier: 'SUB_TITLE',
+                        rules: [
+                          {
+                              type: 'empty',
+                              prompt: '사용자이름을 입력하여 주시기 바랍니다.' // Please enter a first name
+                          }
+                        ]
+                    }
+                    ,
+                    BANNER_TYPE: {
+                        identifier: 'BANNER_TYPE',
+                        rules: [
+                          {
+                              type: 'empty',
+                              prompt: '배너유형을 선택하여 주시기 바랍니다.' // Please enter a first name
+                          }
+                        ]
+                    }
+                    //, LOGO_URL: {
+                    //    identifier: 'LOGO_URL',
+                    //    rules: [
+                    //      {
+                    //          type: 'empty',
+                    //          prompt: '로고를 등록하여 주시기 바랍니다.' // Please enter a first name
+                    //      }
+                    //    ]
+                    //}
+
+
+                }, onFailure: function (event, fields) {
+
+                    //실패후 첫번재 에러 태그에 포커스
+                    SemanticUI.Form.Invalidation.ErrorFocus();
+                }, onInvalid: function (event) {
+
+                    //SemanticUI.Form.addErrorMessage(event);
+                }
+            });
+
+        }
+
+        function doSave() {
+            var params = BaseCommon.FormInfo.serializeJson(".ui.form");
+            params.CONTENT = tinymce.get('CONTENT').getContent();
+            params.AD_CODE = @(data.AD_CODE== null ? 0 : data.AD_CODE);
+            params = JSON.stringify(params);
+            ajax.GetAjax("/AdvStep/Step2Save/", params, "json", function (result) {
+                if (result.ERROR_MESSAGE != "") {
+                    $.MessageBox(result.ERROR_MESSAGE);
+                }
+                else {
+                    var arrUrl = String(result.RETURN_URL).toLowerCase().split('?');
+                    BaseCommon.FormInfo.PostSubmit(arrUrl[0], [{ name: "id", value: arrUrl[1].split('=')[1] }]);
+                }
+            });
+
+
+
+        }
+
+
+
+
+
+
+    </script>
+}
+@Html.Hidden("AD_CODE", data.AD_CODE)
+<div class="ui modal oriImage">
+    <div class="header">원본보기</div>
+    <div class="content">
+        <p><img src="@data.LOGO_URL" /></p>
+    </div>
+    <div class="actions">
+        <button class="ui button close  ok">닫기</button>
+
+    </div>
+</div>
+<div class="ui  vertical stripe attached segment wizard centered">
+    @{Html.RenderPartial("/Views/AdvStep/Partial/Top.cshtml"); }
+
+    <form class="ui form" onSubmit="return false;" action="/Base/FileUpload" data-ajax="true" data-ajax-mode="replace" data-ajax-update="#dc_goal_placeholder" enctype="multipart/form-data" id="frmUpload" method="post">
+        <h2 class="ui header">광고작성</h2>
+
+        @{Html.RenderPartial("/Views/AdvStep/Partial/StepBar.cshtml"); }
+        <div class="ui structured grid  fields">
+            <div class="one column row">
+                <div class="column">
+                    <table class="ui celled structured table">
+                        <tbody>
+                            <tr>
+                                <td class="title">
+                                    @Html.Semantic_TITLE2("제목", true)
+                                </td>
+                                <td class="content" style="width:50%">
+                                    <div class="field">
+                                        @*@Html.Semantic_TextBox("TITLE", "", SemanticUIHelper.Size.mini, "100%", new { @placeholder = "제목을 입력하세요", @style = "width:100%" })*@
+                                        @Html.TextArea("TITLE", data.TITLE, new { @class = "mini", @row = "3", @placeholder = "제목을 입력하세요" })
+                                    </div>
+                                </td>
+                                <td class="title" rowspan="3">
+                                    @Html.Semantic_TITLE2("로고")
+                                </td>
+                                <td class="content logo" rowspan="4" style="width:30%">
+                                    
+                                    <div id="fileuploader">파일</div> <!-- Upload -->
+                                    @Html.Hidden("FolderName")
+                                    @Html.Hidden("LOGO_URL", data.LOGO_URL)
+
+                                    
+                                    @{
+                                        if (!string.IsNullOrEmpty(data.LOGO_URL))
+                                        {
+                                            @Html.Semantic_Button("btnOriImage", "원본보기")
+                                        }
+                                        else
+                                        {
+                                            @Html.Semantic_Button("btnOriImage", "원본보기", SemanticUIHelper.enButtonType.Normal, new { @style = "display:none;" })
+                                        }
+                                    }
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="title">
+                                    @Html.Semantic_TITLE2("부제목", true)
+                                </td>
+                                <td class="content">
+                                    @Html.Semantic_TextBox("SUB_TITLE", @data.SUB_TITLE, SemanticUIHelper.Size.mini, "100%", new { @placeholder = "부제목을 입력하세요", @style = "width:100%" })
+
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="title">
+                                    @Html.Semantic_TITLE2("상태", true)
+                                </td>
+                                <td class="content">
+
+                                    @Html.CommonCombo("STATUS", new ALT.VO.Common.T_COMMON_COND { MAIN_CODE = "A001" }, data.STATUS.ToString(), " ", new { @class = "mini disabled " })
+                                    @*@Html.Semantic_TextBox("STATUS", "", SemanticUIHelper.Size.mini, "100%", new { @placeholder = "상태를 입력하세요~", @style = "width:100%" })*@
+
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="title">
+                                    @Html.Semantic_TITLE2("배너유형", true)
+                                </td>
+                                <td class="content">
+
+                                    @Html.CommonCombo("BANNER_TYPE", new ALT.VO.Common.T_COMMON_COND { MAIN_CODE = "A005" }, data.BANNER_TYPE.ToString("1"), " ", new { @class = "mini " })
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="title" rowspan="5">
+                                    @Html.Semantic_TITLE2("내용")
+                                </td>
+                                <td class="content" rowspan="5" colspan="3">
+                                    @Html.EditorFor(model => new EditTempleateModel().TinyMCE_Editor, new { option = new TinyMCEOption { MAINFORM_ID = "form1", ID = "CONTENT", CONTENT = data.CONTENT, HEIGHT = "250px", WIDTH = "100%", templeate_Index = new int[] { 0 } } })
+                                </td>
+
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <div style="float:right">
+                        <button class="ui left attached  blue disabled icon  button">
+                            <i class="chevron circle left  icon"></i>
+                            이전
+                        </button>
+                        <button class="ui right attached blue active icon  button">
+                            다음
+                            <i class="chevron circle right icon"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="ui error message"></div>
+    </form>
+</div>
+

@@ -1,0 +1,34 @@
+﻿@{
+    List<AdPlayBusiTotalList> list = ViewBag.list;
+    string totCnt = (list.Count() == 0 ? "0" : list.First().TOTAL_ROWCOUNT.ToString());
+     AdPlayBusiTotalList chartData = new AdPlayBusiTotalList();
+    if (list.Count() >= 1) { chartData = list[0]; }
+    <input type="hidden" id="total" value="@totCnt" />
+    <input type="hidden" id="piechartData" value="@Json.Encode(chartData)" />
+    foreach (AdPlayBusiTotalList data in list)
+    {
+<tr>
+    <!--<td class="right">@data.REG_MONTH</td>-->
+    <td class="right">@data.AD_CNT</td>
+    <td class="right">@data.DEVICE_CNT</td>
+
+    <td class="right">@data.IMAGE1_PLAY_QTY.ToString("#,##0")</td>
+    <td class="right">@data.IMAGE1_PLAY_TIME.ToString("#,##0.##")</td>
+    <td class="right">@data.IMAGE6_PLAY_QTY.ToString("#,##0")</td>
+    <td class="right">@data.IMAGE6_PLAY_TIME.ToString("#,##0.##")</td>
+    <td class="right">@data.IMAGE12_PLAY_QTY.ToString("#,##0")</td>
+    <td class="right">@data.IMAGE12_PLAY_TIME.ToString("#,##0.##")</td>
+    <td class="right">@data.CLICK_PLAY_QTY.ToString("#,##0")</td>
+    <td class="right">@data.CLICK_PLAY_TIME.ToString("#,##0.##")</td>
+    <td class="right">@data.VIDEO_PLAY_QTY.ToString("#,##0")</td>
+    <td class="right">@data.VIDEO_PLAY_TIME.ToString("#,##0.##")</td>
+
+    <td class="right">@data.YOUTUBE_PLAY_QTY.ToString("#,##0")</td>
+    <td class="right">@data.YOUTUBE_PLAY_TIME.ToString("#,##0.##")</td>
+
+
+    <td class="right">@Html.Semantic_Button("btnQty", data.TOT_QTY.ToString("#,##0.##"), SemanticUIHelper.enButtonType.Normal, new { @onclick = "adPlayDetail( this);", @class = "size100 right" })</td>
+    <td class="right">@data.TOT_PLAY_TIME.ToString("#,##0.##")</td>
+</tr>
+    }
+}

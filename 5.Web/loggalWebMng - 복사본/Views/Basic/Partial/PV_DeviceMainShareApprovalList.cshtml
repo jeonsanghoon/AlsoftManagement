@@ -1,0 +1,40 @@
+﻿
+@{
+    List<DEVICE_MAIN_SHARE_APPROVAL_LIST> list = ViewBag.list;
+
+    string totCnt = (list.Count() == 0 ? "0" : list.First().TOTAL_ROWCOUNT.ToString());
+
+    <input type="hidden" id="total" value="@totCnt" />
+    foreach (DEVICE_MAIN_SHARE_APPROVAL_LIST data in list)
+    {
+    <tr>
+        <td class="center">
+            @data.SHARE_STATUS_NAME
+        @{
+            if (data.SHARE_STATUS == 1)
+            { <i class="red remove circle  icon" style="cursor:pointer" onclick="fnReqCencel(this);"></i> }
+        }
+    <td class="hide">@data.DEVICE_CODE</td>
+    <td style="max-width:10em;"><a href="/basic/devicereg2/@data.DEVICE_CODE" style="min-width:2em;">@data.DEVICE_NAME</a></td>
+    <td class="hide">@data.SEQ</td>
+    <td>@data.BANNER_TYPE_NAME</td>
+    <td><a href="/advertise/adreg/@data.AD_CODE">@data.AD_CODE</a></td>
+    <td><img src="@data.LOGO_URL" class="ui mini rounded image"></td>
+    <td>@data.COMPANY_NAME</td>
+    <td><a href="@Global.ConfigInfo.MANAGEMENT_SITE/advertise/Contentview/@data.AD_CODE" target="_blank">@(string.IsNullOrEmpty(data.TITLE) ? "상세보기" : data.TITLE)</a></td>
+    <td>@data.MNG_COMPANY_NAME</td>
+    @{
+        if (!string.IsNullOrEmpty(data.MNG_DEVICE_NAME))
+        {
+            <td><a href="/basic/deviceReg2/@data.MNG_DEVICE_CODE">@data.MNG_DEVICE_NAME</a></td> }
+        else
+        {
+            <td><a href="/advertise/adreg/@data.AD_CODE">[배너]</a></td>
+        }
+
+    }
+    <td class="center">@data.UPDATE_NAME</td>
+    <td class="center">@data.UPDATE_DATE</td>
+    </tr>
+    }
+}

@@ -1,0 +1,181 @@
+﻿@{
+
+}
+<style>
+    #podvStoreGroup .column.row
+    {
+        padding:0.25em;
+    }
+</style>
+<div class="ui tiny modal form" id="podvStoreGroup">
+    <div class="header">그룹등록</div>
+    <div class="content">
+        <div class="ui grid">
+            <div class="one column row">
+                <div class="column buttons">
+                    
+                    @Html.Semantic_Button2("btnStoreGroupAdd", "추가", SemanticUIHelper.enButtonType.New, SemanticUIHelper.Size.mini, new { onclick = "doStoreGroupAdd();"})
+                </div>
+            </div>
+            <div class="one column row">
+                <div class="column">
+                    <div id="dvStoreGroup">
+                        <table id="tbList" class="mrc-table">
+                            <thead>
+                                <tr>
+                                    <th column_name="STORE_CODE" class="hide">매장코드</th>
+                                    <th column_name="GROUP_TYPE" class="hide">그룹유형</th>
+                                    <th column_name="GROUP_CODE" class="hide">그룹코드</th>
+                                    <th column_name="GROUP_NAME">그룹명</th>
+                                    <th column_name="SEQ">순번</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="ui error message" style="display:none;"><ul></ul></div>
+    </div>
+    <div class="actions">
+        @Html.Semantic_Button2("btnStoreGroupDel", "삭제", SemanticUIHelper.enButtonType.Del, SemanticUIHelper.Size.mini, new { onclick = "doStoreGroupDelete();" })
+        @Html.Semantic_Button2("btnStoreGroupSave", "저장", SemanticUIHelper.enButtonType.Save, new { @onclick = "StoreGroupSave();" })
+        @Html.Semantic_Button2("btnStoreGroupClose", "닫기", SemanticUIHelper.enButtonType.Normal, new { @onclick = "StoreGroupClose();" })
+    </div>
+</div>
+<script type="text/javascript">
+    var _groupType = 2;
+    var _storeCode = 0;
+    function StoreGroupOpen(storeCode, groupType) {
+        _storeCode = storeCode;
+        $('#podvStoreGroup').modal("show");
+        _groupType = groupType;
+        doQuery_StoreGroup(storeCode);
+    }
+    function StoreGroupClose() {
+        $('#podvStoreGroup').modal("hide");
+    }
+    function errormessageClear() {
+        $(".ui.error.message").hide();
+        $(".ui.error.message ul").html("");
+    }
+
+    function doQuery_StoreGroup(storeCode) {
+
+        if (storeCode == undefined) storeCode = _storeCode;
+        var params = new Object();
+        params.STORE_CODE = storeCode;
+        params.GROUP_TYPE = _groupType;
+
+        params = JSON.stringify(params);
+        ajax.GetAjax("/common/PV_StoreGroupList", params, "html", function (result) {
+            $("#dvStoreGroup table tbody").html(result);
+            $.mrc_table.Init("#dvStoreGroup table", true);
+            for (var i = 0; i < 3; i++) $(".chkEditMode.ui.checkbox").eq(i).hide();
+        });
+    }
+
+    function doStoreGroupAdd() {
+        var tableData = $.mrc_table.GetData("#dvStoreGroup table");
+        var seq = 1;
+        try {
+            seq = Number(tableData[tableData.length - 1].SEQ) + 1;
+        } catch (e) { }
+        var addHtml = '<tr>  ';
+        addHtml += '     <td class="center hide">@(SessionHelper.LoginInfo.STORE_CODE)</td>';
+        addHtml += '     <td class="center  hide">' + _groupType + '</td> ';
+        addHtml += '     <td class="center hide">-1</td> ';
+        addHtml += '     <td class="center"><input type="text" maxlength="20" value="" /></td> ';
+        addHtml += '     <td class="center"><input type="text" style="min-width:3em;width:3em;" class="number" maxlength="1" value="' + seq + '" /></td> ';
+        addHtml += '</tr>                                                          ';
+
+
+        $.mrc_table.AddRowHtml("#dvStoreGroup table", addHtml);
+        $.mrc_table.Init("#dvStoreGroup table", true);
+        Input.TextBox.onlyNumber("#dvStoreGroup table.mrc-table .number");
+    }
+
+    function chkStoreGroupSave() {
+        var tableData = $.mrc_table.GetData("#dvStoreGroup table");
+        var exit = false;
+        $.each(tableData, function (rowIndex) {
+
+            $.each(this, function (name, value) {
+
+                if (name == "GROUP_NAME" && value == "") {
+                    $.MessageBox("그룹명은 필수입력입니다.").done(function () {
+                        var columnIndex = $.mrc_table.columnIndex("#dvStoreGroup table", "GROUP_NAME");
+                        $.mrc_table.SetActiveIndex("#dvStoreGroup table", rowIndex);
+                        $.mrc_table.SetFocus("#dvStoreGroup table", rowIndex, columnIndex);
+
+                    });
+                    exit = true;
+                    return false;
+
+                } else if (name == "SEQ" && value == "") {
+                    $.MessageBox("순번은 필수입력입니다.").done(function () {
+                        var columnIndex = $.mrc_table.columnIndex("#dvStoreGroup table", "SEQ");
+                        $.mrc_table.SetActiveIndex("#dvStoreGroup table", rowIndex);
+                        $.mrc_table.SetFocus("#dvStoreGroup table", rowIndex, columnIndex);
+
+                    });
+                    exit = true;
+                    return false;
+
+                }
+            })
+            if (exit == true) return false;
+        })
+
+        if (exit == true) return false;
+        else return true;
+    }
+
+    function StoreGroupSave() {
+        errormessageClear();
+        var arrSaveData = $.mrc_table.GetSaveData("#dvStoreGroup table");
+        if (arrSaveData.length == 0) {
+            $.MessageBox("저장할 데이터가 없습니다.");
+            return;
+        }
+        if (!chkStoreGroupSave()) return;
+        var param = JSON.stringify(arrSaveData);
+
+        ajax.GetAjax("/common/StoreGroupSave", param, "json", function (result) {
+            if (result.ERROR_MESSAGE != "") {
+                $.MessageBox(result.ERROR_MESSAGE);
+            }
+            else {
+                doQuery_StoreGroup(_storeCode);
+                try {
+                    StoreGroupSaveAfter();
+                } catch (e) { }
+            }
+            StoreGroupClose();
+        });
+    }
+
+    function doStoreGroupDelete() {
+        var arrSaveData = $.mrc_table.GetCheckedData("#dvStoreGroup table", "D");
+        if (arrSaveData.length == 0) {
+            $.MessageBox("저장할 데이터가 없습니다.");
+            return;
+        }
+       
+        var param = JSON.stringify(arrSaveData);
+
+        ajax.GetAjax("/common/StoreGroupSave", param, "json", function (result) {
+            if (result.ERROR_MESSAGE != "") {
+                $.MessageBox(result.ERROR_MESSAGE);
+            }
+            else {
+                doQuery_StoreGroup(_storeCode);
+                try {
+                    StoreGroupSaveAfter();
+                } catch (e) { }
+            }
+            StoreGroupClose();
+        });
+    }
+</script>

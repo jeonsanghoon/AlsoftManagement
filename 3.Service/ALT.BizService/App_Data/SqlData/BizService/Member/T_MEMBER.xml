@@ -1,0 +1,440 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<DBAgentMultiTemplate  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns="http://altsoft.kr/">
+
+  <DBAgentTemplate TemplateID="GetMemberList">
+    <!-- 
+    SqlType : SQL의 형태를 지정합니다.
+      Example 1:<SqlType>FixedSQL</SqlType> 고정적인 SQL을 지원합니다. 
+      Example 2:<SqlType>DynamicSQL</SqlType> 동적인 SQL Type1을 지원합니다.  
+    Description : 해당 SQL의 기능설명을 적습니다.
+    SQLModifier : 해당 SQL의 작성자(수정자)를 적습니다
+    LastModifyDate : 해당 SQL의 마지막 수정일을 적습니다
+    -->
+    <Information>
+      <SqlType>DynamicSQL</SqlType>
+      <Description>회원조회</Description>
+      <SQLModifier>전상훈</SQLModifier>
+      <LastModifyDate>2016-08-23</LastModifyDate>
+    </Information>
+
+    <TemplateSQL>
+      <!-- FixedSQL : 고정된 SQL이 들어가는 곳입니다. -->
+      <FixedSQL>
+        <![CDATA[ 
+    SET NOCOUNT ON
+    /* Customer 조회 GetMemberList */
+    SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED
+
+
+    SELECT 
+      		A.MEMBER_CODE
+		    , A.USER_TYPE
+		    , A.USER_ID
+		    , A.PASSWORD
+		    , A.USER_NAME
+		    , A.EMAIL
+		    , A.PHONE
+		    , A.MOBILE
+		    , A.ADDRESS1
+		    , A.ADDRESS2
+		    , A.ZIP_CODE
+		    , A.BIRTH
+		    , A.GENDER
+		    , A.PASSWORD_CHANGE_URL
+		    , A.PASSWORD_AUTH_TIME
+            , A.SHARE_AUTH_NUMBER
+		    , A.HIDE
+		    , A.REMARK
+		    , A.INSERT_CODE
+		    , A.INSERT_DATE
+		    , A.UPDATE_CODE
+            , B.USER_NAME AS UPDATE_NAME
+		    , A.UPDATE_DATE
+            , CONVERT(BIT, CASE WHEN (SELECT COUNT(1) FROM T_MEMBER_EMPLOYEE WHERE MEMBER_CODE = A.MEMBER_CODE) > 0 THEN 1 ELSE 0 END) IS_EMPLOYEE
+	   FROM T_MEMBER A
+      INNER JOIN T_MEMBER B
+         ON A.UPDATE_CODE = B.MEMBER_CODE
+  
+      WHERE 1=1
+        #[MEMBER_CODE]
+        #[USER_ID]
+        #[USER_TYPE]
+        #[PHONE]
+        #[MOBILE]
+        #[PASSWORD_CHANGE_URL]
+        #[EMPLOYEE_YN]
+   SET NOCOUNT OFF
+      ]]>
+      </FixedSQL>
+      <DynamicBodys>
+        <Key>USER_ID</Key>
+        <Body>AND A.USER_ID = '{0}' </Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>USER_TYPE</Key>
+        <Body>AND A.USER_TYPE = '{0}' </Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>PHONE</Key>
+        <Body>AND A.PHONE LIKE '%{0}%' </Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>MOBILE</Key>
+        <Body>AND A.MOBILE LIKE '%{0}%' </Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>PASSWORD_CHANGE_URL</Key>
+        <Body>AND A.PASSWORD_CHANGE_URL = '{0}' </Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>EMPLOYEE_YN</Key>
+        <Body> AND A.MEMBER_CODE IN (  
+		                             SELECT A.MEMBER_CODE 
+									   FROM T_MEMBER A
+									  INNER JOIN T_MEMBER_EMPLOYEE B
+									     ON A.MEMBER_CODE = B.MEMBER_CODE
+									  WHERE A.USER_ID = '{0}')</Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>MEMBER_CODE</Key>
+        <Body>AND A.MEMBER_CODE = {0} </Body>
+      </DynamicBodys>
+    </TemplateSQL>
+  </DBAgentTemplate>
+
+  <DBAgentTemplate TemplateID="GetEmployeeInfoList">
+    <!-- 
+    SqlType : SQL의 형태를 지정합니다.
+      Example 1:<SqlType>FixedSQL</SqlType> 고정적인 SQL을 지원합니다. 
+      Example 2:<SqlType>DynamicSQL</SqlType> 동적인 SQL Type1을 지원합니다.  
+    Description : 해당 SQL의 기능설명을 적습니다.
+    SQLModifier : 해당 SQL의 작성자(수정자)를 적습니다
+    LastModifyDate : 해당 SQL의 마지막 수정일을 적습니다
+    -->
+    <Information>
+      <SqlType>DynamicSQL</SqlType>
+      <Description>회원조회</Description>
+      <SQLModifier>전상훈</SQLModifier>
+      <LastModifyDate>2016-09-24</LastModifyDate>
+    </Information>
+
+    <TemplateSQL>
+      <!-- FixedSQL : 고정된 SQL이 들어가는 곳입니다. -->
+      <FixedSQL>
+        <![CDATA[ 
+    SET NOCOUNT ON
+    /* 직원정보 조회 - 로그인시 정보 GetEmployeeInfoList */
+    SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED
+    
+    SELECT A.MEMBER_CODE
+          ,D.COMPANY_CODE
+          ,D.COMPANY_NAME
+          ,C.STORE_CODE, C.STORE_NAME
+	        ,B.DEPT_CODE
+	        ,BD.DEPT_NAME
+	        ,B.PARENT_MEMBER_CODE
+	        ,E.USER_NAME AS PARENT_MEMBER_NAME
+	        ,B.COMP_POSITION
+	        ,G.NAME AS COMP_POSITION_NAME
+	        ,B.COMP_TITLE
+	        ,H.NAME AS COMP_TITLE_NAME
+	        ,B.EMP_AUTH
+          
+	        ,F.NAME AS EMP_AUTH_NAME
+          ,CONVERT(INT, CASE WHEN ISNUMERIC(F.REF_DATA1) = 1 THEN F.REF_DATA1 ELSE 20 END) AS MAKER_MAX_COUNT
+	        ,B.MENU_GROUP
+	        ,I.GROUP_NAME AS MENU_GROUP_NAME 
+          ,B.MEMO
+        FROM T_MEMBER A 
+      INNER JOIN T_MEMBER_EMPLOYEE B
+          ON A.MEMBER_CODE = B.MEMBER_CODE
+      INNER JOIN T_STORE C
+          ON B.STORE_CODE = C.STORE_CODE
+      LEFT JOIN T_STORE_DEPT BD
+          ON BD.STORE_CODE = B.STORE_CODE
+        AND BD.DEPT_CODE = B.DEPT_CODE
+      INNER JOIN T_COMPANY D
+          ON C.COMPANY_CODE = D.COMPANY_CODE
+      LEFT JOIN T_MEMBER E
+          ON E.MEMBER_CODE = B.PARENT_MEMBER_CODE
+      INNER JOIN T_COMMON F
+          ON F.MAIN_CODE = 'A002'
+        AND F.SUB_CODE = B.EMP_AUTH
+      INNER JOIN T_STORE_POSITION G
+          ON B.COMP_POSITION =  G.POSITION_CODE
+      INNER JOIN T_STORE_POSITION H
+          ON B.COMP_TITLE = H.POSITION_CODE
+      LEFT JOIN T_STORE_WEBMENU_GROUP I
+          ON B.STORE_CODE = I.STORE_CODE 
+        AND B.MENU_GROUP = I.GROUP_CODE
+      WHERE 1=1
+      #[MEMBER_CODE]
+   SET NOCOUNT OFF
+      ]]>
+      </FixedSQL>
+      <DynamicBodys>
+        <Key>MEMBER_CODE</Key>
+        <Body>AND A.MEMBER_CODE = {0} </Body>
+      </DynamicBodys>
+    
+    </TemplateSQL>
+  </DBAgentTemplate>
+
+  <DBAgentTemplate TemplateID="MemberSave">
+    <!-- 
+    SqlType : SQL의 형태를 지정합니다.
+      Example 1:<SqlType>FixedSQL</SqlType> 고정적인 SQL을 지원합니다. 
+      Example 2:<SqlType>DynamicSQL</SqlType> 동적인 SQL Type1을 지원합니다.  
+    Description : 해당 SQL의 기능설명을 적습니다.
+    SQLModifier : 해당 SQL의 작성자(수정자)를 적습니다
+    LastModifyDate : 해당 SQL의 마지막 수정일을 적습니다
+    -->
+    <Information>
+      <SqlType>DynamicSQL</SqlType>
+      <Description>회원저장</Description>
+      <SQLModifier>전상훈</SQLModifier>
+      <LastModifyDate>2016-08-23</LastModifyDate>
+    </Information>
+
+    <TemplateSQL>
+      <!-- FixedSQL : 고정된 SQL이 들어가는 곳입니다. -->
+      <FixedSQL>
+        <![CDATA[ 
+	SET NOCOUNT ON 
+	/*********************************************/
+	/* 사용자정보 - T_MEMBER 저장 -  SAVE QUERY */ 
+	/*********************************************/
+	DECLARE @MEMBER_CODE                    INT                  = N'{0}'
+			  , @USER_TYPE                      INT                  = CONVERT(INT, CASE WHEN ISNUMERIC('{1}') = 1 THEN '{1}' ELSE NULL END )
+			  , @USER_ID                        NVARCHAR(50)         = N'{2}'
+			  , @PASSWORD                       NVARCHAR(200)        = N'{3}'
+			  , @USER_NAME                      NVARCHAR(100)        = N'{4}'
+			  , @EMAIL                          NVARCHAR(100)        = N'{5}'
+			  , @PHONE                          VARCHAR(30)          = N'{6}'
+			  , @MOBILE                         VARCHAR(30)          = N'{7}'
+			  , @ADDRESS1                       NVARCHAR(200)        = N'{8}'
+			  , @ADDRESS2                       NVARCHAR(200)        = N'{9}'
+			  , @ZIP_CODE                        VARCHAR(10)          = N'{10}'
+			  , @BIRTH                          VARCHAR(8)           = N'{11}'
+			  , @GENDER                         INT                  = CONVERT(INT, CASE WHEN ISNUMERIC('{12}') = 1 THEN '{12}' ELSE NULL END )
+			  , @PASSWORD_CHANGE_URL            NVARCHAR(200)        = N'{13}'
+			  , @PASSWORD_AUTH_TIME             DATETIME             = CASE WHEN ISDATE('{14}') = 1 THEN '{14}' ELSE GETDATE() END
+        , @SHARE_AUTH_NUMBER              VARCHAR(2)           = N'{15}'
+			  , @HIDE                           BIT                  = CONVERT(BIT, CASE WHEN ISNUMERIC('{16}') = 1 THEN '{16}' ELSE '0' END )
+			  , @REMARK                         NVARCHAR(1000)       = N'{17}'
+			  , @INSERT_CODE                    INT                  = {18}
+			  , @INSERT_DATE                    DATETIME             = GETDATE() 
+			  , @UPDATE_CODE                    INT                  = {18}
+        , @UPDATE_DATE                    DATETIME             = GETDATE()
+
+	UPDATE A 
+	SET  	  USER_TYPE                      = @USER_TYPE                     
+			 ,  USER_ID                        = @USER_ID                       		 ,  PASSWORD                       = @PASSWORD                      
+			 ,  USER_NAME                      = @USER_NAME                     		 ,  EMAIL                          = @EMAIL                         
+			 ,  PHONE                          = @PHONE                         		 ,  MOBILE                         = @MOBILE                        
+			 ,  ADDRESS1                       = @ADDRESS1                      		 ,  ADDRESS2                       = @ADDRESS2                      
+			 ,  ZIP_CODE                        = @ZIP_CODE                       		 ,  BIRTH                          = @BIRTH                         
+			 ,  GENDER                         = @GENDER                        		 ,  PASSWORD_CHANGE_URL            = @PASSWORD_CHANGE_URL           
+			 ,  PASSWORD_AUTH_TIME             = @PASSWORD_AUTH_TIME            		 , SHARE_AUTH_NUMBER               = @SHARE_AUTH_NUMBER
+       ,  HIDE                           = @HIDE                          
+			 ,  REMARK                         = @REMARK                        		 ,  UPDATE_CODE                    = @UPDATE_CODE                   
+			 ,  UPDATE_DATE                    = @UPDATE_DATE                   
+	FROM T_MEMBER A 
+	WHERE MEMBER_CODE= @MEMBER_CODE
+	IF @@ROWCOUNT = 0
+	BEGIN
+		INSERT INTO T_MEMBER
+		(		USER_TYPE                     		, USER_ID                       		, PASSWORD                      		
+			, USER_NAME                     		, EMAIL                         		, PHONE                         		, MOBILE                        		
+			, ADDRESS1                      		, ADDRESS2                      		, ZIP_CODE                       		, BIRTH                         		
+			, GENDER                        		, PASSWORD_CHANGE_URL           		, PASSWORD_AUTH_TIME                , SHARE_AUTH_NUMBER          		
+      , HIDE                          		
+			, REMARK                        		, INSERT_CODE                   		, INSERT_DATE                   		, UPDATE_CODE                   		
+			, UPDATE_DATE                   		
+		)
+		SELECT @USER_TYPE                    		, @USER_ID                      	
+				, @PASSWORD                     		, @USER_NAME                    		, @EMAIL                        	
+				, @PHONE                        		, @MOBILE                       		, @ADDRESS1                     	
+				, @ADDRESS2                     		, @ZIP_CODE                      		, @BIRTH                        	
+				, @GENDER                       		, @PASSWORD_CHANGE_URL          		, @PASSWORD_AUTH_TIME            ,@SHARE_AUTH_NUMBER     	
+				, @HIDE                         		, @REMARK                       		, @INSERT_CODE                  	
+				, @INSERT_DATE                  		, @UPDATE_CODE                  		, @UPDATE_DATE   
+        
+        SELECT CONVERT(INT, IDENT_CURRENT( 'T_MEMBER' ))  MEMBER_CODE
+	 END
+   ELSE
+   BEGIN
+      SELECT CONVERT(INT, @MEMBER_CODE) AS MEMBER_CODE
+   END
+ 
+  SET NOCOUNT OFF
+  ]]>
+      </FixedSQL>
+    </TemplateSQL>
+  </DBAgentTemplate>
+
+<DBAgentTemplate TemplateID="GetLoginWebMenuList">
+    <!-- 
+    SqlType : SQL의 형태를 지정합니다.
+      Example 1:<SqlType>FixedSQL</SqlType> 고정적인 SQL을 지원합니다. 
+      Example 2:<SqlType>DynamicSQL</SqlType> 동적인 SQL Type1을 지원합니다.  
+    Description : 해당 SQL의 기능설명을 적습니다.
+    SQLModifier : 해당 SQL의 작성자(수정자)를 적습니다
+    LastModifyDate : 해당 SQL의 마지막 수정일을 적습니다
+    -->
+    <Information>
+      <SqlType>DynamicSQL</SqlType>
+      <Description>사용자별웹메뉴조회</Description>
+      <SQLModifier>전상훈</SQLModifier>
+      <LastModifyDate>2016-09-28</LastModifyDate>
+    </Information>
+
+    <TemplateSQL>
+      <!-- FixedSQL : 고정된 SQL이 들어가는 곳입니다. -->
+      <FixedSQL>
+        <![CDATA[ 
+    SET NOCOUNT ON
+    /* 사용자별웹메뉴조회 - 로그인시 정보 GetLoginWebMenuList */
+    SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED
+    
+    DECLARE @PROJECT_SITE INT = {0}, @STORE_CODE INT = {1}, @MEMBER_CODE INT = {2}, @STORE_TYPE INT, @EMP_AUTH INT
+    
+    
+    SELECT @STORE_TYPE = A.STORE_TYPE, @EMP_AUTH = B.EMP_AUTH FROM T_STORE A
+	 INNER JOIN T_MEMBER_EMPLOYEE B
+	   ON A.STORE_CODE = B.STORE_CODE
+	WHERE A.STORE_CODE = @STORE_CODE
+	  AND B.MEMBER_CODE = @MEMBER_CODE;
+    
+WITH T_TABLE 
+AS(
+    SELECT C.STORE_CODE,  C.MENU_CODE 
+          ,C.SEARCH_CODE, C.PARENT_CODE
+          ,C.LEVEL,       CASE WHEN C1.STORE_TYPE NOT IN (1,4) AND C.MENU_CODE = 22 THEN N'지점(지사)정보' ELSE  C.NAME END AS NAME
+          ,C.MENU_URL,    C.MENU_CLASS
+	        ,B.INSERT_AUTH, B.UPDATE_AUTH
+          ,B.EXCEL_AUTH,  B.PRINT_AUTH
+	   FROM T_MEMBER_EMPLOYEE A
+    INNER JOIN T_STORE_WEBMENU_EMPLOYEE_MENU B
+       ON A.STORE_CODE   = B.STORE_CODE
+      AND A.MEMBER_CODE  = B.MEMBER_CODE
+    INNER JOIN T_STORE_WEBMENU C
+       ON B.PROJECT_SITE = C.PROJECT_SITE
+      AND B.STORE_CODE   = C.STORE_CODE
+      AND B.MENU_CODE    = C.MENU_CODE
+    INNER JOIN T_WEBMENU WC
+	     ON C.PROJECT_SITE = WC.PROJECT_SITE
+	    AND C.MENU_CODE    = WC.MENU_CODE
+	    AND WC.HIDE = 0
+    INNER JOIN T_STORE C1
+       ON C.STORE_CODE = C1.STORE_CODE
+    WHERE B.PROJECT_SITE = @PROJECT_SITE
+      AND A.STORE_CODE   = @STORE_CODE
+      AND A.MEMBER_CODE  = @MEMBER_CODE
+      AND B.HIDE = 0
+      AND C.HIDE = 0
+     AND ((C1.STORE_CODE = 1 AND C1.STORE_TYPE IN (1,4)) 
+		 OR CASE WHEN WC.MENU_AUTH = 1 THEN 1
+	             WHEN WC.MENU_AUTH = 2 AND (C1.STORE_CODE = 1 AND C1.STORE_TYPE IN (1,4)) THEN 1
+			         WHEN WC.MENU_AUTH = 3 AND WC.MENU_COMPANY_CODE = C1.COMPANY_CODE THEN 1
+			         WHEN WC.MENU_AUTH = 4 AND WC.MENU_STORE_CODE = C1.STORE_CODE THEN 1
+	             ELSE 0 END = 1
+				 )
+   UNION 
+	 SELECT @STORE_CODE AS STORE_CODE, MENU_CODE, SEARCH_CODE, PARENT_CODE, LEVEL, NAME, MENU_URL, MENU_CLASS
+     , CONVERT(BIT, 1) INSERT_AUTH,  CONVERT(BIT, 1) UPDATE_AUTH, CONVERT(BIT, 1) EXCEL_AUTH, CONVERT(BIT, 1) PRINT_AUTH
+  FROM V_STORE_MENU
+ WHERE PROJECT_SITE = @PROJECT_SITE
+   AND (MENU_AUTH = 1 OR ( MENU_AUTH = 2 AND @STORE_CODE = 1 AND @EMP_AUTH = 1))
+   AND HIDE =0
+) SELECT * FROM T_TABLE A
+  WHERE SEARCH_CODE IN (SELECT LEFT(SEARCH_CODE,2) FROM T_TABLE WHERE LEN(SEARCH_CODE) > 2 )  OR 
+    ( LEN(SEARCH_CODE) > 2 AND LEFT(SEARCH_CODE,2) IN (SELECT SEARCH_CODE FROM T_TABLE WHERE LEN(SEARCH_CODE) = 2))
+   ORDER BY SEARCH_CODE
+   SET NOCOUNT OFF
+      ]]>
+      </FixedSQL>
+    </TemplateSQL>
+  </DBAgentTemplate>
+  <DBAgentTemplate TemplateID="ReqPasswordChange">
+    <!-- 
+    SqlType : SQL의 형태를 지정합니다.
+      Example 1:<SqlType>FixedSQL</SqlType> 고정적인 SQL을 지원합니다. 
+      Example 2:<SqlType>DynamicSQL</SqlType> 동적인 SQL Type1을 지원합니다.  
+    Description : 해당 SQL의 기능설명을 적습니다.
+    SQLModifier : 해당 SQL의 작성자(수정자)를 적습니다
+    LastModifyDate : 해당 SQL의 마지막 수정일을 적습니다
+    -->
+    <Information>
+      <SqlType>DynamicSQL</SqlType>
+      <Description>비밀번호변경 요청시 실행</Description>
+      <SQLModifier>전상훈</SQLModifier>
+      <LastModifyDate>2016-11-03</LastModifyDate>
+    </Information>
+
+    <TemplateSQL>
+      <!-- FixedSQL : 고정된 SQL이 들어가는 곳입니다. -->
+      <FixedSQL>
+        <![CDATA[ 
+    SET NOCOUNT ON
+    /* 비밀번호변경 요청시 실행 - 로그인시 정보 ReqPasswordChange */
+
+    
+    DECLARE @USER_ID NVARCHAR(100) = N'{0}'
+           ,@PASSWRO_CHANGE_URL NVARCHAR(200) = N'{1}'
+
+    UPDATE T_MEMBER
+       SET PASSWORD_CHANGE_URL = @PASSWRO_CHANGE_URL
+          ,PASSWORD_AUTH_TIME = DATEADD(HOUR, 1, GETDATE())
+	        ,UPDATE_CODE = 0
+	        ,UPDATE_DATE = GETDATE() 
+    WHERE USER_ID = @USER_ID
+  SELECT  DATEADD(HOUR, 1, GETDATE()) AS PASSWORD_AUTH_TIME
+   SET NOCOUNT OFF
+      ]]>
+      </FixedSQL>
+
+
+    </TemplateSQL>
+  </DBAgentTemplate>
+  <DBAgentTemplate TemplateID="PasswordChangeSave">
+    <!-- 
+    SqlType : SQL의 형태를 지정합니다.
+      Example 1:<SqlType>FixedSQL</SqlType> 고정적인 SQL을 지원합니다. 
+      Example 2:<SqlType>DynamicSQL</SqlType> 동적인 SQL Type1을 지원합니다.  
+    Description : 해당 SQL의 기능설명을 적습니다.
+    SQLModifier : 해당 SQL의 작성자(수정자)를 적습니다
+    LastModifyDate : 해당 SQL의 마지막 수정일을 적습니다
+    -->
+    <Information>
+      <SqlType>DynamicSQL</SqlType>
+      <Description>비밀번호변경</Description>
+      <SQLModifier>전상훈</SQLModifier>
+      <LastModifyDate>2016-11-03</LastModifyDate>
+    </Information>
+
+    <TemplateSQL>
+      <!-- FixedSQL : 고정된 SQL이 들어가는 곳입니다. -->
+      <FixedSQL>
+        <![CDATA[ 
+	SET NOCOUNT ON 
+	/*********************************************/
+	/* 비밀번호변경 - T_MEMBER 저장 -  ChangePasswordSave */ 
+	/*********************************************/
+
+	DECLARE  @USER_ID   NVARCHAR(50)  = N'{0}'
+	       , @PASSWORD  NVARCHAR(200) = N'{1}'
+    UPDATE T_MEMBER
+    SET PASSWORD_CHANGE_URL = ''
+       ,PASSWORD_AUTH_TIME = GETDATE()
+       ,PASSWORD = @PASSWORD
+       ,UPDATE_CODE = MEMBER_CODE
+       ,UPDATE_DATE = GETDATE()
+    WHERE USER_ID = @USER_ID
+ 
+  SET NOCOUNT OFF
+  ]]>
+      </FixedSQL>
+    </TemplateSQL>
+  </DBAgentTemplate>
+</DBAgentMultiTemplate>

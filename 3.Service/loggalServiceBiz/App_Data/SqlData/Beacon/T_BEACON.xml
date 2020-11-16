@@ -1,0 +1,221 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<DBAgentMultiTemplate  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns="http://altsoft.kr/">
+
+  <DBAgentTemplate TemplateID="GetBeaconList">
+    <!-- 
+    SqlType : SQL의 형태를 지정합니다.
+      Example 1:<SqlType>FixedSQL</SqlType> 고정적인 SQL을 지원합니다. 
+      Example 2:<SqlType>DynamicSQL</SqlType> 동적인 SQL Type1을 지원합니다.  
+    Description : 해당 SQL의 기능설명을 적습니다.
+    SQLModifier : 해당 SQL의 작성자(수정자)를 적습니다
+    LastModifyDate : 해당 SQL의 마지막 수정일을 적습니다
+    -->
+    <Information>
+      <SqlType>DynamicSQL</SqlType>
+      <Description>비콘배너 정보 가져오기</Description>
+      <SQLModifier>전상훈</SQLModifier>
+      <LastModifyDate>2018-04-10</LastModifyDate>
+    </Information>
+
+    <TemplateSQL>
+      <!-- FixedSQL : 고정된 SQL이 들어가는 곳입니다. -->
+      <FixedSQL>
+        <![CDATA[ 
+  
+	SET NOCOUNT ON 
+	/**********************************************/
+	/* 비콘정보 - T_BEACON 조회 -  SELECT QUERY   */ 
+	/**********************************************/
+	SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED 
+	
+  DECLARE @PAGE INT = {0}
+         ,@PAGE_COUNT INT = {1};
+
+  WITH T_TABLE AS
+  (    
+	SELECT 
+		ROW_NUMBER() OVER(ORDER BY {2}) AS IDX
+		, A.BEACON_CODE
+		, A.BEACON_NAME
+		, A.DEVICE_NUMBER
+    , A.LOGO_URL
+		, A.ADDRESS1
+		, A.ADDRESS2
+		, A.ZIP_CODE
+		, A.LATITUDE
+		, A.LONGITUDE
+		, A.HIDE
+		, A.REMARK
+		, A.INSERT_CODE
+		, B.USER_NAME AS INSERT_NAME
+    , A.INSERT_DATE
+		, A.UPDATE_CODE
+    , C.USER_NAME AS UPDATE_NAME
+		, A.UPDATE_DATE
+	FROM T_BEACON A 
+ INNER JOIN T_MEMBER B
+    ON A.INSERT_CODE = B.MEMBER_CODE
+ INNER JOIN T_MEMBER C
+    ON A.UPDATE_CODE = C.MEMBER_CODE
+    
+ WHERE 1=1 
+  #[BEACON_CODE]
+  #[BEACON_NAME]
+  #[HIDE]
+  )SELECT * , (SELECT COUNT(*) FROM T_TABLE) AS TOTAL_ROWCOUNT  
+     FROM T_TABLE	  
+    WHERE IDX > ((@PAGE-1) * @PAGE_COUNT)
+      AND IDX <= @PAGE * @PAGE_COUNT    
+	  SET NOCOUNT OFF 
+	SET NOCOUNT OFF 
+
+
+
+      ]]>
+      </FixedSQL>
+      <DynamicBodys>
+        <Key>BEACON_CODE</Key>
+        <Body>AND A.BEACON_CODE = {0} </Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>BEACON_NAME</Key>
+        <Body>AND A.SIGN_NAME LIKE N'%{0}%' </Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>HIDE</Key>
+        <Body>AND A.HIDE = {0} </Body>
+      </DynamicBodys>
+    </TemplateSQL>
+  </DBAgentTemplate>
+  <DBAgentTemplate TemplateID="BeaconSave">
+    <!-- 
+    SqlType : SQL의 형태를 지정합니다.
+      Example 1:<SqlType>FixedSQL</SqlType> 고정적인 SQL을 지원합니다. 
+      Example 2:<SqlType>DynamicSQL</SqlType> 동적인 SQL Type1을 지원합니다.  
+    Description : 해당 SQL의 기능설명을 적습니다.
+    SQLModifier : 해당 SQL의 작성자(수정자)를 적습니다
+    LastModifyDate : 해당 SQL의 마지막 수정일을 적습니다
+    -->
+    <Information>
+      <SqlType>DynamicSQL</SqlType>
+      <Description>로컬사인 정보 저장</Description>
+      <SQLModifier>전상훈</SQLModifier>
+      <LastModifyDate>2018-04-10</LastModifyDate>
+    </Information>
+
+    <TemplateSQL>
+      <!-- FixedSQL : 고정된 SQL이 들어가는 곳입니다. -->
+      <FixedSQL>
+        <![CDATA[ 
+	SET NOCOUNT ON 
+	/********************************************/
+	/* 비콘정보 - T_BEACON 저장 -  SAVE QUERY */ 
+	/********************************************/
+	DECLARE @BEACON_CODE                    BIGINT               = N'{0}'
+			  , @BEACON_NAME                    NVARCHAR(200)        = N'{1}'
+			  , @DEVICE_NUMBER                  VARCHAR(100)         = N'{2}'
+			  , @LOGO_URL                       NVARCHAR(200)        = N'{3}'
+			  , @ADDRESS1                       NVARCHAR(200)        = N'{4}'
+			  , @ADDRESS2                       NVARCHAR(200)        = N'{5}'
+			  , @ZIP_CODE                       VARCHAR(10)          = N'{6}'
+			  , @LATITUDE                       NUMERIC(20,16)       = CONVERT(NUMERIC(20,16), CASE WHEN ISNUMERIC('{7}') = 1 THEN '{7}' ELSE NULL END )
+			  , @LONGITUDE                     NUMERIC(20,16)       = CONVERT(NUMERIC(20,16), CASE WHEN ISNUMERIC('{8}') = 1 THEN '{8}' ELSE NULL END )
+			  , @HIDE                           BIT                  = CONVERT(BIT, CASE WHEN ISNUMERIC('{9}') = 1 THEN '{9}' ELSE '0' END )
+			  , @REMARK                         NVARCHAR(200)        = N'{10}'
+			  , @INSERT_CODE                    INT                  = {11}
+			  , @INSERT_DATE                    DATETIME             = GETDATE() 
+			  , @UPDATE_CODE                    INT                  = {11}
+			  , @UPDATE_DATE                    DATETIME             = GETDATE() 
+
+	UPDATE A 
+	SET  	  BEACON_NAME                    = @BEACON_NAME                   
+			 ,  DEVICE_NUMBER                  = @DEVICE_NUMBER                 		 ,  LOGO_URL                       = @LOGO_URL                      
+			 ,  ADDRESS1                       = @ADDRESS1                      		 ,  ADDRESS2                       = @ADDRESS2                      
+			 ,  ZIP_CODE                       = @ZIP_CODE                      		 ,  LATITUDE                       = @LATITUDE                      
+			 ,  LONGITUDE                     = @LONGITUDE                    		 ,  HIDE                           = @HIDE                          
+			 ,  REMARK                         = @REMARK                        		 ,  UPDATE_CODE                    = @UPDATE_CODE                   
+			 ,  UPDATE_DATE                    = @UPDATE_DATE                   
+	
+	FROM T_BEACON A 
+	WHERE BEACON_CODE= @BEACON_CODE
+	IF @@ROWCOUNT = 0
+	BEGIN
+		INSERT INTO T_BEACON
+		(		BEACON_NAME                   		, DEVICE_NUMBER                 		, LOGO_URL                      		
+			, ADDRESS1                      		, ADDRESS2                      		, ZIP_CODE                      		, LATITUDE                      		
+			, LONGITUDE                    		, HIDE                          		, REMARK                        		, INSERT_CODE                   		
+			, INSERT_DATE                   		, UPDATE_CODE                   		, UPDATE_DATE                   		
+		)
+		SELECT @BEACON_NAME                  		, @DEVICE_NUMBER                	
+				, @LOGO_URL                     		, @ADDRESS1                     		, @ADDRESS2                     	
+				, @ZIP_CODE                     		, @LATITUDE                     		, @LONGITUDE                   	
+				, @HIDE                         		, @REMARK                       		, @INSERT_CODE                  	
+				, @INSERT_DATE                  		, @UPDATE_CODE                  		, @UPDATE_DATE                  	                  	
+	 
+      SELECT  @BEACON_CODE =  IDENT_CURRENT('T_BEACON')
+   END
+   SELECT @BEACON_CODE AS DATA
+SET NOCOUNT OFF
+
+
+
+
+
+      ]]>
+      </FixedSQL>
+    </TemplateSQL>
+  </DBAgentTemplate>
+  <DBAgentTemplate TemplateID="BeaconDelete">
+    <!-- 
+    SqlType : SQL의 형태를 지정합니다.
+      Example 1:<SqlType>FixedSQL</SqlType> 고정적인 SQL을 지원합니다. 
+      Example 2:<SqlType>DynamicSQL</SqlType> 동적인 SQL Type1을 지원합니다.  
+    Description : 해당 SQL의 기능설명을 적습니다.
+    SQLModifier : 해당 SQL의 작성자(수정자)를 적습니다
+    LastModifyDate : 해당 SQL의 마지막 수정일을 적습니다
+    -->
+    <Information>
+      <SqlType>DynamicSQL</SqlType>
+      <Description>로컬사인 정보 저장</Description>
+      <SQLModifier>전상훈</SQLModifier>
+      <LastModifyDate>2018-04-10</LastModifyDate>
+    </Information>
+
+    <TemplateSQL>
+      <!-- FixedSQL : 고정된 SQL이 들어가는 곳입니다. -->
+      <FixedSQL>
+        <![CDATA[ 
+	SET NOCOUNT ON 
+	/*********************************************************************/
+	/* 비콘정보 - T_BEACON 삭제 -  SAVE QUERY SignageSave */ 
+	/*********************************************************************/
+	DECLARE @BEACON_CODE                  BIGINT               = N'{0}'
+	
+		  , @UPDATE_CODE                    INT                  = {1}
+		  , @UPDATE_DATE                    DATETIME             = GETDATE() 
+
+  IF EXISTS (SELECT * FROM T_AD_BEACON WHERE BEACON_CODE = @BEACON_CODE)
+  BEGIN
+      UPDATE T_AD_BEACON
+         SET HIDE = 1
+            ,UPDATE_CODE = @UPDATE_CODE
+            ,UPDATE_DATE = @UPDATE_DATE
+      WHERE BEACON_CODE = @BEACON_CODE
+      
+        UPDATE T_AD_BEACON
+         SET HIDE = 1
+            ,UPDATE_CODE = @UPDATE_CODE
+            ,UPDATE_DATE = @UPDATE_DATE
+      WHERE BEACON_CODE = @BEACON_CODE
+  END
+  ELSE
+  BEGIN
+      DELETE FROM T_BEACON WHERE BEACON_CODE = @BEACON_CODE
+  END
+  SELECT @BEACON_CODE
+  SET NOCOUNT OFF
+    ]]>
+      </FixedSQL>
+    </TemplateSQL>
+  </DBAgentTemplate>
+</DBAgentMultiTemplate>

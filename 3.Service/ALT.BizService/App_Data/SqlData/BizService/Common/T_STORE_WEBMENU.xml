@@ -1,0 +1,346 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<DBAgentMultiTemplate  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns="http://altsoft.kr/">
+
+  <DBAgentTemplate TemplateID="GetStoreWebMenu">
+    <!-- 
+    SqlType : SQL의 형태를 지정합니다.
+      Example 1:<SqlType>FixedSQL</SqlType> 고정적인 SQL을 지원합니다. 
+      Example 2:<SqlType>DynamicSQL</SqlType> 동적인 SQL Type1을 지원합니다.  
+    Description : 해당 SQL의 기능설명을 적습니다.
+    SQLModifier : 해당 SQL의 작성자(수정자)를 적습니다
+    LastModifyDate : 해당 SQL의 마지막 수정일을 적습니다
+    -->
+    <Information>
+      <SqlType>DynamicSQL</SqlType>
+      <Description>웹메뉴조회</Description>
+      <SQLModifier>전상훈</SQLModifier>
+      <LastModifyDate>2016-10-04</LastModifyDate>
+    </Information>
+
+    <TemplateSQL>
+      <!-- FixedSQL : 고정된 SQL이 들어가는 곳입니다. -->
+      <FixedSQL>
+        <![CDATA[ 
+
+	 
+		SET NOCOUNT ON 
+	/*********************************************************/
+	/* 매장별웹메뉴 - T_STORE_WEBMENU 조회 -  SELECT QUERY */ 
+	/*********************************************************/
+	SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED 
+	SELECT
+      A.PROJECT_SITE
+		, A.STORE_CODE
+		, A.MENU_CODE
+		, A.SEARCH_CODE
+		, A.MENU_TYPE
+		, A.PARENT_CODE
+		, A.LEVEL
+		, A.SEQ
+		, A.NAME
+		, A.FULL_NAME
+		, A.MENU_URL
+		, A.MENU_CLASS
+		, A.REMARK
+		, A.HIDE
+    , A.UPDATE_NAME
+		, A.UPDATE_DATE
+	FROM V_STORE_MENU A
+  WHERE 1=1
+   #[PROJECT_SITE]
+   #[STORE_CODE]
+   #[MENU_CODE]
+   #[SEARCH_CODE]
+   #[NAME]
+   #[LEVEL]
+   #[HIDE]
+   ORDER BY A.STORE_CODE, A.SEARCH_CODE
+	SET NOCOUNT OFF 
+
+
+	SET NOCOUNT OFF 
+      ]]>
+      </FixedSQL>
+      <DynamicBodys>
+        <Key>PROJECT_SITE</Key>
+        <Body>AND A.PROJECT_SITE = {0} </Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>STORE_CODE</Key>
+        <Body>AND A.STORE_CODE = {0} </Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>MENU_CODE</Key>
+        <Body>AND A.MENU_CODE = {0} </Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>SEARCH_CODE</Key>
+        <Body>AND A.SEARCH_CODE LIKE N'{0}%' </Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>NAME</Key>
+        <Body>AND A.NAME LIKE N'%{0}%' </Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>LEVEL</Key>
+        <Body>AND A.LEVEL = {0} </Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>HIDE</Key>
+        <Body>AND A.HIDE = {0} </Body>
+      </DynamicBodys>
+
+    </TemplateSQL>
+  </DBAgentTemplate>
+  <DBAgentTemplate TemplateID="StoreWebMenuSave">
+    <!-- 
+    SqlType : SQL의 형태를 지정합니다.
+      Example 1:<SqlType>FixedSQL</SqlType> 고정적인 SQL을 지원합니다. 
+      Example 2:<SqlType>DynamicSQL</SqlType> 동적인 SQL Type1을 지원합니다.  
+    Description : 해당 SQL의 기능설명을 적습니다.
+    SQLModifier : 해당 SQL의 작성자(수정자)를 적습니다
+    LastModifyDate : 해당 SQL의 마지막 수정일을 적습니다
+    -->
+    <Information>
+      <SqlType>DynamicSQL</SqlType>
+      <Description>메뉴저장</Description>
+      <SQLModifier>전상훈</SQLModifier>
+      <LastModifyDate>2016-10-05</LastModifyDate>
+    </Information>
+
+    <TemplateSQL>
+      <!-- FixedSQL : 고정된 SQL이 들어가는 곳입니다. -->
+      <FixedSQL>
+        <![CDATA[ 
+  	SET NOCOUNT ON 
+	  /*********************************************/
+	  /* 메뉴저장 - menuSave(T_STORE_WEBMENU 저장 -  SAVE QUERY */ 
+	  /*********************************************/
+    DECLARE @RTN_MSG NVARCHAR(1000) = '', @ROW_NUM INT = 0, @SAVE_MODE VARCHAR(2)= N'{0}', @MENU_CODE INT, @STORE_CODE INT,  @PROJECT_SITE INT
+    DECLARE @TABLE TABLE
+    (  
+       SEQ INT IDENTITY PRIMARY KEY
+     , PROJECT_SITE INT
+     , STORE_CODE INT  
+     , MENU_CODE INT
+     , SEARCH_CODE VARCHAR(50)
+     , NAME NVARCHAR(100) 
+     , MENU_URL NVARCHAR(200)
+     , MENU_CLASS NVARCHAR(100)
+     , HIDE BIT
+     , REG_CODE INT 
+     , ROW_NUM INT
+    )
+    
+    INSERT INTO @TABLE
+    (PROJECT_SITE, STORE_CODE, MENU_CODE, SEARCH_CODE, NAME, MENU_CLASS, MENU_URL, HIDE, REG_CODE, ROW_NUM)
+    #[INSERT_QUERY]
+    
+    IF @SAVE_MODE = 'D'
+    BEGIN
+       UPDATE A
+         SET HIDE = 1
+           ,UPDATE_CODE = B.REG_CODE
+           ,UPDATE_DATE = GETDATE()
+       FROM T_STORE_WEBMENU A
+       INNER JOIN @TABLE B
+          ON A.PROJECT_SITE = B.PROJECT_SITE
+         AND A.STORE_CODE   = B.STORE_CODE
+         AND A.MENU_CODE    = B.MENU_CODE
+         
+       DELETE C
+       FROM @TABLE A
+       INNER JOIN T_STORE_WEBMENU B
+          ON A.PROJECT_SITE = B.PROJECT_SITE
+         AND A.STORE_CODE = B.STORE_CODE
+         AND A.MENU_CODE = B.MENU_CODE 
+       INNER JOIN T_STORE_WEBMENU_EMPLOYEE_MENU C
+          ON B.PROJECT_SITE = C.PROJECT_SITE
+         AND B.STORE_CODE = C.STORE_CODE
+         AND B.MENU_CODE = C.MENU_CODE 
+         
+        DELETE C
+       FROM @TABLE A
+       INNER JOIN T_STORE_WEBMENU B
+          ON A.PROJECT_SITE = B.PROJECT_SITE
+         AND A.STORE_CODE = B.STORE_CODE
+         AND A.MENU_CODE = B.MENU_CODE 
+       INNER JOIN T_STORE_WEBMENU_GROUP_MENU C
+          ON B.PROJECT_SITE = C.PROJECT_SITE
+         AND B.STORE_CODE = C.STORE_CODE
+         AND B.MENU_CODE = C.MENU_CODE 
+       
+       DELETE A
+        FROM T_STORE_WEBMENU A
+       INNER JOIN @TABLE B
+          ON A.PROJECT_SITE = B.PROJECT_SITE
+         AND A.STORE_CODE = B.STORE_CODE
+         AND A.MENU_CODE = B.MENU_CODE
+       GOTO EXCEPTION
+    END
+    
+ 
+ SELECT TOP 1 @PROJECT_SITE = PROJECT_SITE, @STORE_CODE = STORE_CODE FROM @TABLE
+
+    SELECT @ROW_NUM = MAX(A1.ROW_NUM), 
+       @RTN_MSG = N'메뉴코드는 숫자형이어야 하며 길이는 2의 배수여야 합니다..</br>' + 
+		     ISNULL(
+			    STUFF(
+			    (
+				    SELECT 
+				       ',' + CONVERT(VARCHAR(20), A.ROW_NUM)  + N'행 || 메뉴코드 : ' +  A.SEARCH_CODE + ' || 메뉴명 : ' + A.NAME
+				     FROM @TABLE A
+				    WHERE A1.PROJECT_SITE = A.PROJECT_SITE
+              AND A1.STORE_CODE = A.STORE_CODE AND A1.SEARCH_CODE = A.SEARCH_CODE
+				      AND ISNUMERIC(A.SEARCH_CODE) = 0 OR LEN(A.SEARCH_CODE) % 2 <> 0 OR A.SEARCH_CODE = ''
+			    FOR XML PATH (''))
+			    ,1,1,'')
+		    ,NULL)
+    FROM @TABLE A1
+    GROUP BY A1.PROJECT_SITE, A1.STORE_CODE, A1.SEARCH_CODE
+
+    IF ISNULL(@RTN_MSG ,'') <> ''
+    BEGIN
+    
+	    GOTO EXCEPTION
+    END
+
+    SELECT @ROW_NUM = MAX(A1.ROW_NUM)
+      , @RTN_MSG = N'메뉴코드가 중복되었습니다.</br>' + 
+	    ISNULL(
+		    STUFF(
+		    (
+			    SELECT 
+			       ',' + CONVERT(VARCHAR(20), A.ROW_NUM)  + N'행 || 메뉴코드 : ' +  A.SEARCH_CODE + ' || 메뉴명 : ' + A.NAME
+			     FROM @TABLE A
+			    LEFT JOIN T_STORE_WEBMENU B
+             ON A.PROJECT_SITE = B.PROJECT_SITE
+			      AND A.STORE_CODE = B.STORE_CODE
+			      AND A.MENU_CODE = B.MENU_CODE
+			    INNER JOIN T_STORE_WEBMENU C
+             ON A.PROJECT_SITE = C.PROJECT_SITE 
+			      AND A.STORE_CODE   = C.STORE_CODE
+			      AND A.SEARCH_CODE  = C.SEARCH_CODE
+		        WHERE A.PROJECT_SITE = A1.PROJECT_SITE 
+              AND A.STORE_CODE = A1.STORE_CODE
+              AND A.SEARCH_CODE  = A1.SEARCH_CODE  
+              AND A.MENU_CODE <= 0
+		    FOR XML PATH (''))
+		    ,1,1,'')
+	    ,NULL)
+    FROM @TABLE A1
+    GROUP BY A1.PROJECT_SITE, A1.STORE_CODE, A1.SEARCH_CODE
+    IF ISNULL(@RTN_MSG ,'') <> ''
+    BEGIN
+      GOTO EXCEPTION
+    END
+
+    UPDATE B 
+    SET SEARCH_CODE = A.SEARCH_CODE
+      , NAME = A.NAME
+      , MENU_URL= A.MENU_URL
+      , MENU_CLASS = A.MENU_CLASS
+      , HIDE = A.HIDE
+      , UPDATE_CODE = A.REG_CODE
+      , UPDATE_DATE = GETDATE()
+    FROM @TABLE A
+    INNER JOIN T_STORE_WEBMENU B
+      ON A.PROJECT_SITE = B.PROJECT_SITE
+     AND A.STORE_CODE = B.STORE_CODE
+     AND A.MENU_CODE = B.MENU_CODE
+
+	 SELECT @MENU_CODE = ISNULL(MAX(MENU_CODE),0) FROM T_STORE_WEBMENU WHERE PROJECT_SITE = @PROJECT_SITE AND STORE_CODE = @STORE_CODE
+
+
+    INSERT INTO T_WEBMENU
+    (PROJECT_SITE, MENU_CODE, MENU_TYPE, MENU_AUTH
+    , MENU_COMPANY_CODE, MENU_STORE_CODE, SEARCH_CODE, PARENT_CODE, LEVEL, SEQ, NAME, FULL_NAME
+    , MENU_URL, TEMPLEATE_PAGE, MENU_CLASS, REMARK, HIDE, INSERT_CODE, INSERT_DATE, UPDATE_CODE, UPDATE_DATE
+    )
+    SELECT A.PROJECT_SITE
+          , @MENU_CODE + ROW_NUMBER() OVER(ORDER BY A.SEARCH_CODE) MENU_CODE
+          , 1 AS MENU_TYPE
+          , 4 AS MENU_AUTH /*U002*/
+          , D.COMPANY_CODE AS MENU_COMPANY_CODE
+          , A.STORE_CODE AS MENU_STORE_CODE
+          
+          , A.SEARCH_CODE
+		      , (SELECT MAX(MENU_CODE) FROM T_WEBMENU
+		          WHERE SEARCH_CODE = SUBSTRING(A.SEARCH_CODE,1, LEN(A.SEARCH_CODE) -2)) PARENT_CODE
+		      , CONVERT(INT, LEN(A.SEARCH_CODE) / 2) AS [LEVEL]
+		      , CONVERT(INT, SUBSTRING(A.SEARCH_CODE, LEN(A.SEARCH_CODE) -1, LEN(A.SEARCH_CODE))) AS SEQ
+		      , A.NAME,A.NAME AS FULL_NAME
+		      , A.MENU_URL,'' AS TEMPLEATE_PAGE,  A.MENU_CLASS, N'지점에서 등록', A.HIDE, A.REG_CODE, GETDATE(), A.REG_CODE, GETDATE()
+    
+      FROM @TABLE A
+    LEFT JOIN T_STORE_WEBMENU B
+      ON A.PROJECT_SITE = B.PROJECT_SITE
+     AND A.STORE_CODE = B.STORE_CODE
+     AND A.SEARCH_CODE = B.SEARCH_CODE
+    LEFT JOIN T_WEBMENU C
+       ON A.PROJECT_SITE = C.PROJECT_SITE
+      AND A.SEARCH_CODE = C.SEARCH_CODE    
+    INNER JOIN T_STORE D
+       ON A.STORE_CODE = D.STORE_CODE
+    WHERE A.MENU_CODE <= 0
+      AND B.PROJECT_SITE IS NULL
+      AND C.PROJECT_SITE IS NULL
+      
+      /*하위 코드 저장 상위메뉴코드 먼저 저장*/
+     INSERT INTO T_STORE_WEBMENU
+     (PROJECT_SITE, STORE_CODE, MENU_CODE,SEARCH_CODE, NAME, MENU_URL, MENU_CLASS, HIDE, INSERT_CODE, INSERT_DATE, UPDATE_CODE, UPDATE_DATE)
+
+	     SELECT DISTINCT A1.PROJECT_SITE, A.STORE_CODE, A1.MENU_CODE, A1.SEARCH_CODE, A1.NAME, a1.MENU_URL, A1.MENU_CLASS, A1.HIDE, A.REG_CODE, GETDATE(), A.REG_CODE, GETDATE()
+			   FROM @TABLE A
+				INNER JOIN T_WEBMENU A1
+		       ON A.PROJECT_SITE = A1.PROJECT_SITE
+			    AND  LEFT(A.SEARCH_CODE, LEN(A.SEARCH_CODE) -2)  = A1.SEARCH_CODE
+			   LEFT JOIN T_STORE_WEBMENU B
+			     ON A.PROJECT_SITE = B.PROJECT_SITE 
+          AND A.STORE_CODE = B.STORE_CODE
+          AND LEFT(A.SEARCH_CODE, LEN(A.SEARCH_CODE) -2) = B.SEARCH_CODE
+		   
+			    WHERE LEN(A.SEARCH_CODE) > 2
+			     AND  B.MENU_CODE IS NULL
+      
+    /*추가*/
+    INSERT INTO T_STORE_WEBMENU
+    (PROJECT_SITE, STORE_CODE, MENU_CODE,SEARCH_CODE, NAME, MENU_URL, MENU_CLASS, HIDE, INSERT_CODE, INSERT_DATE, UPDATE_CODE, UPDATE_DATE)
+    SELECT A.PROJECT_SITE, A.STORE_CODE, A.MENU_CODE, A.SEARCH_CODE, A.NAME, A.MENU_URL, A.MENU_CLASS, A.HIDE, A.REG_CODE, GETDATE(), A.REG_CODE, GETDATE()
+    FROM @TABLE A
+    LEFT JOIN T_STORE_WEBMENU B
+      ON A.PROJECT_SITE = B.PROJECT_SITE
+     AND A.STORE_CODE = B.STORE_CODE
+     AND A.SEARCH_CODE = B.SEARCH_CODE
+    WHERE B.PROJECT_SITE IS NULL
+    ORDER BY A.SEARCH_CODE
+
+    SELECT 
+    @RTN_MSG = N'코드를 잘못입력하였습니다. 메뉴코드는  2자리씩 2지리 이상일 경우 2자리를 뺀코드는 상위 코드가 있어야 합니다..</br>' + 
+	    ISNULL(
+		    STUFF(
+		    (
+			    SELECT 
+			       ',' + CONVERT(VARCHAR(20), A.ROW_NUM)  + N'행 || 메뉴코드 : ' +  A.SEARCH_CODE + ' || 메뉴명 : ' + A.NAME 
+			      FROM @TABLE A
+			    LEFT JOIN T_STORE_WEBMENU B
+			      ON A.PROJECT_SITE = B.PROJECT_SITE 
+           AND A.STORE_CODE = B.STORE_CODE
+           AND LEFT(A.SEARCH_CODE, LEN(A.SEARCH_CODE) -2) = B.SEARCH_CODE
+			    WHERE LEN(A.SEARCH_CODE) > 2
+			     AND  B.MENU_CODE IS NULL
+ 					    FOR XML PATH (''))
+		    ,1,1,'')
+	    ,NULL)
+    EXCEPTION:
+     SELECT @ROW_NUM AS ROW_NUM, ISNULL(@RTN_MSG,'') AS ERROR_MESSAGE
+  SET NOCOUNT OFF
+  ]]>
+      </FixedSQL>
+      <DynamicBodys>
+        <Key>INSERT_QUERY</Key>
+        <Body>{0} </Body>
+      </DynamicBodys>
+    </TemplateSQL>
+  </DBAgentTemplate>
+</DBAgentMultiTemplate>

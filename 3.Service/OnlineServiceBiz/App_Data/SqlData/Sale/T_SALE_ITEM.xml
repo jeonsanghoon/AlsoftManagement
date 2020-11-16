@@ -1,0 +1,159 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<DBAgentMultiTemplate  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns="http://altsoft.kr/">
+
+  <DBAgentTemplate TemplateID="GetSaleItemList">
+    <!-- 
+    SqlType : SQL의 형태를 지정합니다.
+      Example 1:<SqlType>FixedSQL</SqlType> 고정적인 SQL을 지원합니다. 
+      Example 2:<SqlType>DynamicSQL</SqlType> 동적인 SQL Type1을 지원합니다.  
+    Description : 해당 SQL의 기능설명을 적습니다.
+    SQLModifier : 해당 SQL의 작성자(수정자)를 적습니다
+    LastModifyDate : 해당 SQL의 마지막 수정일을 적습니다
+    -->
+    <Information>
+      <SqlType>DynamicSQL</SqlType>
+      <Description>매장조회</Description>
+      <SQLModifier>전상훈</SQLModifier>
+      <LastModifyDate>2016-06-17</LastModifyDate>
+    </Information>
+
+    <TemplateSQL>
+      <!-- FixedSQL : 고정된 SQL이 들어가는 곳입니다. -->
+      <FixedSQL>
+        <![CDATA[ 
+    SET NOCOUNT ON
+    /* 매출아이템 테이블(T_SALE_ITEM) 조회 GetSaleItemList */
+	/**********************************/
+	/*T_SALE_ITEM SELECT SELECT QUERY */ 
+	/**********************************/
+	SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED 	SELECT 
+		  SALE_CODE
+		, A.ITEM_SEQ
+		, A.ITEM_CODE
+		, A.ITEM_NAME
+		, A.ITEM_TYPE
+		, A.COST
+		, A.TOT_TAX
+		, A.TAX1
+		, A.TAX2
+		, A.TAX3
+		, A.CNT
+		, A.PRICE
+		, A.DISCOUNT_TYPE
+		, A.DISCOUNT_AMT
+		, A.TOPPING_CODE
+		, A.REMARK
+		, A.INSERT_CODE
+		, A.INSERT_DATE
+		, A.UPDATE_CODE
+		, A.UPDATE_DATE
+	FROM T_SALE_ITEM A 
+ WHERE 1=1
+      #[SALE_CODE]
+      #[ITEM_SEQ]
+      #[ITEM_CODE]
+ ORDER BY A.SALE_CODE, A.ITEM_SEQ
+   SET NOCOUNT OFF
+      ]]>
+      </FixedSQL>
+      <DynamicBodys>
+        <Key>SALE_CODE</Key>
+        <Body>AND A.SALE_CODE = {0} </Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>ITEM_SEQ</Key>
+        <Body>AND A.ITEM_SEQ = {0} </Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>ITEM_CODE</Key>
+        <Body>AND A.ITEM_CODE = {0} </Body>
+      </DynamicBodys>
+    </TemplateSQL>
+  </DBAgentTemplate>
+
+
+  <DBAgentTemplate TemplateID="SaleItemSave">
+    <!-- 
+    SqlType : SQL의 형태를 지정합니다.
+      Example 1:<SqlType>FixedSQL</SqlType> 고정적인 SQL을 지원합니다. 
+      Example 2:<SqlType>DynamicSQL</SqlType> 동적인 SQL Type1을 지원합니다.  
+    Description : 해당 SQL의 기능설명을 적습니다.
+    SQLModifier : 해당 SQL의 작성자(수정자)를 적습니다
+    LastModifyDate : 해당 SQL의 마지막 수정일을 적습니다
+    -->
+    <Information>
+      <SqlType>DynamicSQL</SqlType>
+      <Description>매장조회</Description>
+      <SQLModifier>전상훈</SQLModifier>
+      <LastModifyDate>2016-06-17</LastModifyDate>
+    </Information>
+
+    <TemplateSQL>
+      <!-- FixedSQL : 고정된 SQL이 들어가는 곳입니다. -->
+      <FixedSQL>
+        <![CDATA[ 
+	SET NOCOUNT ON 
+	/****************************************************/
+	/* 매출아이템테이블 - T_SALE_ITEM 저장 -  SAVE QUERY */ 
+	/****************************************************/
+	DECLARE @SALE_CODE              BIGINT               = N'{0}'
+			  , @ITEM_SEQ             INT                  = N'{1}'
+			  , @ITEM_CODE            BIGINT               = CASE WHEN ISNUMERIC('{2}') = 1 THEN '{2}' ELSE 0 END
+			  , @ITEM_NAME            NVARCHAR(100)        = N'{3}'
+			  , @ITEM_TYPE            INT                  = CASE WHEN ISNUMERIC('{4}') = 1 THEN '{4}' ELSE 0 END
+			  , @COST                 NUMERIC(30,12)       = CONVERT(NUMERIC(30,12), CASE WHEN ISNUMERIC('{5}') = 1 THEN '{5}' ELSE  '0' END )
+			  , @TOT_TAX              NUMERIC(30,16)       = CONVERT(NUMERIC(30,16), CASE WHEN ISNUMERIC('{6}') = 1 THEN '{6}' ELSE  '0' END )
+			  , @TAX1                 NUMERIC(30,16)       = CONVERT(NUMERIC(30,16), CASE WHEN ISNUMERIC('{7}') = 1 THEN '{7}' ELSE  '0' END )
+			  , @TAX2                 NUMERIC(30,16)       = CONVERT(NUMERIC(30,16), CASE WHEN ISNUMERIC('{8}') = 1 THEN '{8}' ELSE  '0' END )
+			  , @TAX3                 NUMERIC(30,16)       = CONVERT(NUMERIC(30,16), CASE WHEN ISNUMERIC('{9}') = 1 THEN '{9}' ELSE  '0' END )
+			  , @CNT                  INT                  = CASE WHEN ISNUMERIC('{10}') = 1 THEN '{10}' ELSE 0 END
+			  , @PRICE                NUMERIC(30,6)        = CONVERT(NUMERIC(30,16), CASE WHEN ISNUMERIC('{11}') = 1 THEN '{11}' ELSE  '0' END )
+			  , @DISCOUNT_TYPE        INT                  = CASE WHEN ISNUMERIC('{12}') = 1 THEN '{12}' ELSE 0 END
+			  , @DISCOUNT_AMT         NUMERIC(30,6)        = CONVERT(NUMERIC(30,16), CASE WHEN ISNUMERIC('{13}') = 1 THEN '{13}' ELSE  '0' END )
+			  , @TOPPING_CODE         INT                  = CASE WHEN ISNUMERIC('{14}') = 1 THEN '{14}' ELSE NULL END
+			  , @REMARK               NVARCHAR(400)        = N'{15}'
+			  , @INSERT_CODE          INT                  = {16}
+			  , @INSERT_DATE          DATETIME             = GETDATE() 
+			  , @UPDATE_CODE          INT                  = {16}
+			  , @UPDATE_DATE          DATETIME             = GETDATE() 
+
+	UPDATE A 
+	SET  	  SALE_CODE                   = @SALE_CODE                  		 ,  ITEM_SEQ                  = @ITEM_SEQ                 
+			 ,  ITEM_CODE                 = @ITEM_CODE                		 ,  ITEM_NAME                 = @ITEM_NAME                
+			 ,  ITEM_TYPE                 = @ITEM_TYPE                		 ,  COST                      = @COST                     
+			 ,  TOT_TAX                   = @TOT_TAX                  		 ,  TAX1                      = @TAX1                     
+			 ,  TAX2                      = @TAX2                     		 ,  TAX3                      = @TAX3                     
+			 ,  CNT                       = @CNT                      		 ,  PRICE                     = @PRICE                    
+			 ,  DISCOUNT_TYPE             = @DISCOUNT_TYPE            		 ,  DISCOUNT_AMT              = @DISCOUNT_AMT             
+			 ,  TOPPING_CODE              = @TOPPING_CODE             		 ,  REMARK                    = @REMARK                   
+			 ,  UPDATE_CODE               = @UPDATE_CODE              		 ,  UPDATE_DATE               = @UPDATE_DATE              
+	
+	FROM T_SALE_ITEM A 
+	WHERE SALE_CODE= @SALE_CODE	  AND ITEM_SEQ= @ITEM_SEQ
+	IF @@ROWCOUNT = 0
+	BEGIN
+       SELECT @ITEM_SEQ = ISNULL(MAX(ITEM_SEQ),0) + 1 FROM T_SALE_ITEM
+        WHERE SALE_CODE = @SALE_CODE
+    
+		    INSERT INTO T_SALE_ITEM
+		    (		SALE_CODE             	, ITEM_SEQ            		, ITEM_CODE           		, ITEM_NAME           		
+			    , ITEM_TYPE           		, COST                		, TOT_TAX             		, TAX1                		
+			    , TAX2                		, TAX3                		, CNT                 		, PRICE               		
+			    , DISCOUNT_TYPE       		, DISCOUNT_AMT        		, TOPPING_CODE        		, REMARK              		
+			    , INSERT_CODE         		, INSERT_DATE         		, UPDATE_CODE         		, UPDATE_DATE         		
+			 )
+		   SELECT @SALE_CODE            	, @ITEM_SEQ           		, @ITEM_CODE          	
+				    , @ITEM_NAME          		, @ITEM_TYPE          		, @COST               	
+				    , @TOT_TAX            		, @TAX1               		, @TAX2               	
+				    , @TAX3               		, @CNT                		, @PRICE              	
+				    , @DISCOUNT_TYPE      		, @DISCOUNT_AMT       		, @TOPPING_CODE       	
+				    , @REMARK             		, @INSERT_CODE        		, @INSERT_DATE        	
+				    , @UPDATE_CODE        		, @UPDATE_DATE        	
+	     END
+SET NOCOUNT OFF
+
+      ]]>
+      </FixedSQL>
+    </TemplateSQL>
+  </DBAgentTemplate>
+</DBAgentMultiTemplate>

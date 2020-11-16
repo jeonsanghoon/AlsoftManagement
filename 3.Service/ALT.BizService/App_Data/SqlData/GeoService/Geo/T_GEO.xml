@@ -1,0 +1,160 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<DBAgentMultiTemplate  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns="http://altsoft.kr/">
+    <DBAgentTemplate TemplateID="GeoSave">
+        <!-- 
+    SqlType : SQL의 형태를 지정합니다.
+      Example 1:<SqlType>FixedSQL</SqlType> 고정적인 SQL을 지원합니다. 
+      Example 2:<SqlType>DynamicSQL</SqlType> 동적인 SQL Type1을 지원합니다.  
+    Description : 해당 SQL의 기능설명을 적습니다.
+    SQLModifier : 해당 SQL의 작성자(수정자)를 적습니다
+    LastModifyDate : 해당 SQL의 마지막 수정일을 적습니다
+    -->
+        <Information>
+            <SqlType>DynamicSQL</SqlType>
+            <Description>행정구역경계정보테이블 - T_GEO 저장</Description>
+            <SQLModifier>전상훈</SQLModifier>
+            <LastModifyDate>2018-02-01</LastModifyDate>
+        </Information>
+
+        <TemplateSQL>
+            <!-- FixedSQL : 고정된 SQL이 들어가는 곳입니다. -->
+            <FixedSQL>
+                <![CDATA[ 
+
+        SET NOCOUNT ON 
+        /*****************************************************/
+        /* 행정구역경계정보테이블 - T_GEO 저장 -  SAVE QUERY */ 
+        /*****************************************************/
+        DECLARE @GEO_TYPE     INT           = CONVERT(INT, CASE WHEN ISNUMERIC('{0}') = 1 THEN '{0}' ELSE NULL END )
+			  , @CODE         VARCHAR(20)   = N'{1}'
+			  , @NAME         NVARCHAR(100) = N'{2}'
+			  , @COORDINATES  VARCHAR(MAX)  = N'{3}'
+			  , @INSERT_CODE  INT           =  CONVERT(INT, CASE WHEN ISNUMERIC(' {4}') = 1 THEN '{4}' ELSE '0' END )
+           
+
+        
+        
+            UPDATE A 
+            SET   GEO_TYPE  = @GEO_TYPE ,  CODE        = @CODE                          
+	            ,  NAME     = @NAME     ,  COORDINATES = @COORDINATES                   
+	
+            FROM T_GEO A 
+            WHERE GEO_TYPE  = @GEO_TYPE 
+              AND CODE      = @CODE  
+            IF @@ROWCOUNT = 0
+            BEGIN
+	            INSERT INTO T_GEO
+	            (   GEO_TYPE     , CODE   , NAME, COORDINATES ,  INSERT_CODE)
+	            SELECT @GEO_TYPE , @CODE  , @NAME, @COORDINATES, @INSERT_CODE                  	
+            END
+        
+        SELECT '' AS DATA
+        SET NOCOUNT OFF
+      ]]>
+            </FixedSQL>
+
+        </TemplateSQL>
+    </DBAgentTemplate>
+    <DBAgentTemplate TemplateID="GeoDelete">
+        <!-- 
+    SqlType : SQL의 형태를 지정합니다.
+      Example 1:<SqlType>FixedSQL</SqlType> 고정적인 SQL을 지원합니다. 
+      Example 2:<SqlType>DynamicSQL</SqlType> 동적인 SQL Type1을 지원합니다.  
+    Description : 해당 SQL의 기능설명을 적습니다.
+    SQLModifier : 해당 SQL의 작성자(수정자)를 적습니다
+    LastModifyDate : 해당 SQL의 마지막 수정일을 적습니다
+    -->
+        <Information>
+            <SqlType>DynamicSQL</SqlType>
+            <Description>행정구역경계정보테이블 - T_GEO 삭제</Description>
+            <SQLModifier>전상훈</SQLModifier>
+            <LastModifyDate>2018-02-01</LastModifyDate>
+        </Information>
+
+        <TemplateSQL>
+            <!-- FixedSQL : 고정된 SQL이 들어가는 곳입니다. -->
+            <FixedSQL>
+                <![CDATA[ 
+
+        SET NOCOUNT ON 
+        /*****************************************************/
+        /* 행정구역경계정보테이블 - T_GEO 삭제 -  Delete QUERY */ 
+        /*****************************************************/
+        
+		 DELETE FROM T_GEO
+             WHERE 1=1
+              #[GEO_TYPE]
+              #[CODE]
+        
+        SET NOCOUNT OFF
+      ]]>
+            </FixedSQL>
+            <DynamicBodys>
+                <Key>GEO_TYPE</Key>
+                <Body>AND GEO_TYPE = {0} </Body>
+            </DynamicBodys>
+            <DynamicBodys>
+                <Key>CODE</Key>
+                <Body>AND CODE = {0} </Body>
+            </DynamicBodys>
+        </TemplateSQL>
+    </DBAgentTemplate>
+    <DBAgentTemplate TemplateID="GetGeoList">
+        <!-- 
+    SqlType : SQL의 형태를 지정합니다.
+      Example 1:<SqlType>FixedSQL</SqlType> 고정적인 SQL을 지원합니다. 
+      Example 2:<SqlType>DynamicSQL</SqlType> 동적인 SQL Type1을 지원합니다.  
+    Description : 해당 SQL의 기능설명을 적습니다.
+    SQLModifier : 해당 SQL의 작성자(수정자)를 적습니다
+    LastModifyDate : 해당 SQL의 마지막 수정일을 적습니다
+    -->
+        <Information>
+            <SqlType>DynamicSQL</SqlType>
+            <Description>행정구역경계정보테이블 - T_GEO 가져오기</Description>
+            <SQLModifier>전상훈</SQLModifier>
+            <LastModifyDate>2018-02-01</LastModifyDate>
+        </Information>
+
+        <TemplateSQL>
+            <!-- FixedSQL : 고정된 SQL이 들어가는 곳입니다. -->
+            <FixedSQL>
+                <![CDATA[ 
+
+        SET NOCOUNT ON 
+       	SET NOCOUNT ON 
+	/***************************************************/
+	/* 행정구역경계정보테이블 - T_GEO 조회 -  SELECT QUERY */ 
+	/***************************************************/
+	SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED 
+	SELECT 
+		 A.GEO_TYPE
+		, A.CODE
+		, A.NAME
+		, A.COORDINATES
+		, A.INSERT_CODE
+	FROM T_GEO A 
+   WHERE 1=1 
+    #[GEO_TYPE]
+    #[CODE]
+    #[NAME]
+	SET NOCOUNT OFF 
+
+
+        SET NOCOUNT OFF
+      ]]>
+            </FixedSQL>
+            <DynamicBodys>
+                <Key>GEO_TYPE</Key>
+                <Body>AND A.GEO_TYPE = {0} </Body>
+            </DynamicBodys>
+            <DynamicBodys>
+                <Key>CODE</Key>
+                <Body>AND A.CODE = {0} </Body>
+            </DynamicBodys>
+            <DynamicBodys>
+                <Key>NAME</Key>
+                <Body>AND A.NAME LIKE N'%{0}%' </Body>
+            </DynamicBodys>
+        </TemplateSQL>
+    </DBAgentTemplate>
+</DBAgentMultiTemplate>

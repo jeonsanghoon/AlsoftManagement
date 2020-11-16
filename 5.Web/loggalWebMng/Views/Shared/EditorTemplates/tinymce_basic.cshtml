@@ -1,0 +1,46 @@
+﻿
+
+
+<script type="text/javascript">
+    if (typeof tinymce === 'undefined') {
+        document.write('<script src="@Url.Content("~/Common/plugin/js/tinymce/tinymce.min.js")" type="text/javascript"><\/script>');
+        
+    }
+</script>
+@{ 
+
+    TinyMCEOption option = (ViewData["option"] == null) ? new TinyMCEOption() : (TinyMCEOption)ViewData["option"];
+}
+<script type="text/javascript">
+    (function(){
+        tinymce.init({
+            mode: "exact",
+            selector : "#@(option.ID == null ? ViewData.TemplateInfo.GetFullHtmlFieldId(string.Empty) : option.ID)",
+            //elements: "@ViewData.TemplateInfo.GetFullHtmlFieldId(string.Empty)",
+            theme: "modern",
+            height: "@(option.ID == null ? "500px" : option.HEIGHT)",
+            width: "@(option.ID == null ? "100%" : option.WIDTH)",
+            plugins: [
+                "advlist autolink lists link image charmap print preview anchor",
+                "searchreplace visualblocks code fullscreen",
+                "insertdatetime media table contextmenu paste"
+            ],
+            toolbar: "insertfile undo redo | styleselect | bold italic | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | link image"
+            , setup: function (ed) {
+            ed.onChange.add(function (ed, l) {
+                console.debug('Editor contents was modified. Contents: ' + l.content);
+            })
+            }
+    });
+    })();
+</script>
+@{ 
+    if (option.ID == null)
+    {
+    @Html.TextArea(string.Empty, ViewData.TemplateInfo.FormattedModelValue)
+    }
+    else
+    {
+        @Html.TextArea(option.ID, option.CONTENT == null ? string.Empty : option.CONTENT)
+    }
+}

@@ -1,0 +1,221 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<DBAgentMultiTemplate  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns="http://altsoft.kr/">
+
+  <DBAgentTemplate TemplateID="GetCommon">
+    <!-- 
+    SqlType : SQL의 형태를 지정합니다.
+      Example 1:<SqlType>FixedSQL</SqlType> 고정적인 SQL을 지원합니다. 
+      Example 2:<SqlType>DynamicSQL</SqlType> 동적인 SQL Type1을 지원합니다.  
+    Description : 해당 SQL의 기능설명을 적습니다.
+    SQLModifier : 해당 SQL의 작성자(수정자)를 적습니다
+    LastModifyDate : 해당 SQL의 마지막 수정일을 적습니다
+    -->
+    <Information>
+      <SqlType>DynamicSQL</SqlType>
+      <Description>공통코드조회</Description>
+      <SQLModifier>전상훈</SQLModifier>
+      <LastModifyDate>2016-08-17</LastModifyDate>
+    </Information>
+
+    <TemplateSQL>
+      <!-- FixedSQL : 고정된 SQL이 들어가는 곳입니다. -->
+      <FixedSQL>
+        <![CDATA[ 
+   	/**************************/
+    /* 공통코드조회 GetCommon */
+    /**************************/
+	SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED 
+	SELECT 
+		  A.MAIN_CODE
+		, A.SUB_CODE
+		, A.NAME
+		, A.LANGUAGE_CODE
+		, A.ORDER_SEQ
+		, A.REF_DATA1
+		, A.REF_DATA2
+		, A.REF_DATA3
+		, A.REF_DATA4
+		, A.HIDE
+		, A.INSERT_CODE
+		, A.INSERT_DATE
+		, A.UPDATE_CODE
+		, A.UPDATE_DATE
+	FROM T_COMMON A 
+  WHERE 1=1
+  #[MAIN_CODE]
+  #[SUB_CODE]
+  #[REF_DATA1]
+  #[REF_DATA2]
+  #[REF_DATA3]
+  #[REF_DATA4]
+  #[HIDE]
+  ORDER BY A.ORDER_SEQ
+	SET NOCOUNT OFF 
+      ]]>
+      </FixedSQL>
+      <DynamicBodys>
+        <Key>MAIN_CODE</Key>
+        <Body>AND A.MAIN_CODE = '{0}' </Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>SUB_CODE</Key>
+        <Body>AND A.SUB_CODE = '{0}' </Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>REF_DATA1</Key>
+        <Body>AND A.REF_DATA1 = '{0}' </Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>REF_DATA2</Key>
+        <Body>AND A.REF_DATA2 = '{0}' </Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>REF_DATA3</Key>
+        <Body>AND A.REF_DATA3 = '{0}' </Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>REF_DATA4</Key>
+        <Body>AND A.REF_DATA4 = '{0}' </Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>HIDE</Key>
+        <Body>AND A.HIDE = '{0}' </Body>
+      </DynamicBodys>
+     
+    </TemplateSQL>
+  </DBAgentTemplate>
+
+
+  <DBAgentTemplate TemplateID="GetMember">
+    <!-- 
+    SqlType : SQL의 형태를 지정합니다.
+      Example 1:<SqlType>FixedSQL</SqlType> 고정적인 SQL을 지원합니다. 
+      Example 2:<SqlType>DynamicSQL</SqlType> 동적인 SQL Type1을 지원합니다.  
+    Description : 해당 SQL의 기능설명을 적습니다.
+    SQLModifier : 해당 SQL의 작성자(수정자)를 적습니다
+    LastModifyDate : 해당 SQL의 마지막 수정일을 적습니다
+    -->
+    <Information>
+      <SqlType>DynamicSQL</SqlType>
+      <Description>직원조회</Description>
+      <SQLModifier>전상훈</SQLModifier>
+      <LastModifyDate>2016-09-18</LastModifyDate>
+    </Information>
+
+    <TemplateSQL>
+      <!-- FixedSQL : 고정된 SQL이 들어가는 곳입니다. -->
+      <FixedSQL>
+        <![CDATA[ 
+  SET NOCOUNT ON 
+	/************************************************/
+	/* 사용자정보 - T_MEMBER 조회 -  SELECT QUERY */ 
+	/************************************************/
+	SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED 
+	SELECT 
+		  MEMBER_CODE
+		, A.USER_TYPE
+		, A.USER_ID
+		, A.PASSWORD
+		, A.USER_NAME
+		, A.EMAIL
+		, A.PHONE
+		, A.MOBILE
+		, A.ADDRESS1
+		, A.ADDRESS2
+		, A.ZIP_CODE
+		, A.BIRTH
+		, A.GENDER
+		, A.REMARK
+		, A.HIDE
+		, A.INSERT_CODE
+		, A.INSERT_DATE
+		, A.UPDATE_CODE
+		, A.UPDATE_DATE
+	FROM T_MEMBER A 
+
+	WHERE 1=1 
+  #[USER_TYPE]
+	SET NOCOUNT OFF 
+      ]]>
+      </FixedSQL>
+      <DynamicBodys>
+        <Key>USER_TYPE</Key>
+        <Body>AND A.USER_TYPE = '{0}' </Body>
+      </DynamicBodys>
+    </TemplateSQL>
+  </DBAgentTemplate>
+  <DBAgentTemplate TemplateID="MemberSave">
+    <!-- 
+    SqlType : SQL의 형태를 지정합니다.
+      Example 1:<SqlType>FixedSQL</SqlType> 고정적인 SQL을 지원합니다. 
+      Example 2:<SqlType>DynamicSQL</SqlType> 동적인 SQL Type1을 지원합니다.  
+    Description : 해당 SQL의 기능설명을 적습니다.
+    SQLModifier : 해당 SQL의 작성자(수정자)를 적습니다
+    LastModifyDate : 해당 SQL의 마지막 수정일을 적습니다
+    -->
+    <Information>
+      <SqlType>DynamicSQL</SqlType>
+      <Description>회원저장</Description>
+      <SQLModifier>전상훈</SQLModifier>
+      <LastModifyDate>2016-06-24</LastModifyDate>
+    </Information>
+
+    <TemplateSQL>
+      <!-- FixedSQL : 고정된 SQL이 들어가는 곳입니다. -->
+      <FixedSQL>
+        <![CDATA[ 
+  	SET NOCOUNT ON 
+	  /*********************************************/
+	  /* 사용자정보 - T_MEMBER 저장 -  SAVE QUERY */ 
+	  /*********************************************/
+	  DECLARE @MEMBER_CODE          INT                  = N'{0}'
+			    , @USER_TYPE            INT                  = CONVERT(INT, CASE WHEN ISNUMERIC('{1}') = 1 THEN '{1}' ELSE NULL END )
+			    , @USER_ID              NVARCHAR(50)         = N'{2}'
+			    , @PASSWORD             NVARCHAR(200)        = N'{3}'
+			    , @USER_NAME            NVARCHAR(100)        = N'{4}'
+			    , @EMAIL                NVARCHAR(100)        = N'{5}'
+			    , @PHONE                VARCHAR(30)          = N'{6}'
+			    , @MOBILE               VARCHAR(30)          = N'{7}'
+			    , @ADDRESS1             NVARCHAR(200)        = N'{8}'
+			    , @ADDRESS2             NVARCHAR(200)        = N'{9}'
+			    , @ZIP_CODE              VARCHAR(10)          = N'{10}'
+			    , @REMARK               NVARCHAR(1000)       = N'{11}'
+			    , @HIDE                 BIT                  = CONVERT(BIT, CASE WHEN ISNUMERIC('{12}') = 1 THEN '{12}' ELSE '0' END )
+			    , @INSERT_CODE          INT                  = {13}
+			    , @INSERT_DATE          DATETIME             = GETDATE() 
+			    , @UPDATE_CODE          INT                  = {13}
+			    , @UPDATE_DATE          DATETIME             = GETDATE() 
+
+	  UPDATE A 
+	  SET  	  USER_TYPE                 = @USER_TYPE                
+			   ,  USER_ID                   = @USER_ID                  		 ,  PASSWORD                  = @PASSWORD                 
+			   ,  USER_NAME                 = @USER_NAME                		 ,  EMAIL                     = @EMAIL                    
+			   ,  PHONE                     = @PHONE                    		 ,  MOBILE                    = @MOBILE                   
+			   ,  ADDRESS1                  = @ADDRESS1                 		 ,  ADDRESS2                  = @ADDRESS2                 
+			   ,  ZIP_CODE                   = @ZIP_CODE                  		 ,  REMARK                    = @REMARK                   
+			   ,  HIDE                      = @HIDE                     		 ,  UPDATE_CODE               = @UPDATE_CODE              
+			   ,  UPDATE_DATE               = @UPDATE_DATE              
+	  FROM T_MEMBER A 
+	  WHERE MEMBER_CODE= @MEMBER_CODE
+	  IF @@ROWCOUNT = 0
+	  BEGIN
+		    INSERT INTO T_MEMBER
+		    (		USER_TYPE           		, USER_ID             		, PASSWORD            		
+			    , USER_NAME           		, EMAIL               		, PHONE               		, MOBILE              		
+			    , ADDRESS1            		, ADDRESS2            		, ZIP_CODE             		, REMARK              		
+			    , HIDE                		, INSERT_CODE         		, INSERT_DATE         		, UPDATE_CODE         		
+			    , UPDATE_DATE         		
+		    )
+		    SELECT @USER_TYPE          		, @USER_ID            	
+				    , @PASSWORD           		, @USER_NAME          		, @EMAIL              	
+				    , @PHONE              		, @MOBILE             		, @ADDRESS1           	
+				    , @ADDRESS2           		, @ZIP_CODE            		, @REMARK             	
+				    , @HIDE               		, @INSERT_CODE        		, @INSERT_DATE        	
+				    , @UPDATE_CODE        		, @UPDATE_DATE        	
+	END
+  SET NOCOUNT OFF
+  ]]>
+      </FixedSQL>
+    </TemplateSQL>
+  </DBAgentTemplate>
+</DBAgentMultiTemplate>

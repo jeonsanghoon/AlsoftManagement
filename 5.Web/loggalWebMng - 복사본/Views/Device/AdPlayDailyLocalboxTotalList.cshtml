@@ -1,0 +1,236 @@
+﻿@{ 
+    AdPlayLocalboxTotalCond Cond = ViewBag.Cond ?? new AdPlayLocalboxTotalCond();
+    Cond.FR_DATE = Cond.FR_DATE ?? DateTime.Now.ToString("yyyy.MM.01");
+    Cond.TO_DATE = Cond.TO_DATE ?? DateTime.Now.ToString("yyyy.MM.dd");
+}
+@section scripts{
+
+    <script type="text/javascript">
+        var baseCond = @Html.Raw(Json.Encode(Cond));
+        $(document).ready(function () {
+
+
+            var pageCount = ($(window).height()- $(".column.schedule").height() - $(".cd-main-header").outerHeight() + $(".ui.header").outerHeight() + $(".ui.table.search").outerHeight() + $(".ui.footer").outerHeight() - $(".ui.table.search").height()- 420) / 30;
+            if (pageCount != NaN) PARAM_DATA.PAGE_COUNT = Number(Math.floor(pageCount));
+            ComponentInit();
+            doQuery(1,"",baseCond);
+        }); //End document.ready
+
+        function ComponentInit() {
+            $('#FR_DATE').datetimepicker({
+                timepicker: false,
+                format: 'Y.m.d',
+                value: moment(baseCond.FR_DATE).format("YYYY-MM-DD")
+            });
+
+            $('#TO_DATE').datetimepicker({
+                timepicker: false,
+                format: 'Y.m.d',
+                value: moment(baseCond.TO_DATE).format("YYYY-MM-DD")
+            });
+            $("#SEARCH_TEXT").attr("placeholder", Input.ComboBox.GetText("#cboGubun"));
+            $("#cboGubun").change(function () {
+                $("#SEARCH_TEXT").attr("placeholder", Input.ComboBox.GetText("#cboGubun"));
+            });
+            $("#SEARCH_TEXT2").attr("placeholder", Input.ComboBox.GetText("#cboGubun2"));
+            $("#cboGubun2").change(function () {
+                $("#SEARCH_TEXT2").attr("placeholder", Input.ComboBox.GetText("#cboGubun2"));
+            });
+
+
+            
+            if (baseCond.STORE_CODE > 0) {
+                SemanticUI.ComboBox.SetVal("#cboGubun2", "STORE_CODE");
+                $("#SEARCH_TEXT2").val(baseCond.STORE_CODE);
+            }
+
+        }
+        var PARAM_DATA = {
+            PAGE_SIZE: ($("window").width() < 768 ? 5 : 10)
+          , PAGE_COUNT: 15
+          , PAGE: 1
+          , SORT_ORDER:""
+        }
+        function doQuery(page, order, roadData) {
+            if (page == undefined || page == null || page < 1) page = 1;
+            PARAM_DATA.PAGE = page;
+            var param = BaseCommon.FormInfo.serializeJson(".ui.form");
+            if(roadData != undefined) param = roadData;
+            else {
+                param[$("#cboGubun").val()]  = $("#SEARCH_TEXT").val();
+                param[$("#cboGubun2").val()] = $("#SEARCH_TEXT2").val();
+            }
+            param.PAGE_COUNT = PARAM_DATA.PAGE_COUNT;
+            param.PAGE = PARAM_DATA.PAGE;
+
+        
+
+            if (order != undefined) {
+                PARAM_DATA.SORT_ORDER = order;
+                param.SORT_ORDER = order;
+            }
+            else if (order == undefined) {
+                param.SORT_ORDER = PARAM_DATA.SORT_ORDER;
+            }
+            param = JSON.stringify(param);
+            ajax.GetAjax("/device/pv_AdPlayDailyLocalboxTotalList", param, "html", function (result) {
+                $("#dvTable table tbody").html(result);
+                $.mrc_table.Init(".mrc-table", false, order);
+                $("#dvpagination").show();
+
+
+                $("#idTotal").text($("#total").val()).number(true,0,",");
+                $("#dvpagination").pagination({
+                    total: Number($("#total").val()), page: PARAM_DATA.PAGE, pagesize: PARAM_DATA.PAGE_SIZE, perpage: PARAM_DATA.PAGE_COUNT
+                    , onPageClick:function(item, page) {
+                        doQuery(page);
+                    }
+                })
+                $("#dvpagination").css("display", "");
+            });
+        }
+
+        function mrcGrid_Sort(objName, datasort, orderType) {
+            if (datasort == "" || orderType == "") doQuery(1,"");
+            else doQuery(1, datasort + " " + orderType);
+        }
+
+        function ExcelDown() {
+            var params = BaseCommon.FormInfo.serializeJson(".ui.form");
+            params.PAGE_COUNT = PARAM_DATA.PAGE_COUNT;
+            params.PAGE = PARAM_DATA.PAGE;
+            params[$("#cboGubun").val()] = $("#SEARCH_TEXT").val();
+            params[$("#cboGubun2").val()] = $("#SEARCH_TEXT2").val();
+            var arrData = new Array();
+            $.each(params, function (key, val) {
+                //display the key and value pair
+
+                arrData.push({ name: key, value: val });
+            });
+            BaseCommon.FormInfo.PostSubmit('/device/AdPlayDailyLocalboxTotalExcelReport', arrData);
+        }
+        function adPlayDetail(obj, regDay, deviceCode) {
+            $.mrc_table.SetActiveIndex(".mrc-table", $(obj).closest("tr").index()-1);
+            var params = $.mrc_table.GetActiveRowData(".mrc-table")[0];
+            var arrData = new Array();
+               $.each(params, function (key, val) {
+                //display the key and value pair
+
+                arrData.push({ name: key, value: val });
+               });
+            
+            params.REG_DAY = moment(params.REG_DAY, "YYYYMMDD").format("YYYY.MM.DD");
+            arrData.push({ name: "FR_DATE", value:params.REG_DAY });
+            arrData.push({ name: "TO_DATE", value: params.REG_DAY });
+            arrData.push({ name: "DEVICE_CODE", value: deviceCode });
+            arrData.push({ name: "BANNER_KIND", value: params.BANNER_KIND });
+            BaseCommon.FormInfo.PostSubmit('/device/adplaylogMongoList', arrData);
+        }
+    </script>
+}
+<style> /*
+    .ui.checkbox {
+        margin-top: 0.5em;
+    }
+
+    #dvpagination {
+        margin-top: 1em;
+    }
+
+    .ui.table td.title {
+        width: 120px;
+    }
+
+   @@media (min-width:768px) and (max-width:1023px) {
+        .ui.table td.frtodate {
+            width: 39.5%;
+        }
+    }
+
+    @@media only screen and (min-width:1024px) {
+        .ui.table td.frtodate {
+            width: 23.5%;
+        }
+    }*/
+</style>
+<div class="ui vertical stripe segment">
+    @Html.TitleNavigation()
+    <form class="ui form">
+        <div class="ui stackable grid fields">
+            <div class="one column row">
+                <div class="column">
+                    <table class="ui table search">
+                        <tbody>
+                            <tr>
+                                <td class="title">
+                                    @Html.Semantic_TITLE2("조회일자")
+                                </td>
+                                <td class="content frtodate">
+                                    @Html.Semantic_TextBox("FR_DATE", DateTime.Now.ToString("yyyy.MM.01"), SemanticUIHelper.Size.mini, new { @style = "text-align:center;", @class = "size100", @placeholder = "시작일자" })@Html.Semantic_TextBox("TO_DATE", DateTime.Now.ToString("yyyy.MM.dd"), SemanticUIHelper.Size.mini, new { @style = "text-align:center;", @class = "size100", @placeholder = "종료일자" })
+                                </td>
+
+                                <td class="title inline">
+                                    @{
+                                        List<SelectListItem> comboList = new List<SelectListItem>();
+                                        comboList.Add(new SelectListItem { Value = "DEVICE_NAME", Text = "로컬박스명" });
+                                        comboList.Add(new SelectListItem { Value = "DEVICE_CODE", Text = "로컬박스코드" });
+                                    }
+                                    @Html.DropDownList("cboGubun", comboList)
+                                </td>
+                                <td class="content">
+                                    @Html.Semantic_TextBox("SEARCH_TEXT", "", SemanticUIHelper.Size.mini, new { @placeholder = "", @class = "size200" })
+                                </td>
+                                <td class="title">
+                                    @{
+                                        List<SelectListItem> comboList2 = new List<SelectListItem>();
+                                        comboList2.Add(new SelectListItem { Value = "STORE_NAME", Text = "로컬사업자" });
+                                        comboList2.Add(new SelectListItem { Value = "STORE_CODE", Text = "사업자코드" });
+                                    }
+                                    @Html.DropDownList("cboGubun2", comboList2)
+                                </td>
+                                <td class="content">  @Html.Semantic_TextBox("SEARCH_TEXT2", "", SemanticUIHelper.Size.mini, new { @placeholder = "", @class = "size200" })</td>
+                            </tr>
+                            <tr class="tablerow buttons">
+                                <td colspan="6" class="conetent buttons">
+                                    총 <span style="font-weight:bold;color:red;" id="idTotal">0</span>건이 조회되었습니다.<span style="width:3em;">&nbsp;</span>
+                                    @Html.Semantic_Button2("btnSearch", "조회", SemanticUIHelper.enButtonType.ToList, SemanticUIHelper.Size.medium, new { onclick = "doQuery();" })
+                                    @Html.Semantic_Button2("btnExcel", "엑셀", SemanticUIHelper.enButtonType.Excel, SemanticUIHelper.Size.medium, new { @onclick = "ExcelDown();" })
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="one column row">
+                <div class="column schedule right" style="font-weight:bold;"><span style="color:red">기준일자  : </span> @SessionHelper.ScheduleInfo.MONGODB_BASE_DATE.ToFormatDate() &nbsp; <span style="color:blue">적용시간</span> : @SessionHelper.ScheduleInfo.MONGODB_APPLY_TIME </div>
+                <div class="column" id="dvTable">
+                    <table class="mrc-table" id="tbList">
+                        <thead>
+                            <tr>
+                                <th column_name="ROW_IDX" style="width:8em">순번</th>
+                                <th column_name="REG_DAY" class="sort">일자</th>
+                                <th column_name="DEVICE_NAME" class="sort"display_size="pc">로컬박스</th>
+                               
+                                <th column_name="BANNER_KIND" class="sort" display_size="tablet">구분</th>
+                                <th column_name="IMAGE1_PLAY_TIME" data-sort="A.IMAGE1_PLAY_TIME" display_size="tablet" class="sort">이미지-1(초)</th>
+                                <th column_name="IMAGE6_PLAY_TIME" class="sort" display_size="pc">이미지-6(초)</th>
+                                <th column_name="IMAGE12_PLAY_TIME" class="sort" display_size="pc">이미지-12(초)</th>
+                                <th column_name="CLICK_PLAY_TIME" class="sort" data-sort="CLICK_PLAY_TIME" display_size="pc">클릭(초)</th>
+                                <th column_name="VIDEO_PLAY_TIME" class="sort" display_size="pc">비디오(초)</th>
+                                <th column_name="YOUTUBE_PLAY_TIME" class="sort" data-sort="YOUTUBE_PLAY_TIME" display_size="pc">유튜브(초)</th>
+                                <th column_nmae="TOT_QTY" class="sort" data-sort="TOT_QTY" display_size="tablet">건수</th>
+                                <th column_nmae="TOT_PLAY_TIME" >총시간(초)</th>
+                                <th column_nmae="STORE_NAME" data-sort="STORE_NAME" display_size="pc">로컬사업자</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="one column row">
+                <div id="dvpagination" class="ui floated pagination menu"></div>
+            </div>
+        </div>
+    </form>
+</div>
+

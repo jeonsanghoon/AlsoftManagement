@@ -1,0 +1,327 @@
+﻿
+@{
+    if (ViewData[Global.ConfigInfo.DaumMapScript] == null || (bool)ViewData[Global.ConfigInfo.DaumMapScript] == false)
+    {
+        <script type="text/javascript" src="//apis.daum.net/maps/maps3.js?apikey=@(Global.ConfigInfo.DaumApiKey)&libraries=services,clusterer,drawing"></script>
+        ViewData[Global.ConfigInfo.DaumMapScript] = true;
+    }
+
+    DaumAddressOption option = (ViewData["option"] == null) ? new DaumAddressOption() { ID = "address" } : (DaumAddressOption)ViewData["option"];
+    decimal? nLATITUDE = option.LATITUDE == null ? (decimal)37.5657134 : option.LATITUDE;
+    decimal? nLONGITUDE = option.LONGITUDE == null ? (decimal)126.9719545 : option.LONGITUDE;
+
+}
+<style>
+    #@(option.ID)_popDaumMapMaker .map_wrap {
+        position: relative;
+        width: 100%;
+        height: 100%;
+    }
+
+    /*.title {
+        font-weight: bold;
+        display: block;
+    }*/
+
+    #@(option.ID)_popDaumMapMaker  .hAddr {
+        position: absolute;
+        left: 10px;
+        top: 10px;
+        border-radius: 2px;
+        background: #fff;
+        background: rgba(255,255,255,0.8);
+        z-index: 1;
+        padding: 5px;
+    }
+
+    #@(option.ID)_popDaumMapMaker  #@(option.ID)_centerAddr {
+        display: block;
+        margin-top: 2px;
+        font-weight: normal;
+    }
+
+    #@(option.ID)_popDaumMapMaker  .bAddr {
+        padding: 1em;
+        text-overflow: ellipsis;
+        overflow: hidden;
+        white-space: nowrap;
+    }
+    #@(option.ID)_popDaumMapMaker  .padding-lr5 {
+        padding-left:1em;
+        padding-right:1em;
+    }
+    #@(option.ID)_popDaumMapMaker  .padding-bottom5 {
+        padding-bottom:1em;
+    }
+    #@(option.ID)_popDaumMapMaker .popDaumMapMaker.ui.modal>.content {
+        font-size:1.2em;
+
+    }
+
+</style>
+
+<div class="ui small modal form popDaumMapMaker" id="@(option.ID)_popDaumMapMaker" style="height:500px">
+    <div class="header">지도 검색</div>
+    <div class="content">
+        <div class="ui grid">
+            <div class="one column row">
+                <div class="column">
+                    <div class="map_wrap">
+                        <div id="@(option.ID)_map" style="width:100%;height:450px;position:relative;"></div>
+                        <div class="hAddr">
+                            <span class="title">지도중심기준 행정동 주소정보</span>
+                            <span id="@(option.ID)_centerAddr"></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="actions">
+        @Html.Semantic_Button2("btnpopDaumMapMakerConFirm", "확인", SemanticUIHelper.enButtonType.Save, new { @onclick = option.ID + "_popDaumMapMaker_Confirm();" })
+        @Html.Semantic_Button2("btnpopDaumMapMakerClose", "닫기", SemanticUIHelper.enButtonType.Normal, new { @onclick = option.ID + "_popDaumMapMaker_Close();" })
+    </div>
+</div>
+
+
+@*<script type="text/javascript" src="//apis.daum.net/maps/maps3.js?apikey=@(Global.ConfigInfo.DaumApiKey)&libraries=services"></script>*@
+<script>
+        var @(option.ID)_mapContainer, @(option.ID)_mapOption, @(option.ID)_map;
+        var @(option.ID)_geocoder;
+        var @(option.ID)_marker;
+        var @(option.ID)_address =  {
+            _address1:""
+            , _zipcode :""
+            , _latitude : "@(option.LATITUDE == null ? "" : option.LATITUDE.ToString())"
+            , _longitude :"@(option.LONGITUDE == null ? "" : option.LONGITUDE.ToString())"
+           , bmarker : true
+           , _default_latitude: null , _default_longitude:null
+        }
+
+        $("document").ready(function(){
+          if (navigator.geolocation) {
+
+                // GeoLocation을 이용해서 접속 위치를 얻어옵니다
+                navigator.geolocation.getCurrentPosition(function(position) {
+
+                    @(option.ID)_address._default_latitude = position.coords.latitude, // 위도
+                    @(option.ID)_address._default_longitude  = position.coords.longitude; // 경도
+                });
+            }
+        })
+
+        function set@(option.ID)AddressInfo()
+        {
+            try{
+                // 우편번호와 주소 정보를 해당 필드에 넣는다.
+                @(option.ID)_address._zipcode = document.getElementById('@(option.ID)_POST_CODE').value; //5자리 새우편번호 사용
+                @(option.ID)_address._address1 = document.getElementById('@(option.ID)_ADDRESS1').value ;
+                @(option.ID)_address._address2 = document.getElementById('@(option.ID)_ADDRESS2').value;
+            }catch(e){}
+
+
+
+            try{
+                if(document.getElementById('@(option.ID)_LATITUDE').value != "")
+                {
+                    @(option.ID)_address._latitude =document.getElementById('@(option.ID)_LATITUDE').value;
+                    @(option.ID)_address._longitude =document.getElementById('@(option.ID)_longitude').value;
+                }
+            }catch(e){}
+
+            try{
+                if(document.getElementById('LATITUDE').value != "")
+                {
+                    @(option.ID)_address._latitude = document.getElementById('LATITUDE').value;
+                    @(option.ID)_address._longitude = document.getElementById('LONGITUDE').value ;
+                }
+            }catch(e){}
+
+            if(!(@(option.ID)_address._address1 == null || @(option.ID)_address._address1 == ""))
+            {
+                if(@(option.ID)_address._latitude == "" || @(option.ID)_address._latitude == "")
+                {
+
+                    DaumApi.Map.addr2coord(@(option.ID)_address._address1, function (result) {
+                        @(option.ID)_address._latitude  = result.lat;
+                        @(option.ID)_address._longitude  = result.lng;
+                        @(option.ID)_address.bmarker = true;
+                    },function(result){},false);
+                }
+            }
+
+            if(@(option.ID)_address._latitude == "" || @(option.ID)_address._longitude == "")
+            {
+                if(@(option.ID)_address._default_latitude != null)
+                {
+                    @(option.ID)_address._latitude = @(option.ID)_address._default_latitude;
+                    @(option.ID)_address._longitude = @(option.ID)_address._default_longitude;
+                }
+                else{
+                    @(option.ID)_address._latitude = "37.566826";
+                    @(option.ID)_address._longitude = "126.9786567";
+                }
+
+                @(option.ID)_address.bmarker = false;
+            }
+
+
+
+
+        }
+        function @(option.ID)_Open() {
+            set@(option.ID)AddressInfo();
+
+            //  if (mapContainer != null) return;
+            @(option.ID)_mapContainer = document.getElementById('@(option.ID)_map'), // 지도를 표시할 div
+            @(option.ID)_mapOption = {
+                center: new kakao.maps.LatLng(@(option.ID)_address._latitude, @(option.ID)_address._longitude), // 지도의 중심좌표
+                level: 6 // 지도의 확대 레벨
+            };
+            // 지도를 생성합니다
+            @(option.ID)_map = new kakao.maps.Map(@(option.ID)_mapContainer, @(option.ID)_mapOption);
+
+
+            // 주소-좌표 변환 객체를 생성합니다
+            @(option.ID)_geocoder = new kakao.maps.services.Geocoder();
+            infowindow = new kakao.maps.InfoWindow({ zindex: 1 }); // 클릭한 위치에 대한 주소를 표시할 인포윈도우입니다
+
+            if(@(option.ID)_address.bmarker == true)
+            {
+
+                @(option.ID)_marker = new kakao.maps.Marker(
+                {
+                    position: @(option.ID)_mapOption.center, // 지도의 중심좌표에 올립니다.
+                    map: @(option.ID)_map // 생성하면서 지도에 올립니다.
+                    ,draggable : true
+                }
+                ); // 클릭한 위치를 표시할 마커입니다
+                var detailAddr ="" ;//= !!result[0].roadAddress.name ? '<div>도로명주소 : ' + result[0].roadAddress.name + '</div>' : '';
+                detailAddr += '<div>지번 주소 : ' + @(option.ID)_address._address1 + ' ' + @(option.ID)_address._address2 + ' (우)' + @(option.ID)_address._zipcode  + '</div>';
+
+                var content = '<div class="bAddr">' +
+                                '<b>법정동 주소정보</b>' +
+                                detailAddr;
+
+                content += "<div>위도 : " + @(option.ID)_address._latitude + " / 경도 : " + @(option.ID)_address._longitude + "</div>";
+                content += "</div>";
+
+                infowindow.setContent(content);
+                infowindow.open(@(option.ID)_map, @(option.ID)_marker);
+            }
+            else{
+                 @(option.ID)_marker = new kakao.maps.Marker();
+
+            }
+
+
+
+            @(option.ID)_marker.setMap(@(option.ID)_map);
+
+                // 현재 지도 중심좌표로 주소를 검색해서 지도 좌측 상단에 표시합니다
+            @(option.ID)_searchAddrFromCoords(@(option.ID)_map.getCenter(), @(option.ID)_displayCenterInfo);
+
+
+            // 지도를 클릭했을 때 클릭 위치 좌표에 대한 주소정보를 표시하도록 이벤트를 등록합니다
+            kakao.maps.event.addListener(@(option.ID)_map, 'click', function (mouseEvent) {
+                @(option.ID)_searchDetailAddrFromCoords(mouseEvent.latLng, function (status, result) {
+                    if (status === kakao.maps.services.Status.OK) {
+
+
+                        var detailAddr = !!result[0].roadAddress.name ? '<div>도로명주소 : ' + result[0].roadAddress.name + '</div>' : '';
+                        detailAddr += '<div>지번 주소 : ' + result[0].jibunAddress.name + ' (우)' + result[0].jibunAddress.zipcode +  '</div>';
+
+                        var content = '<div class="bAddr">' +
+                                        '<b>법정동 주소정보</b>' +
+                                        detailAddr;
+                        
+                        content += "<div>위도 : " + String(mouseEvent.latLng.getLat()) + "</div>";
+                        content += "<div>경도 : " + String(mouseEvent.latLng.getLng()) + "</div>";
+                        content += "</div>";
+
+
+
+                        @(option.ID)_address._zipcode    = result[0].jibunAddress.zipcode; //5자리 새우편번호 사용
+                        @(option.ID)_address._address1   = result[0].jibunAddress.name;
+                        @(option.ID)_address._latitude   = mouseEvent.latLng.getLat();
+                        @(option.ID)_address._longitude = mouseEvent.latLng.getLng();
+                        try{
+                            var arrAdd = result[0].region.split(' ');
+                            var rtndata = {
+                                sido: arrAdd[0]
+                               ,sigungu:arrAdd[1]
+                               ,bname:arrAdd[2]
+                               ,address:@(option.ID)_address._address1
+                               ,zipCode:@(option.ID)_address._zipcode
+                               ,lantiude : @(option.ID)_address._latitude
+                               ,longitude :  @(option.ID)_address._longitude
+                            }
+                            @(option.ID)_addressCallBack(rtndata, true);
+                        }catch(e)
+                        {}
+                        // 마커를 클릭한 위치에 표시합니다
+                        @(option.ID)_marker.setPosition(mouseEvent.latLng);
+                        @(option.ID)_marker.setMap(@(option.ID)_map);
+
+                        // 인포윈도우에 클릭한 위치에 대한 법정동 상세 주소정보를 표시합니다
+                        infowindow.setContent(content);
+                        infowindow.open(@(option.ID)_map, @(option.ID)_marker);
+                    }
+                });
+            });
+
+            // 중심 좌표나 확대 수준이 변경됐을 때 지도 중심 좌표에 대한 주소 정보를 표시하도록 이벤트를 등록합니다
+            kakao.maps.event.addListener(@(option.ID)_map, 'idle', function () {
+                @(option.ID)_searchAddrFromCoords(@(option.ID)_map.getCenter(), @(option.ID)_displayCenterInfo);
+            });
+        }
+
+        /* 지도팝업에서 확인 버튼 클릭 시*/
+        function @(option.ID)_popDaumMapMaker_Confirm() {
+
+            try{
+                // 우편번호와 주소 정보를 해당 필드에 넣는다.
+                document.getElementById('@(option.ID)_POST_CODE').value = @(option.ID)_address._zipcode; //5자리 새우편번호 사용
+                document.getElementById('@(option.ID)_ADDRESS1').value = @(option.ID)_address._address1;
+                document.getElementById('@(option.ID)_ADDRESS2').value = "";
+            }catch(e){}
+            try{
+                document.getElementById('LATITUDE').value= @(option.ID)_address._latitude;
+                document.getElementById('LONGITUDE').value = @(option.ID)_address._longitude;
+            }catch(e){}
+
+            try{
+                document.getElementById('@(option.ID)_LATITUDE').value   = @(option.ID)_address._latitude;
+                document.getElementById('@(option.ID)_longitude').value = @(option.ID)_address._longitude;
+            }catch(e){}
+
+
+            $('#@(option.ID)_popDaumMapMaker').modal("hide");
+        }
+        function @(option.ID)_popDaumMapMaker_Close() {
+            $('#@(option.ID)_popDaumMapMaker').modal("hide");
+        }
+
+        function @(option.ID)_searchAddrFromCoords(coords, callback) {
+            // 좌표로 행정동 주소 정보를 요청합니다
+
+
+            try {
+                // 좌표로 행정동 주소 정보를 요청합니다
+                @(option.ID)_geocoder.coord2addr(coords, callback);
+            } catch (e) { @(option.ID)_geocoder.coord2Address(coords.getLng(), coords.getLat(), callback); }
+        }
+
+        function @(option.ID)_searchDetailAddrFromCoords(coords, callback) {
+            // 좌표로 법정동 상세 주소 정보를 요청합니다
+            @(option.ID)_geocoder.coord2detailaddr(coords, callback);
+        }
+
+        // 지도 좌측상단에 지도 중심좌표에 대한 주소정보를 표출하는 함수입니다
+        function @(option.ID)_displayCenterInfo(status, result) {
+            if (status === kakao.maps.services.Status.OK) {
+                var infoDiv = document.getElementById('@(option.ID)_centerAddr');
+                infoDiv.innerHTML = result[0].fullName;
+            }
+        }
+</script>

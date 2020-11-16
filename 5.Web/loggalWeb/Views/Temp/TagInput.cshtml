@@ -1,0 +1,103 @@
+﻿
+@{
+    Layout = "~/Views/Shared/_Layout_Step.cshtml";
+}
+<style>
+    .ui.form .token-input-input-token-facebook input[type=text]
+        {
+            border: 0px solid rgba(34,36,38,.15);
+        }
+
+</style>
+<script type="text/javascript">
+    $(document).ready(function () {
+
+        //$("#tokeninput-demo").tokenInput("http://jquery-tokeninput-demo.herokuapp.com", {
+        //    theme: "facebook"
+        //});
+        $("#tokeninput-demo").tokenInput("/temp/KeyData22", {
+              tokenValue: "CODE"
+            , propertyToSearch: "NAME"
+           
+
+        });
+
+    });;
+
+    function fnGetItem() {
+        alert($("#tokeninput-demo").tokenInput("get"));
+    }
+</script>
+
+
+<div class="ui  vertical stripe attached segment wizard centered">
+    <div class="ui secondary pointing menu wizard">
+        @*<a class="item active">
+                Home
+            </a>
+            <a class="item">
+                Messages
+            </a>
+            <a class="item">
+                Friends
+            </a>*@
+        <div class="right menu">
+
+            @{
+                if (SessionHelper.LoginInfo == null || SessionHelper.LoginInfo.MEMBER == null)
+                {
+                    <a class="ui item" href="/home/login?returnUrl=/advstep/step1">
+                        <span style="vertical-align:bottom">로그인 </span><i style="margin-bottom:0.2em;" class="sign in large icon"></i>
+                    </a>
+                }
+                else
+                {
+                    <a class="ui item" href="javascript:login.doLogout();">
+                        <span style="vertical-align:bottom">@SessionHelper.LoginInfo.MEMBER.USER_NAME </span><i style="margin-bottom:0.2em;" class="sign out large icon"></i>
+                    </a>
+                }
+            }
+
+        </div>
+    </div>
+
+    <form class="ui form" onSubmit="return false;">
+        <h1 class="ui header">광고요청상태</h1>
+
+
+        <div class="ui structured grid  fields">
+            <div class="one column row">
+                <div class="column">
+                    <table class="ui celled structured table">
+                        <tbody>
+                            <tr>
+                                <td>
+                                    <div id="project">
+                                        <h2 id="instant-demo">Instant Demo</h2>
+                                        <p><input type="text" id="tokeninput-demo" /></p>
+                                        <button onclick="fnGetItem();">가져오기</button>
+                                    </div>
+                                </td>
+                            </tr>
+
+
+                        </tbody>
+                    </table>
+                    <div class="ui right floated pagination menu"></div>
+                    <div style="float:right">
+                        <button class="ui left attached  blue disabled icon  button">
+                            <i class="chevron circle left  icon"></i>
+                            이전
+                        </button>
+                        <button class="ui right attached blue active icon  button">
+                            다음
+                            <i class="chevron circle right icon"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="ui error message"></div>
+    </form>
+</div>

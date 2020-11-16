@@ -1,0 +1,30 @@
+﻿@using ALT.VO.Common;
+@using ALT.Framework.Data;
+@using ALT.BizService;
+@{
+    List<T_STORE_WEBMENU_GROUP> list = ViewBag.list;
+
+    <table class="mrc-table list">
+        <thead>
+            <tr>
+                
+                <th display_size="pc" column_name="GROUP_CODE" style="width:80px;">그룹코드</th>
+                <th column_name="GROUP_NAME">그룹명</th>
+                <th class="hide" column_name="STORE_CODE" >지점코드</th>
+            </tr>
+        </thead>
+        <tbody>
+            @{
+                foreach (T_STORE_WEBMENU_GROUP data in list)
+                {
+                    <tr>
+                        
+                        <td class="center">@data.GROUP_CODE</td>
+                        <td>@data.GROUP_NAME</td>
+                        <td class="hide">@data.STORE_CODE</td>
+                    </tr>
+                }
+            }
+        </tbody>
+    </table>
+}

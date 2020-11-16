@@ -1,0 +1,200 @@
+﻿@{
+
+
+}
+<style>
+    #dvAdSignInfoPopup .column.row {
+        padding: 0em 0.25em 0em 0.25em;
+    }
+
+    /*#dvAdSignInfoPopup {
+        min-height: 250px;
+    }*/
+    .ui.grid.search .row .column {
+
+        padding-top: 0.5em;
+    }
+
+    #dvAdSignInfoPopup .content {
+        height:auto;
+    }
+    @@media only screen and (max-width: 767px) {
+        .ui.modal > .content {
+            padding-top:0rem!important;
+        }
+        .ui.grid.search {
+            padding-left:0rem;
+        }
+    }
+
+</style>
+<div class="ui modal form" id="dvAdSignInfoPopup">
+    <div class="header">사이니지 콘텐츠</div>
+    <div class="content">
+        <div class="ui grid search">
+            <div class="one column row search">
+
+                <div class="eight wide mobile four wide tablet  three wide computer column">
+                    @Html.Semantic_TextBox("P_TITLE", "", new { @style = "width:100%", @placeholder = "제목을 입력하세요" })
+                </div>
+                <div class="eight wide mobile four wide tablet three wide computer column ">
+                    <table><tr><td style="padding-right:0.2em;">@Html.CommonCombo("P_SIGN_TYPE", new T_COMMON_COND { MAIN_CODE = "A010", HIDE = false }, null, "-유형-")</td><td>@Html.CommonCombo("P_IS_VERTICAL", new T_COMMON_COND { MAIN_CODE = "U005", HIDE = false }, null, "-보기-")</td></tr></table>
+                    
+                    
+                </div>
+                <div class="eight wide mobile four wide tablet three wide computer column column">
+                    @Html.CommonCombo("P_PLAY_TIME", new T_COMMON_COND { MAIN_CODE = "U006", HIDE = false }, null,"-시간-")
+                </div>
+                <div class="eight wide mobile four wide tablet seven wide computer column buttons">
+                    @*@Html.Semantic_Button2("btnAdSignInfoP", "배너", SemanticUIHelper.enButtonType.ToList, SemanticUIHelper.Size.mini, new { onclick = "AdSignInfoMove();" })*@
+                    @Html.Semantic_Button2("btnAdSignInfo", "조회", SemanticUIHelper.enButtonType.Normal, SemanticUIHelper.Size.mini, new { onclick = "doQuery_AdSignInfoP();" })
+                </div>
+
+            </div>
+            <div class="one column row">
+                <div class="column">
+                    <div id="dvAdSignInfoP">
+                        <table id="tbList" class="mrc-table">
+                            <thead>
+                                <tr>
+                                    <th column_name="TITLE" class="center" >제목</th>
+                                    <th column_name="SIGN_TYPE_NAME" display_size="tablet" class="center" style="width:100px;">유형</th>
+                                    <th column_name="IS_VERTICAL_NAME" display_size="tablet">디스플레이</th>
+                                    <th column_name="PLAY_TIME_NAME" display_size="pc" style="width:200px;">실행시간</th>
+                                    <th column_name="AD_CODE" class="hide">광고코드</th>
+                                    <th column_name="SIGN_CODE" class="hide">사이니지코드</th>
+                                    <th column_name="UPDATE_NAME" display_size="tablet">수정자</th>
+                                    <th column_name="UPDATE_DATE" display_size="pc">수정시간</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                        <center style="padding-top:0.5em">
+                            <div id="dvpagination_AdSignInfo" class="ui floated pagination menu"></div>
+                        </center>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="ui error message" style="display:none;"><ul></ul></div>
+    </div>
+    <div class="actions">
+        @Html.Semantic_Button2("btnAdSignInfoPSel", "확인", SemanticUIHelper.enButtonType.Save, new { @onclick = "AdSignInfoPConfirm();" })
+        @Html.Semantic_Button2("btnAdSignInfoPDel", "닫기", SemanticUIHelper.enButtonType.Normal, new { @onclick = "AdSignInfoPClose();" })
+    </div>
+</div>
+
+<script type="text/javascript">
+    var PARAM_DATA_SIGNINFO_P = {
+        PAGE_SIZE: 5
+        , PAGE_COUNT: 7
+        , PAGE: 1
+        , SORT: "A.IDX"
+        , EXT_SIGN_CODE: 0
+    }
+
+    function AdSignInfoP_Open(extSignCode, isVertical, playTime) {
+        if (extSignCode != undefined) PARAM_DATA_SIGNINFO_P.EXT_SIGN_CODE = extSignCode;
+        else PARAM_DATA_SIGNINFO_P.EXT_SIGN_CODE = 0;
+        if (isVertical != undefined) SemanticUI.ComboBox.SetVal("#P_IS_VERTICAL", isVertical);
+        if (playTime != undefined) SemanticUI.ComboBox.SetVal("#P_PLAY_TIME", playTime);
+        $('#dvAdSignInfoPopup').modal('setting', {
+            autofocus: false,
+            onShow: function () {
+                setTimeout("AdSignInfoP_Init()", 1000);
+            }
+        }).modal("show");
+        doQuery_AdSignInfoP();
+        $("#P_STATION_NAME").keydown(function (e) {
+            if (e.keyCode == 13) doQuery_AdSignInfoP();
+        });
+       // $("#dvAdSignInfoPopup").css("margin-top", "-300px");
+
+    }
+    function AdSignInfoP_Init() {
+        $("#P_STATION_NAME").focus();
+        $("#P_STATION_NAME").select();
+    }
+    function AdSignInfoPClose() {
+        $('#dvAdSignInfoPopup').modal("hide");
+    }
+    function errormessageClear() {
+        $(".ui.error.message").hide();
+        $(".ui.error.message ul").html("");
+    }
+
+    function mrc_table_trClick(objName, result) {
+
+        if (objName == "#dvAdSignInfoP table") {
+            // AdSignInfoPopupSelected(result);
+            // AdSignInfoPClose();
+        }
+    }
+
+    function AdSignInfoPConfirm() {
+        var list = $.mrc_table.GetCheckedData("#dvAdSignInfoP table");
+        if (list.length == 0) {
+            $.MessageBox("선택된 데이터가 없습니다.");
+            return;
+        }
+        AdSignInfoPopupSelected($.mrc_table.GetCheckedData("#dvAdSignInfoP table"));
+        AdSignInfoPClose();
+    }
+
+    function doQuery_AdSignInfoP(page, sort) {
+        if (page == undefined || page < 1) page = 1;
+        PARAM_DATA_SIGNINFO_P.PAGE = page;
+        var params = new Object();
+        
+        params.TITLE = $("#P_TITLE").val();
+        params.SIGN_TYPE = SemanticUI.ComboBox.GetVal("#P_SIGN_TYPE");
+        params.IS_VERTICAL = SemanticUI.ComboBox.GetVal("#P_IS_VERTICAL");
+      
+        params.PLAY_TIME = SemanticUI.ComboBox.GetVal("#P_PLAY_TIME");
+        
+        
+        params.PAGE_COUNT = PARAM_DATA_SIGNINFO_P.PAGE_COUNT;
+        params.PAGE_SIZE = PARAM_DATA_SIGNINFO_P.PAGE_SIZE;
+        
+        params.EXT_SIGN_CODE = PARAM_DATA_SIGNINFO_P.EXT_SIGN_CODE;
+        if (!(sort == undefined || sort == null)) PARAM_DATA_SIGNINFO_P.SORT = sort;
+        params.SORT = PARAM_DATA_SIGNINFO_P.SORT;
+        params = JSON.stringify(params);
+        ajax.GetAjax("/Basic/pv_AdSigninfoList", params, "html", function (result) {
+            $("#dvAdSignInfoP table tbody").html(result);
+            $.mrc_table.Init("#dvAdSignInfoP table", true, PARAM_DATA_SIGNINFO_P.SORT);
+            $("#dvpagination_AdSignInfo").show();
+
+            $("#dvpagination_AdSignInfo").pagination({
+                total: Number($("#dvAdSignInfoP #total").val()), page: PARAM_DATA_SIGNINFO_P.PAGE, pagesize: PARAM_DATA_SIGNINFO_P.PAGE_SIZE, perpage: PARAM_DATA_SIGNINFO_P.PAGE_COUNT
+                , onPageClick: function (item, page) {
+                    doQuery_AdSignInfoP(page);
+                }
+            })
+        });
+    }
+
+    function mrcGrid_Sort(gridName, columnName, orderType) {
+        if (gridName == "#dvAdSignInfoP table") {
+            var sSort = (orderType == undefined || orderType == "") ? "D.USER_NAME" : columnName + " " + orderType;
+            doQuery_AdSignInfoP(1, sSort)
+        } else {
+            try {
+                mrcGrid_Sort_After(gridName, columnName, orderType);
+            } catch (e) { }
+        }
+    }
+
+    function AdSignInfoMove() {
+        var openNewWindow = window.open("about:blank");
+        openNewWindow.location.href = "/advertise/index";
+    }
+    function AdSigninfoPreview(signType, contentUrl) {
+        var param = new Object();
+        param.SIGN_TYPE = signType;
+        param.CONTENT_URL = contentUrl;
+        PreviewPopOpen(param);ㅋ
+    }
+
+
+</script>

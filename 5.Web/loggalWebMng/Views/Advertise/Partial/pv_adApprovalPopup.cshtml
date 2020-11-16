@@ -1,0 +1,51 @@
+﻿<div class="ui tiny modal" id="dvAdApprovalPopup">
+    <div class="header">진행상태</div>
+    <div class="content">
+
+        <p>
+            @{
+                if (SessionHelper.LoginInfo.STORE_CODE != 1)
+                {
+                    @Html.CommonCombo("cboStatus", new T_COMMON_COND { MAIN_CODE = "A001", ADD_COND = " AND REF_DATA3='Y'" }, "", null, new { @class = "size180" })
+                }
+                else
+                {
+                    @Html.CommonCombo("cboStatus", new T_COMMON_COND { MAIN_CODE = "A001" }, "", null, new { @class = "size180" })
+                }
+            }
+</div>
+    <div class="actions">
+        @Html.Semantic_Button2("btnAdStatusSave", "적용", SemanticUIHelper.enButtonType.Save, new { @onclick = "AdStatusApprovalSave();" })
+        @Html.Semantic_Button2("btnAdStatusClose", "닫기", SemanticUIHelper.enButtonType.Normal, new { @onclick = "AdApprovalPopupClose();" })
+    </div>
+</div>
+<script type="text/javascript">
+    var _adCode = 0;
+    function AdApprovalPopupOpen(adCode, status) {
+        _adCode = adCode;
+        SemanticUI.ComboBox.SetVal("#cboStatus", status)
+        $("#dvAdApprovalPopup").modal("show");
+    }
+    function AdApprovalPopupClose() {
+        $('#dvAdApprovalPopup').modal("hide");
+    }
+    function errormessageClear() {
+        $(".ui.error.message").hide();
+        $(".ui.error.message ul").html("");
+    }
+    function AdStatusApprovalSave() {
+        var params = new Object();
+        params.AD_CODE = _adCode;
+        params.STATUS = SemanticUI.ComboBox.GetVal("#cboStatus");
+
+        params = JSON.stringify(params);
+        ajax.GetAjax("/Advertise/AdStatusApprovalSave/", params, "json", function (result) {
+            if (result.ERROR_MESSAGE != "") {
+                $.MessageBox(result.ERROR_MESSAGE);
+            } else {
+                $('#dvAdApprovalPopup').modal("hide");
+                doQuery();
+            }
+        });
+    }
+</script>

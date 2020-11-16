@@ -1,0 +1,28 @@
+﻿
+@{
+    List<T_COMMON> list = (List<T_COMMON>)ViewBag.list;
+    string totCnt = (list.Count() == 0 ? "0" : list.First().TOTAL_ROWCOUNT.ToString());
+    <input type="hidden" id="total" value="@totCnt" />
+    foreach (T_COMMON data in list)
+    {
+           <tr>
+
+                <td style="padding-right:2em;">@data.MAIN_CODE</td>
+                <td>@data.SUB_CODE</td>
+                <td><input type="text" value="@data.NAME" /></td>
+                <td class="hide"><input type="text" value="@data.LANGUAGE_CODE.ToString("332")" /></td>
+                <td><input class="number"  type="text" style="text-align:center;" value="@data.ORDER_SEQ" /></td>
+                <td><input type="text" value="@data.REF_DATA1" /></td>
+                <td><input type="text" value="@data.REF_DATA2" /></td>
+                <td><input type="text" value="@data.REF_DATA3" /></td>
+                <td><input type="text" value="@data.REF_DATA4" /></td>
+                <td class="center"><input type="checkbox"  @((data.HIDE == null || data.HIDE == false) ? "" : "checked" ) /></td>
+                <td class="center">@data.INSERT_NAME</td>
+                <td class="center">@data.INSERT_DATE</td>
+                <td class="center">@data.UPDATE_NAME</td>
+                <td class="center">@data.UPDATE_DATE</td>
+                <td class="hide">@data.IDX</td>
+            </tr>
+        }
+}
+

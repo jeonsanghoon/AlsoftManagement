@@ -1,0 +1,118 @@
+﻿@{ 
+    List<T_ITEM_GROUP> groupList = ViewBag.ItemGroupList;
+    List<T_ITEM> itemList = ViewBag.ItemList;
+} 
+<!-- Start Restaurant Menu -->
+<section id="mu-restaurant-menu">
+    <div class="container">
+        <div class="row">
+            <div class="col-md-12">
+                <div class="mu-restaurant-menu-area">
+                    <div class="mu-title">
+                        <span class="mu-subtitle">Discover</span>
+                        <h2>OUR MENU</h2>
+                        <i class="fa fa-spoon"></i>
+                        <span class="mu-title-bar"></span>
+                    </div>
+                    <div class="mu-restaurant-menu-content">
+                        <ul class="nav nav-tabs mu-restaurant-menu">
+                            @{
+                                    int nCnt = 0;
+                                    foreach (T_ITEM_GROUP groupData in groupList)
+                                    {
+                                        <li class="@(nCnt==0 ? "active" : "")"><a href="#@groupData.GROUP_CODE" data-toggle="tab">@groupData.GROUP_NAME</a></li>
+                                        nCnt++;
+                                    }
+                            }
+                        </ul>
+
+                        <!-- Tab panes -->
+                        <div class="tab-content">
+                            @{
+                                nCnt = 0;
+                                foreach (T_ITEM_GROUP groupData in groupList)
+                                {
+                                    <div class="tab-pane fade @(nCnt==0 ? "in active" :"")" id="@groupData.GROUP_CODE">
+                                        <div class="mu-tab-content-area">
+                                            @{
+                                                var Itemlist2 = itemList.Where(w => w.GROUP_CODE == groupData.GROUP_CODE).ToList();
+
+                                                for (var nRow = 0; nRow < Itemlist2.Count(); nRow++)
+                                                {
+
+                                                        <div class="col-md-6">
+                                                            <div class="mu-tab-content-left">
+                                                                <ul class="mu-menu-item-nav">
+                                                                    <li>
+                                                                        <div class="media"> 
+                                                                            <div class="media-left">
+                                                                                <a href="#">
+                                                                                    <img class="media-object" src="@Itemlist2[nRow].IMAGE_URL" alt="img">
+                                                                                </a>
+                                                                            </div>
+                                                                            <div class="media-body">
+                                                                                <h4 class="media-heading"><a href="#">@Itemlist2[nRow].ITEM_NAME_DISPLAY</a></h4>
+                                                                                <span class="mu-menu-price">@String.Format(SessionHelper.LoginInfo.CultureInfo, "{0:C}", Itemlist2[nRow].PRICE).Replace(SessionHelper.LoginInfo.CultureInfo.NumberFormat.CurrencySymbol,"")</span><a href="javascript:void(0);" title="장바구니담기" class="fa fa-shopping-cart" onclick="AddCart('@groupData.GROUP_NAME_DISPLAY', '@Itemlist2[nRow].ITEM_CODE','@Itemlist2[nRow].ITEM_NAME_DISPLAY','@Itemlist2[nRow].COST','@Itemlist2[nRow].PRICE','@Itemlist2[nRow].IMAGE_URL' )"></a>  <a title="결재하기" href="javascript:void(0);" class="fa fa-credit-card custom" onclick="AddCart('@groupData.GROUP_NAME_DISPLAY', '@Itemlist2[nRow].ITEM_CODE','@Itemlist2[nRow].ITEM_NAME_DISPLAY','@Itemlist2[nRow].COST','@Itemlist2[nRow].PRICE','@Itemlist2[nRow].IMAGE_URL', 'pay' )"></a>  
+                                                                                <p>@Itemlist2[nRow].ITEM_DESC</p>
+                                                                            </div>
+                                                                        </div>
+                                                                    </li>
+                                                                </ul>
+                                                            </div>
+                                                        </div>
+                                                    }
+                                                }
+                                        </div>
+                                    </div>
+                                    nCnt++;
+                                }
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+<!-- End Restaurant Menu -->
+
+<script type="text/javascript">
+    var cartData = "", _gubun;
+    function AddCart(groupName, ItemCode, ItemName, Cost,Price, imageUrl, gubun)
+    {
+        cartData = "";
+        _gubun = (gubun == undefined) ? "" : gubun;
+        var param = new Object();
+        param.ITEM_GROUP_NAME = groupName;
+        param.ITEM_CODE       = ItemCode;
+        param.ITEM_NAME       = ItemName;
+        param.COST            = Cost;
+        param.CNT             = 1;
+        param.DISCOUNT_AMT    = 0;
+        param.PRICE           = Price;
+        param.MEMO = "";
+        param.ITEM_IMAGEURL = imageUrl;
+        cartData = param;
+        param = JSON.stringify(param);
+
+        ajax.GetAjax("@SessionHelper.LoginInfo.BASE_URL/order/ShoppingCartAdd", param, "json", function (result) {
+            if (result.error_message != "") {
+                modal({ /* https://github.com/CreativeDream/jquery.modal */
+                    type: 'warning',
+                    title: '저장에러',
+                    text: result.error_message
+                    , closeClick: false
+                    , callback: function (e) {
+                    }
+                });
+            } else {
+                $("#spTotAmt").text(result.TOT_AMT);
+                if(_gubun=="pay")
+                {
+                    location.href = "@SessionHelper.LoginInfo.BASE_URL/order/cart";
+                }
+            }
+        }, false);
+     }
+
+</script>

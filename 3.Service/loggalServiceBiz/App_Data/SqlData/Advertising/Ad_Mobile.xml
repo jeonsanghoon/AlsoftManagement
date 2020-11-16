@@ -1,0 +1,206 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<DBAgentMultiTemplate  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns="http://altsoft.kr/">
+ <DBAgentTemplate TemplateID="GetMobileAdDetail">
+    <!-- 
+    SqlType : SQL의 형태를 지정합니다.
+      Example 1:<SqlType>FixedSQL</SqlType> 고정적인 SQL을 지원합니다. 
+      Example 2:<SqlType>DynamicSQL</SqlType> 동적인 SQL Type1을 지원합니다.  
+    Description : 해당 SQL의 기능설명을 적습니다.
+    SQLModifier : 해당 SQL의 작성자(수정자)를 적습니다
+    LastModifyDate : 해당 SQL의 마지막 수정일을 적습니다
+    -->
+    <Information>
+      <SqlType>DynamicSQL</SqlType>
+      <Description>모바일 광고상세</Description>
+      <SQLModifier>전상훈</SQLModifier>
+      <LastModifyDate>2017-05-29</LastModifyDate>
+    </Information>
+
+    <TemplateSQL>
+      <!-- FixedSQL : 고정된 SQL이 들어가는 곳입니다. -->
+      <FixedSQL>
+        <![CDATA[ 
+  /***************************************/
+  /* 모바일 광고상세 GetMobileAdDetail   */
+  /***************************************/
+  SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED 
+	SET NOCOUNT ON 
+    DECLARE @AD_CODE        BIGINT = {0}
+           ,@USER_ID        NVARCHAR(50)
+		   = '{1}'
+	       ,@BOOKMARK_YN    BIT = 0
+	       ,@MANAGEMENT_URL NVARCHAR(100) = '{2}' 
+
+    SELECT @BOOKMARK_YN= CASE WHEN COUNT(1) > 0 THEN 1 ELSE 0 END FROM T_MEMBER A
+    INNER JOIN T_MEMBER_BOOKMARK B
+       On A.MEMBER_CODE = B.MEMBER_CODE
+      AND B.AD_CODE     = @AD_CODE
+     WHERE A.USER_ID    = @USER_ID
+
+    SELECT A.AD_CODE
+          ,A.TITLE
+          ,A.LOGO_URL
+	        ,CASE WHEN A.CONTENT_TYPE = 2 THEN @MANAGEMENT_URL +'/advertise/adsub?AD_CODE=' + CONVERT(VARCHAR(10), A.AD_CODE) ELSE @MANAGEMENT_URL + '/advertise/contentview/'+ CONVERT(VARCHAR(10), A.AD_CODE) END AS CONTENT_URL
+          ,ISNULL(BOOKMARK_YN,0) AS BOOKMARK_YN
+          ,ISNULL(FAVORITE_YN,0) AS FAVORITE_YN
+      FROM T_AD A
+      LEFT JOIN (SELECT AD_CODE 
+                      ,  CONVERT(BIT, MAX(CASE WHEN BOOKMARK_KIND = 1 THEN 1 ELSE 0 END)) AS BOOKMARK_YN
+		                   , CONVERT(BIT, MAX(CASE WHEN BOOKMARK_KIND = 2 THEN 1 ELSE 0 END)) AS FAVORITE_YN
+                   FROM T_MEMBER_BOOKMARK 
+                   GROUP BY AD_CODE
+                ) B
+              ON A.AD_CODE = B.AD_CODE
+     WHERE A.AD_CODE = @AD_CODE
+     
+     UPDATE T_AD
+        SET CLICK_CNT = ISNULL(CLICK_CNT,0) + 1
+      WHERE AD_CODE = @AD_CODE
+ 	SET NOCOUNT OFF
+  
+  ]]>
+      </FixedSQL>
+
+    </TemplateSQL>
+  </DBAgentTemplate>
+
+  <DBAgentTemplate TemplateID="GetMobileAdSearchList">
+    <!-- 
+    SqlType : SQL의 형태를 지정합니다.
+      Example 1:<SqlType>FixedSQL</SqlType> 고정적인 SQL을 지원합니다. 
+      Example 2:<SqlType>DynamicSQL</SqlType> 동적인 SQL Type1을 지원합니다.  
+    Description : 해당 SQL의 기능설명을 적습니다.
+    SQLModifier : 해당 SQL의 작성자(수정자)를 적습니다
+    LastModifyDate : 해당 SQL의 마지막 수정일을 적습니다
+    -->
+    <Information>
+      <SqlType>DynamicSQL</SqlType>
+      <Description>모바일 광고상세</Description>
+      <SQLModifier>전상훈</SQLModifier>
+      <LastModifyDate>2017-05-29</LastModifyDate>
+    </Information>
+
+    <TemplateSQL>
+      <!-- FixedSQL : 고정된 SQL이 들어가는 곳입니다. -->
+      <FixedSQL>
+        <![CDATA[ 
+ 
+ /**************************************************/
+  /* 모바일 광고 검색리스트 GetMobileAdSearchList  */
+  /*************************************************/
+  SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED 
+	SET NOCOUNT ON 
+  DECLARE @PAGE_COUNT INT = {0}
+         ,@PAGE       INT = {1}
+         ,@LATITUDE   NUMERIC(20,16) = CASE WHEN ISNUMERIC('{2}') = 1 THEN  '{2}' ELSE 37.5655905 END
+         ,@LONGITUDE  NUMERIC(20,16) = CASE WHEN ISNUMERIC('{3}') = 1 THEN  '{3}' ELSE 126.9758364 END
+         ,@UTC_DATE   VARCHAR(8)     = CONVERT(VARCHAR(8), GETUTCDATE(),112)
+	     ,@UTC_TIME   VARCHAR(5)     = CONVERT(VARCHAR(5), GETUTCDATE(),108)
+	     ,@TIME_ZONE  NUMERIC(5,0)   = {4} /* 9시간 * 60분*/
+         ,@USER_ID    NVARCHAR(100)  = '{5}'
+         ,@MNG_URL    NVARCHAR(100)  = '{6}';
+WITH T_TABLE
+AS
+(         
+SELECT  ROW_NUMBER() OVER(ORDER BY MIN(dbo.FN_TO_DISTANCE(@LATITUDE, @LONGITUDE, C.LATITUDE, C.LONGITUDE,'M'))) AS IDX
+      ,A.AD_CODE
+    ,A.TITLE
+	  ,A.SUB_TITLE
+	  ,B.COMPANY_NAME
+	  ,A.LOGO_URL
+	  ,A.BANNER_TYPE
+	  ,ISNULL(MIN(dbo.FN_TO_DISTANCE(@LATITUDE, @LONGITUDE, C.LATITUDE, C.LONGITUDE,'M')),0) AS DISTANCE
+	  ,ISNULL(MAX(REAL_AD_TYPE),1) AS REAL_AD_TYPE
+    ,CONVERT(BIT, CASE WHEN A1.AD_CODE IS NULL THEN 0 ELSE 1 END) BOOKMARK_YN
+    ,@MNG_URL + '/advertise/contentview/' + CONVERT(VARCHAR(100), A.AD_CODE) CONTENT_URL
+  FROM T_AD A
+  LEFT JOIN (SELECT A.AD_CODE FROM T_MEMBER_BOOKMARK A
+            INNER JOIN T_MEMBER B 
+			    ON A.MEMBER_CODE = B.MEMBER_CODE
+			WHERE B.USER_ID = @USER_ID
+		) A1
+	ON A.AD_CODE = A1.AD_CODE
+ INNER JOIN T_COMPANY B
+    ON A.COMPANY_CODE = B.COMPANY_CODE
+ INNER JOIN (
+             SELECT AD_CODE, LATITUDE, LONGITUDE,1 REAL_AD_TYPE FROM T_AD_PLACE
+             UNION ALL
+			 SELECT A.AD_CODE, b.LATITUDE, B.LONGITUDE,2 REAL_AD_TYPE FROM T_DEVICE_MAIN A
+			 INNER JOIN T_DEVICE B
+			    On A.DEVICE_CODE = B.DEVICE_CODE AND B.HIDE=0
+			 WHERE A.AD_CODE > 0
+  ) C
+    ON A.AD_CODE = C.AD_CODE
+   
+ WHERE 1=1
+   AND A.FR_DATE <= DATEADD(MINUTE, @TIME_ZONE, @UTC_DATE)
+	 AND A.TO_DATE >= DATEADD(MINUTE, @TIME_ZONE, @UTC_DATE)
+   AND A.FR_TIME <=  CASE WHEN ISNULL( A.FR_TIME,'') = '' THEN A.FR_TIME ELSE  CONVERT(VARCHAR(5), DATEADD(MINUTE, @TIME_ZONE, @UTC_DATE + ' ' + @UTC_TIME), 108) END
+	 AND A.TO_TIME >=  CASE WHEN ISNULL( A.FR_TIME,'') = '' THEN A.TO_TIME ELSE  CONVERT(VARCHAR(5), DATEADD(MINUTE, @TIME_ZONE, @UTC_DATE + ' ' + @UTC_TIME), 108) END
+   AND A.STATUS =9 AND A.HIDE = 0
+   #[CATEGORY_CODE]
+   #[CATEGORY_CODES]
+   #[KEYWORD_CODE]
+   #[KEYWORD_NAME]
+   #[DISTANCE]
+  GROUP BY  A.AD_CODE
+           ,A.TITLE
+	        ,A.SUB_TITLE
+	        ,B.COMPANY_NAME
+	        ,A.LOGO_URL
+	        ,A.BANNER_TYPE
+          ,A1.AD_CODE
+)SELECT * FROM T_TABLE
+WHERE IDX > ((@PAGE -1) * @PAGE_COUNT)
+  AND IDX <= (@PAGE * @PAGE_COUNT)
+ 	SET NOCOUNT OFF
+  
+  ]]>
+      </FixedSQL>
+      <DynamicBodys>
+        <Key>CATEGORY_CODE</Key>
+        <Body>
+          <![CDATA[ AND A.REP_CATEGORY_CODE = {0}]]>
+        </Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>CATEGORY_CODES</Key>
+        <Body>
+          <![CDATA[ AND A.REP_CATEGORY_CODE IN ({0})]]>
+        </Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>KEYWORD_CODE</Key>
+        <Body>
+          <![CDATA[
+            	AND  A.AD_CODE IN (SELECT AD_CODE FROM T_SEARCH_KEYWORD
+                      WHERE KEYWORD_CODE = {0} 
+		             )
+        ]]>
+        </Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>KEYWORD_NAME</Key>
+        <Body> <![CDATA[
+            /*AND ( A.TITLE LIKE '%{0}%'
+                OR A.CONTENT like '%{0}%'
+                OR A.AD_CODE IN (SELECT AD_CODE FROM T_SEARCH_KEYWORD
+                              WHERE KEYWORD_CODE IN (SELECT BASE_CODE FROM T_KEYWORD
+					                                  WHERE KEYWORD_NAME LIKE '%{0}%')
+		             )
+		          )*/
+              {0}
+        ]]></Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>DISTANCE</Key>
+        <Body>
+          <![CDATA[
+             AND (C.AD_CODE IS NOT NULL AND dbo.FN_TO_DISTANCE(@LATITUDE, @LONGITUDE, C.LATITUDE, C.LONGITUDE,'M') <= {0})
+        ]]>
+        </Body>
+      </DynamicBodys>
+     
+    </TemplateSQL>
+  </DBAgentTemplate>
+</DBAgentMultiTemplate>

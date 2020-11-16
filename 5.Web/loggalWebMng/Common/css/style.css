@@ -1,0 +1,139 @@
+﻿
+html {
+    font-size: 70%;
+}
+
+.hidden.menu {
+    display: none;
+}
+i.share2 {
+    background: url('/common/images/deviceshare3_1.png') no-repeat top left;
+    background-position: 0 0;
+    background-size: 100%;
+    width: 1em;
+    height: 1em;
+}
+.masthead.segment {
+    padding: 1em 0em;
+}
+.projecttitle {
+    font-family: 'Jua', sans-serif !important;
+    font-size:2.8rem;
+}z
+.masthead .logo.item img {
+    margin-right: 1em;
+}
+
+.masthead .ui.menu .ui.button {
+    margin-left: 0.5em;
+}
+
+.masthead h1.ui.header {
+    margin-top: 3em;
+    margin-bottom: 0em;
+    font-size: 4em;
+    font-weight: normal;
+}
+
+.cd-side-nav li.mastermenu a{
+    color: #989898;
+    font-weight:bold;
+}
+
+.masthead h2 {
+    font-size: 1.7em;
+    font-weight: normal;
+}
+
+
+.ui.vertical.stripe h3 {
+    font-size: 1.5em;
+}
+.ui.vertical.stripe h4
+{
+    font-size: 1.2em;
+}
+
+.ui.vertical.stripe .button + h3,
+.ui.vertical.stripe p + h3 {
+    margin-top: 3em;
+}
+
+.ui.vertical.stripe .floated.image {
+    clear: both;
+}
+
+.ui.vertical.stripe p {
+    font-size: 1.33em;
+}
+
+.ui.vertical.stripe .horizontal.divider {
+    margin: 3em 0em;
+}
+
+.quote.stripe.segment {
+    padding: 0em;
+}
+
+.quote.stripe.segment .grid .column {
+    padding-top: 5em;
+    padding-bottom: 5em;
+}
+
+.footer.segment {
+    padding: 2em 0em;
+    bottom:4em;
+    left:200px;
+}
+div.hide {
+    display:none!important;
+}
+
+
+.secondary.pointing.menu .toc.item {
+    display: none;
+}
+
+@media only screen and (max-width: 700px) {
+    .ui.fixed.menu {
+        display: none !important;
+    }
+
+    .secondary.pointing.menu .item,
+    .secondary.pointing.menu .menu {
+        display: none;
+    }
+
+    .secondary.pointing.menu .toc.item {
+        display: block;
+    }
+
+    .masthead.segment {
+    }
+
+    .masthead h1.ui.header {
+        font-size: 2em;
+        margin-top: 1.5em;
+    }
+
+    .masthead h2 {
+        margin-top: 0.5em;
+        font-size: 1.5em;
+    }
+}
+
+
+
+
+form {
+    margin-left: 20px;
+    margin-right: 20px;
+    vertical-align: top;
+}
+
+
+
+input[readonly]
+{
+    background-color:#f5f5f5;
+}

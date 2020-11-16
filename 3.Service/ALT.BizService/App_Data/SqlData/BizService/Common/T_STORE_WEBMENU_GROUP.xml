@@ -1,0 +1,182 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<DBAgentMultiTemplate  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns="http://altsoft.kr/">
+
+  <DBAgentTemplate TemplateID="GetWebGroupList">
+    <!-- 
+    SqlType : SQL의 형태를 지정합니다.
+      Example 1:<SqlType>FixedSQL</SqlType> 고정적인 SQL을 지원합니다. 
+      Example 2:<SqlType>DynamicSQL</SqlType> 동적인 SQL Type1을 지원합니다.  
+    Description : 해당 SQL의 기능설명을 적습니다.
+    SQLModifier : 해당 SQL의 작성자(수정자)를 적습니다
+    LastModifyDate : 해당 SQL의 마지막 수정일을 적습니다
+    -->
+    <Information>
+      <SqlType>DynamicSQL</SqlType>
+      <Description>메뉴그룹조회</Description>
+      <SQLModifier>전상훈</SQLModifier>
+      <LastModifyDate>2016-10-09</LastModifyDate>
+    </Information>
+
+    <TemplateSQL>
+      <!-- FixedSQL : 고정된 SQL이 들어가는 곳입니다. -->
+      <FixedSQL>
+        <![CDATA[ 
+ 	SET NOCOUNT ON 
+	/**********************************************************/
+	/* 웹메뉴 그룹(템플릿)테이블 - T_STORE_WEBMENU_GROUP 조회 */
+  /* - SELECT QUERY                                         */ 
+	/**********************************************************/
+	SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED 
+	SELECT
+      A.PROJECT_SITE
+    , A.STORE_CODE
+    , A.GROUP_CODE
+    , A.GROUP_NAME
+    , A.ORDER_SEQ
+    , A.DEPT_AUTH
+    , A.COMP_POSITION_AUTH
+    , A.COMP_TITLE_AUTH
+    , A.REMARK
+    , A.HIDE
+    , A.INSERT_CODE
+    , A.INSERT_DATE
+    , A.UPDATE_CODE
+    , A.UPDATE_DATE
+    , B.USER_NAME AS UPDATE_NAME
+	FROM T_STORE_WEBMENU_GROUP A
+ INNER JOIN T_MEMBER B
+    ON A.UPDATE_CODE = B.MEMBER_CODE
+ WHERE 1=1 
+   #[PROJECT_SITE]
+   #[STORE_CODE]
+   #[GROUP_CODE]
+   #[GROUP_NAME]
+   #[DEPT_AUTH]
+   #[COMP_POSITION_AUTH]
+   #[COMP_TITLE_AUTH]
+   #[HIDE]
+	SET NOCOUNT OFF 
+
+
+      ]]>
+      </FixedSQL>
+      <DynamicBodys>
+        <Key>PROJECT_SITE</Key>
+        <Body>AND A.PROJECT_SITE = {0} </Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>STORE_CODE</Key>
+        <Body>AND A.STORE_CODE = {0} </Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>GROUP_CODE</Key>
+        <Body>AND A.GROUP_CODE = {0} </Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>GROUP_NAME</Key>
+        <Body>AND A.GROUP_NAME LIKE '%{0}%' </Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>DEPT_AUTH</Key>
+        <Body>AND ',' + A.DEPT_AUTH + ',' LIKE N',%{0}%,' </Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>COMP_POSITION_AUTH</Key>
+        <Body>AND ',' + A.COMP_POSITION_AUTH + ',' LIKE N',%{0}%,' </Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>COMP_TITLE_AUTH</Key>
+        <Body>AND ',' + A.COMP_TITLE_AUTH + ',' LIKE N',%{0}%,' </Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>HIDE</Key>
+        <Body>AND A.HIDE = {0} </Body>
+      </DynamicBodys>
+
+    </TemplateSQL>
+  </DBAgentTemplate>
+  <DBAgentTemplate TemplateID="menuGroupSave">
+    <!-- 
+    SqlType : SQL의 형태를 지정합니다.
+      Example 1:<SqlType>FixedSQL</SqlType> 고정적인 SQL을 지원합니다. 
+      Example 2:<SqlType>DynamicSQL</SqlType> 동적인 SQL Type1을 지원합니다.  
+    Description : 해당 SQL의 기능설명을 적습니다.
+    SQLModifier : 해당 SQL의 작성자(수정자)를 적습니다
+    LastModifyDate : 해당 SQL의 마지막 수정일을 적습니다
+    -->
+    <Information>
+      <SqlType>DynamicSQL</SqlType>
+      <Description>메뉴그룹저장</Description>
+      <SQLModifier>전상훈</SQLModifier>
+      <LastModifyDate>2016-10-09</LastModifyDate>
+    </Information>
+
+    <TemplateSQL>
+      <!-- FixedSQL : 고정된 SQL이 들어가는 곳입니다. -->
+      <FixedSQL>
+        <![CDATA[ 
+	SET NOCOUNT ON 
+	/**********************************************************/
+	/* 웹메뉴 그룹(템플릿)테이블 - T_STORE_WEBMENU_GROUP 저장 */
+  /* - SAVE QUERY                                           */ 
+	/**********************************************************/
+	DECLARE @PROJECT_SITE                   INT                  = N'{0}'
+			  , @STORE_CODE                     INT                  = N'{1}'
+			  , @GROUP_CODE                     INT                  = N'{2}'
+			  , @GROUP_NAME                     NVARCHAR(100)        = N'{3}'
+			  , @ORDER_SEQ                      INT                  = CONVERT(INT, CASE WHEN ISNUMERIC('{4}') = 1 THEN '{4}' ELSE '0' END )
+			  , @DEPT_AUTH                      NVARCHAR(100)        = N'{5}'
+			  , @COMP_POSITION_AUTH             NVARCHAR(100)        = N'{6}'
+			  , @COMP_TITLE_AUTH                NVARCHAR(100)        = N'{7}'
+			  , @REMARK                         NVARCHAR(200)        = N'{8}'
+			  , @HIDE                           BIT                  = CONVERT(BIT, CASE WHEN ISNUMERIC('{9}') = 1 THEN '{9}' ELSE '0' END )
+			  , @INSERT_CODE                    INT                  = {10}
+			  , @INSERT_DATE                    DATETIME             = GETDATE() 
+			  , @UPDATE_CODE                    INT                  = {10}
+			  , @UPDATE_DATE                    DATETIME             = GETDATE() 
+        
+        , @SAVE_TYPE                      VARCHAR(9) = N'{11}'
+        
+ IF @SAVE_TYPE  = 'D'
+ BEGIN
+      DELETE A  FROM T_STORE_WEBMENU_GROUP_MENU A 
+	     WHERE PROJECT_SITE= @PROJECT_SITE AND STORE_CODE= @STORE_CODE	  AND GROUP_CODE= @GROUP_CODE
+      DELETE A  FROM T_STORE_WEBMENU_GROUP A 
+	     WHERE PROJECT_SITE= @PROJECT_SITE AND STORE_CODE= @STORE_CODE	  AND GROUP_CODE= @GROUP_CODE 
+ END
+ ELSE
+ BEGIN
+	  	UPDATE A 
+	      SET  	  GROUP_NAME                     = @GROUP_NAME                    
+			       ,  ORDER_SEQ                      = @ORDER_SEQ                     		 ,  DEPT_AUTH                      = @DEPT_AUTH                     
+			       ,  COMP_POSITION_AUTH             = @COMP_POSITION_AUTH            		 ,  COMP_TITLE_AUTH                = @COMP_TITLE_AUTH               
+			       ,  REMARK                         = @REMARK                        		 ,  HIDE                           = @HIDE                          
+			       ,  UPDATE_CODE                    = @UPDATE_CODE                   		 ,  UPDATE_DATE                    = @UPDATE_DATE                   
+	
+	      FROM T_STORE_WEBMENU_GROUP A 
+	      WHERE PROJECT_SITE= @PROJECT_SITE	  AND STORE_CODE= @STORE_CODE	  AND GROUP_CODE= @GROUP_CODE
+        IF @@ROWCOUNT = 0
+	      BEGIN
+            SELECT @GROUP_CODE = ISNULL(MAX(GROUP_CODE),0) + 1 FROM T_STORE_WEBMENU_GROUP
+             WHERE PROJECT_SITE = @PROJECT_SITE AND STORE_CODE = @STORE_CODE
+         
+		        INSERT INTO T_STORE_WEBMENU_GROUP
+		        (		PROJECT_SITE                  		, STORE_CODE                    		, GROUP_CODE                    		, GROUP_NAME                    		
+			        , ORDER_SEQ                     		, DEPT_AUTH                     		, COMP_POSITION_AUTH            		, COMP_TITLE_AUTH               		
+			        , REMARK                        		, HIDE                          		, INSERT_CODE                   		, INSERT_DATE                   		
+			        , UPDATE_CODE                   		, UPDATE_DATE                   		
+		        )
+		        SELECT @PROJECT_SITE                 		, @STORE_CODE                   		, @GROUP_CODE                   	
+				        , @GROUP_NAME                   		, @ORDER_SEQ                    		, @DEPT_AUTH                    	
+				        , @COMP_POSITION_AUTH           		, @COMP_TITLE_AUTH              		, @REMARK                       	
+				        , @HIDE                         		, @INSERT_CODE                  		, @INSERT_DATE                  	
+				        , @UPDATE_CODE                  		, @UPDATE_DATE                  	
+	      END
+  END        
+SET NOCOUNT OFF
+
+  ]]>
+      </FixedSQL>
+    </TemplateSQL>
+  </DBAgentTemplate>
+</DBAgentMultiTemplate>

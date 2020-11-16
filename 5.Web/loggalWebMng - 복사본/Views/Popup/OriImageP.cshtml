@@ -1,0 +1,36 @@
+﻿
+<style>
+    .ui.modal.logoimagePopup img {
+        margin-left: auto;
+        margin-right: auto;
+        display: block;
+    }
+
+</style>
+<div class="ui modal logoimagePopup">
+    <div class="header">원본보기</div>
+    <div class="content">
+        <p><img src="" /></p>
+    </div>
+    <div class="actions">
+        <button class="ui button close  ok">닫기</button>
+
+    </div>
+</div>
+<script type="text/javascript">
+    function logimagePopupOpen(logoUrl) {
+        $(".ui.modal.logoimagePopup img").attr("src", logoUrl);
+        $('.ui.modal.logoimagePopup').modal({
+            onVisible: function (e) {
+                
+                if ($(".ui.modal.logoimagePopup").closest(".ui.modal").height() > $(window).height()) {
+                    $(".ui.modal.logoimagePopup img").height($(window).height() - 200);
+                }
+            },
+            onApprove: function (e) {
+
+            },
+        }).modal('show')
+
+    }
+</script>

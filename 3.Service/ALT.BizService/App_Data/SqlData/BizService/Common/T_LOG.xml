@@ -1,0 +1,220 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<DBAgentMultiTemplate  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns="http://altsoft.kr/">
+
+ <DBAgentTemplate TemplateID="GetLogList">
+    <!-- 
+    SqlType : SQL의 형태를 지정합니다.
+      Example 1:<SqlType>FixedSQL</SqlType> 고정적인 SQL을 지원합니다. 
+      Example 2:<SqlType>DynamicSQL</SqlType> 동적인 SQL Type1을 지원합니다.  
+    Description : 해당 SQL의 기능설명을 적습니다.
+    SQLModifier : 해당 SQL의 작성자(수정자)를 적습니다
+    LastModifyDate : 해당 SQL의 마지막 수정일을 적습니다
+    -->
+    <Information>
+      <SqlType>DynamicSQL</SqlType>
+      <Description>로그 조회</Description>
+      <SQLModifier>전상훈</SQLModifier>
+      <LastModifyDate>2016-11-19</LastModifyDate>
+    </Information>
+
+    <TemplateSQL>
+      <!-- FixedSQL : 고정된 SQL이 들어가는 곳입니다. -->
+      <FixedSQL>
+        <![CDATA[ 
+
+		SET NOCOUNT ON 
+	/*******************************************/
+	/* 로그테이블 - T_LOG 조회 -  SELECT QUERY */ 
+	/*******************************************/
+	SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED 
+  DECLARE @PAGE INT = {0}
+         ,@PAGE_COUNT INT = {1};
+ WITH T_TABLE AS
+(
+SELECT   
+      ROW_NUMBER() OVER(ORDER BY {2}) AS SEQ
+		, A.IDX
+		, B3.COMPANY_NAME
+		, B2.STORE_NAME
+    , DEPT.DEPT_NAME
+		, A.STORE_CODE
+		, CONVERT(VARCHAR(10), CONVERT(DATETIME, LEFT(A.LOG_DATE,8)), 102) + ' '+ LEFT(RIGHT(LOG_DATE,6),2) + ':' +  LEFT(RIGHT(LOG_DATE,4),2) + ':' + RIGHT(LOG_DATE,2) AS LOG_DATE
+		, A.LOG_TYPE
+     , C.NAME AS LOG_TYPE_NAME
+		, A.LOG_DATA1
+		, A.LOG_DATA2
+		, A.LOG_DATA3
+		, A.LOG_DESC
+		, A.USE_IP
+		, A.LOG_TABLE
+		, A.INSERT_CODE
+    , B.USER_NAME AS INSERT_NAME
+		, A.INSERT_DATE
+    , B.USER_ID AS INSERT_ID
+    
+	FROM T_LOG A 
+   INNER JOIN T_MEMBER B
+      ON A.INSERT_CODE = B.MEMBER_CODE
+   INNER JOIN T_MEMBER_EMPLOYEE B1
+      ON B.MEMBER_CODE = B1.MEMBER_CODE
+   INNER JOIN T_STORE_DEPT DEPT
+      ON B1.STORE_CODE = DEPT.STORE_CODE
+	 AND B1.DEPT_CODE = DEPT.DEPT_CODE
+   INNER JOIN T_STORE B2
+      ON B1.STORE_CODE = B2.STORE_CODE
+   INNER JOIN T_COMPANY B3
+       ON B2.COMPANY_CODE = B3.COMPANY_CODE
+   INNER JOIN T_COMMON C
+      ON C.MAIN_CODE = 'L002'
+     AND C.SUB_CODE = A.LOG_TYPE
+   
+ WHERE 1=1 
+  #[COMPANY_CODE]
+  #[STORE_CODE]
+  #[DEPT_SEARCH]
+  #[PARENT_MEMBER_CODE]
+  #[LOGIN_MEMBER_CODE]
+  #[FR_DATE]
+  #[TO_DATE]
+  #[LOG_TYPE]
+  #[LOG_DATA1]
+  #[LOG_DATA2]
+  #[INSERT_NAME]
+) 
+SELECT *, (SELECT COUNT(1) FROM T_TABLE) TOTAL_ROWCOUNT FROM T_TABLE
+WHERE SEQ > (@PAGE -1) * @PAGE_COUNT
+  AND SEQ <= (@PAGE) * @PAGE_COUNT
+    
+ 
+  
+	SET NOCOUNT OFF 
+
+
+]]>
+      </FixedSQL>
+      <DynamicBodys>
+        <Key>COMPANY_CODE</Key>
+        <Body>AND B2.COMPANY_CODE = {0}</Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>STORE_CODE</Key>
+        <Body>AND A.STORE_CODE = {0}</Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>DEPT_SEARCH</Key>
+        <Body>AND DEPT.DEPT_SEARCH LIKE '{0}'</Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>PARENT_MEMBER_CODE</Key>
+        <Body>AND (B1.PARENT_MEMBER_CODE = {0} OR A.INSERT_CODE = {0}) </Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>LOGIN_MEMBER_CODE</Key>
+        <Body>AND A.INSERT_CODE = {0}</Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>FR_DATE</Key>
+        <Body>AND LEFT(A.LOG_DATE,8) >= '{0}'</Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>TO_DATE</Key>
+        <Body>
+          <![CDATA[ AND LEFT(A.LOG_DATE,8) <= '{0}']]></Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>LOG_TYPE</Key>
+        <Body>
+          AND LEFT(A.LOG_TYPE,8) = '{0}'
+        </Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>LOG_DATA1</Key>
+        <Body>
+          AND A.LOG_DATA1 LIKE N'%{0}%'
+        </Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>LOG_DATA2</Key>
+        <Body>
+          AND A.LOG_DATA2 LIKE N'%{0}%'
+        </Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>INSERT_NAME</Key>
+        <Body>
+          AND B.USER_NAME LIKE N'%{0}%'
+        </Body>
+      </DynamicBodys>
+    </TemplateSQL>
+  </DBAgentTemplate>
+
+  <DBAgentTemplate TemplateID="LogSave">
+    <!-- 
+    SqlType : SQL의 형태를 지정합니다.
+      Example 1:<SqlType>FixedSQL</SqlType> 고정적인 SQL을 지원합니다. 
+      Example 2:<SqlType>DynamicSQL</SqlType> 동적인 SQL Type1을 지원합니다.  
+    Description : 해당 SQL의 기능설명을 적습니다.
+    SQLModifier : 해당 SQL의 작성자(수정자)를 적습니다
+    LastModifyDate : 해당 SQL의 마지막 수정일을 적습니다
+    -->
+    <Information>
+      <SqlType>DynamicSQL</SqlType>
+      <Description>로그 조회</Description>
+      <SQLModifier>전상훈</SQLModifier>
+      <LastModifyDate>2016-11-19</LastModifyDate>
+    </Information>
+
+    <TemplateSQL>
+      <!-- FixedSQL : 고정된 SQL이 들어가는 곳입니다. -->
+      <FixedSQL>
+        <![CDATA[ 
+
+	SET NOCOUNT ON 
+	/******************************************/
+	/* 로그테이블 - T_LOG 저장 -  SAVE QUERY */ 
+	/*****************************************/
+	DECLARE @IDX                            BIGINT                         = N'{0}'
+			  , @STORE_CODE                     INT                            = CONVERT(INT, CASE WHEN ISNUMERIC('{1}') = 1 THEN '{1}' ELSE '0' END )
+			  , @LOG_DATE                       VARCHAR(16)                    = CASE WHEN N'{2}' = '' THEN CONVERT(VARCHAR(10), GETDATE(),112) + REPLACE(CONVERT(VARCHAR(10), GETDATE(), 108),':','') ELSE '{2}' END
+			  , @LOG_TYPE                       INT                            = CONVERT(INT, CASE WHEN ISNUMERIC('{3}') = 1 THEN '{3}' ELSE '0' END )
+			  , @LOG_DATA1                      NVARCHAR(50)                   = N'{4}'
+			  , @LOG_DATA2                      NVARCHAR(50)                   = N'{5}'
+			  , @LOG_DATA3                      NVARCHAR(50)                   = N'{6}'
+			  , @LOG_DESC                       NVARCHAR(MAX)                  = N'{7}'
+			  , @USE_IP                         NVARCHAR(30)                   = N'{8}'
+			  , @LOG_TABLE                      NVARCHAR(50)                   = N'{9}'
+			  , @INSERT_CODE                    INT                            = {10}
+			  , @INSERT_DATE                    DATETIME                       = GETDATE() 
+
+	UPDATE A 
+	SET  	  STORE_CODE                = @STORE_CODE               
+			 ,  LOG_DATE                  = @LOG_DATE                 		 ,  LOG_TYPE                  = @LOG_TYPE                 
+			 ,  LOG_DATA1                 = @LOG_DATA1                		 ,  LOG_DATA2                 = @LOG_DATA2                
+			 ,  LOG_DATA3                 = @LOG_DATA3                		 ,  LOG_DESC                  = @LOG_DESC                 
+			 ,  USE_IP                    = @USE_IP                   		 ,  LOG_TABLE                 = @LOG_TABLE                
+	
+	FROM T_LOG A 
+	WHERE IDX= @IDX
+	IF @@ROWCOUNT = 0
+	BEGIN
+		INSERT INTO T_LOG
+		(		STORE_CODE                    		, LOG_DATE                      		, LOG_TYPE                      		
+			, LOG_DATA1                     		, LOG_DATA2                     		, LOG_DATA3                     		, LOG_DESC                      		
+			, USE_IP                        		, LOG_TABLE                     		, INSERT_CODE                   		, INSERT_DATE                   		
+			
+		)
+		SELECT @STORE_CODE                   		, @LOG_DATE                     	
+				, @LOG_TYPE                     		, @LOG_DATA1                    		, @LOG_DATA2                    	
+				, @LOG_DATA3                    		, @LOG_DESC                     		, @USE_IP                       	
+				, @LOG_TABLE                    		, @INSERT_CODE                  		, @INSERT_DATE                  	
+			
+	 END
+SET NOCOUNT OFF
+
+
+
+]]>
+      </FixedSQL>
+    </TemplateSQL>
+  </DBAgentTemplate>
+</DBAgentMultiTemplate>

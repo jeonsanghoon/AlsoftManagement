@@ -1,0 +1,50 @@
+﻿@using System.Web.Optimization;
+<!--Favicon-->
+<link rel="apple-touch-icon" sizes="57x57" href="~/Common/images/Favicon/apple-icon-57x57.png">
+<link rel="apple-touch-icon" sizes="60x60" href="/Common/images/Favicon/apple-icon-60x60.png">
+<link rel="apple-touch-icon" sizes="72x72" href="/Common/images/Favicon/apple-icon-72x72.png">
+<link rel="apple-touch-icon" sizes="76x76" href="/Common/images/Favicon/apple-icon-76x76.png">
+<link rel="apple-touch-icon" sizes="114x114" href="/Common/images/Favicon/apple-icon-114x114.png">
+<link rel="apple-touch-icon" sizes="120x120" href="/Common/images/Favicon/apple-icon-120x120.png">
+
+<link rel="apple-touch-icon" sizes="144x144" href="/Common/images/Favicon/apple-icon-144x144.png">
+<link rel="apple-touch-icon" sizes="152x152" href="/Common/images/Favicon/apple-icon-152x152.png">
+<link rel="apple-touch-icon" sizes="180x180" href="/Common/images/Favicon/apple-icon-180x180.png">
+<link rel="icon" type="image/png" sizes="192x192" href="/Common/images/Favicon/android-icon-192x192.png">
+<link rel="icon" type="image/png" sizes="32x32" href="/Common/images/Favicon/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="96x96" href="/Common/images/Favicon/favicon-96x96.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/Common/images/Favicon/favicon-16x16.png">
+<link rel="manifest" href="/Common/images/Favicon/manifest.json">
+<meta name="msapplication-TileColor" content="#ffffff">
+<meta name="msapplication-TileImage" content="/ms-icon-144x144.png">
+<meta name="theme-color" content="#ffffff">
+<link href="//cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.4.1/semantic.min.css" rel='stylesheet' type='text/css'>
+<link href="//fonts.googleapis.com/earlyaccess/jejugothic.css" rel='stylesheet' type='text/css'>
+<link href="//fonts.googleapis.com/earlyaccess/nanumgothic.css" rel='stylesheet' type='text/css'>
+<link href="//fonts.googleapis.com/earlyaccess/hanna.css" rel='stylesheet' type='text/css'>
+<link href="//fonts.googleapis.com/earlyaccess/notosanskr.css" rel='stylesheet' type='text/css'>
+<link href="//fonts.googleapis.com/css?family=Black+Han+Sans&display=swap&subset=korean" rel='stylesheet' type='text/css'>
+<link href="//fonts.googleapis.com/css?family=Jua&display=swap" rel='stylesheet' type='text/css'>
+<link href="//fonts.googleapis.com/css?family=Nanum+Gothic:400,800" rel='stylesheet' type='text/css'>
+
+@Styles.Render("~/BundleStyle")
+
+
+
+<link href="//use.fontawesome.com/releases/v5.0.6/css/all.css?ver=20180315" rel="stylesheet">
+
+
+
+<script src="//code.jquery.com/jquery-2.2.4.min.js" integrity="sha256-BbhdlvQf/xTY9gja0Dq3HiwQF8LaCRTXxZKRutelT44=" crossorigin="anonymous"></script>
+<!--<script src="//code.jquery.com/jquery-3.3.1.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script>-->
+@*<script type="text/javascript" src="//dapi.kakao.com/v2/maps/sdk.js?appkey=@Global.ConfigInfo.KakaoAppKey&libraries=services,clusterer,drawing"></script>*@
+@{
+	string controller = this.ViewContext.RouteData.Values["controller"].ToString().ToLower();
+	string action = this.ViewContext.RouteData.Values["action"].ToString().ToLower();
+
+	if (!(controller == "home" && action == "login"))
+	{
+		<link rel="stylesheet" href="~/Common/plugin/css/responsive-sidebar-navigation/reset.css?ver=20190722">
+		<link rel="stylesheet" href="~/Common/plugin/css/responsive-sidebar-navigation/style.css?ver=20191011">
+	}
+}

@@ -1,0 +1,271 @@
+﻿@{
+
+}
+@section scripts{
+
+    <script type="text/javascript">
+
+        $(document).ready(function () {
+
+            doQuery();
+
+            ComponentInit();
+        }); //End document.ready
+
+        function ComponentInit() {
+            $('#FR_DATE').datetimepicker({
+                timepicker: false,
+                format: 'Y.m.d'
+            });
+
+            $('#TO_DATE').datetimepicker({
+                timepicker: false,
+                format: 'Y.m.d'
+            });
+
+            $("input").keyup(function (e) {
+                if (e.keyCode == 13) {
+                    doQuery(1);
+                }
+            });
+            $(".mrc-fixed-table-container").css("height", "auto");
+            //gridAutoHeight();
+            //$(window).resize(function () {
+            //    gridAutoHeight();
+            //})
+
+        }
+
+        function gridAutoHeight() {
+           
+          
+            if ($(window).width() < 768) {
+                $(".cd-main").css("height", $(window).height() - ($(".ui.grid.search").height() + $(".ui.footer").height()));
+                var nHeight = $(window).height() - ($(".ui.grid.search").height() + 350 + $(".ui.footer").height());
+                nHeight = (nHeight < 200) ? 200 : nHeight;
+                $(".mrc-fixed-table-container").css("height", nHeight);
+
+            }
+            else {
+                $(".mrc-fixed-table-container").css("height", $(window).height() - ($(".ui.grid.search").height()  + $(".cd-main-header").height() + 200 + $(".ui.pagination.menu").height() + $(".ui.footer").height()));
+            }
+
+        }
+        var PARAM_DATA = {
+            PAGE_SIZE: 10
+            , PAGE_COUNT: 10
+            , PAGE: 1
+            , SORT: ""
+        }
+
+
+
+        function doQuery(page, order) {
+            if (page == undefined || page == null || page < 1) page = 1;
+            PARAM_DATA.PAGE = page;
+
+            var param = BaseCommon.FormInfo.serializeJson(".ui.form");
+
+            param.PAGE_COUNT = PARAM_DATA.PAGE_COUNT;
+            param.PAGE = PARAM_DATA.PAGE;
+
+            if (order != undefined) {
+                PARAM_DATA.SORT = order;
+                param.SORT = order;
+            }
+            else if (order == undefined) {
+                param.SORT = PARAM_DATA.SORT;
+            }
+
+
+            param = JSON.stringify(param);
+            ajax.GetAjax("/comp/pv_complist", param, "html", function (result) {
+                $("#dvTable table tbody").html(result);
+                $.mrc_table.Init(".mrc-table", false, order);
+                $("#dvpagination").show();
+                $("#dvpagination").pagination({
+                    total: Number($("#total").val()), page: PARAM_DATA.PAGE, pagesize: PARAM_DATA.PAGE_SIZE, perpage: PARAM_DATA.PAGE_COUNT
+                    , onPageClick: function (item, page) {
+                        doQuery(page);
+                    }
+                })
+                $("#dvpagination").css("display", "");
+                $.mrc_table.fixedHeder("#dvTable table");
+
+            });
+        }
+
+        function mrcGrid_Sort(objName, datasort, orderType) {
+            //_sortColumn = datasort;
+            //_sortOrder = orderType;
+
+            //        _page = 1;
+
+            if (datasort == "" || orderType == "") doQuery(1, "");
+            else doQuery(1, datasort + " " + orderType);
+        }
+        function btnNewClick() {
+            location.href = "/comp/compreg";
+        }
+
+        function fnStoreList(compCode) {
+            location.href = "/comp/storelist?COMPANY_CODE=" + compCode;
+        }
+        function ExcelDown() {
+            var params = BaseCommon.FormInfo.serializeJson(".ui.form");
+
+            params.SORT = PARAM_DATA.SORT;
+            var arrData = new Array();
+            $.each(params, function (key, val) {
+                //display the key and value pair
+
+                arrData.push({ name: key, value: val });
+            });
+            BaseCommon.FormInfo.PostSubmit('/comp/CompanyExcelReport', arrData);
+        }
+
+
+    </script>
+}
+<style>
+    .ui.checkbox {
+        margin-top: 0.5em;
+    }
+
+    #dvpagination {
+        margin-top: 1em;
+    }
+    
+ 
+</style>
+<div class="ui vertical stripe segment">
+    @Html.TitleNavigation()
+    <form class="ui form">
+        <div class="ui grid search " style="margin-top:1em; margin-bottom:1em;">
+            <div class="three wide mobile two wide tablet one wide computer column title">
+                @Html.Semantic_TITLE2("회사명")
+            </div>
+            <div class="five wide mobile three wide tablet two wide computer column">
+                @Html.Semantic_TextBox("COMPANY_NAME", "", SemanticUIHelper.Size.mini, new { @placeholder = "회사명" })
+            </div>
+            <div class="three wide mobile two wide tablet one wide computer column title">
+                @Html.Semantic_TITLE2("유형")
+            </div>
+            <div class="five wide mobile three wide tablet two wide computer column">
+                @Html.CommonCombo("COMPANY_TYPE", new T_COMMON_COND { MAIN_CODE = "C003" }, "", "-선택-", new { @class = "size150 field" })
+            </div>
+            <div class="three wide mobile two wide tablet one wide computer column title">
+                @Html.Semantic_TITLE2("상태")
+            </div>
+            <div class="five wide mobile four wide tablet two wide computer column">
+                @Html.CommonCombo("STATUS", new T_COMMON_COND { MAIN_CODE = "S001" }, "", "-선택-", new { @class = "size150 field" })
+            </div>
+            <div class="three wide mobile two wide tablet one wide computer column title">
+                @Html.Semantic_TITLE2("등록자")
+            </div>
+            <div class="five wide mobile three wide tablet two wide computer column">
+                @Html.Semantic_TextBox("INSERT_NAME", "", SemanticUIHelper.Size.mini, new { @placeholder = "등록자" })
+            </div>
+
+            <div class="sixteen wide mobile eleven wide tablet four wide computer column buttons">
+                @{
+                        Daum_MapMultiMarker optionmap = new Daum_MapMultiMarker() { ID = "company", bReadOnly = true, MAKER_MAX_COUNT = SessionHelper.LoginInfo.EMPLOYEE.MAKER_MAX_COUNT, bCircle = false };
+                    @Html.EditorFor(model => new EditTempleateModel().Kakao_MapMakerCircle, new { optionmap = optionmap })
+                }
+                @Html.Semantic_Button2("btnOpen", "지도보기", SemanticUIHelper.enButtonType.Normal, new { @onclick = "markerMapPopupOpen();" })
+
+                <script>
+                    function markerMapPopupOpen() {
+
+                        var params = BaseCommon.FormInfo.serializeJson(".ui.form");
+
+                        params.PAGE_COUNT = 100000;
+                        params = JSON.stringify(params);
+                        ajax.GetAjax("/comp/GetCompanyMapList", params, "json", function (result) {
+
+                            //@(optionmap.ID)_DaumMapMaker_Open(result, 0, 0, "", 1,true);
+                            @(optionmap.ID)_MapOpen(result);
+                        });
+
+                    }
+                </script>
+                @Html.Semantic_Button2("btnSearch", "조회", SemanticUIHelper.enButtonType.ToList, SemanticUIHelper.Size.medium, new { onclick = "doQuery();" })
+                @Html.Semantic_Button2("btnExcel", "엑셀", SemanticUIHelper.enButtonType.Excel, SemanticUIHelper.Size.medium, new { @onclick = "ExcelDown();" })
+                @{
+                    if (SessionHelper.LoginInfo.STORE.STORE_CODE == 1)
+                    {
+                        @Html.Semantic_Button2("btnNew", "신규", SemanticUIHelper.enButtonType.New, SemanticUIHelper.Size.medium, new { @onclick = "btnNewClick();" })
+                    }
+                }
+
+            </div>
+        </div>
+        <div class="one column row">
+            <div class="column" id="dvTable">
+                <div class="mrc-fixed-table-container">
+                    <div class="header-bg"></div>
+                    <div class="table-wrapper">
+                        <table class="mrc-table" id="tbList">
+                            <thead>
+                                <tr>
+                                    <th class="sort center" column_name="COMPANY_CODE" style="width:5em" data-sort="A.COMPANY_CODE">코드</th>
+                                    <th class="sort" column_name="COMPANY_ID" data-sort="A.COMPANY_ID" display_size="tablet">아이디</th>
+                                    <th class="sort" column_name="COMPANY_NAME" data-sort="A.COMPANY_NAME">회사명</th>
+                                    <th class="sort" column_name="COMPANY_TYPE_NAME" display_size="tablet" data-sort="B.NAME">유형</th>
+                                    <th class="sort" column_name="COMPANY_TYPE_NAME2" display_size="tablet" data-sort="B1.NAME">유형2</th>
+                                    <th class="sort" display_size="detail" column_name="PHONE" data-sort="A.PHONE">대표전화</th>
+                                    <th class="sort" display_size="pc" data-sort="C.NAME">상태</th>
+                                    <th class="sort" display_size="pc" data-sort="A.OWNER_NAME">대표자</th>
+                                    <th display_size="pc" style="width:8em;">준비/운영/폐업</th>
+                                    <th class="sort" display_size="detail" data-sort="A.ADDRESS1">주소</th>
+                                    <th display_size="pc">배너</th>
+                                    <th display_size="pc">로컬박스</th>
+                                    <th class="sort" display_size="detail" data-sort="E.USER_NAME">수정자</th>
+                                    <th class="sort" display_size="pc" data-sort="A.UPDATE_DATE">수정일자</th>
+                                    <th display_size="pc">지점</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                        <div class="ui accordion field" style="padding-left:1em;">
+                            <div class="title">
+                                <i class="icon dropdown"></i>
+                                화면설명
+                            </div>
+                            <div class="content field">
+                                <div class="ui segment field" style="margin-bottom:3em;position:absolute">
+                                    <ul class="ui list">
+                                        <li>
+                                            <b>배너</b>
+                                            <ul>
+                                                <li>내소유(직접관리)/내소유(대행의뢰)/대행</li>
+                                            </ul>
+                                        </li>
+
+                                        <li>
+                                            <b>로컬박스</b>
+                                            <ul>
+                                                <li>내소유(직접관리)/내소유(대행의뢰)/대행</li>
+                                            </ul>
+                                        </li>
+
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+        </div>
+
+        <div class="one column row">
+            <div class="column"><div id="dvpagination" class="ui floated pagination menu"></div></div>
+        </div>
+
+    </form>
+   
+
+    
+</div>

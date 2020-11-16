@@ -1,0 +1,23 @@
+﻿@using ALT.VO.loggal;
+@{
+    List<STEP_LOCAL_LIST> list = (List<STEP_LOCAL_LIST>)ViewBag.list;
+    string totCnt = (list.Count() == 0 ? "0" : list.First().TOTAL_ROWCOUNT.ToString());
+
+    <input type="hidden" id="total2" value="@totCnt" />
+    foreach (STEP_LOCAL_LIST data in list)
+    {
+
+        <tr>
+            <td class="collapsing">
+                @Html.Semantic_CheckBox("delchk", "", data.AD_DEVICE_CODE.ToString(), SemanticUIHelper.Size.mini, "fitted slider")
+            </td>
+            <td>@data.STORE_NAME</td>
+            <td>@data.DEVICE_NAME</td>
+            <td>@data.ADDRESS1 @data.ADDRESS2</td>
+            <td>@data.PHONE</td>
+            <td>@data.EMAIL</td>
+
+        </tr>
+    }
+}
+

@@ -1,0 +1,152 @@
+﻿@{
+    
+    
+
+}
+@section scripts{
+    <style>
+        .dvSearchArea {
+            overflow: auto;
+        }
+
+        .dvSearchArea .dvSearchSet .ui.input {
+            min-height: 25px;
+            min-width: 130px;
+            margin-bottom: 0px;
+            font-size: 1.03rem;
+        }
+    </style>
+    <script type="text/javascript">
+
+        $(document).ready(function () {
+            $("#frmSearch").submit(function (event) {
+                _page = 1;
+                doQuery();
+                event.preventDefault();
+            });
+            ComponentInit();
+            doQuery();
+
+            $("#btnClear").click(function () {
+                $("#frmSearch input[type=text]").val("");
+            });
+
+            $("#btnAdd").click(function () {
+                location.href = "/Beacon/beaconreg";
+            });
+
+        }); //End document.ready
+
+
+        var PARAM_DATA = {
+            PAGE_SIZE: 10
+            , PAGE_COUNT: 10
+            , PAGE: 1
+            , SORT: "A.UPDATE_DATE DESC"
+        }
+        function ComponentInit() {
+
+        }   //End ComponentInit
+
+        function doQuery(page, order) {//, sortCol, sortOrd
+
+            if (page == undefined || page == null || page < 1) page = 1;
+            PARAM_DATA.PAGE = page;
+
+            var param = BaseCommon.FormInfo.serializeJson(".ui.form");
+
+            param.PAGE_COUNT = PARAM_DATA.PAGE_COUNT;
+            param.PAGE = PARAM_DATA.PAGE;
+
+            if (order != undefined) {
+                PARAM_DATA.SORT = order;
+                param.SORT = order;
+            }
+            else if (order == undefined) {
+                param.SORT = PARAM_DATA.SORT;
+            }
+
+            ajax.GetAjax("/Beacon/pv_BeaconList", JSON.stringify(param), "html", function (result) {
+
+                $("#pvBeaconList table tbody").html(result);
+                $.mrc_table.Init(".mrc-table", false, order);
+
+                $("#pagination").pagination({
+                    total: Number($("#total").val()), page: PARAM_DATA.PAGE, pagesize: PARAM_DATA.PAGE_SIZE, perpage: PARAM_DATA.PAGE_COUNT
+                    , onPageClick: function (item, page) {
+                        doQuery(page);
+                    }
+                });
+            });
+        }   //End doQuery
+        function mrcGrid_Sort(objName, datasort, orderType) {
+            if (datasort == "" || orderType == "") doQuery(1, "");
+            else doQuery(1, datasort + " " + orderType);
+        }
+
+
+        function mrc_table_trClick(objName, param) {
+            if (objName == ".mrc-table")
+                popAutoNumberApplyShow(param);
+        }
+        function ExcelDown() {
+            var params = BaseCommon.FormInfo.serializeJson(".ui.form");
+            var arrData = new Array();
+            $.each(params, function (key, val) {
+                //display the key and value pair
+
+                arrData.push({ name: key, value: val });
+            });
+            BaseCommon.FormInfo.PostSubmit('/Beacon/BeaconExcelReport', arrData);
+        }
+    </script>
+}
+
+<div class="ui vertical stripe segment" >
+
+    <form class="ui form search" id="frmSearch">
+        @Html.TitleNavigation()
+
+        <div class="ui grid search " style="height:100%;">
+
+            <div class="eight wide mobile eight wide tablet six wide computer column">
+                @Html.Semantic_TextBox("BEACON_NAME", "", SemanticUIHelper.Size.mini, new { @placeholder = "비콘명을 입력하세요" })
+            </div>
+
+            <div class="eight wide mobile eight wide tablet ten wide computer column button">
+                @Html.Semantic_Button2("btnSearch", "조회", SemanticUIHelper.enButtonType.ToList, SemanticUIHelper.Size.mini, new { @type = "submit", @class = "right floated " })
+                @Html.Semantic_Button2("btnExcel", "엑셀", SemanticUIHelper.enButtonType.Excel, SemanticUIHelper.Size.medium, new { @onclick = "ExcelDown();" })
+                @Html.Semantic_Button2("btnAdd", "신규", SemanticUIHelper.enButtonType.New, SemanticUIHelper.Size.mini, new { @class = "right floated " })
+            </div>
+        </div>
+        <div class="ui grid " style="height:100%;">
+            <div class="one column row">
+                <div class="column" id="pvBeaconList">
+                    <table class="mrc-table search" id="tblist">
+                        <thead>
+                            <tr>
+                                <th class="sort" column_name="BEACON_CODE" data-sort="A.BEACON_CODE" style="width:50px;">코드</th>
+                                <th column_name="LOGO_URL">로고</th>
+                                <th class="sort" column_name="BEACON_NAME" data-sort="A.BEACON_NAME">비콘명</th>
+                                <th class="sort" column_name="DEVICE_NUMBER" data-sort="A.DEVICE_NUMBER">기기번호</th>
+                                <th column_name="ADDRESS" data-sort="ADDRESS1, ADDRESS2" display_size="pc" class="sort">주소</th>
+                                <th column_name="ZIP_CODE" display_size="detail" class="sort">우편번호</th>
+                                <th column_name="LATITUDE" display_size="detail" class="sort">위도</th>
+                                <th column_name="LONGITUDE" display_size="detail" class="sort">경도</th>
+                                <th class="sort" column_name="UPDATE_NAME" data-sort="UPDATE_NAME">수정자</th>
+                                <th column_name="MEMBER_NAME" data-sort="UPDATE_DATE" display_size="pc">수정시간</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="one column row">
+                <div id="pagination" class="ui pagination menu"></div>
+            </div>
+        </div>
+    </form>
+</div>
+
+
+

@@ -1,0 +1,247 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<DBAgentMultiTemplate  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns="http://altsoft.kr/">
+
+  <DBAgentTemplate TemplateID="GetAdBeaconList">
+    <!-- 
+    SqlType : SQL의 형태를 지정합니다.
+      Example 1:<SqlType>FixedSQL</SqlType> 고정적인 SQL을 지원합니다. 
+      Example 2:<SqlType>DynamicSQL</SqlType> 동적인 SQL Type1을 지원합니다.  
+    Description : 해당 SQL의 기능설명을 적습니다.
+    SQLModifier : 해당 SQL의 작성자(수정자)를 적습니다
+    LastModifyDate : 해당 SQL의 마지막 수정일을 적습니다
+    -->
+    <Information>
+      <SqlType>DynamicSQL</SqlType>
+      <Description>비콘 정보 가져오기</Description>
+      <SQLModifier>전상훈</SQLModifier>
+      <LastModifyDate>2018-04-10</LastModifyDate>
+    </Information>
+
+    <TemplateSQL>
+      <!-- FixedSQL : 고정된 SQL이 들어가는 곳입니다. -->
+      <FixedSQL>
+        <![CDATA[ 
+  
+   	SET NOCOUNT ON 
+	/*************************************************/
+	/* 로컬사인배너 연결 테이블 - T_AD_BEACON 조회   */ 
+  /* - SELECT QUERY GetSigninfoSignageList         */ 
+	/*************************************************/
+	SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED 
+  DECLARE @PAGE INT       = {0}
+         ,@PAGE_COUNT INT = {1};
+
+  WITH T_TABLE 
+  AS
+  (	
+  SELECT  ROW_NUMBER() OVER(ORDER BY {2}) AS ROW_IDX
+   
+	 	, A.IDX
+		, A.AD_CODE
+		, A.BEACON_CODE
+    , AB.BEACON_NAME
+    , AB.DEVICE_NUMBER
+    , AB.LOGO_URL AS BEACON_LOGO_URL
+    , AD.TITLE
+    , AD.LOGO_URL
+		, A.FR_DATE
+		, A.TO_DATE
+		, A.FR_TIME
+		, A.TO_TIME
+		, A.REMARK
+		, A.HIDE
+		, A.INSERT_CODE
+		, B.USER_NAME AS INSERT_NAME
+    , A.INSERT_DATE
+		, A.UPDATE_CODE
+    , C.USER_NAME AS UPDATE_NAME
+		, A.UPDATE_DATE
+    , GETDATE() RECEIVE_TIME
+	FROM T_AD_BEACON A 
+ INNER JOIN T_AD AD
+    ON A.AD_CODE = AD.AD_CODE
+ INNER JOIN T_BEACON AB
+    ON A.BEACON_CODE = AB.BEACON_CODE
+ INNER JOIN T_MEMBER B
+    ON A.INSERT_CODE = B.MEMBER_CODE
+ INNER JOIN T_MEMBER C
+    ON A.UPDATE_CODE = C.MEMBER_CODE  
+  WHERE 1=1
+      #[IDX]
+      #[AD_CODE]
+      #[DEVICE_NUMBER]
+      #[DEVICE_NUMBERS]
+      #[BEACON_CODE]
+      #[BEACON_CODES]
+      #[BEACON_NAME]
+      #[TITLE]
+      #[SEARCH_DATE]
+      #[HIDE]
+  ) SELECT *, (SELECT COUNT(*) FROM T_TABLE) AS TOTAL_ROWCOUNT FROM T_TABLE
+  WHERE  ROW_IDX > (@PAGE -1) * @PAGE_COUNT
+    AND ROW_IDX <= @PAGE * @PAGE_COUNT
+
+	SET NOCOUNT OFF 
+
+
+
+      ]]>
+      </FixedSQL>
+      <DynamicBodys>
+        <Key>IDX</Key>
+        <Body>AND B.IDX = {0} </Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>AD_CODE</Key>
+        <Body>AND A.AD_CODE = {0} </Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>DEVICE_NUMBER</Key>
+        <Body>AND AB.DEVICE_NUMBER = '{0}' </Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>DEVICE_NUMBERS</Key>
+        <Body>AND AB.DEVICE_NUMBER IN ({0}) </Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>BEACON_CODE</Key>
+        <Body>AND A.BEACON_CODE = {0} </Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>BEACON_CODES</Key>
+        <Body>AND A.BEACON_CODE IN ({0}) </Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>BEACON_NAME</Key>
+        <Body>AND AB.BEACON_NAME LIKE N'%{0}%' </Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>TITLE</Key>
+        <Body>AND AD.TITLE LIKE N'%{0}%' </Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>SEARCH_DATE</Key>
+        <Body><![CDATA[ AND A.FR_DATE <= '{0}' AND A.TO_DATE >= '{0}' ]]></Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>HIDE</Key>
+        <Body>AND A.HIDE = {0} </Body>
+      </DynamicBodys>
+    </TemplateSQL>
+  </DBAgentTemplate>
+  <DBAgentTemplate TemplateID="AdBeaconSave">
+    <!-- 
+    SqlType : SQL의 형태를 지정합니다.
+      Example 1:<SqlType>FixedSQL</SqlType> 고정적인 SQL을 지원합니다. 
+      Example 2:<SqlType>DynamicSQL</SqlType> 동적인 SQL Type1을 지원합니다.  
+    Description : 해당 SQL의 기능설명을 적습니다.
+    SQLModifier : 해당 SQL의 작성자(수정자)를 적습니다
+    LastModifyDate : 해당 SQL의 마지막 수정일을 적습니다
+    -->
+    <Information>
+      <SqlType>DynamicSQL</SqlType>
+      <Description>비콘정보 저장</Description>
+      <SQLModifier>전상훈</SQLModifier>
+      <LastModifyDate>2018-04-10</LastModifyDate>
+    </Information>
+
+    <TemplateSQL>
+      <!-- FixedSQL : 고정된 SQL이 들어가는 곳입니다. -->
+      <FixedSQL>
+        <![CDATA[ 
+	SET NOCOUNT ON 
+	/**************************************************/
+	/* 배너비콘정보 - T_AD_BEACON 저장 -  SAVE QUERY  */ 
+	/**************************************************/
+	DECLARE @IDX                            BIGINT               = N'{0}'
+			  , @AD_CODE                        BIGINT               = CONVERT(BIGINT, CASE WHEN ISNUMERIC('{1}') = 1 THEN '{1}' ELSE NULL END )
+			  , @BEACON_CODE                    BIGINT               = CONVERT(BIGINT, CASE WHEN ISNUMERIC('{2}') = 1 THEN '{2}' ELSE NULL END )
+			  , @FR_DATE                        VARCHAR(8)           = N'{3}'
+			  , @TO_DATE                        VARCHAR(8)           = N'{4}'
+			  , @FR_TIME                        VARCHAR(5)           = N'{5}'
+			  , @TO_TIME                        VARCHAR(5)           = N'{6}'
+			  , @REMARK                         NVARCHAR(200)        = N'{7}'
+			  , @HIDE                           BIT                  = CONVERT(BIT, CASE WHEN ISNUMERIC('{8}') = 1 THEN '{8}' ELSE NULL END )
+			  , @INSERT_CODE                    INT                  = {9}
+			  , @INSERT_DATE                    DATETIME             = GETDATE() 
+			  , @UPDATE_CODE                    INT                  = {9}
+			  , @UPDATE_DATE                    DATETIME             = GETDATE() 
+
+
+  IF @FR_DATE = ''
+  BEGIN
+      SELECT @FR_DATE = FR_DATE, @TO_DATE = TO_DATE
+            ,@FR_TIME = FR_TIME, @TO_TIME = TO_TIME
+        FROM T_AD
+       WHERE AD_CODE = @AD_CODE
+        
+  END
+	UPDATE A 
+	SET  	  AD_CODE                        = @AD_CODE                       
+			 ,  BEACON_CODE                    = @BEACON_CODE                   		 ,  FR_DATE                        = @FR_DATE                       
+			 ,  TO_DATE                        = @TO_DATE                       		 ,  FR_TIME                        = @FR_TIME                       
+			 ,  TO_TIME                        = @TO_TIME                       		 ,  REMARK                         = @REMARK                        
+			 ,  HIDE                           = @HIDE                          		 ,  UPDATE_CODE                    = @UPDATE_CODE                   
+			 ,  UPDATE_DATE                    = @UPDATE_DATE                   
+	FROM T_AD_BEACON A 
+	WHERE IDX= @IDX
+	IF @@ROWCOUNT = 0
+	BEGIN
+		INSERT INTO T_AD_BEACON
+		(		AD_CODE                       		, BEACON_CODE                   		, FR_DATE                       		
+			, TO_DATE                       		, FR_TIME                       		, TO_TIME                       		, REMARK                        		
+			, HIDE                          		, INSERT_CODE                   		, INSERT_DATE                   		, UPDATE_CODE                   		
+			, UPDATE_DATE                   		
+		)
+		SELECT @AD_CODE                      		, @BEACON_CODE                  	
+				, @FR_DATE                      		, @TO_DATE                      		, @FR_TIME                      	
+				, @TO_TIME                      		, @REMARK                       		, @HIDE                         	
+				, @INSERT_CODE                  		, @INSERT_DATE                  		, @UPDATE_CODE                  	
+				, @UPDATE_DATE                  	
+	 END
+   SELECT '' AS DATA
+SET NOCOUNT OFF
+
+      ]]>
+      </FixedSQL>
+    </TemplateSQL>
+  </DBAgentTemplate>
+
+  <DBAgentTemplate TemplateID="AdBeaconDel">
+    <!-- 
+    SqlType : SQL의 형태를 지정합니다.
+      Example 1:<SqlType>FixedSQL</SqlType> 고정적인 SQL을 지원합니다. 
+      Example 2:<SqlType>DynamicSQL</SqlType> 동적인 SQL Type1을 지원합니다.  
+    Description : 해당 SQL의 기능설명을 적습니다.
+    SQLModifier : 해당 SQL의 작성자(수정자)를 적습니다
+    LastModifyDate : 해당 SQL의 마지막 수정일을 적습니다
+    -->
+    <Information>
+      <SqlType>DynamicSQL</SqlType>
+      <Description>비콘정보 저장</Description>
+      <SQLModifier>전상훈</SQLModifier>
+      <LastModifyDate>2018-04-10</LastModifyDate>
+    </Information>
+
+    <TemplateSQL>
+      <!-- FixedSQL : 고정된 SQL이 들어가는 곳입니다. -->
+      <FixedSQL>
+        <![CDATA[ 
+	SET NOCOUNT ON 
+	/********************************************************************/
+	/* 로컬사인배너 연결 테이블 - T_AD_BEACON 삭제 -  Delete QUERY */ 
+	/********************************************************************/
+	DECLARE @IDX                            BIGINT               = N'{0}'
+		
+			  
+
+	 DELETE FROM T_AD_BEACON
+   WHERE IDX = @IDX
+   SELECT '' AS DATA
+SET NOCOUNT OFF
+
+      ]]>
+      </FixedSQL>
+    </TemplateSQL>
+  </DBAgentTemplate>
+</DBAgentMultiTemplate>

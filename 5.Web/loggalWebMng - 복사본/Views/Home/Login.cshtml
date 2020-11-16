@@ -1,0 +1,178 @@
+﻿@{
+    Layout = "~/Views/Shared/_Layout_blank.cshtml";
+    string id = ViewBag.id == null ? "" : ViewBag.id;
+    ViewBag.title = "loggal Management";
+}
+<style type="text/css">
+    body {
+        background-color: #DADADA;
+    }
+
+        body > .grid {
+            height: 100%;
+        }
+
+    .image {
+        margin-top: -100px;
+    }
+
+    .column {
+        max-width: 500px;
+    }
+    .loginTitle {
+        font-family: 'Jua', sans-serif !important;
+        font-size: 2.2em;
+        margin-top: 1em;
+        color:#00b5ad;
+    }
+</style>
+
+
+@section scripts{
+
+    <script type="text/javascript">
+        $(document).ready(function () {
+   
+
+            validationinit();
+            $("form").submit(function (event) {
+
+                if ($(".ui.error.message").css("display") == "none") { doLogin(); }
+                event.preventDefault();
+            });
+        })
+
+        $(document).ready(function () {
+
+            $("#LOGIN_USER_ID,#LOGIN_PASSWORD").keyup(function (e) {
+                if (e.which == 13) {/* 13 == enter key@ascii */
+                    setTimeout("doLogin()");
+                    return false;
+                }
+            });
+        });
+
+        function doLogin() {
+
+
+            var params = BaseCommon.FormInfo.serializeJson(".ui.form", "LOGIN_");
+            params.returnUrl = "@ViewBag.returnUrl";
+            params = JSON.stringify(params);
+
+            ajax.GetAjax("/account/doLogin", params, "json", function (result) {
+
+                if (result.error_message != "") {
+
+                    if (result.focus_input == "confirm") {
+
+                         $.MessageBox({
+                             buttonDone: "예",
+                             buttonFail: "아니오",
+                             message: result.error_message
+                         }).done(function () {
+                             if (result.return_url != "") {
+                                 location.href = result.return_url;
+                                  BaseCommon.FormInfo.PostSubmit( result.return_url,[{ name: "id", value: result.returnurlparam.split('=')[1] }]);
+                             }
+                         }).fail(function () {
+                             $("#USER_ID").val("");
+                             $("#PASSWORD").val("");
+                             $("#USER_ID").focus();
+                         });
+                    }
+                    else {
+                        $.MessageBox(result.error_message).done(function () {
+                           
+                            if (result.return_url != "") {
+                                location.href = result.return_url;
+                            }
+                            if (result.focus_input != "") {
+                                $("#" + result.focus_input).focus();
+                                $("#" + result.focus_input).select();
+                            }
+                        });
+                    }
+                  
+
+                } else {
+                    location.href = "/";
+                }
+            })
+        }
+
+
+        //// 체크
+        function validationinit() {
+
+            $('.ui.form').form({
+                on: 'change',
+                focusInvalid: true,
+                fields: {
+                    USER_NAME: {
+                        identifier: 'USER_ID',
+                        rules: [
+                          {
+                              type: 'empty',
+                              prompt: '사용자이름을 입력하여 주시기 바랍니다.' // Please enter a first name
+                          }
+                        ]
+                    }, BIRTH: {
+                        identifier: 'PASSWORD',
+                        rules: [
+                          {
+                              type: 'empty',
+                              prompt: '비밀번호를 입력하여 주시기 바랍니다.' // Please enter a middle name
+                          }
+                        ]
+                    }
+                }, onFailure: function (event, fields) {
+
+                    //실패후 첫번재 에러 태그에 포커스
+                    SemanticUI.Form.Invalidation.ErrorFocus();
+                }
+            });
+        }
+</script>
+}
+
+<div class="ui middle aligned center aligned grid">
+    <div class="column">
+        <h2 class="ui teal image header">
+            <img src="/common/images/logo.png" class="image">
+        </h2>
+           
+       <span class="loginTitle">@Global.ConfigInfo.ProjectTitle 로그인</span>
+            
+            
+     
+        <form class="ui large form" autocomplete="off">
+            <div class="ui stacked segment">
+                <div class="field">
+                    <div class="ui left icon input">
+                        <i class="user icon"></i>
+                        
+                        @Html.TextBox("USER_ID", id, new { @placeholder = "사용자아이디를 입력하세요", @autocomplete = "off" })
+                    </div>
+                </div>
+                <div class="field">
+                    <div class="ui left icon input">
+                        @Html.Semantic_TextBox("PASSWORD", "", SemanticUIHelper.Size.medium, new { @placeholder = "비밀번호(6자리이상)를 입력하세요", @type = "password", @class = "dataclear", @autocomplete = "off" }, "", "lock icon")
+                    </div>
+                </div>
+                <div class="field">
+                    <div class="ui fluid large teal submit button">로그인</div>
+                </div>
+                <div class="field" >
+                    <div class="ui fluid large orange button" onclick="location.href = '/account/memberjoin';">회원가입</div>
+                </div>
+                <div class="field" >
+                    
+                    <div class="ui fluid large  button" onclick="location.href = '/account/passwordfind';">비밀번호찾기</div>
+                </div>
+            </div>
+
+            <div class="ui error message"></div>
+
+        </form>
+    </div>
+</div>

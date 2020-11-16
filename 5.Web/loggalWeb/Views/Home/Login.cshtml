@@ -1,0 +1,103 @@
+﻿@{
+    Layout = "~/Views/Shared/_Layout_blank.cshtml";
+}
+@section script{
+    <style type="text/css">
+        body {
+            background-color: #DADADA;
+        }
+
+            body > .grid {
+                height: 100%;
+            }
+
+        .image {
+            margin-top: -100px;
+        }
+
+        .column {
+            max-width: 450px;
+        }
+    </style>
+    <script type="text/javascript">
+        $(document).ready(function () {
+
+            validationinit();
+            $("form").submit(function (event) {
+
+                if ($(".ui.error.message").css("display") == "none") { login.doLogin(".ui.form"); }
+                event.preventDefault();
+            });
+        })
+
+      
+        //// 체크
+        function validationinit() {
+
+            $('.ui.form').form({
+                on: 'change',
+                focusInvalid: true,
+                fields: {
+                    LOGIN_USER_ID: {
+                        identifier: 'LOGIN_USER_ID',
+                        rules: [
+                          {
+                              type: 'empty',
+                              prompt: '사용자이름을 입력하여 주시기 바랍니다.' // Please enter a first name
+                          }
+                        ]
+                    }, LOGIN_PASSWORD: {
+                        identifier: 'LOGIN_PASSWORD',
+                        rules: [
+                          {
+                              type: 'empty',
+                              prompt: '비밀번호를 입력하여 주시기 바랍니다.' // Please enter a middle name
+                          }
+                        ]
+                    }
+                }, onFailure: function (event, fields) {
+
+                    //실패후 첫번재 에러 태그에 포커스
+                    SemanticUI.Form.Invalidation.ErrorFocus();
+                }
+            });
+        }
+
+    </script>
+}
+
+<div class="ui middle aligned center aligned grid">
+    <div class="column">
+        <h2 class="ui teal image header">
+            @*<img src="/common/images/logo.png" class="image">*@
+            <div class="content">
+                loggal 광고 서비스
+            </div>
+        </h2>
+        <form class="ui large form">
+            <div class="ui stacked segment">
+                <div class="field">
+                    <div class="ui left icon input">
+                        <i class="user icon"></i>
+                        @Html.TextBox("LOGIN_USER_ID", "", new { placeholder = "사용자아이디를 입력하세요" })
+                    </div>
+                    
+                </div>
+                <div class="field">
+                    <div class="ui left icon input">
+                        <i class="lock icon"></i>
+                        @Html.Password("LOGIN_PASSWORD", "", new { placeholder = "비밀번호를 입력하세요" })
+                    </div>
+                </div>
+                <div class="field">
+                    <div class="ui fluid large teal submit button">로그인</div>
+                </div>
+                <div class="field">
+                    <div class="ui fluid large olive button" onclick="location.href='/advstep/step1'">회원등록</div>
+                </div>
+            </div>
+            <div class="ui error message"></div>
+        </form>
+ 
+    </div>
+</div>

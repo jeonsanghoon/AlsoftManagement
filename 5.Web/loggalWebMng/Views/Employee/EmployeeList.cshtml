@@ -1,0 +1,201 @@
+﻿@{
+
+    T_STORE data = (T_STORE)ViewBag.data;
+}
+@section scripts{
+    <style>
+        .dvSearchArea {
+            overflow: overlay;
+        }
+
+            .dvSearchArea .dvSearchSet .ui.input {
+                min-height: 25px;
+                min-width: 130px;
+                margin-bottom: 0px;
+                font-size: 1.03rem;
+            }
+    </style>
+    <script type="text/javascript">
+ 
+        $(document).ready(function () {
+
+			
+            $("#frmSearch").submit(function (event) {
+                _page = 1;
+                doQuery();
+                event.preventDefault();
+            });
+            ComponentInit();
+            doQuery();
+
+         
+
+
+        }); //End document.ready
+
+        var PARAM_DATA = {
+            PAGE_SIZE: ($("window").width() < 768 ? 5 : 10)
+           , PAGE_COUNT: 10
+           , PAGE: 1
+           , SORT: "SP1.SEQ"
+        }
+		function ComponentInit() {
+			PARAM_DATA = $.mrc_table.SetPageSizeObject({ pageParam: PARAM_DATA, searchObjName: ".ui.table.search" });
+            
+
+            $('#FR_BIRTH').datetimepicker({
+                timepicker: false,
+                format: 'Y.m.d'
+            });
+
+            $('#TO_BIRTH').datetimepicker({
+                timepicker: false,
+                format: 'Y.m.d'
+            });
+
+			$("#dv_detail").accordion();
+			
+            $("#btnAdd").click(function () {
+              
+                location.href = "/Employee/EmployeeReg?STORE_CODE=" + $("#STORE_CODE").val();
+			});
+
+        }   //End ComponentInit
+
+        function doQuery(page, order) {//, sortCol, sortOrd
+            
+            
+            if (page == undefined || page == null || page < 1) page = 1;
+            PARAM_DATA.PAGE = page;
+
+            var param = BaseCommon.FormInfo.serializeJson(".ui.form");
+
+            param.PAGE_COUNT = PARAM_DATA.PAGE_COUNT;
+            param.PAGE = PARAM_DATA.PAGE;
+
+            if (order != undefined) {
+                PARAM_DATA.SORT = order;
+                param.SORT = order;
+            }
+            else if (order == undefined) {
+                param.SORT = PARAM_DATA.SORT;
+            }
+
+           
+            var url = '@Url.Action("PV_EmployeeList", "Employee")';
+            ajax.GetAjax(url, JSON.stringify(param), "html", function (result) {
+
+                $("#pvEmployeeList table tbody").html(result);
+                $.mrc_table.Init("#tbl_empList");
+
+                $("#pagination").pagination({
+                    total: Number($("#total").val()), page: PARAM_DATA.PAGE, pagesize: PARAM_DATA.PAGE_SIZE, perpage: PARAM_DATA.PAGE_COUNT
+                    , onPageClick: function (item, page) {
+                        doQuery(page);
+                    }
+                });
+            });
+        }   //End doQuery
+
+        function storeChange() {
+            doQuery(1);
+        }
+        function mrcGrid_Sort(objName, datasort, orderType) {
+            if (datasort == "" || orderType == "") doQuery(1, "");
+            else doQuery(1, datasort + " " + orderType);
+        }
+
+        function ExcelDown() {
+            if (!chkStore()) return;
+            var params = BaseCommon.FormInfo.serializeJson(".ui.form");
+            var arrData = new Array();
+            $.each(params, function (key, val) {
+                //display the key and value pair
+
+                arrData.push({ name: key, value: val });
+            });
+            BaseCommon.FormInfo.PostSubmit('/employee/EmployeeExcelReport', arrData);
+        }
+    </script>
+}
+    <div class="ui vertical stripe segment">
+        @Html.TitleNavigation()
+        <form class="ui form search" id="frmSearch">
+            <div class="ui grid " style="height:100%;">
+				<div class="one column row">
+					<div class="column">
+						<table class="ui table search">
+							<tbody>
+								<tr>
+									<td class="title" style="width:11%">
+										@Html.Semantic_TITLE2("지점명")
+									</td>
+									<td class="content">
+
+										@Html.StoreCombo("STORE_CODE", new T_STORE_COND { COMBO_DISPLAY = 1 }, data.STORE_CODE.ToString(""), "-지점선택-", new { @class = "size250", @onchange = "storeChange();" })
+									</td>
+									<td class="title" style="width:11%">
+										@Html.Semantic_TITLE2("직원명")
+									</td>
+									<td class="content" style="width:22%">
+										@Html.Semantic_TextBox("USER_NAME", "", SemanticUIHelper.Size.mini, new { @placeholder = "직원명" })
+									</td>
+									<td class="title" style="width:11%">
+										@Html.Semantic_TITLE2("모바일")
+									</td>
+									<td class="content" style="width:22%">
+										@Html.Semantic_TextBox("MOBILE", "", SemanticUIHelper.Size.mini, new { @placeholder = "전화번호" })
+									</td>
+								</tr>
+								<tr>
+									<td class="title">
+										@Html.Semantic_TITLE2("생년월일")
+									</td>
+									<td class="content">
+										@Html.Semantic_TextBox("FR_BIRTH", "", SemanticUIHelper.Size.mini, new { @placeholder = "생년월일(Fr)", @style = "text-align:center;", @class = "size100" })~&nbsp;
+										@Html.Semantic_TextBox("TO_BIRTH", "", SemanticUIHelper.Size.mini, new { @placeholder = "생년월일(To)", @style = "text-align:center;", @class = "size100" })
+									</td>
+
+									<td class="content buttons" colspan="4">
+										@Html.Semantic_Button2("btnSearch", "조회", SemanticUIHelper.enButtonType.ToList, SemanticUIHelper.Size.mini, new { @type = "submit", @class = "right floated " })
+										@Html.Semantic_Button2("btnExcel", "엑셀", SemanticUIHelper.enButtonType.Excel, SemanticUIHelper.Size.medium, new { @onclick = "ExcelDown();" })
+										@Html.Semantic_Button2("btnAdd", "신규", SemanticUIHelper.enButtonType.New, SemanticUIHelper.Size.mini, new { @class = "right floated " })
+									</td>
+								</tr>
+							</tbody>
+						</table>
+					</div>
+				</div>
+					<div class="one column row">
+						<div class="column" id="pvEmployeeList">
+							<table class="mrc-table" id="tbl_empList">
+								<thead>
+									<tr>
+										@*<th class="center aligned">코드</th>*@
+										<th class="sort" data-sort="SP.NAME">직급</th>
+										<th class="sort" data-sort="SP1.NAME" display_size="pc">직책</th>
+										<th class="sort" data-sort="A.USER_NAME">이름</th>
+										<th class="sort" data-sort="A.USER_ID">아이디</th>
+										<th class="sort" data-sort="A.MOBILE" display_size="tablet">핸드폰</th>
+
+										<th class="sort" data-sort="A.BIRTH" display_size="pc">생년월일</th>
+										<th class="sort" data-sort="BM.USER_NAME" display_size="tablet">상급자</th>
+										<th class="sort" data-sort="CM2.ORDER_SEQ" display_size="tablet">권한</th>
+										<th class="sort" data-sort="WG.GROUP_NAME" display_size="tablet">메뉴</th>
+										<th class="sort" data-sort="M2.USER_NAME" display_size="pc">수정자</th>
+										<th class="sort" data-sort="A.UPDATE_DATE" display_size="pc">수정일시</th>
+									</tr>
+								</thead>
+								<tbody></tbody>
+							</table>
+						</div>
+					</div>
+					<div class="one column row">
+						<div id="pagination" class="ui pagination menu"></div>
+					</div>
+				</div>
+</form>
+    </div>
+
+
+

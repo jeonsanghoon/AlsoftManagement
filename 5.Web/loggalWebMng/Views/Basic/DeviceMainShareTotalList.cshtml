@@ -1,0 +1,181 @@
+﻿
+@{
+
+    List<T_COMMON> addColumns = ViewBag.addColumns;
+}
+
+@section scripts{
+
+    <script type="text/javascript">
+        var PARAM_DATA = {
+            PAGE_SIZE: ($("window").width() < 768 ? 5 : 10)
+          , PAGE_COUNT: 15
+          , PAGE: 1
+          , SORT: "A2.REQ_DATE DESC"
+        }
+        $(document).ready(function () {
+
+            ComponentInit();
+
+            doQuery(1);
+  
+        }); //End document.ready
+
+        function ComponentInit() {
+            var pageCount = ($(window).height() - $(".cd-main-header").outerHeight() + $(".ui.header").outerHeight() + $(".ui.grid.search").outerHeight() + $(".ui.footer").outerHeight() - 450) / 30;
+            PARAM_DATA.PAGE_COUNT = Number(Math.floor(pageCount));
+            $.datetimepicker.setLocale('kr');
+            $('#FR_DATE').datetimepicker({
+                timepicker: false,
+                format: 'Y.m.d',
+                onShow: function (ct) {
+                    this.setOptions({
+                        maxDate: $('#TO_DATE').val() ? jQuery('#TO_DATE').val() : false
+                    })
+                }
+            });
+            $('#TO_DATE').datetimepicker({
+                timepicker: false,
+                format: 'Y.m.d',
+                onShow: function (ct) {
+                    this.setOptions({
+                        minDate: $('#FR_DATE').val() ? jQuery('#FR_DATE').val() : false
+                    })
+                }
+            });
+            $(".ui.form .search input").keyup(function (e) {
+                var code = (e.keyCode ? e.keyCode : e.which);
+                if (code == 13) {
+                    doQuery();
+                }
+            });
+        }
+        function doQuery(page, sort) {
+            if (page == undefined || page < 1) page = 1;
+
+            PARAM_DATA.PAGE = page;
+           
+            var params = BaseCommon.FormInfo.serializeJson(".ui.form");
+            params.GUBUN = $(".btnGubun.active").attr("value");
+            params.PAGE_COUNT = PARAM_DATA.PAGE_COUNT;
+            params.PAGE = PARAM_DATA.PAGE;
+            params.COLUMN_COUNT = @addColumns.Count();
+            params.SORT =  ((sort == undefined || sort =="") ? PARAM_DATA.SORT : sort);
+           
+            params = JSON.stringify(params);
+            ajax.GetAjax("/basic/PV_DeviceMainShareTotalList", params, "html", function (result) {
+                $("#dvTable tbody").html(result);
+                $.mrc_table.Init("#tbList", true, sort);
+
+                $("#dvpagination").show();
+
+                $("#dvpagination").pagination({
+                    total: Number($("#total").val()), page: PARAM_DATA.PAGE, pagesize: PARAM_DATA.PAGE_SIZE, perpage: PARAM_DATA.PAGE_COUNT
+                    , onPageClick: function (item, page) {
+                        doQuery(page);
+                    }
+                })
+                $("#dvpagination").css("display", "");
+                $("#tbList,table.mrc-table td:nth-child(2)").css("padding-right","0em");
+            });
+        }
+
+        function mrcGrid_Sort(gridName, columnName, orderType) {
+            var sSort = (orderType == undefined || orderType == "") ? "A.UPDATE_DATE DESC" : columnName + " " + orderType;
+            doQuery(1, sSort)
+        }
+
+        function btnGubun_Callback(result)
+        {
+            doQuery(1);
+        }
+    </script>
+}
+<style>
+    .ui.checkbox {
+        margin-top: 0.5em;
+    }
+</style>
+
+@{Html.RenderPartial("/Views/Basic/Partial/PV_DeviceMainApproval.cshtml"); }
+
+<div class="ui vertical stripe segment">
+    @Html.TitleNavigation()
+    <form class="ui form">
+        @*@Html.TitleHeader()*@
+
+        
+        <div class="ui grid " style="height:100%;">
+            <div class="one column row">
+                <div class="column">
+                    @{ bool bMode = (SessionHelper.LoginInfo.COMPANY_CODE == 1) ? false : true; }
+                    <table class="ui table search">
+                        <tr>
+
+                            <td class="content @(!bMode ? "hide" : "")" colspan="2">
+                                @Html.Semantic_ButtonList("btnGubun", new List<SelectListItem> { new SelectListItem { Value ="1", Text="요청한내역&nbsp;&nbsp;&nbsp;&nbsp;<i class='user icon' ></i><i class='arrow right icon'></i>" }
+                                                                                                ,new SelectListItem { Value ="2", Selected=true, Text="요청받은내역&nbsp;&nbsp;&nbsp;&nbsp;<i class='arrow right icon' style='margin-right:1em'></i><i class='user icon'></i>" }
+                                                                                            })
+                            </td>
+                            <td class="title">@Html.Semantic_TITLE2("광고일자")</td>
+                            <td class="content">
+                                @Html.Semantic_TextBox("FR_DATE", "", SemanticUIHelper.Size.mini, new { @placeholder = "요청일(Fr)", @class = "dataclear", @style = "text-align:center;width:80px;" })
+                                @Html.Semantic_TextBox("TO_DATE", "", SemanticUIHelper.Size.mini, new { @placeholder = "요청일(To)", @class = "dataclear", @style = "text-align:center;width:80px;" })
+
+                            </td>
+                            <td class="title">@Html.Semantic_TITLE2("검색")</td>
+                            <td class="content">@Html.Semantic_TextBox("SEARCH_TEXT", "", new { @placeholder = "업체명 & 제목 &  등록자", @style = "width:100%" })</td>
+
+
+                            <td class="content buttons">
+                                @Html.Semantic_Button2("btnSearch", "조회", SemanticUIHelper.enButtonType.ToList, SemanticUIHelper.Size.medium, new { @onclick = "doQuery(1);" })
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+            <div class="one column row">
+                <div class="column" id="dvTable">
+                    <table id="tbList" class="mrc-table">
+                        <thead>
+                            <tr>
+                                @{
+                                    if (SessionHelper.LoginInfo.COMPANY_CODE == 1)
+                                    {
+                                        <th column_name="GUBUN" style="width:1em;">@(SessionHelper.LoginInfo.COMPANY_CODE == 1 ? "" : "구분")</th>
+                                    }
+                                    else
+                                    {
+                                        <th column_name="GUBUN" data-sort="A2.GUBUN" class="sort" style="width:6.5em;">구분</th>
+                                    }
+                                }
+                                <th column_name="DEVICE_NAME" data-sort="A.DEVICE_NAME" class="sort">로컬박스명</th>
+                                <th column_name="COMPANY_NAME" display_size="tablet" data-sort="DC.COMPANY_NAME" class="sort">업체명</th>
+
+
+
+
+                                @{
+                                    for (int i = 0; i < addColumns.Count(); i++)
+                                    {
+                                        <th column_name="CNT@(i+1)" display_size="pc" data-sort="A.CNT@(i+1)" class="sort">@addColumns[i].NAME</th>
+                                    }
+                                }
+                                <th column_name="TOT_CNT" display_size="pc" data-sort="A2.TOT_CNT" class="sort">합계</th>
+                                <th column_name="REQ_DATE" display_size="pc" data-sort="A2.REQ_DATE" class="sort">최종요청일</th>
+
+                                <th column_name="UPDATE_DATE" display_size="detail" data-sort="A2.UPDATE_DATE" class="sort">수정일</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="one column row">
+                <div id="dvpagination" class="ui floated pagination menu"></div>
+            </div>
+        </div>
+    </form>
+</div>
+
+

@@ -1,0 +1,322 @@
+﻿@model EditTempleateModel
+@using ALT.VO.Common;
+@{
+    T_MEMBER member = (T_MEMBER)ViewBag.member;
+    T_STORE store = ViewBag.store;
+
+}
+
+
+@section scripts{
+    <script type="text/javascript">
+        $(document).ready(function () {
+
+            validationinit();
+            $(".ui.form").submit(function (event) {
+
+                if ($(".ui.error.message").css("display") == "none") { doSave(); }
+
+                event.preventDefault();
+
+            });
+            ComponentInit();
+        })
+
+        function ComponentInit() {
+
+            $.datetimepicker.setLocale('kr');
+
+
+            $('#BIRTH').datetimepicker({
+                timepicker: false,
+                format: 'Y.m.d'
+            });
+
+            @{
+                if (string.IsNullOrEmpty(member.USER_ID))
+                {
+                    @:   $("#USER_ID").blur(function() {
+                        @:        USER_ID_Chk();
+                        @:   });
+                    }
+              }
+        }
+        var Id_validation = false;
+
+        //// 아이디 중복 체크
+        function USER_ID_Chk() {
+            if ($("#USER_ID").val() == "") {
+                return;
+            }
+
+            var param = new Object();
+            param.USER_ID = $("#USER_ID").val();
+            param = JSON.stringify(param);
+
+            ajax.GetAjax("/account/GetMemberList/", param, "json", function (result) {
+
+                if (result.list.length == 0) {
+                    Id_validation = true;
+                    //$('#USER_ID').popup('hide');
+                    $('#USER_ID').popup('remove');
+                } else {
+                    $("#USER_ID").popup({
+                        title: '아이디 확인',
+                        content: '등록되어있는 아이디가 있습니다.'
+                    });
+
+                    $('#USER_ID').popup('show');
+                    $("#USER_ID").parent().addClass("error");
+                    $("#USER_ID").focus(); $("#USER_ID").select();
+                    Id_validation = false;
+                    return;
+                }
+            });
+        }
+
+        //// 체크
+        function validationinit() {
+
+            $('.ui.form').form({
+                on: 'change',
+                focusInvalid: true,
+                fields: {
+                    USER_ID: {
+                        identifier: 'USER_ID',
+                        rules: [
+                          {
+                              type: 'empty',
+                              prompt: '아이디를 입력하여 주시기 바랍니다.' // Please enter a first name
+                          },
+                           {
+                               type: 'email',
+                               prompt: '아이디가 이메일형식에 맞지 않습니다.' // Please enter a first name
+                           }
+                        ]
+                    },
+                    USER_NAME: {
+                        identifier: 'USER_NAME',
+                        rules: [
+                          {
+                              type: 'empty',
+                              prompt: '사용자이름을 입력하여 주시기 바랍니다.' // Please enter a first name
+                          }
+                        ]
+                    }
+                    ,PASSWORD: {
+                        identifier: 'PASSWORD',
+                        rules: [
+                            {
+                                type: 'empty',
+                                prompt: '비밀번호를 입력하여 주시기 바랍니다'
+                            }
+
+                        ]
+                    },
+                    PASSWORD_CONFIRM: {
+                        identifier: 'PASSWORD_CONFIRM',
+                        rules: [
+                            {
+                                type: 'match[PASSWORD]',
+                                prompt: '입력하신 비밀번호와 다릅니다.'
+                            }
+                        ]
+                    }
+                }, onFailure: function (event, fields) {
+
+                    //실패후 첫번재 에러 태그에 포커스
+                    SemanticUI.Form.Invalidation.ErrorFocus();
+                }, onInvalid: function (event) {
+                   //
+                    //SemanticUI.Form.addErrorMessage(event);
+                }
+            });
+        }
+        function chkSave() {
+
+            if($("#COMPANY_TYPE2").val() == "8" && $("#BUSI_REG_NUMBER").val()=="")
+            {
+                $.MessageBox("기업일 경우 사업자등록번호는 필수 입력입니다.").done(function () {
+                    $("#BUSI_REG_NUMBER").focus();
+                });
+                return false;
+            }
+            return true;
+        }
+        function doSave() {
+
+            if (!chkSave()) return;
+            var params = BaseCommon.FormInfo.serializeJson(".ui.form");
+            params.BIRTH = moment(params.BIRTH).format("YYYYMMDD");
+            params.ZIP_CODE = $("#MEMBER_POST_CODE").val();
+            params.ADDRESS1 = $("#MEMBER_ADDRESS1").val();
+            params.ADDRESS2 = $("#MEMBER_ADDRESS2").val();
+            params = JSON.stringify(params);
+           //
+            ajax.GetAjax("/account/MemberJoinSave/", params, "json", function (result) {
+                if (result.ERROR_MESSAGE != "") {
+                    $.MessageBox(result.ERROR_MESSAGE).done(function () {
+                        if (result.FOCUS_TAG_ID == "PASSWORD") {
+                            $("#PASSWORD_CONFIRM").val("");
+                        }
+                        $("#" + result.FOCUS_TAG_ID).val("");
+                        $("#" + result.FOCUS_TAG_ID).focus();
+
+                    });
+
+                }
+                else {
+                    location.href = "/account/memberlist";
+                }
+            });
+        }
+
+    </script>
+}
+<div class="ui vertical stripe segment">
+    <form class="ui form " onSubmit="return false;" action="/Base/FileUpload" data-ajax="true" data-ajax-mode="replace" data-ajax-update="#dc_goal_placeholder" enctype="multipart/form-data" id="frmUpload" method="post">
+        @Html.TitleNavigation(" - 신규")
+
+        <div class="ui stackable grid">
+            <div class="sixteen wide column">
+
+                <table class="ui celled table">
+                    <tbody>
+
+                        <tr>
+                            <td class="title">
+                                @Html.Semantic_TITLE2("아이디", true)
+
+                            </td>
+                            <td class="content">
+                                @{
+                                    string sPassWord = (SessionHelper.LoginInfo.MEMBER.MEMBER_CODE == member.MEMBER_CODE || member.MEMBER_CODE == null) ? "" : "******";
+                                    if (string.IsNullOrEmpty(member.USER_ID))
+                                    {
+
+                                        @Html.Semantic_TextBox("USER_ID", member.USER_ID, SemanticUIHelper.Size.mini, new { @placeholder = "이메일", @class = "size180" })
+                                    }
+                                    else
+                                    {
+
+                                        @Html.Semantic_TextBox("USER_ID", member.USER_ID, SemanticUIHelper.Size.mini, new { @placeholder = "이메일", @readonly = "readonly", @class = "size180" })
+                                    }
+                                }
+                                @*@Html.Semantic_Button2("btnChkUSERID", "중복체크", SemanticUIHelper.enButtonType.Normal, SemanticUIHelper.Size.mini, new { })*@
+                            </td>
+                            <td class="title">
+                                @Html.Semantic_TITLE2("이름", true)
+                            </td>
+                            <td class="content">
+                                @Html.Semantic_TextBox("USER_NAME", member.USER_NAME, SemanticUIHelper.Size.mini, new { @placeholder = "이름", @class = "size180" })
+                            </td>
+                            <td class="title">
+                                @Html.Semantic_TITLE2("수정일")
+                            </td>
+                            <td class="content">
+                                @Html.Semantic_TextBox("UPDATE_DATE", (member.UPDATE_DATE == null ? DateTime.Now.ToString() : member.UPDATE_DATE.ToString()), new { @readonly = "readonly", @class = "size180" })
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="title">
+                                @Html.Semantic_TITLE2("비밀번호", true)
+                            </td>
+                            <td class="content">
+                                @Html.Semantic_TextBox("PASSWORD", sPassWord, SemanticUIHelper.Size.mini, new { @placeholder = "비밀번호(6자리이상)", @type = "password", @class = "dataclear size180", @autocomplete = "off" })
+                            </td>
+                            <td class="title">
+                                @Html.Semantic_TITLE2("번호확인", true)
+                            </td>
+                            <td class="content">
+                                @Html.Semantic_TextBox("PASSWORD_CONFIRM", sPassWord, SemanticUIHelper.Size.mini, new { @placeholder = "비밀번호(6자리이상)", @type = "password", @class = "dataclear size180", @autocomplete = "off" })
+                            </td>
+                            <td class="title">
+                                @Html.Semantic_TITLE2("수정자")
+                            </td>
+                            <td class="content">
+                                @Html.Semantic_TextBox("UPDATE_NAME", member.UPDATE_NAME, new { @readonly = "readonly", @class = "size180" })
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="title">
+                                @Html.Semantic_TITLE2("전화번호")
+                            </td>
+                            <td class="content">
+                                @Html.Semantic_TextBox("PHONE", member.PHONE, SemanticUIHelper.Size.mini, new { @placeholder = "전화번호", @class = "size180" })
+                            </td>
+                            <td class="title">
+                                @Html.Semantic_TITLE2("생년월일")
+                            </td>
+                            <td class="content">
+                                <div class="ui mini input ">
+                                    @Html.Semantic_TextBox("BIRTH", member.BIRTH, SemanticUIHelper.Size.mini, new { @placeholder = "생년월일(클릭)", @style = "text-align:center;" })
+                                </div>
+                            </td>
+                            <td class="title">
+                                @Html.Semantic_TITLE2("성별")
+                            </td>
+                            <td class="content">
+                                @{
+                                    List<SelectListItem> genderList = new List<SelectListItem>();
+                                    genderList.Add(new SelectListItem { Value = "0", Text = "남자", Selected = (member.GENDER == 0 ? true : false) });
+                                    genderList.Add(new SelectListItem { Value = "1", Text = "여자", Selected = (member.GENDER == 1 ? true : false) });
+                                }
+                                @Html.Semantic_YesOrNo("GENDER", genderList, SemanticUIHelper.Size.mini, member.GENDER.ToString())
+                            </td>
+                        </tr>
+                        <!-- 전체 권한만 표시 -->
+                        @{
+                            string sDisplay = "";
+                            if (SessionHelper.LoginInfo.EMPLOYEE.EMP_AUTH != 1) { sDisplay = "style='display:none'"; }
+                        }
+                        <tr @sDisplay>
+                            <td class="title">
+                                @Html.Semantic_TITLE2("사업자여부")
+                            </td>
+                            <td class="content">
+                                @{
+                                    List<SelectListItem> busiTypeList = new List<SelectListItem>();
+                                    busiTypeList.Add(new SelectListItem { Value = "7", Text = "개인", Selected = (store.COMPANY_TYPE2.ToString() == "7" ? true : false) });
+                                    busiTypeList.Add(new SelectListItem { Value = "8", Text = "기업", Selected = (store.COMPANY_TYPE2.ToString() == "8" ? true : false) });
+                                }
+                                @Html.Hidden("COMPANY_TYPE", "3")
+                                @Html.Semantic_YesOrNo("COMPANY_TYPE2", busiTypeList, SemanticUIHelper.Size.mini)
+                            </td>
+                            <td class="title">
+                                @Html.Semantic_TITLE2("사업자번호")
+                            </td>
+                            <td class="content" colspan="3">
+                                @Html.Semantic_TextBox("BUSI_REG_NUMBER", store.BUSI_REG_NUMBER, SemanticUIHelper.Size.mini, new { @placeholder = "사업자등록번호(-제외)", @class = "size250", @maxlength = "10" })
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="title" rowspan="3">
+                                @Html.Semantic_TITLE2("주소", true)
+                            </td>
+                            <td class="content address" rowspan="3" colspan="5">
+                                @Html.EditorFor(model => model.Kakao_address, new { option = new DaumAddressOption { ID = "MEMBER", POST_CODE = member.ZIP_CODE, ADDRESS1 = member.ADDRESS1, ADDRESS2 = member.ADDRESS2 } })
+                            </td>
+                        </tr>
+                        <tr style="display:none!important">
+                            <td class="title">
+                                @Html.Semantic_TITLE2("사용자구분", true)
+                            </td>
+                            <td colspan="3" class="content">
+                                @Html.CommonCombo("USER_TYPE", new T_COMMON_COND { MAIN_CODE = "U001" }, "2")
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+                <div style="float:right">
+                    @Html.Semantic_Button2("btnSave", "저장", SemanticUIHelper.enButtonType.Save, SemanticUIHelper.Size.medium, new { @type = "submit" })
+                </div>
+
+            </div>
+        </div>
+
+        <div class="ui error message"></div>
+        @Html.Hidden("MEMBER_CODE", member.MEMBER_CODE)
+        @Html.Hidden("STORE_CODE", store.STORE_CODE)
+        @Html.Hidden("COMPANY_CODE", store.COMPANY_CODE)
+    </form>
+</div>

@@ -1,0 +1,424 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<DBAgentMultiTemplate  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns="http://altsoft.kr/">
+  <DBAgentTemplate TemplateID="GetMemberbookmarkList">
+    <!-- 
+    SqlType : SQL의 형태를 지정합니다.
+      Example 1:<SqlType>FixedSQL</SqlType> 고정적인 SQL을 지원합니다. 
+      Example 2:<SqlType>DynamicSQL</SqlType> 동적인 SQL Type1을 지원합니다.  
+    Description : 해당 SQL의 기능설명을 적습니다.
+    SQLModifier : 해당 SQL의 작성자(수정자)를 적습니다
+    LastModifyDate : 해당 SQL의 마지막 수정일을 적습니다
+    -->
+    <Information>
+      <SqlType>DynamicSQL</SqlType>
+      <Description>회원조회</Description>
+      <SQLModifier>전상훈</SQLModifier>
+      <LastModifyDate>2017-04-06</LastModifyDate>
+    </Information>
+
+    <TemplateSQL>
+      <!-- FixedSQL : 고정된 SQL이 들어가는 곳입니다. -->
+      <FixedSQL>
+        <![CDATA[ 
+	  
+		SET NOCOUNT ON 
+	/***************************************************************/
+	/* 회원별 북마크정보 - T_MEMBER_BOOKMARK 조회 -  SELECT QUERY  */ 
+  /* GetMemberbookmarkList                                       */
+	/***************************************************************/
+	SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED 
+  DECLARE @PAGE INT = {0}
+         ,@PAGE_COUNT INT = {1};
+	WITH T_TABLE
+  AS
+  (
+  SELECT ROW_NUMBER() OVER(ORDER BY {2}) AS IDX, * FROM
+  (
+	SELECT 
+		  A.BOOKMARK_CODE
+		, A.MEMBER_CODE
+		, B.USER_ID
+		, B.USER_NAME
+		, A.BOOKMARK_TYPE
+    , A.BOOKMARK_KIND
+		, A.DEVICE_CODE
+		, A.AD_CODE
+    , CONVERT(INT, CASE WHEN A.BOOKMARK_TYPE = 2 AND  (C.STATUS = 9 AND C.HIDE = 0) THEN 1
+		       WHEN A.BOOKMARK_TYPE = 3 AND (D.STATUS = 9 AND D.HIDE = 0) 
+                AND (D.FR_DATE = '' OR D.FR_DATE <= CONVERT(VARCHAR(10), GETDATE(),112)) 
+                AND (D.TO_DATE = '' OR D.TO_DATE >= CONVERT(VARCHAR(10), GETDATE(),112))
+           THEN 1
+			   ELSE 0 END) AS STATUS
+		
+		, A.BOOKMARK_URL
+		, A.MEMO
+		, A.REMARK
+		, A.INSERT_DATE
+		, CASE WHEN ISNULL(A.BOOKMARK_NAME,'') <> '' THEN A.BOOKMARK_NAME
+		       WHEN A.BOOKMARK_TYPE = 1 THEN A.BOOKMARK_URL
+			   WHEN A.BOOKMARK_TYPE = 2 THEN C.DEVICE_NAME
+			   WHEN A.BOOKMARK_TYPE = 3 THEN D.TITLE
+			   ELSE N'북마크'
+			   END
+		 AS BOOKMARK_NAME
+		, C.DEVICE_NAME
+		, D.TITLE
+    , C.DEVICE_DESC
+        , C.AUTH_NUMBER
+		, CASE WHEN A.BOOKMARK_TYPE = 2 AND NOT (C.STATUS = 9 AND C.HIDE = 0) THEN '로컬박스 미사용'
+		       WHEN A.BOOKMARK_TYPE = 3 AND NOT (D.STATUS = 9 AND D.HIDE = 0) THEN '광고 미사용'
+			   WHEN A.BOOKMARK_TYPE = 3 AND D.TO_DATE <CONVERT(VARCHAR(10), GETDATE(),112) THEN '광고 기간만료'
+			   ELSE ISNULL(D2.NAME,C2.NAME) END AS STATUS_NAME
+			,ISNULL(ISNULL(D1.COMPANY_NAME, C1.COMPANY_NAME),'') AS COMPANY_NAME
+			,C.ADDRESS1 + ' ' + C.ADDRESS2 AS DEVICE_ADDRESS
+			,(SELECT COUNT(*) FROM T_MEMBER_BOOKMARK
+			  WHERE AD_CODE = A.AD_CODE) AS AD_CNT
+			,(SELECT COUNT(*) FROM T_MEMBER_BOOKMARK
+			  WHERE DEVICE_CODE = A.DEVICE_CODE) AS DEVICE_CNT
+      , ISNULL(D.LOGO_URL,FF1.FILE_URL) AS LOGO_URL
+      , ISNULL(D.SUB_TITLE,c.DEVICE_DESC) AS SUB_TITLE
+	  FROM T_MEMBER_BOOKMARK A 
+   INNER JOIN T_MEMBER B
+      ON A.MEMBER_CODE = B.MEMBER_CODE
+    LEFT JOIN T_DEVICE C
+      ON A.DEVICE_CODE = C.DEVICE_CODE
+    LEFT JOIN T_COMPANY C1
+      ON C.COMPANY_CODE = C1.COMPANY_CODE
+   LEFT JOIN T_COMMON C2
+      ON C2.MAIN_CODE = 'S006'
+	 AND C2.SUB_CODE = C.STATUS
+    LEFT JOIN T_AD D
+      ON A.AD_CODE = D.AD_CODE
+    LEFT JOIN T_COMPANY D1
+      ON D.COMPANY_CODE = D1.COMPANY_CODE
+	LEFT JOIN T_COMMON D2
+      ON D2.MAIN_CODE = 'A001'
+	 AND D2.SUB_CODE = D.STATUS  
+  
+  LEFT JOIN T_FILE FF1
+    ON FF1.TABLE_NAME = 'T_DEVICE'
+   AND FF1.TABLE_KEY  = CONVERT(VARCHAR(20), C.DEVICE_CODE) 
+   AND FF1.FILE_SEQ   = 1
+   AND FF1.REF_DATA1  = '1'
+   WHERE 1=1
+     #[BOOKMARK_CODE]
+     #[MEMBER_CODE]
+     #[USER_ID]
+     #[USER_NAME]
+     #[BOOKMARK_TYPE]
+     #[BOOKMARK_KIND]
+     #[BOOKMARK_URL]
+     #[TITLE]
+     #[DEVICE_NAME]
+   )A
+)     
+SELECT *, (SELECT COUNT(*) FROM T_TABLE) AS TOTAL_ROWCOUNT FROM T_TABLE
+ WHERE IDX > (@PAGE -1) * @PAGE_COUNT
+   AND IDX <= @PAGE * @PAGE_COUNT
+ 
+	  SET NOCOUNT OFF 
+    ]]>
+      </FixedSQL>
+      <DynamicBodys>
+        <Key>BOOKMARK_CODE</Key>
+        <Body>AND A.BOOKMARK_CODE = {0} </Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>MEMBER_CODE</Key>
+        <Body>AND A.MEMBER_CODE = {0} </Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>USER_ID</Key>
+        <Body>AND B.USER_ID = '{0}' </Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>BOOKMARK_TYPE</Key>
+        <Body>AND A.BOOKMARK_TYPE = {0} </Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>BOOKMARK_KIND</Key>
+        <Body>AND A.BOOKMARK_KIND = {0} </Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>BOOKMARK_URL</Key>
+        <Body>AND A.BOOKMARK_URL = '{0}' </Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>TITLE</Key>
+        <Body>AND D.TITLE LIKE N'%{0}%' </Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>DEVICE_NAME</Key>
+        <Body>AND C.DEVICE_NAME LIKE N'%{0}%' </Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>USER_NAME</Key>
+        <Body>AND B.USER_NAME LIKE N'%{0}%' </Body>
+      </DynamicBodys>
+    </TemplateSQL>
+  </DBAgentTemplate>
+  <DBAgentTemplate TemplateID="MemberbookmarkSave">
+    <!-- 
+    SqlType : SQL의 형태를 지정합니다.
+      Example 1:<SqlType>FixedSQL</SqlType> 고정적인 SQL을 지원합니다. 
+      Example 2:<SqlType>DynamicSQL</SqlType> 동적인 SQL Type1을 지원합니다.  
+    Description : 해당 SQL의 기능설명을 적습니다.
+    SQLModifier : 해당 SQL의 작성자(수정자)를 적습니다
+    LastModifyDate : 해당 SQL의 마지막 수정일을 적습니다
+    -->
+    <Information>
+      <SqlType>DynamicSQL</SqlType>
+      <Description>북마크저장</Description>
+      <SQLModifier>전상훈</SQLModifier>
+      <LastModifyDate>2017-04-06</LastModifyDate>
+    </Information>
+
+    <TemplateSQL>
+      <!-- FixedSQL : 고정된 SQL이 들어가는 곳입니다. -->
+      <FixedSQL>
+        <![CDATA[ 
+	SET NOCOUNT ON 
+	/*************************************************************/
+	/* 회원별 북마크정보 - T_MEMBER_BOOKMARK 저장 -  SAVE QUERY */ 
+	/*************************************************************/
+	DECLARE @BOOKMARK_CODE   INT                  = N'{0}'
+			  , @MEMBER_CODE     INT                  = CONVERT(INT, CASE WHEN ISNUMERIC('{1}') = 1 THEN '{1}' ELSE '0' END )
+			  , @BOOKMARK_NAME   NVARCHAR(100)        = N'{2}'
+			  , @BOOKMARK_KIND   INT                  = CONVERT(INT, CASE WHEN ISNUMERIC('{3}') = 1 THEN '{3}' ELSE NULL END )
+        , @BOOKMARK_TYPE   INT                  = CONVERT(INT, CASE WHEN ISNUMERIC('{4}') = 1 THEN '{4}' ELSE NULL END )
+			  , @DEVICE_CODE     BIGINT               = CONVERT(BIGINT, CASE WHEN ISNUMERIC('{5}') = 1 THEN '{5}' ELSE NULL END )
+			  , @AD_CODE         BIGINT               = CONVERT(BIGINT, CASE WHEN ISNUMERIC('{6}') = 1 THEN '{6}' ELSE NULL END )
+			  , @BOOKMARK_URL    VARCHAR(600)         = N'{7}'
+			  , @MEMO            NVARCHAR(500)        = N'{8}'
+			  , @REMARK          NVARCHAR(100)        = N'{9}'
+			  , @INSERT_DATE     DATETIME             = GETDATE() 
+        , @USER_ID         VARCHAR(30)          = '{10}'
+        , @SAVE_MODE       VARCHAR(1)           = '{11}'
+
+      IF @USER_ID <> ''
+      BEGIN
+          SELECT @MEMBER_CODE = MEMBER_CODE 
+            FROM T_MEMBER
+           WHERE USER_ID = @USER_ID
+      END
+      
+      IF @USER_ID <> '' AND   @BOOKMARK_CODE < 1 AND ISNULL(@AD_CODE,0) >0
+      BEGIN
+         SELECT @BOOKMARK_CODE = BOOKMARK_CODE
+		       FROM T_MEMBER_BOOKMARK 
+          WHERE MEMBER_CODE = @MEMBER_CODE
+            AND AD_CODE = @AD_CODE
+            AND BOOKMARK_KIND = @BOOKMARK_KIND
+			  SET @BOOKMARK_TYPE = 3
+			
+      END
+      ELSE IF @USER_ID <> '' AND ISNULL(@DEVICE_CODE,0) > 0 AND   @BOOKMARK_CODE < 1 
+      BEGIN
+        SELECT @BOOKMARK_CODE = BOOKMARK_CODE
+		       FROM T_MEMBER_BOOKMARK 
+          WHERE MEMBER_CODE = @MEMBER_CODE
+            AND DEVICE_CODE = @DEVICE_CODE
+            AND BOOKMARK_KIND = @BOOKMARK_KIND
+			SET @BOOKMARK_TYPE = 2
+
+			
+      END
+      ELSE IF @USER_ID <> '' AND len(ISNULL(@BOOKMARK_URL,'')) > 0 AND @BOOKMARK_CODE < 1  
+      BEGIN
+        SELECT @BOOKMARK_CODE = BOOKMARK_CODE
+		       FROM T_MEMBER_BOOKMARK 
+          WHERE MEMBER_CODE = @MEMBER_CODE
+            AND BOOKMARK_URL = @BOOKMARK_URL
+            AND BOOKMARK_KIND = @BOOKMARK_KIND
+
+			SET @BOOKMARK_TYPE = 1
+      END
+     
+      IF @SAVE_MODE  = 'D'
+      BEGIN
+            DELETE FROM T_MEMBER_BOOKMARK
+             WHERE BOOKMARK_CODE  = @BOOKMARK_CODE
+            
+            SELECT ''  AS ERROR_MESSAGE
+            GOTO EXCEPTION
+            
+      END
+      ELSE
+      BEGIN
+        UPDATE A 
+	          SET  	  MEMBER_CODE                    = @MEMBER_CODE                   
+			           ,  BOOKMARK_NAME                  = @BOOKMARK_NAME                 		 ,  BOOKMARK_KIND                  = @BOOKMARK_KIND                
+                 ,  BOOKMARK_TYPE                  = @BOOKMARK_TYPE                    
+			           ,  DEVICE_CODE                    = @DEVICE_CODE                   		 ,  AD_CODE                        = @AD_CODE                       
+			           ,  BOOKMARK_URL                   = @BOOKMARK_URL                  		 ,  MEMO                           = @MEMO                          
+			           ,  REMARK                         = @REMARK                        
+	          FROM T_MEMBER_BOOKMARK A 
+	          WHERE BOOKMARK_CODE= @BOOKMARK_CODE
+	        IF @@ROWCOUNT = 0
+	        BEGIN
+		           INSERT INTO T_MEMBER_BOOKMARK
+		          (		MEMBER_CODE                   		, BOOKMARK_NAME                 		, BOOKMARK_TYPE                     , BOOKMARK_KIND                 		
+			          , DEVICE_CODE                   		, AD_CODE                       		, BOOKMARK_URL                  		, MEMO                          		
+			          , REMARK                        		, INSERT_DATE                   		
+		          )
+		          SELECT @MEMBER_CODE                  		, @BOOKMARK_NAME                	, @BOOKMARK_TYPE                		, @BOOKMARK_KIND         
+                  , @DEVICE_CODE                  		, @AD_CODE                      	, @BOOKMARK_URL                 		, @MEMO                         		
+                  , @REMARK                       	  , @INSERT_DATE                  	
+				      
+			        SELECT CONVERT(VARCHAR(30), IDENT_CURRENT( 'T_MEMBER_BOOKMARK' ))  AS DATA
+                 GOTO EXCEPTION
+	         END
+     END
+      SELECT ''  AS ERROR_MESSAGE
+    EXCEPTION:
+    SET NOCOUNT OFF
+
+
+    ]]>
+      </FixedSQL>
+    </TemplateSQL>
+  </DBAgentTemplate>
+
+  <DBAgentTemplate TemplateID="GetBookmarkAdList">
+    <!-- 
+    SqlType : SQL의 형태를 지정합니다.
+      Example 1:<SqlType>FixedSQL</SqlType> 고정적인 SQL을 지원합니다. 
+      Example 2:<SqlType>DynamicSQL</SqlType> 동적인 SQL Type1을 지원합니다.  
+    Description : 해당 SQL의 기능설명을 적습니다.
+    SQLModifier : 해당 SQL의 작성자(수정자)를 적습니다
+    LastModifyDate : 해당 SQL의 마지막 수정일을 적습니다
+    -->
+    <Information>
+      <SqlType>DynamicSQL</SqlType>
+      <Description>회원별 북마크 배너정보</Description>
+      <SQLModifier>전상훈</SQLModifier>
+      <LastModifyDate>2017-05-26</LastModifyDate>
+    </Information>
+
+    <TemplateSQL>
+      <!-- FixedSQL : 고정된 SQL이 들어가는 곳입니다. -->
+      <FixedSQL>
+        <![CDATA[ 
+	  
+		SET NOCOUNT ON 
+	/***************************************************************/
+	/* 회원별 북마크 배너정보 - GetBookmarkAdList 조회 -  SELECT QUERY */ 
+	/***************************************************************/
+	SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED 
+    DECLARE @PAGE       INT           = {0}
+	         ,@PAGE_COUNT INT           = {1}
+           ,@MNG_URL    NVARCHAR(200) = N'{2}';
+    WITH T_TABLE 
+    AS (
+    
+       SELECT ROW_NUMBER() OVER(ORDER BY {3}) AS IDX
+              ,* FROM (
+        SELECT A.BOOKMARK_CODE 
+              ,C.AD_CODE
+              ,CONVERT(INT, 
+		                   CASE WHEN A.BOOKMARK_TYPE = 3 AND (C.STATUS = 9 AND C.HIDE = 0) 
+                        AND (C.FR_DATE = '' OR C.FR_DATE <= CONVERT(VARCHAR(10), GETDATE(),112)) 
+                        AND (C.TO_DATE = '' OR C.TO_DATE >= CONVERT(VARCHAR(10), GETDATE(),112)) 
+                   THEN 1
+			           ELSE 0 END) AS STATUS
+              ,A.MEMBER_CODE
+              ,B.USER_NAME
+              ,CASE WHEN ISNULL(C.TITLE,'') = '' THEN '제목없음' ElSE C.TITLE END AS TITLE
+              ,C.SUB_TITLE
+              ,C.LOGO_URL
+              ,C.BANNER_TYPE
+              ,C1.NAME AS BANNER_TYPE_NAME
+              ,C.AD_TYPE
+              ,C2.NAME AS AD_TYPE_NAME
+              ,D.COMPANY_NAME
+              ,@MNG_URL + '/advertise/contentview/' + CONVERT(VARCHAR(100), C.AD_CODE) CONTENT_URL
+              ,C.FR_DATE, C.TO_DATE
+              ,C.FR_TIME, C.TO_TIME
+              ,A.INSERT_DATE
+              ,(SELECT COUNT(*) FROM T_MEMBER_BOOKMARK
+			           WHERE AD_CODE = A.AD_CODE) AS AD_CNT
+        FROM T_MEMBER_BOOKMARK A
+       INNER JOIN T_MEMBER B 
+          ON A.MEMBER_CODE = B.MEMBER_CODE
+        
+       INNER JOIN T_AD C
+          ON A.AD_CODE = C.AD_CODE 
+       INNER JOIN T_COMMON C1
+          ON C1.MAIN_CODE = 'A005'
+         AND C1.SUB_CODE = C.BANNER_TYPE
+       INNER JOIN T_COMMON C2
+          ON C2.MAIN_CODE = 'A006'
+         AND C2.SUB_CODE = C.AD_TYPE
+       INNER JOIN T_COMPANY D
+          ON C.COMPANY_CODE = D.COMPANY_CODE
+      
+       WHERE 1=1
+         #[USER_ID]
+         #[TITLE]
+         #[USER_NAME]
+         #[BOOKMARK_KIND]
+       ) A
+    )    
+    SELECT *, (SELECT COUNT(*) FROM T_TABLE) AS TOTAL_ROWCOUNT FROM T_TABLE
+    WHERE IDX > (@PAGE -1) * @PAGE_COUNT
+      AND IDX <= @PAGE * @PAGE_COUNT
+	  SET NOCOUNT OFF 
+    
+   
+    ]]>
+      </FixedSQL>
+      <DynamicBodys>
+        <Key>USER_ID</Key>
+        <Body>  AND B.USER_ID = '{0}' </Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>TITLE</Key>
+        <Body>AND CASE WHEN ISNULL(C.TITLE,'') = '' THEN '제목없음' ElSE C.TITLE END LIKE N'%{0}%' </Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>USER_NAME</Key>
+        <Body>AND B.USER_NAME LIKE N'%{0}%' </Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>BOOKMARK_KIND</Key>
+        <Body>AND A.BOOKMARK_KIND = {0} </Body>
+      </DynamicBodys>
+    </TemplateSQL>
+  </DBAgentTemplate>
+
+
+	<DBAgentTemplate TemplateID="GetBookmarkAdList">
+		<!-- 
+    SqlType : SQL의 형태를 지정합니다.
+      Example 1:<SqlType>FixedSQL</SqlType> 고정적인 SQL을 지원합니다. 
+      Example 2:<SqlType>DynamicSQL</SqlType> 동적인 SQL Type1을 지원합니다.  
+    Description : 해당 SQL의 기능설명을 적습니다.
+    SQLModifier : 해당 SQL의 작성자(수정자)를 적습니다
+    LastModifyDate : 해당 SQL의 마지막 수정일을 적습니다
+    -->
+		<Information>
+			<SqlType>DynamicSQL</SqlType>
+			<Description>회원별 북마크 배너정보</Description>
+			<SQLModifier>전상훈</SQLModifier>
+			<LastModifyDate>2017-05-26</LastModifyDate>
+		</Information>
+
+		<TemplateSQL>
+			<!-- FixedSQL : 고정된 SQL이 들어가는 곳입니다. -->
+			<FixedSQL>
+				<![CDATA[ 
+	  
+		SET NOCOUNT ON 
+	/***************************************************************/
+	/* 북마크 삭제  -  DELETE QUERY */ 
+	/***************************************************************/
+	 DELETE FROM T_MEMBER_BOOKMARK
+	 WHERE BOOKMARK_CODE = {0}
+	  SET NOCOUNT OFF 
+    
+   
+    ]]>
+			</FixedSQL>
+		</TemplateSQL>
+	</DBAgentTemplate>
+</DBAgentMultiTemplate>

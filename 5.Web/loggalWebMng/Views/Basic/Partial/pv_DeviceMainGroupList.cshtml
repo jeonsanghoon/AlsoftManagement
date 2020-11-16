@@ -1,0 +1,59 @@
+﻿@{
+
+    List<T_DEVICE_MAIN_GROUP> list = ViewBag.list;
+
+    List<SelectListItem> combo_FRAME_TYPE = new ALT.BizService.CommonService().GetCommon(new T_COMMON_COND { MAIN_CODE = "H002", HIDE = false }).Select(s => new SelectListItem { Value = s.SUB_CODE.ToString(), Text = s.NAME }).ToList();
+    List<SelectListItem> combo_CONTENT_TYPE = new ALT.BizService.CommonService().GetCommon(new T_COMMON_COND { MAIN_CODE = "A010", HIDE = false }).Select(s => new SelectListItem { Value = s.SUB_CODE.ToString(), Text = s.NAME }).ToList();
+    List<SelectListItem> combo_PLAY_TYPE = new ALT.BizService.CommonService().GetCommon(new T_COMMON_COND { MAIN_CODE = "U006", HIDE = false }).Select(s => new SelectListItem { Value = s.SUB_CODE.ToString(), Text = s.NAME }).ToList();
+    @Html.Hidden("groupListData",  Newtonsoft.Json.JsonConvert.SerializeObject(list));
+    int nCnt = 0;
+    foreach (T_DEVICE_MAIN_GROUP data in list)
+    {
+<tr>
+    <td class="center">
+        @{
+            @:<div>
+                if (nCnt > 0)
+                {
+                    <i class="fa fa-arrow-circle-up fa-3x" aria-hidden="true" style="color:#d34e4e;cursor:pointer;" onclick="fnBannerGroupSeqMove(@data.DEVICE_CODE, @list[nCnt - 1].GROUP_SEQ, @data.GROUP_SEQ);"></i>
+                }
+                else
+                {
+                    <i class="fa fa-arrow-circle-up fa-3x" aria-hidden="true" style="color:grey!important;"></i>
+                }
+                if (nCnt < list.Count() - 1)
+                {
+                    <i class="fa fa-arrow-circle-down fa-3x" aria-hidden="true" style="color:#6390ee;cursor:pointer;" onclick="fnBannerGroupSeqMove(@data.DEVICE_CODE, @data.GROUP_SEQ,@list[nCnt + 1].GROUP_SEQ);"></i>
+                }
+                else
+                {
+                    <i class="fa fa-arrow-circle-down fa-3x" aria-hidden="true" style="color:grey!important;"></i>
+                }
+            @:</div>
+            nCnt++;
+        }
+    </td>
+    <td class="center">@data.GROUP_SEQ</td>
+    <td class="center"><input type="text" style="min-width:3em;max-width:5em;width:95%;" class="size150 field" value="@data.GROUP_NAME" /></td>
+
+
+
+    <td class="center">@Html.CommonComboNormal("CONTENT_TYPE", combo_CONTENT_TYPE, data.CONTENT_TYPE.ToString("1"), "", new { @class = "size120 field", @onchange = "contentTypeChange(this);" })</td>
+    <td class="center hide">@data.CONTENT_TYPE_NAME</td>
+    <td class="center hide">@Html.CommonComboNormal("FRAME_TYPE", combo_FRAME_TYPE, data.FRAME_TYPE.ToString("1"), "", new { @class = "size120 field", @onchange = "frameTypeChange(this);" })</td>
+    <td class="center">
+        <div class="playTime" @(data.CONTENT_TYPE.ToString("1") != "1" ? "style=display:none" : "")>@Html.CommonComboNormal("PLAY_TIME", combo_PLAY_TYPE, data.PLAY_TIME.ToString("60"), "", new { @class = "size120 field" })</div>
+        <div class="playTimeHide" @(data.CONTENT_TYPE.ToString("1") == "1" ? "style=display:none" : "")>-</div>
+    </td>
+    <td><input type="text" style="min-width:3em;width:98%;" maxlength="200" class="field" value="@data.REMARK" /></td>
+    <td class="center">@data.INSERT_NAME</td>
+    <td class="center">@data.INSERT_DATE</td>
+    <td class="center">@data.UPDATE_NAME</td>
+    <td class="center">@data.UPDATE_DATE</td>
+    <td class="hide">@data.DEVICE_CODE</td>
+    <td class="hide">@data.UPDATE_CODE</td>
+    <td class="center">@Html.Semantic_Button2("btnBannerReg", "배너보기", SemanticUIHelper.enButtonType.Normal, new { @onclick = "bannerView(" + data.GROUP_SEQ.ToString() + ");" })</td>
+</tr>
+    }
+
+}

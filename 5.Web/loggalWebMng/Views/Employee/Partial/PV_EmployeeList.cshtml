@@ -1,0 +1,32 @@
+﻿
+@using ALT.VO.Common;
+@using ALT.Framework.Data;
+@{
+    List<EMPLOYEE_INFO> list = ViewBag.list;
+    string totCnt = (list.Count() == 0 ? "0" : list.First().TOTAL_ROWCOUNT.ToString());
+    <input type="hidden" id="total" value="@totCnt" />
+    foreach (EMPLOYEE_INFO data in list)
+    {
+        <tr>
+            @*<td>@data.MEMBER_CODE</td>*@
+            <td class="center">@data.COMP_POSITION_NAME</td>
+            <td>@data.COMP_TITLE_NAME</td>
+            <td class="center">@Ajax.ActionLink(data.USER_NAME, "EmployeeReg", new { id = data.MEMBER_CODE }, null)</td>
+			<td>@data.USER_ID</td>
+            <td class="center">@data.MOBILE</td>
+			<td class="center aligned">@data.BIRTH.ToFormatDate()</td>
+            <td class="center">@data.PARENT_MEMBER_NAME</td>
+            <td class="center">@data.EMP_AUTH_NAME</td>
+            <td >@data.MENU_GROUP_NAME</td>
+            <td class="center">@data.UPDATE_NAME</td>
+            <td class="center aligned">@data.UPDATE_DATE</td>
+        </tr>
+    }
+
+    if (list.Count() ==0)
+    {
+            <tr>
+                <td colspan="12">검색 결과가 없습니다.</td>
+            </tr>
+    }
+}

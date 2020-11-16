@@ -1,0 +1,895 @@
+﻿@using Newtonsoft.Json;
+
+@{
+    Layout = "~/Views/Shared/_Layout_webview.cshtml";
+
+
+    List<LOGGAL_BOX_INFO> groupList = ViewBag.GroupList;
+    List<LOGGAL_BOX_INFO> BannerGroupList = ViewBag.BannerGroupList;
+
+    var sGroupListJson = JsonConvert.SerializeObject(groupList);
+    var sBannerGroupList = JsonConvert.SerializeObject(BannerGroupList);
+    //GlobalMvc.Util.SetCookie(sGroupListJson, "localboxgrouplist");
+    T_DEVICE device = ViewBag.device;
+
+
+}
+    
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jquery-cookie/1.4.1/jquery.cookie.js"></script>
+<script type="text/javascript" src="https://www.youtube.com/iframe_api"></script>
+<style>
+    body, html {
+        height: 100%;
+        background-color: lightgray !important;
+        background: #000000
+    }
+
+    :-webkit-full-screen {
+        /* properties */
+    }
+
+    :-moz-full-screen {
+        /* properties */
+    }
+
+    :-ms-fullscreen {
+        /* properties */
+    }
+
+    :full-screen { /*pre-spec */
+        /* properties */
+    }
+
+    :fullscreen { /* spec */
+        /* properties */
+    }
+
+    /* deeper elements */
+    :-webkit-full-screen video {
+        width: 100%;
+        height: 100%;
+    }
+
+    /* styling the backdrop*/
+    ::backdrop {
+        /* properties */
+    }
+
+    ::-ms-backdrop {
+        /* properties */
+    }
+
+    img#imgPreview {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+    }
+
+
+
+    .dvImageView .column {
+        width: 25%;
+        height: 33.333%;
+    }
+
+        .dvImageView .column table {
+            width: 100%;
+            height: 100%;
+            border: 0;
+            padding: 0.2em;
+            background: #ffffff;
+        }
+
+        .dvImageView .column .item td {
+            padding-left: 0.5em;
+            padding-right: 0.5em;
+            line-height: normal;
+        }
+
+            .dvImageView .column .item td.padding0 {
+                padding-left: 0em;
+                padding-right: 0em;
+            }
+
+                .dvImageView .column .item td.padding0 img {
+                    top: 0;
+                    left: 0;
+                    right: 0;
+                    bottom: 0;
+                    height: 60%;
+                }
+
+
+
+    h1 {
+        font-size: 2.1em;
+    }
+
+    .dvImageView .column .item td.subtitle {
+        font-size: 1.3em;
+        color: darkgrey;
+    }
+
+    .dvImageView .column .item td.companyname {
+        font-size: 1.4em;
+    }
+
+    @@media only screen and (max-width: 767px) {
+        .dvImageView .column {
+            width: 50%;
+            height: 16.666%;
+            padding: 0.1em;
+        }
+    }
+
+    .ui.grid > [class*="four column"].row > .column {
+        width: unset;
+    }
+
+    html, body {
+        margin: 0;
+        height: 100%;
+        overflow: hidden
+    }
+
+    .ui.grid {
+        margin: 0em;
+    }
+
+    @@media only screen and (max-width: 991px) and (min-width: 768px) {
+        .ui.doubling.grid > .row > .column, .ui.grid > .doubling.row > .column {
+            padding: 0em !important;
+        }
+    }
+
+    .over {
+        position: absolute;
+        top: 10px;
+        left: 20px; /*위에 올라가는 레이어의 포지션은 top, bottom 둘 중 하나, left, right 둘 중 하나의 속성을 선택하여 잡아준다.*/
+        background-color: lightgrey;
+        opacity: 0.4 !important;
+        position: fixed;
+    }
+
+    .btnDetail {
+        position: absolute;
+        position: fixed;
+        bottom: 5px;
+        right: 20px; /*위에 올라가는 레이어의 포지션은 top, bottom 둘 중 하나, left, right 둘 중 하나의 속성을 선택하여 잡아준다.*/
+        opacity: 0.7;
+        display: none;
+    }
+
+    i.icon {
+        margin: 0.1em;
+    }
+
+    .button, .buttons {
+        cursor: pointer;
+    }
+
+    .pusher {
+        background-color: grey;
+        height: 100%;
+    }
+
+    .dvImageView .item {
+        cursor: pointer;
+    }
+
+    .ui.sidebar .item {
+        cursor: pointer;
+    }
+
+        .ui.sidebar .item:hover {
+            background-color: rgba(255,255,255,.15)
+        }
+
+    #dvImage {
+        background-color: gray;
+    }
+
+
+    /*.menu H3{
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        word-wrap: normal;
+        width:auto;
+        overflow: hidden;
+    }*/
+    .ui.button.btnDetail {
+        display: none;
+    }
+    table td.favoriteIcon {
+        vertical-align:bottom;
+        text-align:right;
+    }
+
+      .ui.inverted.menu .tagetmenu.item {
+        background: #d3fff2!important;
+        color: #004bff !important;
+     
+    }
+  
+.ui.inverted.menu .active.item {
+    background:#a8fae6
+  
+}
+</style>
+
+
+
+<div class="ui sidebar inverted vertical menu">
+
+    @Html.Raw(ViewBag.leftMenu);
+
+</div>
+<div class="pusher">
+    <!-- Site content !-->
+    <div id="dvImage" style="display:none;height:100%;width:100%;" class="playviewer">
+    </div>
+    <div id="dvMovie" class="playviewer" style="width:100%;height:100%;background-color:black;display:none;">
+        <video muted autoplay style="height:100%;width:100%;background-color:black" id="vdoPreview" autoplay="autoplay" onended="videoend();" onerror="videoError(event);">
+            <source id="movie_src" type="video/mp4">
+        </video>
+    </div>
+
+    <div id="dvYoutube" style="width:100%;height:100%;  background-color:black" class="playviewer"></div>
+    <div class="over"><i class="sidebar icon big button" id="btnSideMenu"></i></div>
+
+    <button class="ui large  button btnDetail">
+        상세보기
+        <i class="hand point up outline icon"></i>
+    </button>
+</div>
+@section scripts{
+    <link rel="stylesheet" type="text/css" href="//cdn.jsdelivr.net/npm/slick-carousel@1.8.1/slick/slick.css" />
+    <style>
+        .slider, .slick-track, .slick-list {
+            height: 100%;
+        }
+
+        .a-slide {
+            height: 100%;
+            width: 100%;
+            background-size: cover !important;
+        }
+    </style>
+
+    <script type="text/javascript" src="//cdn.jsdelivr.net/npm/slick-carousel@1.8.1/slick/slick.min.js"></script>
+
+    <script type="text/javascript">
+
+    var groupList =  @(Html.Raw(sGroupListJson)); /*내배너*/
+    var bannerList = @(Html.Raw(sBannerGroupList));/*모바일배너*/
+    var device = @(Html.Raw(JsonConvert.SerializeObject(device)));/*디바이스정보*/
+
+    var nAutoPlayMain = -1;
+    var nAutoPlayBanner = -1;
+    var nModeBanner = -1; /* 0 일경우 내배너 1일경우 모바일배너*/
+    
+    var reloadTime = Number(@device.DATA_CYCLE_TIME.ToString("3600")) * 1000;
+    var bannerTime = 10000;//Number(@device.AD_CYCLE_TIME.ToString("100")) * 1000;
+    var sliderStart1 = 8;
+    var sliderStart2 = 10;
+    var sliderSpeed = 3 * 1000;
+    var baseUrl = "";
+    var timerRoadID;
+    
+
+    var commlist = @Html.Raw(Json.Encode(ViewBag.commonlist));
+
+
+    function getCommonName(mainCode, subCode) {
+        for (var i = 0; i < commlist.length; i++) {
+            var data = commlist[i];
+            if (data.MAIN_CODE == mainCode && data.SUB_CODE == Number(subCode)) {
+                return data.NAME;
+            }
+        }
+    }
+
+
+    $("document").ready(function () {
+
+        if (sessionStorage.getItem("groupList") != null) {
+            groupList = JSON.parse( sessionStorage.getItem("groupList"));
+        }
+        if (sessionStorage.getItem("bannerList") != null) {
+            bannerList =  JSON.parse(sessionStorage.getItem("bannerList"));
+        }
+
+        baseUrl = location.href;
+
+        nModeBanner = -1;
+        var gr1 = $.cookie("groupList");
+        readyYoutube();
+        $("#btnSideMenu").click(function () {
+            $('.ui.sidebar.inverted.vertical.menu').sidebar("toggle", { onHide: function () { } });
+        });
+        //   InitView();
+        $(window).on('hashchange', function () {
+            console.log("다시로드");
+        });
+             layoutInit();
+        reLoad();
+   
+    });
+    function reLoad() {
+        if (timerRoadID != null) clearTimeout(timerRoadID);
+
+        timerRoadID = setTimeout("location.href='" + baseUrl + "';reLoad();", reloadTime);
+    }
+
+    function readyYoutube() {
+        if ((typeof YT !== "undefined") && YT && YT.Player) {
+            //alert("readyYoutube");
+            InitView();
+        } else {
+            setTimeout("readyYoutube()", 200);
+        }
+    }
+
+    function InitView() {
+        
+        var hash = getHash();
+        var arrData = hash.split('_');
+        
+        if (hash != "") {
+            if (arrData[1] == "1") {
+                nAutoPlayMain = Number(arrData[2]) - 1;
+                AutoPlayMain(nAutoPlayMain);
+                
+            } else {
+                nAutoPlayBanner = Number(arrData[5]) - 1;
+                
+                AutoPlayBanner(nAutoPlayBanner);
+            }
+
+            layoutInit();
+            console.log("layoutInit");
+        } else {
+            console.log("AutoPlay>>");
+            AutoPlay();
+        }
+    }    
+    
+
+    function setHash(val) {
+        $(".ui.menu .item").removeClass("tagetmenu");
+        if (getHash() != val) {
+            window.location.hash = val;
+        }
+        var arrData = val.split('_');
+        if (arrData[1] == "1") { $(".ui.menu .item.main_1_" + arrData[2]).addClass("tagetmenu"); }
+        else {  $(".ui.menu .item.banner_1_" + arrData[5]).addClass("tagetmenu");}
+
+
+    }
+
+    function getHash() {
+        return window.location.hash.replace('#', '');
+    }
+
+    $(window).resize(function () {
+        $("body").css("background", "grey");
+        layoutInit();
+    });
+    function layoutInit() {
+        try {
+            var width = ($(document).width() < $(window).width() ? $(document).width() : $(window).width());
+
+            var height = ($(document).height() < $(window).height() ? $(document).height() : $(window).height());
+            //            console.log("height:" + String(height));
+            $(".dvImageView .doubling.four.column").removeClass("four");
+            $(".dvImageView .doubling.three.column").removeClass("three");
+            $(".dvImageView .doubling.two.column").removeClass("two");
+            
+            if ($(window).height() < $(window).width()) {
+     
+                if (objPlayLog.FRAME_TYPE == 6) {
+
+                    $(".dvImageView .column").height(height / 2.00 - 1);
+                    $(".dvImageView .column").css("width", "33.3333%");
+                    $(".dvImageView .doubling.column").addClass("three");
+                }
+                else if (objPlayLog.FRAME_TYPE == 12) {
+                    $(".dvImageView .column").height(height / 3.00 - 1);
+                    $(".dvImageView .column").css("width", "25%");
+                    $(".dvImageView .doubling.column").addClass("four");
+                }
+                else if (objPlayLog.FRAME_TYPE == 1) {
+                    $(".dvImageView .column").css("height", "100%");
+                    $(".dvImageView .column").css("width", "100%");
+                    $(".dvImageView .doubling.column").addClass("one");
+                }
+                //                console.log(" column height:" + String(height / 3.00 - 2));
+                //                console.log(" column width:" + String($(document).width() / 4.00));
+            }
+            else {
+                if (objPlayLog.FRAME_TYPE == 6) {
+
+                    $(".dvImageView .doubling").addClass("two");
+                    $(".dvImageView .column").height(height / 3.00 - 1);
+                    //                console.log(" column height:" + String(height / 6.00));
+                    $(".dvImageView .column").css("width", "50%");
+                    $(".dvImageView .column .column").css("width", "50%");
+                    //                console.log(" column width:" + String($(document).width() / 2.00));
+                }
+                else if (objPlayLog.FRAME_TYPE == 12) {
+                    $(".dvImageView .doubling").addClass("two");
+                    $(".dvImageView .column").height(height / 6.00 - 1);
+                    //                console.log(" column height:" + String(height / 6.00));
+                    $(".dvImageView .column").css("width", "50%");
+                    $(".dvImageView .column .column").css("width", "50%");
+                    //                console.log(" column width:" + String($(document).width() / 2.00));
+                }
+                else if (objPlayLog.FRAME_TYPE == 1) {
+                    $(".dvImageView").css("height", "100%");
+                    $(".dvImageView .column").css("height", "100%");
+                    //                console.log(" column height:" + String(height / 6.00));
+                    //$(".dvImageView .column").css("width", "50%");
+                    //$(".dvImageView .column .column").css("width", "50%");
+                    //                console.log(" column width:" + String($(document).width() / 2.00));
+                }
+            }
+            $(".dvImageView .column").css("padding", "0.1em");
+            $(".oneImage").height($(document).height());
+
+        
+        } catch (e) { }
+    }
+
+    function localboxClose() {
+        try {
+            window.java.getMethod(0);
+        } catch (err) {
+            console.log(">> [exam_script.plus_num()] " + err);
+            window.close();
+        }
+    }
+
+    function localboxLeftMenuClick(obj, grouSeq) {
+        $(".playviewer").hide();
+        localboxclearTimeout();
+        $(".ui.sidebar .item").removeClass("active")
+        $(obj).addClass("active");
+        if (grouSeq == -1) {
+            AutoPlayMain(0);
+            nModeBanner = 0;
+        }
+        else {
+            AutoPlayBanner(grouSeq);
+        }
+        layoutInit();
+        $('.ui.sidebar.inverted.vertical.menu').sidebar("hide");
+    }
+    function localboxMyBnnerLeftMenuClick(obj, grouSeq) {
+
+        localboxclearTimeout();
+        $(".playviewer").hide();
+
+        $(".ui.sidebar .item").removeClass("active")
+        $(obj).addClass("active");
+
+        AutoPlayMain(grouSeq);
+
+        layoutInit();
+        $('.ui.sidebar.inverted.vertical.menu').sidebar("hide");
+    }
+    function AutoPlay() {
+        
+        localboxclearTimeout();
+        nModeBanner = ((nModeBanner == -1 || nModeBanner == 1) ? 0 : 1);
+        if (bannerList.length == 0) nModeBanner = 0;
+        else if (groupList.length == 0) nModeBanner = 1;
+        $(".playviewer").hide();
+
+        if (nModeBanner == 0 && groupList.length > 0) {
+            nAutoPlayMain++;
+            nAutoPlayBanner = ((nAutoPlayBanner < 0) ? 0 : nAutoPlayBanner);
+            AutoPlayMain();
+
+        }
+        else if (bannerList.length > 0) {
+            
+            nAutoPlayMain = ((nAutoPlayMain < 0) ? 0 : nAutoPlayMain);
+            AutoPlayBanner();
+            nAutoPlayBanner++;
+        }
+
+
+        layoutInit();
+    }
+    var _timeIdl;
+    function localboxclearTimeout() {
+        $(".ui.sidebar .item").removeClass("active");
+        if (_timeIdl != null) clearTimeout(_timeIdl);
+
+    }
+    function AutoPlayMain(groupSeq) {
+        console.log("AutoPlayMain");
+        if (groupSeq != undefined) {
+            nAutoPlayMain = groupSeq;
+        }
+        if (groupList.length == nAutoPlayMain || nAutoPlayMain < 0) nAutoPlayMain = 0;
+        nAutoPlayBanner = nAutoPlayBanner < 0 ? 0 : nAutoPlayBanner;
+        setHash("main_1_" + String(nAutoPlayMain + 1) + "_" + "banner_0_" + String(nAutoPlayBanner));
+        AutoPlayExec(groupList[nAutoPlayMain], 1);
+
+    }
+    function AutoPlayBanner(groupSeq) {
+        console.log("AutoPlayBanner");
+        if (groupSeq != undefined) { nAutoPlayBanner = groupSeq };
+        if (bannerList.length <= nAutoPlayBanner) nAutoPlayBanner = 0;
+        nAutoPlayMain = nAutoPlayMain < 0 ? 0 : nAutoPlayMain;
+        setHash("main_0_" + String(nAutoPlayMain) + "_" + "banner_1_" + String(nAutoPlayBanner + 1));
+        AutoPlayExec(bannerList[nAutoPlayBanner], 2);
+    }
+    var objPlayLog;
+    function AutoPlayExec(palyData, bannerKind) {
+        console.log("AutoPlayExec");
+
+        if (objPlayLog != null) adPlayLogSave();
+        objPlayLog = new Object();
+        objPlayLog.DEVICE_CODE = @device.DEVICE_CODE;
+        objPlayLog.DEVICE_NAME = "@device.DEVICE_NAME";
+        objPlayLog.DEVICE_KIND = 2;
+
+        objPlayLog.DEVICE_KIND_NAME = getCommonName("L003", 2);
+
+
+
+        objPlayLog.FRAME_TYPE = palyData.FRAME_TYPE;
+        objPlayLog.FRAME_TYPE_NAME = getCommonName("H002", palyData.FRAME_TYPE);
+        objPlayLog.BANNER_TYPE2 = palyData.CONTENT_TYPE;
+        objPlayLog.BANNER_TYPE2_NAME = getCommonName("A010", palyData.CONTENT_TYPE);
+        objPlayLog.BANNER_KIND = bannerKind; /*1:내배너 2:일반배너*/
+        objPlayLog.BANNER_KIND_NAME = getCommonName("B008", bannerKind); /*1:내배너 2:일반배너*/
+        
+        //$(".btnDetail").hide();
+        var adCodes = "";
+        var adTitles = "";
+        document.title = palyData.CATEGORY_NAME;
+
+        if (palyData.CONTENT_TYPE == 1)//이미지일경우
+        {
+            objPlayLog.PLAY_TYPE = 1;
+            objPlayLog.PLAY_TYPE_NAME = getCommonName("P004", objPlayLog.PLAY_TYPE);
+
+            var tmpHtml = "";
+
+            var nLen = palyData.list.length;
+
+            objPlayLog.FRAME_TYPE = palyData.FRAME_TYPE;
+
+            if (palyData.FRAME_TYPE > 1) {
+                tmpHtml = "<div class='ui grid dvImageView'>  <div class='doubling  column row'>";
+                var nLen = palyData.list.length;
+                for (var i = 0; i < nLen; i++) {
+                    var data = palyData.list[i];
+                    adCodes = ((i > 0) ? adCodes + "|" : "");
+                    adCodes = adCodes + String(data.AD_CODE);
+
+                    adTitles = ((i > 0) ? adTitles + "|" : "");
+                    adTitles = adTitles + String(data.TITLE);
+
+                    var addClass = "";
+                    if (data.SHARE_STATUS == "1") {
+                        addClass = "shareItem"
+                    }
+                    sliderStart1 = palyData.FRAME_TYPE - 4;
+                    sliderStart2 = palyData.FRAME_TYPE - 2;
+                    tmpHtml += "<div class='column item " + addClass + "'  >";
+                    if ((i == sliderStart1 && nLen > sliderStart1 + 1) || (i == sliderStart2 && nLen > sliderStart2 + 1)) {
+                        tmpHtml += "<div class='slider' >";
+                        tmpHtml += "  <div class='a-slide'>";
+                        tmpHtml += "  <div style='height:100%;weight:100%;' onclick='itemClick(this,\"" + data.CONTENT_URL + "\"," + String(i) + "," + String(bannerKind) + ");'>";
+                        tmpHtml += setBannerItem(data);
+                        tmpHtml += "  </div>";
+                        tmpHtml += "  </div>";
+                        i++;
+
+                        data = palyData.list[i];
+                         
+                        tmpHtml += "  <div class='a-slide'>";
+                        // 
+                        tmpHtml += "  <div style='height:100%;weight:100%;' onclick='itemClick(this,\"" + data.CONTENT_URL + "\"," + String(i) + "," + String(bannerKind) + ");'>";
+                        tmpHtml += setBannerItem(data);
+                        tmpHtml += "  </div>";
+                        tmpHtml += "  </div>";
+                        tmpHtml += "</div>";
+                        adCodes = adCodes + "|" + String(data.AD_CODE);
+                        adTitles = adTitles + "|" + String(data.TITLE);
+
+                    }
+                    else {
+                        tmpHtml += "  <div style='height:100%;weight:100%;' onclick='itemClick(this,\"" + data.CONTENT_URL + "\"," + String(i) + "," + String(bannerKind) + ");'>";
+                        tmpHtml += setBannerItem(data);
+                        tmpHtml += "</div>";
+                    }
+
+                    tmpHtml += "</div>";
+                };
+                var nBannerlistCnt = palyData.list.length;
+
+                var nTot = palyData.FRAME_TYPE + 2;
+                /*if (nBannerlistCnt >= 8) nTot = 14;
+                else if (nBannerlistCnt >= 6) nTot = 13;
+                */
+                for (var i = 0; i < nTot - nBannerlistCnt; i++) {
+                    tmpHtml += "<div class='column item'><table class='ui table' style='width:100%;height:100%'><tr><td></td></tr></table></div>";
+                }
+                tmpHtml += "</div></div>"
+                objPlayLog.AD_CODES = adCodes;
+                objPlayLog.AD_TITLES = adTitles;
+            }
+            else {
+                var data = palyData.list[0];
+                objPlayLog.AD_CODE = palyData.list[0].AD_CODE;
+                objPlayLog.TITLE = palyData.list[0].TITLE;
+                tmpHtml = "<div class='ui grid dvImageView'>  <div class='one column row'>";
+                tmpHtml += "<div class='column item'  onclick='itemClick(this,\"" + data.CONTENT_URL + "\",0," + String(bannerKind) + ");'>";
+                tmpHtml += setBannerItem(palyData.list[0]);
+                tmpHtml += "</div></div></div>";
+                //tmpHtml += "<div  style='height:100%;width:100%;display:flex;' onclick='itemClick(this,\"" + palyData.list[0].CONTENT_URL + "\");'>" + "<img  src='" + palyData.list[0].LOGO_URL + "' style='min-width:100%; min-height:100%;' />" + "</div>";
+            }
+
+            $("#dvImage").html(tmpHtml);
+
+            $("#dvImage").show();
+
+            setTimeout("sliderInit();", 10);
+
+            $(".oneImage").height($(document).height());
+
+            if ($(".dvImageView .column.one.item").hasClass()) {
+                $(".dvImageView .column.one.item")
+            }
+
+            setTimeout(' $(".dvImageView .column >.column.item td.padding0 img").height($(".dvImageView .column >.column.item").height() * (60.00 / 100));', 50);
+
+
+            if (nModeBanner == 0) {
+
+                objPlayLog.PLAY_TIME = palyData.PLAY_TIME;
+                _timeIdl = setTimeout("AutoPlay();", palyData.PLAY_TIME * 1000);
+            }
+            else {
+                objPlayLog.PLAY_TIME = bannerTime / 1000;
+                _timeIdl = setTimeout("AutoPlay();", bannerTime);
+            }
+            //setTimeout("", 500);
+            // setTimeout("AutoPlay();", 5 * 1000);
+
+        } else if (palyData.CONTENT_TYPE == 2) //동영상일 경우
+        {
+            objPlayLog.PLAY_TYPE = 3;
+            objPlayLog.PLAY_TYPE_NAME = getCommonName("P004", objPlayLog.PLAY_TYPE);
+            objPlayLog.AD_CODE = palyData.list[0].AD_CODE;
+            objPlayLog.TITLE = palyData.list[0].TITLE;
+            var extension = palyData.list[0].LOGO_URL.substr(palyData.list[0].LOGO_URL.lastIndexOf('.') + 1);
+            $("#dvMovie source").attr("type", "video/" + extension);
+            $("#dvMovie source").attr("src", palyData.list[0].LOGO_URL);
+            $("#dvMovie video")[0].load();
+            $('#dvMovie video').trigger('play');
+
+            $('#dvMovie').height($(document).height());
+            $("#dvMovie").show();
+            objPlayLog.PLAY_TIME = $('#dvMovie video')[0].duration;
+            /*  $("#dvMovie").click(function () {
+                  itemClick(palyData.list[0].CONTENT_URL);
+              })
+              btnDetailClick(palyData.list[0].CONTENT_URL);*/
+        } else if (palyData.CONTENT_TYPE == 3) // 유투브일 경우
+        {
+            objPlayLog.PLAY_TYPE = 3;
+            objPlayLog.PLAY_TYPE_NAME = getCommonName("P004", objPlayLog.PLAY_TYPE);
+            objPlayLog.AD_CODE = palyData.list[0].AD_CODE;
+            objPlayLog.TITLE = palyData.list[0].TITLE;
+            $("#dvYoutube").height($(document).height());
+            $("#dvYoutube").show();
+            onYouTubePlayerAPIReady2(palyData.list[0].LOGO_URL);
+
+            /*$("#dvYoutube").click(function () {
+                itemClick(palyData.list[0].CONTENT_URL);
+            })
+            btnDetailClick(palyData.list[0].CONTENT_URL);*/
+
+        }
+    }
+    function btnDetailClick(url) {
+        /* $(".btnDetail").unbind("click");
+         $(".btnDetail").show();
+         $(".btnDetail").click(function () { itemClick(url); })*/
+
+    }
+    function itemClick(obj,url, idx, bannerKind) {
+        idx = idx == undefined ? 0 : idx;
+        localboxclearTimeout();
+        var _waiting_time = @(string.IsNullOrEmpty(SessionHelper.PAGE_WAITING_TIME)? "60": SessionHelper.PAGE_WAITING_TIME.ToString());
+        if (bannerKind == 1) {
+            groupList[nAutoPlayMain].list[idx].CLICK_CNT = groupList[nAutoPlayMain].list[idx].CLICK_CNT + 1;
+            
+            sessionStorage.setItem("groupList", JSON.stringify(groupList));
+        }
+        else {
+            bannerList[nAutoPlayBanner].list[idx].CLICK_CNT = bannerList[nAutoPlayBanner].list[idx].CLICK_CNT + 1;
+            sessionStorage.setItem("bannerList", JSON.stringify(bannerList));
+        }
+
+        var nCnt = Number($(obj).find(".spClickCnt").text()) + 1;
+
+        $(obj).find(".spClickCnt").text(String(nCnt));
+
+        setHash(location.href+"_")
+        if (url.indexOf('?') > 0) {
+            location.href = url + "&view=back&time=" + _waiting_time + "&deviceCode=" + @device.DEVICE_CODE.ToString("-1") ;
+        }
+        else {
+            location.href = url + "?view=back&time=" + _waiting_time + "&deviceCode=" + @device.DEVICE_CODE.ToString("-1");
+        }
+       
+    }
+
+    function sliderInit() {
+        $('.slider').each(function () {
+            $(this).slick({
+                autoplay: true,
+                autoplaySpeed: sliderSpeed,
+                dots: false,
+                infinite: true,
+                speed: 2000,
+                cssEase: 'linear',
+                fade: true,
+                arrows: false,
+                slidesToShow: 1,
+                slidesToScroll: 1,
+                rows: 0
+            });
+        });
+    }
+
+    function setBannerItem(data) {
+        var tmpHtml = "";
+        if (data == undefined) return;
+
+        if (objPlayLog.FRAME_TYPE == 12) {
+            if (data.BANNER_TYPE == 1) {/*제목이미지*/
+                tmpHtml += "<table class='item'>";
+                tmpHtml += "<tr><td><h1>" + data.TITLE + "</h2></td><td rowspan='3' style='width:40%'><img  src='" + data.LOGO_URL + "' style='width:100%; height:100%;max-height:17em;' /></td></tr>";
+                tmpHtml += "<tr><td class='subtitle'>" + data.SUB_TITLE + "</td></tr>";
+                tmpHtml += "<tr><td class='companyname,favoriteIcon'>" + data.COMPANY_NAME + "&nbsp;&nbsp;&nbsp;<i class='heart icon'></i><span class='spClickCnt'>" + String(data.FAVORITE_CNT) + "</span> <i class='bookmark icon'></i> " + String(data.BOOKMARK_CNT) + "</td></tr>";
+                tmpHtml += "</table>";
+            } else if (data.BANNER_TYPE == 2) { /*제목*/
+                tmpHtml += "<table class='item' style='width:100%; height:100%;border=0;'>";
+                tmpHtml += "<tr><td ><h1>" + data.TITLE + "</h1></td></tr>";
+                tmpHtml += "<tr><td class='subtitle'>" + data.SUB_TITLE + "</td></tr>";
+                tmpHtml += "<tr><td class='companyname,favoriteIcon'>" + data.COMPANY_NAME + "&nbsp;&nbsp;&nbsp;<i class='heart icon'></i><span class='spClickCnt'>" + String(data.FAVORITE_CNT) + "</span> <i class='bookmark icon'></i> " + String(data.BOOKMARK_CNT) + "</td></tr>";
+                tmpHtml += "</table>";
+            }
+            else {/*이미지*/
+                tmpHtml += "<img  src='" + data.LOGO_URL + "' style='width:100%; height:100%;' />";
+            }
+        } else {
+            if (data.BANNER_TYPE == 1) {/*제목이미지*/
+                tmpHtml += "<table class='item' style='width:100%; height:100%;border=0;'>";
+                tmpHtml += "<tr style='height:60%'><td class='padding0' colspan='2'><img  src='" + data.LOGO_URL + "' style='width:100%; height:auto' /></td></tr>";
+                tmpHtml += "<tr><td colspan='2'><h1>" + data.TITLE + "</h1></td></tr>";
+                tmpHtml += "<tr><td colspan='2' class='subtitle'>" + data.SUB_TITLE + "</td></tr>";
+                tmpHtml += "<tr><td class='companyname'>" + data.COMPANY_NAME + "</td><td class='favoriteIcon'><i class='heart icon'></i><span class='spClickCnt'>" + String(data.FAVORITE_CNT) + "</span><i class='bookmark icon'></i> " + String(data.BOOKMARK_CNT) + "</td></tr>";
+                tmpHtml += "</table>";
+            } else if (data.BANNER_TYPE == 2) { /*제목*/
+                tmpHtml += "<table class='item' style='width:100%; height:100%;border=0;'>";
+                tmpHtml += "<tr><td colspan='2'><h1>" + data.TITLE + "</h1></td></tr>";
+                tmpHtml += "<tr><td colspan='2' class='subtitle'>" + data.SUB_TITLE + "</td></tr>";
+                tmpHtml += "<tr><td class='companyname'>" + data.COMPANY_NAME + "</td><td class='favoriteIcon'><i class='heart icon'></i><span class='spClickCnt'>" + String(data.FAVORITE_CNT) + "</span><i class='bookmark icon'></i> " + String(data.BOOKMARK_CNT) + "</td></tr>";
+                tmpHtml += "</table>";
+            }
+            else {/*이미지*/
+                tmpHtml += "<img  src='" + data.LOGO_URL + "' style='width:100%; height:100%;' />";
+            }
+        }
+        return tmpHtml;
+    }
+        /*Video Event start*/
+    function videoend(event) {
+        objPlayLog.PLAY_TIME = $('#dvMovie video')[0].duration;
+        //adPlayLogSave();
+        AutoPlay();
+    }
+
+
+    function videoError(event) {
+        FileSkipAfterError();
+    }
+            /*Video Event end*/
+    var player = null;
+    var _contentId;
+    function onYouTubePlayerAPIReady2(contentId) {
+        /*  if (contentId == undefined || contentId == null || contentId == "") {
+              AutoPlay();
+              return;
+          }*/
+        _contentId = contentId;
+        //$("#dvYoutube").html('<iframe id="gangnamStyleIframe" width="560" height="315" src="https://www.youtube.com/embed/' + _contentId + '?rel=0&enablejsapi=1" frameborder="0" allowfullscreen></iframe>')
+        try {
+            if (player == null || player == undefined) {
+                try {
+                    player = new YT.Player('dvYoutube', {
+                        height: '100%',
+                        width: '100%',
+                        playerVars: { 'autoplay': 1, 'controls': 0 }, /// { 'autoplay': 1, 'controls': 0 }
+                        host: 'https://www.youtube.com',
+                        videoId: _contentId,
+                        autoplay: true,
+                        rel: 0, //0으로 해놓아야 재생 후 관련 영상이 안뜸
+                        events: {
+                            'onReady': onPlayerReady,               // 플레이어 로드가 완료되고 API 호출을 받을 준비가 될 때마다 실행
+                            'onStateChange': onPlayerStateChange,
+                            'onError': onPlayerError
+                        }
+                    });
+                } catch (e) {
+                    setTimeout("youtubePlay();", 100);
+                }
+            } else {
+                youtubePlay();
+            }
+        } catch (e) {
+            //  alert(e);
+        }
+    }
+
+    function youtubePlay() {
+        player.loadVideoById({
+            host: 'https://www.youtube.com',
+            'videoId': _contentId, //0으로 해놓아야 재생 후 관련 영상이 안뜸
+            events: {
+                'onReady': onPlayerReady,               // 플레이어 로드가 완료되고 API 호출을 받을 준비가 될 때마다 실행
+                'onStateChange': onPlayerStateChange,
+                'onError': onPlayerError
+            }
+        });
+    }
+    function onPlayerReady(event) {
+        event.target.playVideo();
+        // objPlayLog.PLAY_TIME = event.target.getDuration();
+        //youtubePlay();
+    }
+    function onPlayerStateChange(event) {
+        if (event.data === 0) {
+            objPlayLog.PLAY_TIME = event.target.getDuration();
+            //adPlayLogSave();
+            AutoPlay();
+        }
+    }
+    function onPlayerError(event) {
+        FileSkipAfterError();
+    }
+    function FileSkipAfterError() {
+        BannerHide(groupList[nAutoPlayMain]);
+        jsonList = BaseCommon.ArrayInfo.Remove(groupList, nAutoPlayMain);
+        //nAutoPlayMain = nAutoPlayMain + 1;
+    }
+
+    function adPlayLogSave() {
+        var param = new Object();
+        
+        param.DEVICE_CODE = @device.DEVICE_CODE;
+        param = objPlayLog;
+        param = JSON.stringify(param);
+
+        ajax.GetAjax("/device/adPlaylogSave", param, "json", function (result) {
+            if (result.ERROR_MESSAGE != "") {
+                $.MessageBox(result.ERROR_MESSAGE);
+            }
+        }, true, null, false);
+    }
+    function BannerHide() {
+    }
+
+    </script>
+}

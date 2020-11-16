@@ -1,0 +1,425 @@
+﻿@using ALT.VO.Common;
+@using ALT.BizService;
+
+
+@section scripts{
+    <style>
+        .ui.mini.image, .ui.mini.images .image, .ui.mini.images img, .ui.mini.images svg {
+            height: 32px;
+            width: auto;
+        }
+
+        @@media screen and (max-width: 600px) {
+            .ui.pagination.menu .first, .ui.pagination.menu .last {
+                display: none;
+            }
+        }
+    </style>
+    <script type="text/javascript">
+
+        $(document).ready(function () {
+            doQuery();
+
+            $("#DEPT_CODE,#COMP_TITLE").change(function () {
+                doQuery(1);
+                doQuery2(1);
+            })
+            pageResize();
+
+            $("#LOCAL_NAME1").keyup(function (e) {
+                if (e.keyCode != 13) {
+                    PARAM_DATA1.SEARCH_CATEGORY_CODE = "";
+                }
+                return false;
+            });
+
+            $("#STORE_DEVICE_NAME").keyup(function (e) {
+                if (e.keyCode == 13) {
+                    doQuery(1);
+                }
+            });
+
+            $("#TITLE").keyup(function (e) {
+                if (e.keyCode == 13) {
+                    doQuery2(1);
+                }
+            });
+            $("#REP_CATEGORY_CODE").change(function () {
+
+                var data = $.mrc_table.GetActiveRowData("#dvTable table");
+                if (data.length > 0) doQuery2(PARAM_DATA2.PAGE, data[0].DEVICE_CODE);
+            })
+
+            $("#IS_AD_DEVICE").parent().checkbox({
+                onChange: function () {
+                    try {
+
+                        doQuery2(1);
+                    } catch (e) { }
+                }
+            });
+        }); //End document.ready
+
+        $(window).resize(function () {
+
+            pageResize();
+        });
+
+        function pageResize() {
+
+            if ($(window).width() <= 370) {
+
+                PARAM_DATA1.PAGE_SIZE = 1;
+                $("#dvpagination").pagination({
+                    total: PARAM_DATA1.TOTAL, page: PARAM_DATA1.PAGE, pagesize: PARAM_DATA1.PAGE_SIZE, perpage: PARAM_DATA1.PAGE_COUNT
+                       , onPageClick: function (item, page) {
+                           doQuery(page);
+                       }
+                })
+                PARAM_DATA2.PAGE_SIZE = 3;
+                $("#dvpagination2").pagination({
+                    total: PARAM_DATA2.TOTAL, page: PARAM_DATA2.PAGE, pagesize: PARAM_DATA2.PAGE_SIZE, perpage: PARAM_DATA2.PAGE_COUNT
+                   , onPageClick: function (item, page) {
+                       doQuery2(page, PARAM_DATA2.SEARCH_DATA);
+                   }
+                })
+
+            }
+            else if ($(window).width() <= 400) {
+                PARAM_DATA1.PAGE_SIZE = 2;
+                $("#dvpagination").pagination({
+                    total: PARAM_DATA1.TOTAL, page: PARAM_DATA1.PAGE, pagesize: PARAM_DATA1.PAGE_SIZE, perpage: PARAM_DATA1.PAGE_COUNT
+                       , onPageClick: function (item, page) {
+                           doQuery(page);
+                       }
+                })
+                PARAM_DATA2.PAGE_SIZE = 5;
+                $("#dvpagination2").pagination({
+                    total: PARAM_DATA2.TOTAL, page: PARAM_DATA2.PAGE, pagesize: PARAM_DATA2.PAGE_SIZE, perpage: PARAM_DATA2.PAGE_COUNT
+                   , onPageClick: function (item, page) {
+                       doQuery2(page, PARAM_DATA2.SEARCH_DATA);
+                   }
+                })
+            }
+            else if ($(window).width() <= 800) {
+            }
+            else {
+
+                PARAM_DATA1.PAGE_SIZE = 5;
+                $("#dvpagination").pagination({
+                    total: PARAM_DATA1.TOTAL, page: PARAM_DATA1.PAGE, pagesize: PARAM_DATA1.PAGE_SIZE, perpage: PARAM_DATA1.PAGE_COUNT
+                       , onPageClick: function (item, page) {
+                           doQuery(page);
+                       }
+                })
+                PARAM_DATA2.PAGE_SIZE = 10;
+                $("#dvpagination2").pagination({
+                    total: PARAM_DATA2.TOTAL, page: PARAM_DATA2.PAGE, pagesize: PARAM_DATA2.PAGE_SIZE, perpage: PARAM_DATA2.PAGE_COUNT
+                   , onPageClick: function (item, page) {
+                       doQuery2(page, PARAM_DATA2.SEARCH_DATA);
+                   }
+                })
+            }
+        }
+
+
+        function mrc_table_trClick(objName, param) {
+
+
+            if (objName == "#dvTable table") {
+
+                var data = $.mrc_table.GetActiveRowData("#dvTable table");
+
+
+                doQuery2(1, data[0].DEVICE_CODE);
+
+            }
+        }
+
+
+        var PARAM_DATA1 = {
+            PAGE_SIZE: 5
+          , PAGE_COUNT: 15
+          , PAGE: 1
+          , SEARCH_CATEGORY_CODE: ""
+          , STORE_DEVICE_NAME: ""
+          , TOTAL: 0
+          , SORT : "A.UPDATE_DATE DESC"
+        }
+
+        function LOCAL_NAME1_callback(result) {
+            PARAM_DATA1.SEARCH_CATEGORY_CODE = result.CODE;
+            doQuery();
+        }
+        function doQuery(page1, sSort) {
+
+            if (sSort == undefined) {
+                PARAM_DATA1.SORT = "A.UPDATE_DATE DESC"
+            }
+            else
+                PARAM_DATA1.SORT = sSort;
+
+            if (page1 == undefined) PARAM_DATA1.PAGE = 1;
+            else PARAM_DATA1.PAGE = page1;
+
+            PARAM_DATA1.STORE_DEVICE_NAME = $("#STORE_DEVICE_NAME").val();
+            var param = JSON.stringify(PARAM_DATA1);
+
+            ajax.GetAjax("/basic/pv_DeviceMainDeviceList", param, "html", function (result) {
+                if (PARAM_DATA1.SEARCH_CODE == "") $("#LOCAL_NAME1").val("");
+                $("#tbSearchList").html(result);
+                $("#dvpagination").show();
+                PARAM_DATA1.TOTAL = Number($("#total").val());
+
+                $("#dvpagination").pagination({
+                    total: PARAM_DATA1.TOTAL, page: PARAM_DATA1.PAGE, pagesize: PARAM_DATA1.PAGE_SIZE, perpage: PARAM_DATA1.PAGE_COUNT
+                    , onPageClick: function (item, page) {
+                        doQuery(page, PARAM_DATA1.SORT);
+                    }
+                })
+                $("#dvpagination").css("display", "");
+
+
+                $.mrc_table.Init("#dvTable table", false, PARAM_DATA1.SORT);
+                doQuery2(-1);
+            });
+        }
+
+        var PARAM_DATA2 = {
+
+            PAGE_SIZE: 5
+            , PAGE_COUNT: 15
+            , PAGE: 1
+            , TOTAL: 0
+            , DEVICE_CODE: "0"
+            , SORT: "AD_CODE DESC"
+        }
+        function doQuery2(page, deviceCde, sSort) {
+
+            Input.CheckBox.Checked("chkAll", false);
+            var arrdata = $.mrc_table.GetActiveRowData("#dvTable table");
+            if (page > 0 && arrdata.length == 0) {
+                $.MessageBox("검색할 기기(왼쪽리스트)을 선택하세요");
+                return;
+            }
+
+            var param = new Object();
+            if (page <= 0) deviceCde = 0;
+            //var arrdata = $.mrc_table.GetActiveRowData("#dvTable table");
+            if (!(deviceCde == undefined || deviceCde == "")) PARAM_DATA2.DEVICE_CODE = deviceCde;
+            if (sSort != undefined) PARAM_DATA2.SORT = sSort;
+            if (page != undefined) PARAM_DATA2.PAGE = page;
+            param = PARAM_DATA2;
+            param.TITLE = $("#TITLE").val();
+            param.REP_CATEGORY_CODE = $("#REP_CATEGORY_CODE").val();
+            param.DEVICE_NAME = $("#DEVICE_NAME").val();
+           
+
+            param = JSON.stringify(param);
+            ajax.GetAjax("/basic/pv_DeviceMainShareList", param, "html", function (result) {
+                $("#dvTable2 table tbody").html(result);
+                PARAM_DATA2.TOTAL = Number($("#total2").val());
+
+                $("#dvpagination2").show();
+                $("#dvpagination2").pagination({
+                    total: PARAM_DATA2.TOTAL, page: PARAM_DATA2.PAGE, pagesize: PARAM_DATA2.PAGE_SIZE, perpage: PARAM_DATA2.PAGE_COUNT
+                    , onPageClick: function (item, page) {
+                        doQuery2(page, PARAM_DATA2.SEARCH_DATA);
+                    }
+                })
+
+                $.mrc_table.Init("#dvTable2 table", true, PARAM_DATA2.SORT);
+
+          
+
+                $("#chkAll").click(function () {
+                    Input.CheckBox.CheckedAll("chkUse", Input.CheckBox.isChecked($(this).attr("id")));
+                    $("#dvTable2 table.list tbody .editableCheck").each(function () {
+                        $(this).find(".editMode").text("U");
+                    });
+
+                    $("#dvTable2 table.list tbody tr.trInputHIde td:eq(0) input").hide();
+                })
+            });
+        }
+
+        function doSave() {
+            
+            var arrdata = $.mrc_table.GetActiveRowData("#dvTable table");
+            if (arrdata.length == 0) {
+                $.MessageBox("적용할 기기(왼쪽리스트)을 선택하세요");
+                return;
+            }
+            
+            var arrSaveData = $.mrc_table.GetCheckedData("#dvTable2 table");
+
+            if (arrSaveData.length == 0) {
+                $.MessageBox("요청할 데이터가 없습니다.");
+                return;
+            }
+
+            $.MessageBox({
+                buttonDone: "예",
+                buttonFail: "아니오",
+                message: "요청하시겠습니까?"
+            }).done(function () {
+                var param = new Object();
+                param.list = arrSaveData;
+                param.TARGET_DEVICE_CODE = arrdata[0].DEVICE_CODE;
+                param = JSON.stringify(param);
+
+                ajax.GetAjax("/basic/DeviceMainShareReqSave", param, "json", function (result) {
+                    if (result.ERROR_MESSAGE != "") {
+                        $.MessageBox(result.ERROR_MESSAGE);
+                    }
+                    else {
+                        doQuery2(PARAM_DATA2.PAGE, $.mrc_table.GetActiveRowData("#dvTable table")[0].DEVICE_CODE);
+                    }
+                });
+            }).fail(function () {
+
+            });
+            return false;
+        }
+
+        function mrcGrid_Sort(gridName, columnName, orderType) {
+            if (gridName == "#dvTable table")
+            {
+                var sSort = (orderType == undefined || orderType == "") ? "A.UPDATE_DATE DESC" : columnName + " " + orderType;
+                doQuery(1, sSort);
+            }
+            else if (gridName == "#dvTable2 table")
+            {
+                var sSort = (orderType == undefined || orderType == "") ? "A.AD_CODE DESC" : columnName + " " + orderType;
+                doQuery2(1,PARAM_DATA2.SEARCH_DATA, sSort )
+            }
+            //var sSort = (orderType == undefined || orderType == "") ? "UPDATE_DATE DESC" : columnName + " " + orderType;
+            //doQuery(1, sSort)
+        }
+
+
+    </script>
+}
+<style>
+    .ui.checkbox {
+        margin-top: 0.5em;
+    }
+
+    #dvTable, #dvTable2 {
+        min-height: 100px;
+    }
+
+    @@media only screen and (max-width: 1023px) {
+        .ui.table tr.search td.content {
+            display: flex !important;
+        }
+    }
+</style>
+<div class="ui vertical stripe segment">
+    @Html.TitleNavigation()
+    <form class="ui medium form" onSubmit="return false;">
+
+        <div class="ui stackable grid">
+            <div class="six wide column">
+                <div class="one column row">
+                    <div class="column">
+                        <table class="ui  table">
+                            <tbody>
+                                <tr class="search">
+                                    <td class="content" style="min-width:150px;">
+                                        @Html.AutoCompleate("LOCAL_NAME1", "/common/PV_LocalNameList")
+                                    </td>
+                                    <td>
+                                        @Html.Semantic_TextBox("STORE_DEVICE_NAME", "", SemanticUIHelper.Size.medium, new { @placeholder = "지점명 또는 기기명 검색" })
+                                    </td>
+                                    <td class="buttons">
+                                        @Html.Semantic_Button2("btnSearch", "검색", SemanticUIHelper.enButtonType.Normal, SemanticUIHelper.Size.medium, new { @style = "height:29.5px;min-width:55px", @onclick = "doQuery(1);" })
+                                    </td>
+                                </tr>
+                        </table>
+
+
+                        @*<div class="ui accordion field" style="padding-bottom:1em;">
+                                <div class="title ">
+                                    <i class="icon dropdown"></i>
+                                    추가조건
+                                </div>
+                                <div class="content field ">
+                                    <input placeholder="Maiden Name" type="text" class="transition visible" style="display: inline-block !important;">
+                                </div>
+                            </div>*@
+                    </div>
+                </div>
+                <div id="dvTable" class="one column row">
+                    <table id="tableList1" class="mrc-table">
+                        <thead>
+                            <tr>
+                                <th column_name="DEVICE_NAME" class="sort" data-sort="A.DEVICE_NAME">기기명</th>
+                                <th column_name="DEVICE_CODE" class="sort" data-sort="A.DEVICE_CODE" display_size="pc">기기코드</th>
+                                <th column_name="STORE_NAME" class="sort" data-sort="B.STORE_NAME" display_size="tablet">지점명</th>
+                                <th column_name="ADDRESS" display_size="detail">주소</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tbSearchList"></tbody>
+                    </table>
+
+                </div>
+                <div class="one column row" style="padding-top:0.5em">
+                    <div id="dvpagination" class="ui floated pagination menu"></div>
+                </div>
+            </div>
+            <div class="ten wide column">
+                <div class="one column row">
+                    <div class="column">
+                        <table class="ui  table">
+                            <tbody>
+                                <tr class="search">
+                                    <td class="content" style="width:150px;">
+                                        @{
+                                            var cboCatetgory = new loggalServiceBiz.CategoryService().GetCategoryList(new ALT.VO.loggal.CATEGORY_COND() { CATEGORY_TYPE = 1 })
+                                                               .Select(s => new SelectListItem { Value = s.CATEGORY_CODE.ToString(), Text = s.CATEGORY_NAME }).ToList();
+                                        }
+                                        @Html.CommonComboNormal("REP_CATEGORY_CODE", cboCatetgory, "", "-대표카테고리-", new { @class = "size150" })
+                                    </td>
+                                    <td class="content" style="width:180px;">@Html.Semantic_TextBox("TITLE", "", new { @placeholder = "제목을 입력하세요" }) </td>
+                                    <td class="content">
+                                        @Html.Semantic_TextBox("DEVICE_NAME", "", new { @placeholder = "기기명을 입력하세요" })
+                                    </td>
+                                    <td class="buttons"> @Html.Semantic_Button2("btnSearch2", "검색", SemanticUIHelper.enButtonType.Normal, SemanticUIHelper.Size.medium, new { @style = "height:29.5px;min-width:55px", @onclick = "doQuery2(1);" })@Html.Semantic_Button2("btnSave", "요청", SemanticUIHelper.enButtonType.Save, SemanticUIHelper.Size.medium, new { onclick = "doSave();" })</td>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                    </div>
+                </div>
+                <div id="dvTable2">
+                    <table class="mrc-table list">
+                        <thead>
+                            <tr>
+                                @*<th column_name="HIDE" style="width:60px;"><input type="checkbox" id="chkAll" /></th>*@
+                                <th column_name="SHARE_STATUS_NAME">상태</th>
+                                <th class="hide" column_name="DEVICE_CODE">기기코드</th>
+                                <th column_name="DEVICE_NAME">기기명</th>
+                                <th column_name="SEQ" class="hide">순번</th>
+                                <th column_name="AD_CODE" display_size="tablet" class="sort" style="width:4em;">코드</th>
+                                <th column_name="LOGO" display_size="tablet" style="width:5em;">로고</th>
+                                <th column_name="COMPANY_CODE" display_size="tablet" class="sort hide">업체코드</th>
+                                <th column_name="COMPANY_NAME" display_size="tablet" class="sort">관리업체</th>
+                                <th column_name="TITLE" class="sort">제목</th>
+                                <th column_name="FR_DATE" display_size="detail" class="sort">시작일</th>
+                                <th column_name="TO_DATE" display_size="detail" class="sort">종료일</th>
+                                <th column_name="USER_CODE" display_size="detail" class="hide sort">등록자코드</th>
+                                <th column_name="USER_NAME" display_size="detail" class="sort">등록자</th>
+
+                            </tr>
+                        </thead>
+                        <tbody id="tbList"></tbody>
+                    </table>
+                    <center style="padding-top:0.5em">
+                        <div id="dvpagination2" class="ui floated pagination menu"></div>
+                    </center>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>

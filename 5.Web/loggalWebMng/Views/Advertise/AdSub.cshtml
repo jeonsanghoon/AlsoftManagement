@@ -1,0 +1,111 @@
+﻿@using System.Linq;
+@{
+    Layout = "~/Views/Shared/_Layout_webview.cshtml";
+
+    IList<T_AD_SUB> list = ViewBag.data;
+    
+
+
+
+}
+<style>
+    .ui.cards.list {
+        margin: 1em;
+    }
+
+    .discription {
+        font-size: 1.5em;
+        font-weight: 700;
+        line-height:160%;
+        text-align:left;
+      
+    }
+</style>
+
+<div id="dvlist">
+    @{
+        foreach (T_AD_SUB data in list)
+        {
+            <div class="ui card">
+                <input type="hidden" name="IDX" value="@data.IDX" />
+                <input type="hidden" name="subdata" value="@Json.Encode(data)" />
+                <div class="image">
+                    <img src="@data.IMG_URL" style="height:300px;margin:auto;">
+                    <input type="hidden" name="IDX" value="@data.IDX" />
+
+                </div>
+                <div class="content">
+                    @*<a class="header">@data.TITLE</a>
+                        <div class="meta">
+                            <span class="date">@data.RELATION</span>
+                        </div>*@
+                    <div class="header">
+                        @Html.Raw(data.CONTENT.Replace("\n", "<br/>"))
+                    </div>
+                </div>
+                <div class="extra content">
+                    <a>
+                        <i class="user icon"></i>
+                        &nbsp;@data.REG_NAME
+                        <span class="right floated">
+                            @(data.UPDATE_DATE.ToString("yyy.MM.dd"))
+                        </span>
+                    </a>
+                  
+                </div>
+            </div>
+
+
+
+        }
+    }
+</div>
+<script type="text/javascript">
+    $("document").ready(function () {
+        setSize();
+        BaseCommon.LoadingBar.Show();
+    })
+
+    $(window).resize(function () {
+        setSize();
+    });
+
+    function setSize() {
+        $("#dvlist").removeAttr('class');
+
+        if ($(window).width() >= 1700) {
+            $("#dvlist").attr("class", "ui five cards list");
+        }
+        else if ($(window).width() >= 1200) {
+            $("#dvlist").attr("class", "ui four cards list");
+        }
+        else if ($(window).width() >= 900) {
+            $("#dvlist").attr("class", "ui three cards list");
+        }
+        else if ($(window).width() >= 500) {
+            $("#dvlist").attr("class", "ui two cards list");
+        }
+        else {
+            $("#dvlist").attr("class", "ui one cards list");
+        }
+        //var nHeight;
+        //if ($(window).width() >= $(window).height()) {
+        //    $("#dvlist").addClass("ui two cards list");
+        //    nHeight = (($(window).height() - 25) / 2) - 25;
+        //}
+        //else {
+        //    $("#dvlist").addClass("ui one cards list");
+        //    nHeight = (($(window).height() - 25) / 4) - 25;
+        //}
+
+    
+        //$(".ui.card").height(nHeight);
+        //nHeight = nHeight - 50;
+        //$(".ui.card table tr td").height(nHeight);
+    }
+    $(window).load(function () {
+        BaseCommon.LoadingBar.Hide();
+    });
+
+
+</script>

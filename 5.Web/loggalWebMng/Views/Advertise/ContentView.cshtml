@@ -1,0 +1,299 @@
+﻿@using ALT.VO.loggal
+@using ALT.Framework;
+@{
+    Layout = null;
+    T_AD data = (ViewBag.data == null) ? new T_AD() { AD_CODE = 0, TITLE = "", CONTENT = "" } : ViewBag.data;
+
+    data.CONTENT = (data.CONTENT == null) ? "" : data.CONTENT.Replace("../../Files/", "/Files/").Replace("../Files/", "/Files/").Replace("img src=\"/Files/", "img src=\"" + Global.ConfigInfo.MANAGEMENT_SITE + "/Files/");
+
+    string viewMode = Request["view"] == null ? "" : Request["view"].ToString();
+
+    viewMode = viewMode.Replace(";", "");
+    string waitingTime = string.IsNullOrEmpty(Request["time"]) ? "60" : Request["time"].ToString();
+    Response.Buffer = true;
+    long? deviceCode = ViewBag.deviceCode;
+
+}
+
+<link href="//www.tinymce.com/css/codepen.min.css" rel='stylesheet' type='text/css'>
+<link href="//fonts.googleapis.com/earlyaccess/nanumgothic.css" rel='stylesheet' type='text/css'>
+<link href="//fonts.googleapis.com/earlyaccess/nanummyeongjo.css" rel='stylesheet' type='text/css'>
+<link href="//fonts.googleapis.com/earlyaccess/nanumgothiccoding.css" rel='stylesheet' type='text/css'>
+<link href="//fonts.googleapis.com/earlyaccess/nanumbrushscript.css" rel='stylesheet' type='text/css'>
+<link href="//fonts.googleapis.com/earlyaccess/nanumpenscript.css" rel='stylesheet' type='text/css'>
+<link href="//fonts.googleapis.com/earlyaccess/jejugothic.css" rel='stylesheet' type='text/css'>
+<link href="//fonts.googleapis.com/earlyaccess/jejuhallasan.css" rel='stylesheet' type='text/css'>
+<link href="//fonts.googleapis.com/earlyaccess/jejumyeongjo.css" rel='stylesheet' type='text/css'>
+<link href="//fonts.googleapis.com/earlyaccess/hanna.css" rel='stylesheet' type='text/css'>
+<link href="//fonts.googleapis.com/earlyaccess/kopubbatang.css" rel='stylesheet' type='text/css'>
+<link href="//fonts.googleapis.com/earlyaccess/notosanskr.css" rel='stylesheet' type='text/css'>
+
+<style>
+    @{
+
+        if (data.CONTENT != null)
+        {
+            <text>
+            img{
+                width:100%; height:auto; object-fit:contain;
+            }
+
+            .social img {
+                width:auto; height:auto; object-fit:none;
+            }
+            </text>
+        }
+        }
+
+
+</style>
+<style>
+    body, html {
+        height: 100%;
+       width:100%;
+        background: #000000;
+        padding:0em!important;
+    }
+
+
+    .backbutton {
+        top: 5px;
+        left: 20px; /*위에 올라가는 레이어의 포지션은 top, bottom 둘 중 하나, left, right 둘 중 하나의 속성을 선택하여 잡아준다.*/
+        background-color: white;
+        cursor: pointer;
+        font-size: 2em !important;
+        position: fixed;
+        margin-right: 0em;
+        padding-top: 0.17em;
+        opacity: 0.65 !important;
+    }
+      .playviewer {
+        background-color:black;
+    }
+</style>
+
+<link href="~/Common/plugin/css/messagebox.css" rel='stylesheet' type='text/css'>
+<link href="~/Common/plugin/css/semantic.min.css" rel='stylesheet' type='text/css'>
+<script src="https://code.jquery.com/jquery-2.2.4.min.js" integrity="sha256-BbhdlvQf/xTY9gja0Dq3HiwQF8LaCRTXxZKRutelT44=" crossorigin="anonymous"></script>
+
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jquery-cookie/1.4.1/jquery.cookie.js"></script>
+<script type="text/javascript" src="https://www.youtube.com/iframe_api"></script>
+<!--Message Box-->
+<script src="~/Common/plugin/js/messagebox.min.js"></script>
+<!--공통코드-->
+<script src="~/Common/js/Common.js?ver=20161207_1"></script>
+<script>
+    $("document").ready(function () {
+        // BaseCommon.LoadingBar.Show();
+    });
+</script>
+@{
+    if (viewMode == "back")
+    {
+        <i class="backbutton arrow alternate circle left outline icon"></i>
+    }
+}
+<div id="dvBody">
+    @{
+
+        if (data.BANNER_TYPE2 == 2)
+        {
+            <div id="dvMovie" class="playviewer" style="width:100%;height:100%;background-color:black;">
+                <video muted autoplay style="height:100%;width:100%;background-color:black" id="vdoPreview" autoplay="autoplay" onerror="videoError(event);">
+                    <source id="movie_src" type="video/mp4">
+                </video>
+            </div>
+            <script>
+
+
+                $(document).ready(function () {
+                    @{
+                        var arrLogoData = @data.LOGO_URL.Split('.');
+                    }
+                    $("#dvMovie source").attr("type", "video/" + "@arrLogoData[arrLogoData.Length-1]");
+                    $("#dvMovie source").attr("src", "@data.FILE_URL");
+                    $("#dvMovie video")[0].load();
+                    $('#dvMovie video').trigger('play');
+
+                    $('#dvMovie').height($(document).height());
+                });
+                function videoError(event) {
+                    {
+                        alert("재생할 수 없습니다.");
+                        window.history.back();
+                    }
+            </script>
+        }
+        else if (data.BANNER_TYPE2 == 3)
+        {
+            <div id="dvYoutube" style="width:100%;height:100%;  background-color:black" class="playviewer"></div>
+            <script>
+
+                $(document).ready(function () {
+                    $("#dvYoutube").height($(document).height());
+                    $("#dvYoutube").show();
+                     readyYoutube();
+                    
+                });
+
+                function readyYoutube() {
+                    if ((typeof YT !== "undefined") && YT && YT.Player) {
+                        //alert("readyYoutube");+
+                        //InitView();
+                        onYouTubePlayerAPIReady2("@data.FILE_URL");
+                    } else {
+                        setTimeout("readyYoutube()", 200);
+                    }
+                }
+
+                var player = null;
+                var _contentId;
+                function onYouTubePlayerAPIReady2(contentId) {
+                    /*  if (contentId == undefined || contentId == null || contentId == "") {
+                          AutoPlay();
+                          return;
+                      }*/
+                    _contentId = contentId;
+                    //$("#dvYoutube").html('<iframe id="gangnamStyleIframe" width="560" height="315" src="https://www.youtube.com/embed/' + _contentId + '?rel=0&enablejsapi=1" frameborder="0" allowfullscreen></iframe>')
+                    try {
+                        if (player == null || player == undefined) {
+                            debugger;
+                            try {
+                                player = new YT.Player('dvYoutube', {
+                                    height: '100%',
+                                    width: '100%',
+                                    playerVars: { 'autoplay': 1, 'controls': 0 }, /// { 'autoplay': 1, 'controls': 0 }
+                                    host: 'https://www.youtube.com',
+                                    videoId: _contentId,
+                                    autoplay: true,
+                                    rel: 0, //0으로 해놓아야 재생 후 관련 영상이 안뜸
+                                    events: {
+                                        'onReady': onPlayerReady,               // 플레이어 로드가 완료되고 API 호출을 받을 준비가 될 때마다 실행
+                                        'onStateChange': onPlayerStateChange,
+                                        'onError': onPlayerError
+                                    }
+                                });
+                            } catch (e) {
+                                setTimeout("youtubePlay();", 100);
+                            }
+                        } else {
+                            youtubePlay();
+                        }
+                    } catch (e) {
+                        //  alert(e);
+                    }
+                }
+
+                function youtubePlay() {
+                    player.loadVideoById({
+                        host: 'https://www.youtube.com',
+                        'videoId': _contentId, //0으로 해놓아야 재생 후 관련 영상이 안뜸
+                        events: {
+                            'onReady': onPlayerReady,               // 플레이어 로드가 완료되고 API 호출을 받을 준비가 될 때마다 실행
+                            'onStateChange': onPlayerStateChange,
+                            'onError': onPlayerError
+                        }
+                    });
+                }
+                function onPlayerReady(event) {
+                    event.target.playVideo();
+                    // objPlayLog.PLAY_TIME = event.target.getDuration();
+                    //youtubePlay();
+                }
+                function onPlayerStateChange(event) {
+                    if (event.data === 0) {
+                        window.history.back();
+                    }
+                }
+                function onPlayerError(event) {
+
+                }
+
+            </script>
+        }
+        else
+        { @Html.Raw(data.CONTENT)}
+    }
+</div>
+@Html.Hidden("AD_CODE", data.AD_CODE)
+@{Html.RenderPartial("~/Views/Shared/Partial/Loader.cshtml"); }
+
+<script type="text/javascript">
+    var timer;
+
+    $(window).on({
+        mousedown: function (event) {
+            drag_x1 = event.offsetX;
+        },
+        mouseup: function (event) {
+            if (event.offsetX - drag_x1 > 100) {
+                timerInit();
+            }
+            if (event.offsetX - drag_x1 < -100) {
+                timerInit();
+            }
+        }
+    });
+    function timerInit() {
+        if (timer != null) {
+            clearTimeout(timer);
+        }
+        timer = setTimeout(function () { window.history.back(); }, @(waitingTime) * 1000);
+    }
+
+
+    $("document").ready(function () {
+        AdContentClickSave();
+        timerInit();
+        $(document).click(function () {
+            timerInit();
+        })
+
+
+        $(".backbutton").click(function () {
+            window.history.back();
+        })
+        try {
+            if ("@viewMode" == "1") {
+                $(".social").hide();
+                $(".dvPhone").hide();
+            }
+            else if ("@viewMode" == "2") { /*SNS Hide*/
+                $(".social").hide();
+            }
+            else if ("@viewMode" == "3") { /*Phone Hide*/
+                $(".dvPhone").hide();
+            }
+            document.title = "@data.TITLE.Replace("\n","").Replace("\r", "")";
+        } catch (e) { }
+        $("body").addClass("mce-content-body");
+        /*$("#dvBody").mouseover(function () {
+            try {
+                window.external.notify(JSON.stringify({ method: "UsingWebView" }));
+            } catch (e) { }
+        });
+        $("#dvBody").mouseout(function () {
+            try {
+                window.external.notify(JSON.stringify({ method: "UsingWebView" }));
+            } catch (e) { }
+
+        });*/
+    })
+
+    $(window).load(function () {
+//        BaseCommon.LoadingBar.Hide();
+    });
+
+    function AdContentClickSave() {
+        var params = new Object();
+            params.DEVICE_CODE =@(deviceCode== null ? null : deviceCode);
+            params.AD_CODE = @(data.AD_CODE== null ? 0 : data.AD_CODE);
+            params = JSON.stringify(params);
+            ajax.GetAjax("/Advertise/AdContentClickSave/", params, "json", function (result) {
+                if (result.ERROR_MESSAGE != "") {
+               //     $.MessageBox(result.ERROR_MESSAGE);
+                }
+            },null, false);
+    }
+
+</script>

@@ -1,0 +1,202 @@
+﻿@{
+
+}
+@section scripts{
+
+    <script type="text/javascript">
+
+        $(document).ready(function () {
+			 ComponentInit();
+            doQuery();
+
+          
+        }); //End document.ready
+
+        function ComponentInit() {
+            $('#FR_DATE').datetimepicker({
+                timepicker: false,
+                format: 'Y.m.d'
+            });
+
+            $('#TO_DATE').datetimepicker({
+                timepicker: false,
+                format: 'Y.m.d'
+            });
+            $(".ui.form input").keyup(function (e) {
+                var code = (e.keyCode ? e.keyCode : e.which);
+                if (code == 13) {
+                    doQuery();
+                }
+			})    
+			PARAM_DATA = $.mrc_table.SetPageSizeObject({ pageParam :PARAM_DATA, searchObjName:".ui.table.search"});	
+        }
+
+
+        var PARAM_DATA = {
+            PAGE_SIZE: 5
+          , PAGE_COUNT: 10
+          , PAGE: 1
+          , SORT_ORDER:""
+        }
+        function doQuery(page, order) {
+            if (page == undefined || page == null || page < 1) page = 1;
+            PARAM_DATA.PAGE = page;
+
+            var param = BaseCommon.FormInfo.serializeJson(".ui.form");
+
+            param.PAGE_COUNT = PARAM_DATA.PAGE_COUNT;
+            param.PAGE = PARAM_DATA.PAGE;
+
+            if (order != undefined) {
+                PARAM_DATA.SORT_ORDER = order;
+                param.SORT_ORDER = order;
+            }
+            else if (order == undefined) {
+                param.SORT_ORDER = PARAM_DATA.SORT_ORDER;
+            }
+
+
+            param = JSON.stringify(param);
+            ajax.GetAjax("/common/pv_logList", param, "html", function (result) {
+				$("#dvTable table tbody").html(result);
+
+				 $.mrc_table.InitObject({
+					 objName: ".mrc-table"
+					 , isDrag: true
+					 , fixedHeader: {
+						   isActive: true
+						 , callback: function () {
+						}
+					 }
+				 });
+
+                $.mrc_table.InitObject(".mrc-table", false, order);
+                $("#dvpagination").show();
+                $("#dvpagination").pagination({
+                    total: Number($("#total").val()), page: PARAM_DATA.PAGE, pagesize: PARAM_DATA.PAGE_SIZE, perpage: PARAM_DATA.PAGE_COUNT
+                    , onPageClick:function(item, page) {
+                        doQuery(page);
+                    }
+                })
+                $("#dvpagination").css("display", "");
+            });
+        }
+
+        function mrcGrid_Sort(objName, datasort, orderType) {
+            //_sortColumn = datasort;
+            //_sortOrder = orderType;
+
+            //        _page = 1;
+
+            if (datasort == "" || orderType == "") doQuery(1,"");
+            else doQuery(1, datasort + " " + orderType);
+        }
+
+    </script>
+}
+<style>
+    .ui.checkbox {
+        margin-top: 0.5em;
+    }
+
+    #dvpagination {
+        margin-top: 1em;
+    }
+    @@media (min-width:768px) and (max-width:1024px) {
+        .ui.table td.frtodate {
+            width:39.5%;
+        }
+    }
+	
+</style>
+<div class="ui vertical stripe segment">
+    @Html.TitleNavigation()
+    <form class="ui form">
+        <div class="one column row">
+            <div class="column">
+                <table class="ui table search">
+                    <tbody>
+                        <tr>
+                            <td class="title">
+                                @Html.Semantic_TITLE2("로그일자")
+                            </td>
+                            <td class="content frtodate">
+                                @Html.Semantic_TextBox("FR_DATE", DateTime.Now.AddDays(-1).ToString("yyyy.MM.dd"), SemanticUIHelper.Size.mini, new { @style = "text-align:center;", @placeholder = "시작일자", @class = "size100" })@Html.Semantic_TextBox("TO_DATE", DateTime.Now.ToString("yyyy.MM.dd"), SemanticUIHelper.Size.mini, new { @style = "text-align:center;", @placeholder = "종료일자", @class = "size100" })
+                            </td>
+                            <td class="title">
+                                @Html.Semantic_TITLE2("로그명")
+                            </td>
+                            <td class="content">
+                                @Html.Semantic_TextBox("LOG_DATA2", "", SemanticUIHelper.Size.mini, new { @placeholder = "로그명", @class="size250" })
+
+                            </td>
+                            <td class="title">
+                                @Html.Semantic_TITLE2("경로")
+                            </td>
+                            <td class="content">
+                                @Html.Semantic_TextBox("LOG_DATA1", "", SemanticUIHelper.Size.mini, new { @placeholder = "경로" , @class="size250"})
+                            </td>
+
+                        </tr>
+                        <tr>
+                            <td class="title">
+                                @Html.Semantic_TITLE2("등록자")
+                            </td>
+                            <td class="content">
+                                @Html.Semantic_TextBox("INSERT_NAME", "", SemanticUIHelper.Size.mini, new { @placeholder = "등록자", @class="size250" })
+                            </td>
+                            <td class="buttons" colspan="4" style="text-align:right;">@Html.Semantic_Button2("btnSearch", "조회", SemanticUIHelper.enButtonType.ToList, SemanticUIHelper.Size.medium, new { onclick = "doQuery();" })</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+            </div>
+        </div>
+        <div class="one column row">
+            <div class="column" id="dvTable" >
+                <table class="mrc-table search" id="tbList">
+					<thead>
+						<tr>
+							<th class="sort" rowspan="2" column_name="LOG_DATE" style="min-width:50px;" data-sort="A.LOG_DATE">로그일자</th>
+							<th display_size="tablet" colspan="3">업체정보</th>
+							<th display_size="detail" class="sort" data-sort="B3.COMPANY_NAME">부서명</th>
+							<th display_size="tablet" class="sort" column_name="LOG_TYPE_NAME" data-sort="C.NAME" rowspan="2">로그유형</th>
+							<th class="sort" column_name="LOG_DATA2" data-sort="A.LOG_DATA2" rowspan="2">로그명</th>
+							<th display_size="tablet" class="sort" column_name="LOG_DATA1" data-sort="A.LOG_DATA1" rowspan="2">경로</th>
+							<th display_size="detail">내용</th>
+							<th display_size="pc" colspan="4">등록정보</th>
+						</tr>
+						<tr>
+							<th display_size="tablet" class="sort" data-sort="B3.COMPANY_NAME">업체명</th>
+							<th display_size="tablet" class="sort" column_name="STORE_NAME" style="min-width:50px;" data-sort="B2.STORE_NAME">지점명</th>
+							<th display_size="tablet" class="sort" data-sort="B3.COMPANY_NAME">부서명</th>
+							<th display_size="detail">내용</th>
+							<th display_size="pc">사용자IP</th>
+							<th display_size="pc" class="sort" data-sort="B.USER_ID">ID</th>
+							<th display_size="pc" class="sort" data-sort="B.USER_NAME">등록자</th>
+							<th display_size="pc" class="sort" column_name="LOG_DATE" style="min-width:50px;" data-sort="A.LOG_DATE">등록일자</th>
+						</tr>
+						<tr class="hide">
+							<th column_name="LOG_DATE" data-sort="A.LOG_DATE">로그일자</th>
+							<th display_size="tablet" class="sort" data-sort="B3.COMPANY_NAME">업체명</th>
+							<th display_size="tablet" class="sort" column_name="STORE_NAME" style="min-width:50px;" data-sort="B2.STORE_NAME">지점명</th>
+							<th display_size="tablet" class="sort" data-sort="B3.COMPANY_NAME">부서명</th>
+							<th display_size="tablet" class="sort" column_name="LOG_TYPE_NAME" data-sort="C.NAME">로그유형</th>
+							<th class="sort" column_name="LOG_DATA2" data-sort="A.LOG_DATA2">로그명</th>
+							<th display_size="tablet" class="sort" column_name="LOG_DATA1" data-sort="A.LOG_DATA1">경로</th>
+							<th display_size="detail">내용</th>
+							<th display_size="pc">사용자IP</th>
+							<th display_size="pc" class="sort" data-sort="B.USER_ID">등록자 ID</th>
+							<th display_size="pc" class="sort" data-sort="B.USER_NAME">등록자</th>
+							<th display_size="pc" class="sort" column_name="LOG_DATE" style="min-width:50px;" data-sort="A.LOG_DATE">등록일자</th>
+						</tr>
+					</thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+        <div class="one column row">
+            <div id="dvpagination" class="ui floated pagination menu"></div>
+        </div>
+    </form>
+</div>

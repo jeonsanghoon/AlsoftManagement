@@ -1,0 +1,546 @@
+﻿@using ALT.VO.Common;
+@using ALT.VO.loggal;
+@{
+    Layout = "~/Views/Shared/_Layout_Step.cshtml";
+
+    T_MEMBER LOGIN_MEMBER = (T_MEMBER)((SessionHelper.LoginInfo.MEMBER == null) ? new ALT.VO.Common.T_MEMBER() : SessionHelper.LoginInfo.MEMBER);
+    T_AD data = ViewBag.data;
+    if (data.STATUS < 3) { data.STATUS = 3; }
+    ViewBag.title = "loggal 광고 서비스> 지역설정";
+}
+
+<style>
+    @@media only screen and (max-width: 767px) {
+        #mButton {
+            margin-bottom: 25px;
+        }
+    }
+
+    @@media only screen and (max-width: 350px) {
+        .ui.table.unstackable tr.search #STORE_NAME {
+            width: 160px;
+        }
+    }
+
+    #btnAdRegionDel {
+        float: right;
+        margin-bottom: 0.5em;
+    }
+</style>
+@section script{
+    <script src="~/Common/plugin/js/jquery-tokeninput/jquery.tokeninput_Common.js"></script>
+
+    <script src="~/Common/js/Common_Expand.js"></script>
+    <script type="text/javascript">
+        $(document).ready(function () {
+            //alert(new Date().getTimezoneOffset());
+            validationinit();
+            $(".ui.form").submit(function (event) {
+                event.preventDefault();
+            });
+            ComponentInit();
+
+            doQuery(1);
+            doQuery2(1);
+            doQuery3(1);
+        })
+        var PARAM_DATA1 = {
+            SEARCH_CODE: ""
+           , PAGE_SIZE: 10
+           , PAGE_COUNT: 5
+           , PAGE: 1
+           , STORE_NAME: ""
+        }
+        function doQuery(page1) {
+            if (page1 == undefined) PARAM_DATA1.PAGE = 1;
+            else PARAM_DATA1.PAGE = page1;
+
+            PARAM_DATA1.STORE_NAME = $("#STORE_NAME").val();
+            var param = JSON.stringify(PARAM_DATA1);
+            ajax.GetAjax("/advstep/PV_Step4list", param, "html", function (result) {
+                if (PARAM_DATA1.SEARCH_CODE == "") $("#LOCAL_NAME1").val("");
+                $("#tbSearchList").html(result);
+                $("#dvpagination").show();
+                $("#dvpagination").pagination({
+                    total: Number($("#total").val()), page: PARAM_DATA1.PAGE, pagesize: PARAM_DATA1.PAGE_SIZE, perpage: PARAM_DATA1.PAGE_COUNT
+                    , onPageClick:function(item, page) {
+                        doQuery(page);
+                    }
+                })
+                $("#dvpagination").css("display", "");
+                //SemanticUI.CheckBox.Init('#tbSearchList .ui.checkbox');
+                //
+                $.mrc_table.Init("#tableList1");
+
+            });
+
+        }
+        var PARAM_DATA2 = {
+            SEARCH_CODE: ""
+          , PAGE_SIZE: 10
+          , PAGE_COUNT: 5
+          , PAGE: 1
+          , STORE_NAME: ""
+        }
+        function doQuery2(page1) {
+            if (page1 == undefined) PARAM_DATA2.PAGE = 1;
+            else PARAM_DATA2.PAGE = page1;
+
+            var param = JSON.stringify(PARAM_DATA2);
+            ajax.GetAjax("/advstep/PV_Step4list2", param, "html", function (result) {
+                if (PARAM_DATA2.SEARCH_CODE == "") $("#LOCAL_NAME1").val("");
+                $("#tbList2").html(result);
+
+                $("#dvpagination2").show();
+
+                $("#dvpagination2").pagination({
+                    total: Number($("#total2").val()), page: PARAM_DATA2.PAGE, pagesize: PARAM_DATA2.PAGE_SIZE, perpage: PARAM_DATA2.PAGE_COUNT
+                    , onPageClick:function(item, page) {
+                        doQuery2(page);
+                    }
+                })
+                $("#dvpagination2").css("display", "");
+                //SemanticUI.CheckBox.Init('#tbList2 .ui.checkbox');
+                $.mrc_table.Init("#tableList2");
+            });
+
+        }
+        function LOCAL_NAME1_callback(param) {
+            PARAM_DATA1.SEARCH_CODE = param.CODE;
+            doQuery();
+        }
+        var PARAM_DATA3 = {
+            PAGE_SIZE: 10
+         , PAGE_COUNT: 10
+         , PAGE: 1
+        }
+        function doQuery3(page1) {
+
+            if (page1 == undefined) PARAM_DATA3.PAGE = 1;
+            else PARAM_DATA3.PAGE = page1;
+
+            var param = JSON.stringify(PARAM_DATA3);
+            ajax.GetAjax("/advstep/PV_Step4RegionList", param, "html", function (result) {
+                if (PARAM_DATA3.SEARCH_CODE == "") $("#LOCAL_NAME3").val("");
+                $("#tbList3 tbody#tbodyList3").html(result);
+
+                $("#dvpagination3").show();
+
+                $("#dvpagination3").pagination({
+                    total: Number($("#total3").val()), page: PARAM_DATA3.PAGE, pagesize: PARAM_DATA3.PAGE_SIZE, perpage: PARAM_DATA3.PAGE_COUNT
+                    , onPageClick:function(item, page) {
+                        doQuery2(page);
+                    }
+                })
+                $("#dvpagination3").css("display", "");
+
+                //SemanticUI.CheckBox.Init('#tbList2 .ui.checkbox');
+                $.mrc_table.Init("#tbList3",true);
+            });
+
+        }
+        function LOCAL_NAME3_callback(param) {
+            PARAM_DATA3.SEARCH_CODE = param.CODE;
+
+            doAdd3(param.CODE);
+        }
+        function ComponentInit() {
+            //$("#LOCAL_NAME1").keypress(function (e) {
+            //    return false;
+            //})
+            $("#LOCAL_NAME1").keyup(function (e) {
+
+                if (e.keyCode != 13) {
+                    PARAM_DATA1.SEARCH_CODE = "";
+
+                }
+                return false;
+
+            });
+            $("#dvpagination").show();
+            $("#dvpagination").pagination({
+                total: 0, page: 1, pagesize: PARAM_DATA1.PAGE_SIZE, perpage: PARAM_DATA1.PAGE_COUNT, onPageClick:function(item, page) { doQuery(page); }
+            })
+            $("#dvpagination2").show();
+            $("#dvpagination2").pagination({
+                total: 0, page: 1, pagesize: PARAM_DATA2.PAGE_SIZE, perpage: PARAM_DATA2.PAGE_COUNT, onPageClick:function(item, page) { doQuery2(page); }
+            })
+            $("#dvpagination3").show();
+            $("#dvpagination3").pagination({
+                total: 0, page: 1, pagesize: PARAM_DATA3.PAGE_SIZE, perpage: PARAM_DATA3.PAGE_COUNT, onPageClick:function(item, page) { doQuery3(page); }
+            })
+
+
+            $("#btnSearch").click(function () { doQuery(); });
+            $("#btnAdRegionDel").click(function () { doDelete3(); });
+
+            $("#tdstep4Button i").popup({});
+            $('.menu .item').tab();
+
+        }
+        function chkSave() {
+            var bChk = true;
+
+            return bChk;
+        }
+
+        function validationinit() {
+
+            $('.ui.form').form({
+                on: 'change',
+                focusInvalid: true,
+                fields: {
+
+                }, onFailure: function (event, fields) {
+
+                    //실패후 첫번재 에러 태그에 포커스
+                    SemanticUI.Form.Invalidation.ErrorFocus();
+                }, onInvalid: function (event) {
+                    //SemanticUI.Form.addErrorMessage(event);
+                }
+            });
+
+
+
+
+        }
+        /// 상태저장
+        function doSave() {
+            ErrorBoxHide();
+            var params = new Object();
+            params.SAVE_TYPE = "SAVE";
+
+
+            params = JSON.stringify(params);
+            ajax.GetAjax("/AdvStep/Step4Save/", params, "json", function (result) {
+                if (result.ERROR_MESSAGE != "") {
+                    $.MessageBox(result.ERROR_MESSAGE);
+                }
+                else {
+                    //  location.href = String(result.RETURN_URL).toLowerCase();
+                    if (!(result.RETURN_URL == null || result.RETURN_URL == "")) {
+                        var arrUrl = String(result.RETURN_URL).toLowerCase().split('?');
+                        BaseCommon.FormInfo.PostSubmit(arrUrl[0], [{ name: "id", value: arrUrl[1].split('=')[1] }]);
+                    }
+                }
+            });
+        }
+
+        function ErrorBoxHide() {
+            $(".ui.error.message").hide();
+            $(".ui.error.message").html("");
+        }
+        /// 추가
+        function doAdd() {
+            ErrorBoxHide();
+            var params = new Object();
+            params.SAVE_TYPE = "N";
+
+            params.DEVICE_CODE = Input.CheckBox.CheckedValues("chk_1");
+            $(".ui.error.message").html("");
+            if (params.DEVICE_CODE.length <= 0) {
+                $(".ui.error.message").show();
+
+                $(".ui.error.message").html("<li>추가할 로컬박스(상단 리스트)를 하나이상 선택하여야 합니다.</li>");
+                return;
+            }
+
+            $(".ui.error.message").html("");
+
+
+            params.TIMEZONE_OFFSET = (new Date().getTimezoneOffset() / -60);
+            params = JSON.stringify(params);
+            ajax.GetAjax("/AdvStep/Step4Save/", params, "json", function (result) {
+                if (result.ERROR_MESSAGE != "") {
+                    $.MessageBox(result.ERROR_MESSAGE);
+                }
+                else {
+                    //  location.href = String(result.RETURN_URL).toLowerCase();
+                    //  location.href = String(result.RETURN_URL).toLowerCase();
+                    if (!(result.RETURN_URL == null || result.RETURN_URL == "")) {
+                        var arrUrl = String(result.RETURN_URL).toLowerCase().split('?');
+                        BaseCommon.FormInfo.PostSubmit(arrUrl[0], [{ name: "id", value: arrUrl[1].split('=')[1] }]);
+                    }
+                    else {
+                        doQuery();
+                        doQuery2();
+                    }
+                }
+            });
+
+            //alert("추가");
+        }
+
+        function doAdd3(searchCode) {
+
+            ErrorBoxHide();
+            var arrSaveData = new Array();
+
+
+            var params = new Object();
+            params.MRC_EDIT_MODE = "N";
+            params.AD_CODE = @(SessionHelper.LoginInfo.AD_CODE == null ? 0 : SessionHelper.LoginInfo.AD_CODE ) ;
+            params.SEARCH_CATEGORY_CODE = searchCode;
+            arrSaveData[0] = params;
+
+            $(".ui.error.message").html("");
+
+
+
+            params = JSON.stringify(arrSaveData);
+            ajax.GetAjax("/AdvStep/AdRegionSave/", params, "json", function (result) {
+                if (result.ERROR_MESSAGE != "") {
+                    $.MessageBox(result.ERROR_MESSAGE);
+                }
+                else {
+
+                    if (!(result.RETURN_URL == null || result.RETURN_URL == "")) {
+                        var arrUrl = String(result.RETURN_URL).toLowerCase().split('?');
+                        BaseCommon.FormInfo.PostSubmit(arrUrl[0], [{ name: "id", value: arrUrl[1].split('=')[1] }]);
+                    }
+                    else {
+                        doQuery3(1);
+                        $("#LOCAL_NAME3").val("");
+                        $("#LOCAL_NAME3").focus();
+                    }
+                }
+
+            });
+        }
+        /// 삭제
+        function doDelete() {
+
+            ErrorBoxHide();
+            var params = new Object();
+            params.SAVE_TYPE = "D";
+            params.AD_DEVICE_CODE = Input.CheckBox.CheckedValues("delchk");
+            $(".ui.error.message").html("");
+            if (params.AD_DEVICE_CODE.length <= 0) {
+                $(".ui.error.message").show();
+
+                $(".ui.error.message").html("<li>광고를 삭제할 로컬박스(하단 리스트)를 하나 이상 선택하여야 합니다.</li>");
+                return;
+            }
+
+            params = JSON.stringify(params);
+            ajax.GetAjax("/AdvStep/Step4Save/", params, "json", function (result) {
+                if (result.ERROR_MESSAGE != "") {
+                    $.MessageBox(result.ERROR_MESSAGE);
+                }
+                else {
+                    //  location.href = String(result.RETURN_URL).toLowerCase();
+                    //  location.href = String(result.RETURN_URL).toLowerCase();
+                    if (!(result.RETURN_URL == null || result.RETURN_URL == "")) {
+                        var arrUrl = String(result.RETURN_URL).toLowerCase().split('?');
+                        BaseCommon.FormInfo.PostSubmit(arrUrl[0], [{ name: "id", value: arrUrl[1].split('=')[1] }]);
+                    }
+                    else {
+                        doQuery();
+                        doQuery2();
+                    }
+                }
+            });
+        }
+
+
+        function MessageBoxConfirm(message){
+            return $.MessageBox({
+                buttonDone  : "Yes",
+                buttonFail  : "No",
+                message     : message
+            });
+        }
+
+        function doDelete3()
+        {
+
+
+            MessageBoxConfirm("선택된 데이터를 삭제하시겠습니까?").done(function(){
+
+                var param = JSON.stringify($.mrc_table.GetCheckedData("#tbList3", "D"));
+                ajax.GetAjax("/AdvStep/AdRegionSave/", param, "json", function (result) {
+                    if (result.ERROR_MESSAGE != "") {
+                        $.MessageBox(result.ERROR_MESSAGE);
+                    }
+                    else
+                        doQuery3(1);
+                });
+            }).fail(function(){
+                // Do something in response to No
+            });
+
+        }
+
+    </script>
+
+}
+<style>
+    /*ui.unstackable.table*/
+</style>
+<div class="ui  vertical stripe attached segment wizard centered">
+    @{Html.RenderPartial("/Views/AdvStep/Partial/Top.cshtml"); }
+
+    <form class="ui form" onSubmit="return false;">
+        <h2 class="ui header">지역 설정</h2>
+
+        @{Html.RenderPartial("/Views/AdvStep/Partial/StepBar.cshtml"); }
+        <div class="ui stackable grid  fields">
+            <div class="one column row">
+                <div class="column">
+                    <div class="ui top attached tabular menu">
+                        <a class="active item" data-tab="first">loggalbox</a>
+                        <a class="item" data-tab="second">지역설정</a>
+                    </div>
+                    <div class="ui bottom attached tab segment active" data-tab="first">
+                        <table class="ui unstackable   table">
+                            <tbody>
+                                <tr class="search">
+                                    <td class="title">
+                                        @Html.Semantic_TITLE2("지역검색")
+                                    </td>
+                                    <td class="content">
+                                        @* @Html.Semantic_TextBox("REGION_SEARCH", "", SemanticUIHelper.Size.mini, new { @placeholder = "지역검색", @style = "min-width:300px;" })*@
+                                        @Html.AutoCompleate("LOCAL_NAME1", "/home/PV_LocalNameList")
+                                    </td>
+                                    <td class="title">
+                                        @Html.Semantic_TITLE2("매장/기기명")
+                                    </td>
+                                    <td class="content">
+                                        @Html.Semantic_TextBox("STORE_NAME", "", SemanticUIHelper.Size.medium, new { @placeholder = "매장명 또는 로컬박스명 검색" })
+                                        @Html.Semantic_Button("btnSearch", "검색", SemanticUIHelper.enButtonType.Normal, SemanticUIHelper.Size.medium, new { })
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td colspan="4">
+                                        <table id="tableList1" class="mrc-table">
+                                            <thead>
+                                                <tr>
+                                                    <th>추가</th>
+                                                    <th>매장명</th>
+                                                    <th>로컬박스명</th>
+                                                    <th display_size="tablet">주소</th>
+                                                    <th display_size="pc">전화</th>
+                                                    <th display_size="pc">이메일</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="tbSearchList"></tbody>
+                                            @*<tfoot class="full-width">
+                                                    <tr>
+                                                        <th></th>
+                                                        <th colspan="4">
+                                                            <div class="ui right floated small primary labeled icon button">
+                                                                <i class="user icon"></i> Add User
+                                                            </div>
+                                                            <div class="ui small button">
+                                                                Approve
+                                                            </div>
+                                                            <div class="ui small  disabled button">
+                                                                Approve All
+                                                            </div>
+                                                        </th>
+                                                    </tr>
+                                                </tfoot>*@
+                                        </table>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td colspan="4" style="text-align:right" id="tdstep4Button">
+                                        <center>
+                                            <div id="dvpagination" class="ui floated pagination menu"></div>
+                                        </center>
+                                        <center>
+                                            <p id="pStep4AddDelButton">
+                                                <i onclick="doAdd();" data-content="광고를 단말기에 추가한다" data-variation="small" class="chevron circle down huge blue icon button"></i>
+                                                <i onclick="doDelete();" data-content="광고를 단말기에서 제거한다" data-variation="small" class="chevron circle up huge orange  icon button"></i>
+                                        </center>
+                                        @*@Html.Semantic_Button("btnAdd", "추가", SemanticUIHelper.enButtonType.New, SemanticUIHelper.Size.medium, new { onclick="doSave()" })
+                                            @Html.Semantic_Button("btnDel", "삭제", SemanticUIHelper.enButtonType.Del, SemanticUIHelper.Size.medium, new { onclick = "doDelete()" })*@
+
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td colspan="4" >
+
+                                        <table id="tableList2" class="mrc-table">
+                                            <thead>
+                                                <tr>
+                                                    <th>삭제</th>
+                                                    <th>매장명</th>
+                                                    <th>로컬박스명</th>
+                                                    <th display_size="tablet">주소</th>
+                                                    <th display_size="pc">전화</th>
+                                                    <th display_size="pc">이메일</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="tbList2"></tbody>
+                                      
+                                        </table>
+                                        <center style="padding-top:0.5em;">
+                                            <div id="dvpagination2" class="ui floated pagination menu"></div>
+                                        </center>
+                                    </td>
+
+                                </tr>
+                                @*<tr>
+                                        <td colspan="4" style="height:300px;">
+                                            지도 표시
+                                        </td>
+                                    </tr>*@
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="ui bottom attached tab segment" data-tab="second">
+                        <table class="ui unstackable   table">
+                            <tbody>
+                                <tr class="search">
+                                    <td class="title">
+                                        @Html.Semantic_TITLE2("지역등록")
+                                    </td>
+                                    <td class="content">
+                                        @* @Html.Semantic_TextBox("REGION_SEARCH", "", SemanticUIHelper.Size.mini, new { @placeholder = "지역검색", @style = "min-width:300px;" })*@
+                                        @Html.AutoCompleate("LOCAL_NAME3", "/home/PV_LocalNameList", null, new { @placeholder = "지역을 선택하세요" })
+                                    </td>
+                                    <td style="float:right"></td>
+
+                                </tr>
+                                <tr>
+                                    <td colspan="3">
+                                        @Html.Semantic_Button("btnAdRegionDel", "삭제", SemanticUIHelper.enButtonType.Del, SemanticUIHelper.Size.medium, new { })
+                                        <table id="tbList3" class="mrc-table">
+                                            <thead>
+                                                <tr>
+                                                    <th>시도</th>
+                                                    <th class="hidden" column_name="AD_CODE">광고코드</th>
+                                                    <th class="hidden" column_name="CATEGORY_CODE">코드</th>
+                                                    <th class="hidden" column_name="SEARCH_CATEGORY_CODE">검색코드</th>
+                                                    <th>시군구</th>
+                                                    <th display_size="tablet">읍면동</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="tbodyList3"></tbody>
+                                        </table>
+                                        <center>
+                                            <div id="dvpagination3" class="ui floated pagination menu"></div>
+                                        </center>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div style="float:right">
+                        <button class="ui left attached  blue disabled icon  button" type="button">
+                            <i class="chevron circle left  icon"></i>
+                            이전
+                        </button>
+                        <button class="ui right attached blue active icon  button" type="button" onclick="doSave();">
+                            다음
+                            <i class="chevron circle right icon"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="ui error message"></div>
+    </form>
+</div>

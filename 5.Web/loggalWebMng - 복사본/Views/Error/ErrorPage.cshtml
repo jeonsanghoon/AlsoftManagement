@@ -1,0 +1,58 @@
+﻿
+@{
+    Layout = "~/Views/Shared/_Layout_blank.cshtml";
+    ViewBag.Title = "Oops! Error Encountered"; }
+
+
+
+<main style="padding:2em;">
+@{
+    if (Response.StatusCode == 404)
+    {
+        ViewBag.Title = "페이지없음";
+        <h2>페이지없음</h2>
+
+        <div class="ui message">
+            <div class="header">
+                페이지없음
+            </div>
+            <ul class="list">
+                <li>요청하신 페이지를 찾을 수 없습니다.</li>
+            </ul><br />
+                 <span id="spTime">5</span>초 후 <a href="/">메인페이지로 이동</a>합니다.
+        </div>
+        }
+        else if (Response.StatusCode == 500)
+        {
+        ViewBag.Title = "페이지에러";
+        <h2>페이지에러</h2>
+
+        <div class="ui message">
+            <div class="header">
+                해당페이지에 에러가 있습니다.
+            </div>
+            <ul class="list">
+                <li>해당페이지에 에러가 있습니다.</li>
+            </ul><br />
+            5초 후 <a href="/">메인페이지로 이동</a>합니다.
+        </div>
+    }
+}
+</main>
+<script>
+    var nTime = 5;
+    $("document").ready(function () {
+        setTimeout("MoveAfterError()", 1000);
+    })
+    function MoveAfterError() {
+        
+        nTime--;
+        $("#spTime").text(String(nTime));
+        if (nTime == 0) location.href = "/";
+        else setTimeout("MoveAfterError()", 1000);
+    }
+</script>
+
+
+
+

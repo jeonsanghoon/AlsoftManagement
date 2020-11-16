@@ -1,0 +1,77 @@
+﻿@using ALT.VO.Common;
+@using ALT.VO.loggal;
+@{
+    Layout = "~/Views/Shared/_Layout_Step.cshtml";
+
+    T_MEMBER LOGIN_MEMBER = (T_MEMBER)((SessionHelper.LoginInfo.MEMBER == null) ? new ALT.VO.Common.T_MEMBER() : SessionHelper.LoginInfo.MEMBER);
+    T_AD data = ViewBag.data;
+    if (data.STATUS < 3) { data.STATUS = 3; }
+    ViewBag.title = "loggal 광고 서비스> 서비스요청";
+}
+
+@section script{
+    <script type="text/javascript">
+        $("document").ready(function () {
+            $("#btnRequest").click(function () {
+                doSave()
+            })
+        })
+
+        function doSave() {
+            
+            ajax.GetAjax("/AdvStep/Step5Save/", null, "json", function (result) {
+                if (result.ERROR_MESSAGE != "") {
+                    $.MessageBox(result.ERROR_MESSAGE);
+                }
+                else {
+                    //  location.href = String(result.RETURN_URL).toLowerCase();
+                    if (!(result.RETURN_URL == null || result.RETURN_URL == "")) {
+                        location.href = result.RETURN_URL;
+                    }
+                }
+            });
+        }
+
+        function fnList(){
+            location.href='/advstep/steplist';
+        }
+    </script>
+}
+<div class="ui  vertical stripe attached segment wizard centered">
+    @{Html.RenderPartial("/Views/AdvStep/Partial/Top.cshtml"); }
+
+    <form class="ui form" onSubmit="return false;">
+        <h2 class="ui header">서비스요청</h2>
+        @{Html.RenderPartial("/Views/AdvStep/Partial/StepBar.cshtml"); }
+        <div class="ui stackable grid  fields">
+            <div class="one column row">
+                <div class="column">
+
+                    <table class="ui celled structured table">
+                        <tbody>
+                            <tr>
+                                <td style="text-align:center; font-size:1em;">
+                                    <p></p>
+                                    작성하신 광고는 검증과정을 거쳐 확인 후 검수후 2일내에 중으로  연락드리도록 하겠습니다.
+                                    </br></br>
+                                        작성하신 광고를 요청하시겠습니까?
+                                    <br /><br />
+                                    @{ if (data.STATUS < 5)
+                                        {
+                                            @Html.Semantic_Button("btnRequest", "요청", SemanticUIHelper.enButtonType.Request, SemanticUIHelper.Size.medium)
+                                        }
+                                        else
+                                        {
+                                             @Html.Semantic_Button("btnList", "목록보기", SemanticUIHelper.enButtonType.Normal, SemanticUIHelper.Size.medium,new { @onclick= "fnList();';" })
+                                        }
+                                    }
+                                    <br /><br />
+                                </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>

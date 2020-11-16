@@ -1,0 +1,203 @@
+﻿
+@media only screen and (max-width: 767px) {
+    .ui.grid > .stackable.stackable.row > .column, .ui.stackable.grid > .column.grid > .column, .ui.stackable.grid > .column.row > .column, .ui.stackable.grid > .column:not(.row), .ui.stackable.grid > .row > .column, .ui.stackable.grid > .row > .wide.column, .ui.stackable.grid > .wide.column {
+        width: 100% !important;
+        margin: 0 !important;
+        box-shadow: none !important;
+        padding-right: 0rem !important;
+        padding-left: 0rem !important;
+        padding-top: 1rem !important;
+    }
+
+    .ui.steps .step > .icon ~ .content {
+        /* display: none; */
+        min-width: 80px;
+        font-size: 10px;
+    }
+
+    .ui.steps .step .title ~ .description {
+        display: none;
+    }
+
+    .ui.steps {
+        display: -webkit-box;
+        overflow: visible;
+        -webkit-box-orient: inherit;
+        /* -webkit-box-direction: normal; */
+        -webkit-flex-direction: inherit;
+        -ms-flex-direction: inherit;
+        flex-direction: inherit;
+    }
+
+    i.icon {
+        height: 0.6em;
+    }
+}
+
+.ui.secondary.pointing.menu {
+    background-color: #d1efff;
+}
+
+
+@media only screen and (min-width: 1000px) {
+    .ui.segment.wizard {
+        width: 950px;
+        margin-left: auto !important;
+        margin-right: auto !important;
+    }
+
+    .ui.vertical.segment {
+        border-radius: 15px;
+        border: 3px solid #8ebcdd;
+    }
+
+    .ui.secondary.pointing.menu {
+        background-color: #d1efff;
+        border-top-left-radius: 13px;
+        border-top-right-radius: 13px;
+    }
+
+    body {
+        padding-top: 50px;
+    }
+}
+
+@media only screen and (max-width: 1000px) {
+    .ui.vertical.segment {
+        border: 0px solid #8ebcdd;
+    }
+}
+
+@media only screen and (max-width: 700px) {
+    .secondary.pointing.menu.wizard .item, .secondary.pointing.menu.wizard .menu {
+        display: block;
+    }
+}
+.secondary.pointing.menu.wizard .menu .ui.item .menu{
+    display:none;
+}
+
+
+
+
+.ui.vertical.stripe.wizard {
+    padding: 0em 0em;
+}
+
+
+
+    .ui.vertical.stripe.wizard .ui.error.message {
+        margin-bottom: 1em;
+    }
+
+
+.ui.selection.dropdown.mini {
+    min-height: 2.6142em;
+    line-height: 5px;
+    padding-top: 12px;
+}
+
+.ui.selection.dropdown {
+    min-width: 8em;
+    max-width: 16em;
+    width: 100%;
+}
+
+.ui.input {
+    max-width: 100%;
+}
+
+.ui.input {
+    max-width: 100%;
+}
+
+.ui.form textarea.mini {
+    font-size: 0.85em;
+}
+
+.ui.mini.input.field input {
+    width: 95%;
+}
+
+.ui.form .ui.dropdown.mini {
+    font-size: 0.85em;
+}
+
+
+
+.ui.form .token-input-input-token-facebook input[type=text] {
+    border: 0px solid rgba(34,36,38,.15);
+}
+
+.ui.checkbox {
+    padding-top: 10px;
+}
+
+.ajax-upload-dragdrop{
+    background-size: 150px 150px;
+}
+
+.ui.checkbox.fitted.slider{
+    padding-top:0px;
+}
+
+.button {
+    cursor:pointer;
+}
+#pStep4AddDelButton{
+     margin-top:0.3em;
+}
+@media only screen and (max-width: 767px) {
+    #pStep4AddDelButton{
+        padding-top:0.3em;
+        padding-bottom: 1em;
+    }
+}
+
+#pStep4AddDelButton i.blue.icon:hover{
+    color: #2170ab!important;
+    text-shadow: 2px 2px 0px #d2d1d1;
+}
+#pStep4AddDelButton  i.orange.icon:hover{
+    color: #d0621a!important;
+    text-shadow: 2px 2px 0px #d2d1d1;
+}
+
+ .ui.floated.menu{
+        float:initial;
+    }
+
+ 
+
+@media only screen and (max-width: 767px) {
+    .ui.table.unstackable tr.search {
+        padding-top: 1em;
+        padding-bottom: 1em;
+        box-shadow: 0 -1px 0 0 rgba(0,0,0,.1) inset !important;
+    }
+}
+
+@media only screen and (max-width: 767px) {
+     .ui.table.unstackable tr.search, .ui.table.unstackable tr.search > td, .ui.table.unstackable tr.search tr > th {
+        width: auto !important;
+        display: block !important;
+    }
+}
+
+@media only screen and (max-width: 350px) {
+    .ui.menu .menu h2 {
+        font-size:1.5em;
+    }
+    h2.ui.header  {
+        font-size:1.5em;
+    }
+}
+
+.ui.pagination .page.item {
+    color:rgba(40,40,40,.3);
+}
+
+.ui.dropdown div.menu .item.defaultlabel{
+    color:lightgray;
+}
+

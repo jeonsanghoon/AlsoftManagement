@@ -1,0 +1,44 @@
+﻿@using ALT.VO.loggal;
+@using ALT.Framework;
+@using ALT.Framework.Data;
+
+@{
+    List<AdOnDeviceList2> list = (List<AdOnDeviceList2>)ViewBag.list;
+    string totCnt = (list.Count() == 0 ? "0" : list.First().TOTAL_ROWCOUNT.ToString());
+
+    <input type="hidden" id="total2" value="@totCnt" />
+    foreach (AdOnDeviceList2 data in list)
+    {
+
+
+        string sStyle = "";
+        if (data.FR_DATE.Length == 8 && data.TO_DATE.Length == 8)
+        {
+            int nowDate = Convert.ToInt32(DateTime.Now.ToString("yyyyMMdd"));
+            if (!(Convert.ToInt32(data.FR_DATE) <= nowDate && Convert.ToInt32(data.TO_DATE) >= nowDate))
+            {
+                sStyle = "style=background-color:grey";
+            }
+        }
+
+        bool bUse = (data.HIDE == null || data.HIDE == true ? false : true);
+        data.FR_DATE = data.FR_DATE.ToFormatDate();
+        data.TO_DATE = data.TO_DATE.ToFormatDate();
+    <tr >
+        
+        <td class="center"><input type="checkbox" name="chkUse" @(bUse == true ? "checked='checked'" : "") @(data.STATUS == 0 ? "disabled" : "")/> </td>
+
+        <td @sStyle>@data.DEVICE_CODE</td>
+        <td @sStyle class="hide">@data.AD_DEVICE_CODE</td>
+        <td @sStyle class="hide">@(data.AD_CODE)</td>
+        <td @sStyle>@(data.DEVICE_NAME) @data.STATUS</td>
+        <td @((string.IsNullOrEmpty(sStyle) ? "style=" : ";") + "text-decoration:underline;color:blue;cursor:pointer;") class="center" onclick="javascript:location.href='/basic/DeviceMainShareApprovalList?AD_CODE=@data.AD_CODE'">@(data.STATUS_NAME)</td>
+        <td @sStyle class="center"><input id="FR_DATE_@(data.DEVICE_CODE)" type="text" class="fr_date date" value="@data.FR_DATE" @(data.STATUS == 0 ? "disabled" : "")/></td>
+        <td @sStyle class="center"><input id="TO_DATE_@(data.DEVICE_CODE)" type="text" class="to_date date" value="@data.TO_DATE" @(data.STATUS == 0 ? "disabled" : "")/></td>
+        <td @sStyle class="center"><input id="FR_TIME_@(data.DEVICE_CODE)" type="text" class="fr_time time" value="@data.FR_TIME" @(data.STATUS == 0 ? "disabled" : "")/></td>
+        <td @sStyle class="center"><input id="TO_TIME_@(data.DEVICE_CODE)" type="text" class="to_time time" value="@data.TO_TIME" @(data.STATUS == 0 ? "disabled" : "")/></td>
+    </tr>
+        
+    }
+}
+

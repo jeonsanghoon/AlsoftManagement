@@ -1,0 +1,60 @@
+﻿@{
+    ViewBag.title = "온닫이 정책";
+}
+@section scripts{
+
+    <script type="text/javascript">
+
+        $(document).ready(function () {
+
+            ComponentInit();
+        }); //End document.ready
+
+        function ComponentInit() {
+            $('.menu .item').tab();
+            
+            SemanticUI.Tab.SetActiveTab('.ui.menu', $('.menu .item').eq(@(ViewBag.nPage)).attr("data-tab"));
+        } 
+       
+    </script>
+}
+<style>
+    .ui.checkbox {
+        margin-top: 0.5em;
+    }
+
+    .ui.table.search {
+        table-layout: fixed !important;
+        width: 100% !important;
+    }
+
+    #dvpagination, #dvpagination2 {
+        margin-top: 1em;
+    }
+
+    .ui.table.search td.title {
+        width: 100px;
+    }
+    .ui.pointing.menu .item {
+        font-size:2rem;
+    }
+</style>
+@{
+
+}
+<div class="ui vertical stripe segment">
+    @Html.TitleNavigation()
+    <form class="ui form" onsubmit="return false;">
+        <div class="ui pointing secondary menu">
+            <a class="item active" data-tab="first">이용약관</a>
+            <a class="item" data-tab="second" >개인정보방침</a>
+        </div>
+        <div class="ui tab segment active" data-tab="first">
+            @{Html.RenderPartial("/Views/common/partial/pv_policy1.cshtml"); }
+        </div>
+        <div class="ui tab segment" data-tab="second">
+            @{Html.RenderPartial("/Views/common/partial/pv_policy2.cshtml");
+            }
+        </div>
+    </form>
+</div>

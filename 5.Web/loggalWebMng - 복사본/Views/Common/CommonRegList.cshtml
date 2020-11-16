@@ -1,0 +1,244 @@
+﻿@{
+
+}
+
+@section scripts{
+
+    <script type="text/javascript">
+        var _pageSize = ($("window").width() < 768 ? 5 : 10);
+        var _perPage = 5;
+        var _page = 1;
+        var PARAM_DATA = {
+            PAGE_SIZE: ($("window").width() < 768 ? 5 : 10)
+            , PAGE_COUNT: 20
+            , PAGE: 1
+            , SORT: ""
+        }
+        $(document).ready(function () {
+            Input.TextBox.notHangul("#MAIN_CODE");
+            PARAM_DATA.PAGE_COUNT = ($(window).height() - $(".cd-main-header").outerHeight() + $(".ui.header").outerHeight() + $(".column.search").outerHeight() + $(".ui.footer").outerHeight() - 500) / 30;
+            doQuery();
+            ComponentInit();
+        }); //End document.ready
+        function ComponentInit() {
+            $(".ui.form .search input").keyup(function (e) {
+                var code = (e.keyCode ? e.keyCode : e.which);
+                if (code == 13) {
+                    doQuery();
+                }
+            })
+        }
+        function SemanticUI_ComboChange(obj) {
+            if ($(obj)[0].id == "STORE_CODE") {
+                doQuery();
+            }
+        }
+
+      
+        function doQuery(page, order) {
+            if (page == undefined || page == null || page < 1) page = 1;
+            PARAM_DATA.PAGE = page;
+
+            var param = BaseCommon.FormInfo.serializeJson(".ui.form");
+            
+            param.PAGE_COUNT = PARAM_DATA.PAGE_COUNT;
+            param.PAGE = PARAM_DATA.PAGE;
+
+            if (order != undefined) {
+                PARAM_DATA.SORT = order;
+                param.SORT = order;
+            }
+            else if (order == undefined) {
+                param.SORT = PARAM_DATA.SORT;
+            }
+
+
+            param = JSON.stringify(param);
+            
+
+            ajax.GetAjax("/common/PV_CommonRegList", param, "html", function (result) {
+                $("#dvTable table tbody").html(result);
+                $.mrc_table.Init(".mrc-table", true);
+                Input.TextBox.onlyNumber(".mrc-table .number");
+
+                $("#dvpagination").show();
+                $("#dvpagination").pagination({
+                    total: Number($("#total").val()), page: PARAM_DATA.PAGE, pagesize: PARAM_DATA.PAGE_SIZE, perpage: PARAM_DATA.PAGE_COUNT
+                    , onPageClick: function (item, page) {
+                        doQuery(page);
+                    }
+                })
+            });
+        }
+
+        function mrcGrid_Sort(objName, datasort, orderType) {
+            if (datasort == "" || orderType == "") doQuery(1, "");
+            else doQuery(1, datasort + " " + orderType);
+        }
+        function doSave() {
+
+            var arrSaveData = $.mrc_table.GetSaveData("#tbList");
+            if (arrSaveData.length==0)
+            {
+                $.MessageBox("저장할 데이터가 없습니다.");
+                return;
+            }
+
+            var param = JSON.stringify(arrSaveData);
+            
+            ajax.GetAjax("/common/CommonSave", param, "json", function (result) {
+                if (result.ERROR_MESSAGE != "") {
+                    $.MessageBox(result.ERROR_MESSAGE);
+                }
+                else
+                    doQuery();
+            });
+        }
+        function doAdd() {
+
+            var addHtml = '';
+            addHtml += '    <tr>        ';
+            addHtml += '        <td style="padding-right:2em;"><input class="nothangul" type="text" value="" placeholder="영문1자리+숫자3자리로 등록" maxlength="4" style="ime-mode:inactive;" /></td> ';
+            addHtml += '        <td><input class="number" type="text" value="" placeholder=""  maxlength="3"/></td>                            ';
+            addHtml += '        <td><input type="text" value=""  maxlength="50"/></td>                            ';
+            addHtml += '        <td class="hide"><input type="text" value=""/></td>               ';
+            addHtml += '        <td><input class="number" type="text" value=""  maxlength="4"/></td>                            ';
+            addHtml += '        <td><input type="text" value="" /></td>                            ';
+            addHtml += '        <td><input type="text" value="" /></td>                            ';
+            addHtml += '        <td><input type="text" value="" /></td>                            ';
+            addHtml += '        <td><input type="text" value="" /></td>                            ';
+            addHtml += '        <td><input type="checkbox" value="1" ) /></td>         ';
+            addHtml += '        <td class="center">@SessionHelper.LoginInfo.MEMBER.USER_NAME</td>  ';
+            addHtml += '        <td class="center">@DateTime.Now</td>                              ';
+            addHtml += '        <td class="center">@SessionHelper.LoginInfo.MEMBER.USER_NAME</td>  ';
+            addHtml += '        <td class="center">@DateTime.Now</td>                              ';
+            addHtml += '        <td class="hide">0</td>                                            ';
+            addHtml += '    </tr>                                                                  ';
+
+            $.mrc_table.AddRowHtml("#tbList", addHtml);
+            $.mrc_table.Init("#tbList", true);
+            Input.TextBox.onlyNumber(".mrc-table .number");
+            
+            
+            Input.TextBox.notHangul(".mrc-table .nothangul");
+            SemanticUI.ComponentInit("#tbList"); // 시맨틱 UI 일경우 초기화 초가
+
+        }
+        function doDel() {
+
+            var arrDel = $.mrc_table.GetCheckedData("#tbList", "D");
+            if (arrDel.length == 0)
+            {
+                $.MessageBox("삭제할 데이터가 없습니다.");
+                return;
+            }
+			$.MessageBox({
+                buttonDone: "예",
+                buttonFail: "아니오",
+                message: "정말로 삭제하시겠습니까?"
+            }).done(function () {
+                var param = JSON.stringify(arrDel);
+
+                ajax.GetAjax("/common/CommonSave", param, "json", function (result) {
+                    if (result.ERROR_MESSAGE != "") {
+                        $.MessageBox(result.ERROR_MESSAGE);
+                    }
+                    else
+                        doQuery();
+                });
+            }).fail(function () {
+
+            });
+        }
+
+        function ExcelDown() {
+            var params = BaseCommon.FormInfo.serializeJson(".ui.form");
+            var arrData = new Array();
+            $.each(params, function (key, val) {
+                //display the key and value pair
+
+                arrData.push({ name: key, value: val });
+            });
+            BaseCommon.FormInfo.PostSubmit('/common/commonExcelReport', arrData);
+        }
+    </script>
+}
+<style>
+    .ui.checkbox {
+        margin-top: 0.5em;
+    }
+    @@media only screen and (max-width: 767px) {
+        .ui.table:not(.unstackable) tr {
+            padding-top: 0em;
+            padding-bottom: 0em;
+            box-shadow: 0 0px 0 0 rgba(0,0,0,.1) inset !important;
+        }
+    }
+</style>
+<div class="ui vertical stripe segment">
+    @Html.TitleNavigation()
+    <form class="ui form">
+        <div class="one column row search">
+            <div class="column">
+                <table class="ui table search">
+                    <tbody>
+                        <tr>
+                            <td class="title">
+                                @Html.Semantic_TITLE2("메인코드")
+                            </td>
+                            <td>
+                                @Html.TextBox("MAIN_CODE", "", new { @class = "nothangul size200", @maxlength = "4" })
+                            </td>
+                            <td class="title">
+                                @Html.Semantic_TITLE2("코드명")
+                            </td>
+                            <td >
+                                @Html.TextBox("NAME")
+                            </td>
+                            <td class="buttons">@Html.Semantic_Button2("btnSearch", "조회", SemanticUIHelper.enButtonType.ToList, SemanticUIHelper.Size.mini, new { onclick = "doQuery();" })</td>
+                        </tr>
+                        <tr>
+                            <td class="buttons" colspan="5">
+                                @Html.Semantic_Button2("btnExcel", "엑셀", SemanticUIHelper.enButtonType.Excel, SemanticUIHelper.Size.medium, new { @onclick = "ExcelDown();" })
+                                @Html.Semantic_Button2("btnClear", "삭제", SemanticUIHelper.enButtonType.Del, SemanticUIHelper.Size.mini, new { onclick = "doDel();" })
+                                @Html.Semantic_Button2("btnAdd", "추가", SemanticUIHelper.enButtonType.New, SemanticUIHelper.Size.mini, new { onclick = "doAdd();" })
+                                @Html.Semantic_Button2("btnSave", "저장", SemanticUIHelper.enButtonType.Save, SemanticUIHelper.Size.mini, new { onclick = "doSave();" })
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+
+            </div>
+        </div>
+        <div class="one column row">
+            <div class="column" id="dvTable">
+                <table class="mrc-table" id="tbList">
+                    <thead>
+                        <tr>
+                            <th class="sort" column_name="MAIN_CODE" data-sort="A.MAIN_CODE">메인코드</th>
+                            <th column_name="SUB_CODE">상세코드</th>
+                            <th column_name="NAME">코드명</th>
+                            <th class="hidden" column_name="LANGUAGE_CODE">언어</th>
+                            <th display_size="tablet" column_name="ORDER_SEQ" style="width:30px;">순번</th>
+                            <th display_size="tablet" column_name="REF_DATA1">참조코드1</th>
+                            <th display_size="pc" column_name="REF_DATA2">참조코드2</th>
+                            <th display_size="pc" column_name="REF_DATA3">참조코드3</th>
+                            <th display_size="pc" column_name="REF_DATA4">참조코드4</th>
+                            <th column_name="HIDE" display_size="tablet">미사용</th>
+                            <th display_size="detail">등록자</th>
+                            <th display_size="detail">등록시간</th>
+                            <th display_size="pc">수정자</th>
+                            <th display_size="pc">수정시간</th>
+                            <th class="hide" display_size="pc" column_name="IDX">기본키</th>
+
+                        </tr>
+                    </thead>
+                    <tbody id="tbList"></tbody>
+                </table>
+            </div>
+        </div>
+        <div class="one column row">
+            <div id="dvpagination" class="ui floated pagination menu" style="margin-top:1em;"></div>
+        </div>
+    </form>
+</div>

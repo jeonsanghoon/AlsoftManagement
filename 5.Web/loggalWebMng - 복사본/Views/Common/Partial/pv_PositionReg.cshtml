@@ -1,0 +1,18 @@
+﻿@using ALT.VO.Common;
+@{
+    List<T_STORE_POSITION> list = ViewBag.list;
+    foreach (T_STORE_POSITION data in list)
+    {
+        <tr>
+            <td><input type="text" value="@data.NAME" /></td>
+            <td><input type="text" value="@data.SEQ" /></td>
+            
+            
+            <td class="center">@data.UPDATE_NAME</td>
+            <td class="center">@data.UPDATE_DATE</td>
+            <td class="hide">@data.STORE_CODE</td>
+            <td class="hide">@data.POSITION_CODE</td>
+            <td class="hide">@data.POSITION_TYPE</td>
+        </tr>
+    }
+}

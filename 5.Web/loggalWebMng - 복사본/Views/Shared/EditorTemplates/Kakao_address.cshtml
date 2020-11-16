@@ -1,0 +1,202 @@
+﻿@* http://postcode.map.daum.net/guide#sample  페이지 참조
+    데이터 콜백을 받을경우 생성 option.ID + _addressCallBack(data)
+*@
+@{
+
+    if (ViewData[Global.ConfigInfo.KakaoMapScript] == null || (bool)ViewData[Global.ConfigInfo.KakaoMapScript] == false)
+    {
+        <script type="text/javascript" src="//dapi.kakao.com/v2/maps/sdk.js?appkey=@Global.ConfigInfo.KakaoAppKey&libraries=services,clusterer,drawing"></script>
+        ViewData[Global.ConfigInfo.KakaoMapScript] = true;
+    }
+    DaumAddressOption option = (ViewData["option"] == null) ? new DaumAddressOption() { ID = "address" } : (DaumAddressOption)ViewData["option"];
+    ViewBag.mapid = option.ID;
+}
+
+<style>
+    @@media only screen and (max-width: 767px)
+    {
+        #@(option.ID + "_POST_CODE"){
+            width:90%;
+        }
+    }
+
+</style>
+
+@{
+    var daummapid = option.ID;
+}
+
+<div class="dvKakaoAddress">
+    <div class=" fields mobile" style="margin-bottom:0.7rem;">
+        <div class="inline eight wide field">
+
+            @Html.Semantic_TextBox(option.ID + "_POST_CODE", option.POST_CODE, option.Size, new { @placeholder = "우편번호", @class = "POSTCODE size100", @readonly = "readonly" })
+
+            @*<i class="btn fa fa-search" aria-hidden="true" onclick = "@(option.ID)_execDaumPostcode();"></i>
+                <i class="btn fa fa-map" aria-hidden="true" onclick="@(option.ID)_popKakaoMapMakerShow();"></i>*@
+
+            @Html.Semantic_Button2("btnAddress_" + option.ID, "", SemanticUIHelper.enButtonType.Normal, option.Size, new { @onclick = (option.ID) + "_execDaumPostcode()", @class = " olive image" }, null, "search icon")
+            @Html.Semantic_Button2("btnMap_" + option.ID, "", SemanticUIHelper.enButtonType.Normal, option.Size, new { @onclick = (option.ID) + "_popKakaoMapMakerShow()", @class = "green image" }, null, "map icon")
+
+
+        </div>
+    </div>
+
+    <div class="fields mobile padding5">
+        <div class="eight wide field">
+            @Html.Semantic_TextBox(option.ID + "_ADDRESS1", option.ADDRESS1, option.Size, new { @placeholder = "주소", @readonly = "readonly" })
+        </div>
+        <br />
+    </div>
+
+    <div class="fields mobile padding5">
+        <div class="eight wide field">
+            @Html.Semantic_TextBox(option.ID + "_ADDRESS2", option.ADDRESS2, option.Size, new { @placeholder = "상세주소" })
+        </div>
+    </div>
+    <div class="fields mobile padding5" style="display:none">
+        <div class="sixteen wide field">
+            <b>위도 : </b><input type="text" id="@(option.ID)_LATITUDE" name="@(option.ID)_LATITUDE" style="max-width:15em" /> &nbsp;
+            <b>경도 : </b><input type="text" id="@(option.ID)_LONGITUDE" name="@(option.ID)_LONGITUDE" style="max-width:15em" />
+        </div>
+    </div>
+</div>
+
+@Html.Partial("/Views/Popup/kakaomapmakerpopop.cshtml")
+
+
+<!-- iOS에서는 position:fixed 버그가 있음, 적용하는 사이트에 맞게 position:absolute 등을 이용하여 top,left값 조정 필요 -->
+<div id="@(option.ID)_layer" class="daumAddresslayer">
+    <img src="//i1.daumcdn.net/localimg/localimages/07/postcode/320/close.png" id="btnCloseLayer" style="cursor:pointer;position:absolute;right:-3px;top:-3px;z-index:1" onclick="closeDaumPostcode_@(option.ID)()" alt="닫기 버튼">
+</div>
+@{
+    if (ViewData[Global.ConfigInfo.DaumPostScript] == null || (bool)ViewData[Global.ConfigInfo.DaumPostScript] == false)
+    {
+        @*<script src="http://dmaps.daum.net/map_js_init/postcode.v2.js"></script>*@
+        <script src="https://ssl.daumcdn.net/dmaps/map_js_init/postcode.v2.js"></script>
+        ViewData[Global.ConfigInfo.DaumPostScript] = true;
+    }
+}
+
+<script>
+        // 우편번호 찾기 화면을 넣을 element
+        var element_layer_@(option.ID) = document.getElementById('@(option.ID)_layer');
+
+        function closeDaumPostcode_@(option.ID)() {
+            // iframe을 넣은 element를 안보이게 한다.
+            element_layer_@(option.ID).style.display = 'none';
+        }
+        function @(option.ID)_popKakaoMapMakerShow()
+        {
+            var @(option.ID)_address = document.getElementById('@(option.ID)_ADDRESS1').value;
+
+            $("#@(option.ID)_popKakaoMapMaker").modal('setting', {
+                autofocus:true,
+                onVisible: function () {
+                     @(option.ID)_Open();
+                }
+            }).modal("show");
+
+         }
+        function @(option.ID)_execDaumPostcode() {
+            new daum.Postcode({
+                oncomplete: function (data) {
+                    // 검색결과 항목을 클릭했을때 실행할 코드를 작성하는 부분.
+
+                    // 각 주소의 노출 규칙에 따라 주소를 조합한다.
+                    // 내려오는 변수가 값이 없는 경우엔 공백('')값을 가지므로, 이를 참고하여 분기 한다.
+                    var fullAddr = data.address; // 최종 주소 변수
+                    var extraAddr = ''; // 조합형 주소 변수
+
+                    // 기본 주소가 도로명 타입일때 조합한다.
+                    if (data.addressType === 'R') {
+                        //법정동명이 있을 경우 추가한다.
+                        if (data.bname !== '') {
+                            extraAddr += data.bname;
+                        }
+                        // 건물명이 있을 경우 추가한다.
+                        if (data.buildingName !== '') {
+                            extraAddr += (extraAddr !== '' ? ', ' + data.buildingName : data.buildingName);
+                        }
+                        // 조합형주소의 유무에 따라 양쪽에 괄호를 추가하여 최종 주소를 만든다.
+                        fullAddr += (extraAddr !== '' ? ' (' + extraAddr + ')' : '');
+                    }
+
+                    // 우편번호와 주소 정보를 해당 필드에 넣는다.
+                    document.getElementById('@(option.ID)_POST_CODE').value = data.zonecode; //5자리 새우편번호 사용
+                    document.getElementById('@(option.ID)_ADDRESS1').value = fullAddr;
+                  // document.getElementById('@(option.ID)_ADDRESS_ENGLISH').value = data.addressEnglish;
+
+                    // iframe을 넣은 element를 안보이게 한다.
+                    // (autoClose:false 기능을 이용한다면, 아래 코드를 제거해야 화면에서 사라지지 않는다.)
+                    element_layer_@(option.ID).style.display = 'none';
+
+                    try {
+
+                        set_@(option.ID)_LATITUDE_LONGITUDE(data);
+                    } catch (e) { }
+                    try { @(option.ID)_addressCallBack(data);
+
+                    }
+                    catch(e){}
+                },
+                width: '100%',
+                height: '100%'
+            }).embed(element_layer_@(option.ID));
+
+            // iframe을 넣은 element를 보이게 한다.
+            element_layer_@(option.ID).style.display = 'block';
+
+            // iframe을 넣은 element의 위치를 화면의 가운데로 이동시킨다.
+            initLayerPosition();
+        }
+        var _@(option.ID)_oriAddress = "";
+        function set_@(option.ID)_LATITUDE_LONGITUDE(data) {
+
+            _@(option.ID)_oriAddress  = data.sido + " " + data.sigungu + " " + data.bname;
+            var arrAddress = data.address.split(' ');
+
+            var address1 = "";
+            for (var i = 0; i < arrAddress.length; i++) {
+                if (i > 0) address1 += " ";
+                address1 += arrAddress[i];
+
+                if (i > 1 && arrAddress[i].charAt(arrAddress[i].length - 1) == "면") {
+                    _@(option.ID)_oriAddress  = address1;
+                    break;
+                }
+            }
+
+            if (data.longitude == undefined) {
+                DaumApi.Map.addr2coord(data.address, function (result) {
+                    try {
+                        $("#@(option.ID)_LATITUDE").val(result.lat);
+                        $("#@(option.ID)_LONGITUDE").val(result.lng);
+                    } catch (e) { }
+                    try {
+                        $("#LATITUDE").val(result.lat);
+                        $("#LONGITUDE").val(result.lng);
+                    } catch (e) { }
+                });
+            }
+        }
+
+
+
+        // 브라우저의 크기 변경에 따라 레이어를 가운데로 이동시키고자 하실때에는
+        // resize이벤트나, orientationchange이벤트를 이용하여 값이 변경될때마다 아래 함수를 실행 시켜 주시거나,
+        // 직접 element_layer_@(option.ID)의 top,left값을 수정해 주시면 됩니다.
+        function initLayerPosition() {
+            var width = $(window).width() > 500 ? 500 : $(window).width() - 10; //우편번호서비스가 들어갈 element의 width
+            var height = 475; //우편번호서비스가 들어갈 element의 height
+            var borderWidth = 2; //샘플에서 사용하는 border의 두께
+
+            // 위에서 선언한 값들을 실제 element에 넣는다.
+            element_layer_@(option.ID).style.width = width + 'px';
+            element_layer_@(option.ID).style.height = height + 'px';
+            element_layer_@(option.ID).style.border = borderWidth + 'px solid';
+            // 실행되는 순간의 화면 너비와 높이 값을 가져와서 중앙에 뜰 수 있도록 위치를 계산한다.
+            element_layer_@(option.ID).style.left = (((window.innerWidth || document.documentElement.clientWidth) - width) / 2 - borderWidth) + 'px';
+            element_layer_@(option.ID).style.top = (((window.innerHeight || document.documentElement.clientHeight) - height) / 2 - borderWidth) + 'px';
+        }
+</script>

@@ -1,0 +1,62 @@
+﻿@model TinyMCEModel
+@{
+
+}
+
+<h2>Index</h2>
+@{
+
+    TinyMCEOption editor1Option = new TinyMCEOption { MAINFORM_ID= "form1", ID = "editor1", CONTENT = "test", HEIGHT = "100%", WIDTH = "100%" };
+    TinyMCEOption editor2Option = new TinyMCEOption { MAINFORM_ID = "form1", ID = "editor2", CONTENT = "test2", HEIGHT = "100%", WIDTH = "100%" };
+    }
+@using (Html.BeginForm(null, null, FormMethod.Post, new { id = "form1" }))
+{
+
+    <fieldset>
+        <legend>TinyMCEModel</legend>
+
+        @*<div class="editor-label">
+        @Html.LabelFor(model => model.Basic)
+    </div>
+    <div class="editor-field">
+        @Html.EditorFor(model => model.Basic)
+        @Html.ValidationMessageFor(model => model.Basic)
+    </div>
+
+    <div class="editor-label">
+        @Html.LabelFor(model => model.Classic)
+    </div>
+    <div class="editor-field">
+        @Html.EditorFor(model => model.Classic)
+        @Html.ValidationMessageFor(model => model.Classic)
+    </div>
+
+    <div class="editor-label">
+        @Html.LabelFor(model => model.Full)
+    </div>
+    <div class="editor-field">
+        @Html.EditorFor(model => model.Full)
+        @Html.ValidationMessageFor(model => model.Full)
+    </div>*@
+
+        <div class="editor-label">
+            @Html.LabelFor(model => model.TinyMCE_Editor)
+        </div>
+        <div class="editor-field">
+            @Html.EditorFor(model => model.TinyMCE_Editor, new { option = editor1Option })
+            @Html.ValidationMessageFor(model => model.TinyMCE_Editor )
+        </div>
+
+        <div class="editor-label">
+            @Html.LabelFor(model => model.TinyMCE_Editor)
+        </div>
+        <div class="editor-field">
+            @Html.EditorFor(model => model.TinyMCE_Editor, new { option = editor2Option })
+            @Html.ValidationMessageFor(model => model.TinyMCE_Editor)
+        </div>
+        <p>
+            <input type="submit" value="Create" />
+        </p>
+    </fieldset>
+}
+

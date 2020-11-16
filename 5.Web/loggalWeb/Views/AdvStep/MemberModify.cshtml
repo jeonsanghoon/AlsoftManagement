@@ -1,0 +1,270 @@
+﻿@using ALT.VO.Common
+@{
+    Layout = "~/Views/Shared/_Layout_Step.cshtml";
+
+    T_MEMBER LOGIN_MEMBER = (T_MEMBER)((SessionHelper.LoginInfo.MEMBER == null) ? new ALT.VO.Common.T_MEMBER() : SessionHelper.LoginInfo.MEMBER);
+    ViewBag.title = "loggal 광고 서비스> 회원가입";
+}
+
+@section script{
+    <script type="text/javascript">
+        $(document).ready(function () {
+
+            validationinit();
+            $(".ui.form").submit(function (event) {
+
+                if ($(".ui.error.message").css("display") == "none") { doSave(); }
+
+                event.preventDefault();
+
+            });
+            ComponentInit();
+        })
+
+        function doQuery() {
+
+            ajax.GetAjax("/account/MemberList/", param, "json", function (result) {
+            });
+
+        }
+
+        function ComponentInit() {
+
+            $.datetimepicker.setLocale('kr');
+
+
+            $('#BIRTH').datetimepicker({
+                timepicker: false,
+                format: 'Y.m.d'
+            });
+
+            @{
+                if (string.IsNullOrEmpty(LOGIN_MEMBER.USER_ID))
+                {
+                    @:   $("#USER_ID").blur(function() {
+                        @:        USER_ID_Chk();
+                        @:   });
+                    }
+              }
+        }
+        var Id_validation = false;
+
+        //// 아이디 중복 체크
+        function USER_ID_Chk() {
+            if ($("#USER_ID").val() == "") {
+                return;
+            }
+
+            var param = new Object();
+            param.USER_ID = $("#USER_ID").val();
+            param = JSON.stringify(param);
+
+            ajax.GetAjax("/account/MemberList/", param, "json", function (result) {
+
+                if (result.list.length == 0) {
+                    Id_validation = true;
+                    //$('#USER_ID').popup('hide');
+                    $('#USER_ID').popup('remove');
+                } else {
+                    $("#USER_ID").popup({
+                        title: '아이디 확인',
+                        content: '등록되어있는 아이디가 있습니다.'
+                    });
+
+                    $('#USER_ID').popup('show');
+                    $("#USER_ID").parent().addClass("error");
+                    $("#USER_ID").focus(); $("#USER_ID").select();
+                    Id_validation = false;
+                    return;
+                }
+            });
+        }
+
+        //// 체크
+        function validationinit() {
+
+            $('.ui.form').form({
+                on: 'change',
+                focusInvalid: true,
+                fields: {
+                    USER_ID: {
+                        identifier: 'USER_ID',
+                        rules: [
+                          {
+                              type: 'empty',
+                              prompt: '아이디를 입력하여 주시기 바랍니다.' // Please enter a first name
+                          },
+                           {
+                               type: 'email',
+                               prompt: '아이디가 이메일형식에 맞지 않습니다.' // Please enter a first name
+                           }
+                        ]
+                    },
+                    USER_NAME: {
+                        identifier: 'USER_NAME',
+                        rules: [
+                          {
+                              type: 'empty',
+                              prompt: '사용자이름을 입력하여 주시기 바랍니다.' // Please enter a first name
+                          }
+                        ]
+                    }
+
+                    @{if (string.IsNullOrEmpty(LOGIN_MEMBER.USER_ID))
+                        {
+                         @:   ,PASSWORD: {
+                         @:       identifier: 'PASSWORD',
+                         @:       rules: [
+                         @:         {
+                         @:             type: 'empty',
+                         @:             prompt: '암호를 입력하여 주시기 바랍니다'
+                         @:         }
+                    
+                         @:       ]
+                         @:   },
+                         @:   PASSWORD_CONFIRM: {
+                         @:       identifier: 'PASSWORD_CONFIRM',
+                         @:       rules: [
+                         @:         {
+                         @:             type: 'match[PASSWORD]',
+                         @:             prompt: '입력하신 비밀번호와 다릅니다.'
+                         @:         }
+                         @:       ]
+                         @:   }
+                     }
+                   }
+                 
+                }, onFailure: function (event, fields) {
+
+                    //실패후 첫번재 에러 태그에 포커스
+                    SemanticUI.Form.Invalidation.ErrorFocus();
+                }, onInvalid: function (event) {
+                   // 
+                    //SemanticUI.Form.addErrorMessage(event);
+                }
+            });
+        }
+
+        function doSave() {
+            var params = BaseCommon.FormInfo.serializeJson(".ui.form");
+            params.BIRTH = moment(params.BIRTH).format("YYYYMMDD");
+            params = JSON.stringify(params);
+           // 
+            ajax.GetAjax("/AdvStep/MemberModifySave/", params, "json", function (result) {
+                if (result.ERROR_MESSAGE != "") {
+                    $.MessageBox(result.ERROR_MESSAGE).done(function () {
+                        if (result.FOCUS_TAG_ID == "PASSWORD") {
+                            $("#PASSWORD_CONFIRM").val("");
+                        }
+                        $("#" + result.FOCUS_TAG_ID).val("");
+                        $("#" + result.FOCUS_TAG_ID).focus();
+                      
+                    });
+                    
+                }
+                else {
+                    location.href = String(result.RETURN_URL).toLowerCase();
+                }
+            });
+        }
+
+    </script>
+}
+<div class="ui  vertical stripe attached segment wizard centered">
+    @{Html.RenderPartial("/Views/AdvStep/Partial/Top.cshtml"); }
+
+    <form class="ui form" onSubmit="return false;">
+        <h2 class="ui header">회원정보</h2>
+
+        <div class="ui stackable grid  fields">
+            <div class="one column row">
+                <div class="column">
+                    <table class="ui celled table">
+                        <tbody>
+                            <tr style="display:none!important">
+                                <td class="title">
+                                    @Html.Semantic_TITLE2("사용자구분", true)
+                                </td>
+                                <td colspan="3" class="content">
+                                    @Html.CommonCombo("USER_TYPE", new ALT.VO.Common.T_COMMON_COND { MAIN_CODE = "U001" }, "2")
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="title">
+                                    @Html.Semantic_TITLE2("아이디", true)
+                                </td>
+                                <td class="content">
+                                    @{
+                                        string sPassWord = "";
+                                        if (string.IsNullOrEmpty(LOGIN_MEMBER.USER_ID))
+                                        {
+                                      
+                                            @Html.Semantic_TextBox("USER_ID", LOGIN_MEMBER.USER_ID, SemanticUIHelper.Size.mini, new { @placeholder = "이메일을 등록하세요", @style = "min-width:240px" })
+                                        }
+                                        else
+                                        {
+                                         
+                                            @Html.Semantic_TextBox("USER_ID", LOGIN_MEMBER.USER_ID, SemanticUIHelper.Size.mini, new { @placeholder = "이메일을 등록하세요", @style = "min-width:240px", @readonly = "readonly" })
+                                        }
+                                    }
+                                    @*@Html.Semantic_Button("btnChkUSERID", "중복체크", SemanticUIHelper.enButtonType.Normal, SemanticUIHelper.Size.mini, new { })*@
+                                </td>
+                                <td class="title">
+                                    @Html.Semantic_TITLE2("이름", true)
+                                </td>
+                                <td class="content">
+                                    @Html.Semantic_TextBox("USER_NAME", LOGIN_MEMBER.USER_NAME, SemanticUIHelper.Size.mini, new { @placeholder = "이름을 등록하세요", @style = "min-width:240px" })
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="title">
+                                    @Html.Semantic_TITLE2("암호", true)
+                                </td>
+                                <td class="content">
+                                    @Html.Semantic_TextBox("PASSWORD", sPassWord, SemanticUIHelper.Size.mini, new { @placeholder = "암호를 입력하세요", @type = "password", @style = "min-width:240px" })
+                                </td>
+                                <td class="title">
+                                    @Html.Semantic_TITLE2("암호확인", true)
+                                </td>
+                                <td class="content">
+                                    @Html.Semantic_TextBox("PASSWORD_CONFIRM", sPassWord, SemanticUIHelper.Size.mini, new { @placeholder = "입력한 암호가 맞는지 확인하세요", @type = "password", @style = "min-width:240px" })
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="title">
+                                    @Html.Semantic_TITLE2("전화번호")
+                                </td>
+                                <td class="content">
+                                    @Html.Semantic_TextBox("PHONE", LOGIN_MEMBER.PHONE, SemanticUIHelper.Size.mini, new { @placeholder = "전화번호를 입력하세요", @style = "min-width:240px" })
+                                </td>
+                                <td class="title">
+                                    @Html.Semantic_TITLE2("생년월일")
+                                </td>
+                                <td class="content">
+                                    <div class="ui mini input " style="max-width:150px;">
+                                        @{ LOGIN_MEMBER.BIRTH = "19800814";}
+                                        @Html.Semantic_TextBox("BIRTH", LOGIN_MEMBER.BIRTH, SemanticUIHelper.Size.mini, new { @placeholder = "생년월일(클릭)", @style = "text-align:center;max-width:100px;" })
+
+                                    </div>
+                                    @{
+                                        List<SelectListItem> genderList = new List<SelectListItem>();
+                                        genderList.Add(new SelectListItem { Value = "0", Text = "남자", Selected = (LOGIN_MEMBER.GENDER == 0 ? true : false) });
+                                        genderList.Add(new SelectListItem { Value = "1", Text = "여자", Selected = (LOGIN_MEMBER.GENDER == 1 ? true : false) });
+                                    }
+                                    @Html.Semantic_YesOrNo("GENDER", genderList)
+
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <div style="float:right">
+
+                       @Html.Semantic_Button("btnSave","저장", SemanticUIHelper.enButtonType.Save, SemanticUIHelper.Size.medium, new { @onclick="doSave();" })
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="ui error message"></div>
+    </form>
+</div>

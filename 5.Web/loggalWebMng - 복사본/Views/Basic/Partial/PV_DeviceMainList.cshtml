@@ -1,0 +1,13 @@
+﻿@using ALT.VO.loggal
+@{
+    List<T_DEVICE_MAIN> list = ViewBag.list;
+    @:<div class="doubling eight column row">
+    for (int i = 0; i < list.Count(); i++)// (T_DEVICE_MAIN data in list)
+    {
+        <div class="mainad column" data-key="@(list[i].DEVICE_CODE + "|" + list[i].SEQ.ToString())">
+            <center style="margin-bottom:0.5em">@Html.Semantic_Button3("btnImageDel", "삭제", SemanticUIHelper.enButtonType.Del, new { @onclick = "doDeleteMain(" + list[i].SEQ.ToString() + ");" }, "/basic/devicereg2")</center>
+            <img class="thumbnail-box" style="width:100px;" src="@list[i].CONTENT" />
+        </div>
+    }
+    @:</div>
+}

@@ -1,0 +1,38 @@
+﻿
+@using ALT.VO.Common;
+@using ALT.Framework.Data;
+@{
+    List<EMPLOYEE_INFO> list = ViewBag.list;
+    string totCnt = (list.Count() == 0 ? "0" : list.First().TOTAL_ROWCOUNT.ToString());
+    <input type="hidden" id="total" value="@totCnt" />
+    foreach (EMPLOYEE_INFO data in list)
+    {
+<tr>
+    <td><a href="/account/membermodify/@(data.MEMBER_CODE)">@data.USER_NAME</a></td>
+    <td>@data.USER_ID</td>
+
+    <td class="center">@data.MOBILE</td>
+    <td class="center aligned">@data.BIRTH.ToFormatDate()</td>
+    <td class="center">@data.USER_TYPE_NAME</td>
+    <td class="center">@data.EMP_AUTH_NAME</td>
+    <td class="right"><a href="javascript:moveAdList();">@data.AD_CNT</a></td>
+    <td class="right"><a href="javascript:moveDeviceList();">@data.DEVICE_CNT</a></td>
+
+
+    <td class="center">@data.UPDATE_NAME</td>
+    <td class="center aligned">@data.UPDATE_DATE</td>
+    <td class="right hide"><a href="javascript:moveContactAdList();">@data.CONTACT_AD_CNT</a></td>
+    <td class="right hide"><a href="javascript:moveContactDeviceList();">@data.CONTACT_DEVICE_CNT</a></td>
+    <td class="hide">@data.STORE_CODE</td>
+    <td class="hide">@data.COMPANY_CODE</td>
+    <td class="hide">@data.MEMBER_CODE</td>
+</tr>
+    }
+
+    if (list.Count() ==0)
+    {
+            <tr>
+                <td colspan="12">검색 결과가 없습니다.</td>
+            </tr>
+    }
+}

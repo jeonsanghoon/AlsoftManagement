@@ -1,0 +1,51 @@
+/* http://meyerweb.com/eric/tools/css/reset/ 
+   v2.0 | 20110126
+   License: none (public domain)
+*/
+
+.cd-main > div,.cd-main > span,.cd-main > applet,.cd-main > object,.cd-main > iframe,
+.cd-main > h1,.cd-main > h2,.cd-main > h3,.cd-main > h4,.cd-main > h5,.cd-main > h6,.cd-main > p,.cd-main > blockquote,.cd-main > pre,
+.cd-main > a,.cd-main > abbr,.cd-main > acronym,.cd-main > address,.cd-main > big,.cd-main > cite,.cd-main > code,
+.cd-main > del,.cd-main > dfn,.cd-main > em,.cd-main > img,.cd-main > ins,.cd-main > kbd,.cd-main > q,.cd-main > s,.cd-main > samp,
+.cd-main > small,.cd-main strike,.cd-main strong,.cd-main sub,.cd-main > sup,.cd-main > tt,.cd-main > var,
+.cd-main > b,.cd-main > u,.cd-main > i,.cd-main > center,
+.cd-main > dl,.cd-main dt,.cd-main > dd,.cd-m.ain-content ol,.cd-main ul.cd-top-nav, .cd-side-nav ul,.cd-main > li,
+.cd-main > fieldset,.cd-main form,.cd-main label,.cd-main > legend,
+.cd-main > table,.cd-main > caption,.cd-main > tbody,.cd-main > tfoot,.cd-main > thead,.cd-main > tr,.cd-main > th,.cd-main > td,
+.cd-main > article,.cd-main aside,.cd-main canvas,.cd-main details,.cd-main embed,.cd-main 
+.cd-main > figure,.cd-main figcaption,.cd-main footer,.cd-main > header,.cd-main hgroup,.cd-main 
+.cd-main > menu,cd-nav,.cd-main output,.cd-main ruby,.cd-main > section,.cd-main > summary,
+.cd-main > time,.cd-main > mark,.cd-main > audio,.cd-main > video {
+	margin: 0;
+	padding: 0;
+	border: 0;
+	/*font-size: 100%;*/
+	font: inherit;
+	vertical-align: baseline;
+}
+/* HTML5 display-role reset for older browsers */
+.cd-main article,.cd-main aside,.cd-main details,.cd-main figcaption,.cd-main figure,.cd-main 
+.cd-main footer,.cd-main header,.cd-main hgroup,.cd-main menu,.cd-main nav,.cd-main section,.cd-main main {
+	display: block;
+}
+
+.cd-main ol,.cd-main ul {
+	list-style: none;
+}
+.cd-main blockquote,.cd-main q {
+	quotes: none;
+}
+.cd-main blockquote:before,.cd-main blockquote:after,
+.cd-main q:before,.cd-main q:after {
+	content: '';
+	content: none;
+}
+.cd-main table {
+	border-collapse: collapse;
+	border-spacing: 0;
+}
+
+.cd-main table label
+{
+    vertical-align:bottom;
+}

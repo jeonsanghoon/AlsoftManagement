@@ -1,0 +1,131 @@
+﻿
+<style>
+    .dvAddForm {
+        width: 100%;
+        min-height: 200px;
+        background-color: #f1f1f1;
+        vertical-align: middle;
+        text-align: center;
+        font-size: 1.4em;
+        background-image: url(/common/images/imageinsert.png);
+    }
+
+    .social {
+        width: 100%;
+        text-align: center;
+        margin-top: 1em;
+        
+    }
+
+        .ui.grid > .social a, .social a {
+            padding: 0;
+            margin: 0;
+        }
+        /* Rounded Corner */
+    input[type=text] {
+        border: 2px solid #456879;
+        border-radius: 10px;
+        height: 35px;
+        width: 230px;
+        font-size:1.5em;
+        padding:0.5em;
+    }
+   
+    .dvPhone{
+        margin-top:1em;
+        text-align:center;
+    }
+    .myButton {
+        vertical-align:bottom;
+        cursor:pointer;
+    }
+</style>
+<div class="dvAddForm">
+</div>
+
+<div class="dvPhone">
+    <input type="text" id="Phone" />&nbsp;<img src="/Common/images/phonereceive.png"  class="myButton"/>
+</div>
+    <script type="text/javascript">
+        $("document").ready(function () {
+            $("#Phone").change(function () {
+                if(BaseCommon.validation.MobilePhoneValidate("#Phone") == false)
+                {
+                    $.MessageBox("휴대폰번호 형식이 아닙니다.").done(function (data, button) {
+                        // Check data and button values
+                        $("#Phone").select();
+                    });
+                }
+            })
+
+            $(".socialItem").click(function(){
+                doSaveAdFavorite("", $(this).attr("data-value"));
+            })
+
+            $(".myButton").click(function () {
+                if (BaseCommon.validation.MobilePhoneValidate("#Phone") == false) {
+                    $.MessageBox("휴대폰번호 형식이 아닙니다.").done(function (data, button) {
+                        // Check data and button values
+                        $("#Phone").select();
+                    });
+                    return;
+                }
+                doSaveAdFavorite($("#Phone").val());
+            })
+
+            if (String(location.href).toLowerCase().indexOf("altsoft") < 0
+               && String(location.href).toLowerCase().indexOf("localhost") < 0
+              && String(location.href).toLowerCase().indexOf("106.246.255.132") < 0
+            ) {
+                $(".social").hide();
+                $(".dvPhone").hide();
+            }
+            document.title = "광고";
+        })
+        var _mobileNumer = "";
+        function doSaveAdFavorite(MobileNumber, snsType) {
+
+            var params = new Object();
+            params.MOBILE = MobileNumber;
+            _mobileNumer = MobileNumber;
+            params.DEVICE_CODE = ($("#DEVICE_CODE").val() == undefined ? "" : $("#DEVICE_CODE").val());
+            params.DEVICE_SEQ = ($("#DEVICE_SEQ").val() == undefined ? "" : $("#DEVICE_SEQ").val());
+            params.SNS_TYPE = (snsType == undefined) ? null : snsType;
+            params.FAV_TYPE = 1
+            try {
+                if (Number(params.DEVICE_CODE) > 0) params.FAV_TYPE =2
+            }
+            catch (e) { }
+                
+            
+            params = JSON.stringify(params);
+            ajax.GetAjax("/Basic/AdFavoriteSave/", params, "json", function (result) {
+                if (result.ERROR_MESSAGE != "") {
+                    $.MessageBox(result.ERROR_MESSAGE);
+                    
+                }
+                else {
+                    if (_mobileNumer != "") {
+                        $.MessageBox("전화번호로 등록이 완료되었습니다").done(function (data, button) {
+                            // Check data and button values
+                            $("#Phone").val("");
+                        });
+                        
+                    }
+
+                }
+            });
+        }
+        
+    </script>
+
+<script type="text/javascript" async defer src="//assets.pinterest.com/js/pinit.js"></script>
+<div class="social">
+    <a href="#" class="socialItem" data-value="1" onclick="javascript:window.open('https://twitter.com/intent/tweet?text=[%EA%B3%B5%EC%9C%A0]%20'+ encodeURIComponent(document.URL + '&view=1') + '%20-%20' + encodeURIComponent(document.title) + '&view=' + encodeURIComponent('1') , 'twittersharedialog', 'menubar=no,toolbar=no,resizable=yes,scrollbars=yes,height=400,width=600');return false;" target="_blank" alt="Share on Twitter"><img src="/Common/images/social/twitter.png"></a>
+    <a href="#" class="socialItem" data-value="2" onclick="javascript: window.open('https://www.facebook.com/sharer/sharer.php?u=' + encodeURIComponent(document.URL + '&view=1') + '&t=' + encodeURIComponent(document.title) + '&view=' + encodeURIComponent('1'), 'facebooksharedialog', 'menubar=no,toolbar=no,resizable=yes,scrollbars=yes,height=400,width=600'); return false;" target="_blank" alt="Share on Facebook"><img src="/Common/images/social/facebook.png"></a>
+    <a href="#" class="socialItem" data-value="3" onclick="javascript: window.open('https://plus.google.com/share?url=' + encodeURIComponent(document.URL + '&view=1') + '&view=' + encodeURIComponent('1'), 'googleplussharedialog', 'menubar=no,toolbar=no,resizable=yes,scrollbars=yes,height=350,width=600'); return false;" target="_blank" alt="Share on Google+"><img src="/Common/images/social/google.png"></a>
+    <a href="#" class="socialItem" data-value="4" onclick="javascript: window.open('https://story.kakao.com/share?url=' + encodeURIComponent(document.URL + '&view=1') + '&view=' + encodeURIComponent('1'), 'kakaostorysharedialog', 'menubar=no,toolbar=no,resizable=yes,scrollbars=yes,height=400,width=600'); return false;" target="_blank" alt="Share on kakaostory"><img src="/Common/images/social/kakaostory.png"></a>
+    <a href="#" class="socialItem" data-value="5" onclick="javascript: window.open('http://share.naver.com/web/shareView.nhn?url=' + encodeURIComponent(document.URL + '&view=1') + '&title=' + encodeURIComponent(document.title) + '&view=' + encodeURIComponent('1'), 'naversharedialog', 'menubar=no,toolbar=no,resizable=yes,scrollbars=yes,height=400,width=600'); return false;" target="_blank" alt="Share on Naver"><img src="/Common/images/social/naver_square_40x40.png"></a>
+    <a class="socialItem" data-value="6" data-pin-do="buttonPin" href="https://www.pinterest.com/pin/create/button/" data-pin-custom="true"><img src="/Common/images/social/pinterest_share_button.png" width="40" height="40"></a>
+    <a href="#" class="socialItem" data-value="7" onclick="javascript: window.open('https://www.linkedin.com/shareArticle?mini=true&url=' + encodeURIComponent(document.URL + '&view=1') + '&title=' + encodeURIComponent(document.title) + '&view=' + encodeURIComponent('1'), 'linkedinsharedialog', 'menubar=no,toolbar=no,resizable=yes,scrollbars=yes,height=400,width=600'); return false;" target="_blank" alt="Share on Naver"><img src="/Common/images/social/linkedin.png"></a>
+</div>

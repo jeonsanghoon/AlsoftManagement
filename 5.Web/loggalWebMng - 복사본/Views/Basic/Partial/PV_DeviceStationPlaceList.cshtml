@@ -1,0 +1,27 @@
+﻿
+@{
+    List<T_DEVICE_STATION_PLACE> list = ViewBag.list;
+
+
+    foreach (T_DEVICE_STATION_PLACE data in list)
+    {
+<tr>
+
+    <td>@data.JIBUN_ADDRESS</td>
+    <td class="center">@data.LATITUDE</td>
+    <td class="center">@data.LONGITUDE</td>
+    <td class="center @(data.RADIUS != null && data.RADIUS > 0 ? "" : "hide")">@(data.RADIUS / 1000.0) km</td>
+    <td style="min-width:15em;">@data.ROAD_ADDRESS</td>
+    <td class="center">@data.ZIP_CODE</td>
+    <td>@data.REGION</td>
+    <td>@data.INSERT_NAME</td>
+    <td>@data.INSERT_DATE</td>
+    <td class="hide">@data.STATION_CODE</td>
+    <td class="hide">@data.CK_CODE</td>
+    <td class="hide">@data.IDX</td>
+    <td class="hide">@(data.IS_RANGE)</td>
+</tr>
+    }
+
+    @Html.Hidden("markerlist", Json.Encode(list.Select(s => new DAUM_MAPLIST { TITLE = "", CONTENT = "", LINK_URL = "", LATITUDE = s.LATITUDE, LONGITUDE = s.LONGITUDE, RADIUS = s.RADIUS, IS_RANGE = s.IS_RANGE }).ToList()))
+}

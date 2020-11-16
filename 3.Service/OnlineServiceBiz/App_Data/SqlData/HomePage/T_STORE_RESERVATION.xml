@@ -1,0 +1,79 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<DBAgentMultiTemplate  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns="http://altsoft.kr/">
+
+  <DBAgentTemplate TemplateID="StoreReservationSave">
+    <!-- 
+    SqlType : SQL의 형태를 지정합니다.
+      Example 1:<SqlType>FixedSQL</SqlType> 고정적인 SQL을 지원합니다. 
+      Example 2:<SqlType>DynamicSQL</SqlType> 동적인 SQL Type1을 지원합니다.  
+    Description : 해당 SQL의 기능설명을 적습니다.
+    SQLModifier : 해당 SQL의 작성자(수정자)를 적습니다
+    LastModifyDate : 해당 SQL의 마지막 수정일을 적습니다
+    -->
+    <Information>
+      <SqlType>DynamicSQL</SqlType>
+      <Description>매장별예약저장</Description>
+      <SQLModifier>전상훈</SQLModifier>
+      <LastModifyDate>2016-06-23</LastModifyDate>
+    </Information>
+
+    <TemplateSQL>
+      <!-- FixedSQL : 고정된 SQL이 들어가는 곳입니다. -->
+      <FixedSQL>
+        <![CDATA[ 
+    SET NOCOUNT ON
+    /* SqlType StoreReservationSave */
+
+      
+      DECLARE   @IDX	         BIGINT        = {0}
+		          , @STORE_CODE	   INT           = {1}
+              , @REG_DATE      VARCHAR(16)   = '{2}'
+		          , @REQUEST_DATE  VARCHAR(16)   = '{3}'
+              , @NAME	         NVARCHAR(100) = N'{4}'
+              , @EMAIL	       NVARCHAR(100) = N'{5}'
+		          , @PHONE	       NVARCHAR(100) = N'{6}'
+		          , @PEOPLE_NUMBER INT           = CASE WHEN ISNUMERIC('{7}') = 1 THEN '{7}' ELSE NULL END
+		          , @CONTENT	     NVARCHAR(MAX) = N'{8}'
+		          , @REMARK	       NVARCHAR(200) = N'{9}'
+		          , @STATUS	       INT           = N'{10}'   
+              , @SALE_CODE     BIGINT        = CASE WHEN ISNUMERIC('{11}') = 1 THEN '{11}' ELSE NULL END
+		          , @INSERT_CODE	 INT           = N'{12}'          
+		          , @INSERT_DATE	 DATETIME      = GETDATE()
+		          , @UPDATE_CODE	 INT           = N'{12}'          
+		          , @UPDATE_DATE	 DATETIME      = GETDATE()
+
+
+      UPDATE T_STORE_RESERVATION
+         SET STORE_CODE = @STORE_CODE
+           , REG_DATE = @REG_DATE
+           , REQUEST_DATE = @REQUEST_DATE
+	         , NAME  = @NAME
+	         , EMAIL = @EMAIL
+	         , PHONE = @PHONE 
+	         , PEOPLE_NUMBER = @PEOPLE_NUMBER
+	         , CONTENT = @CONTENT
+	         , REMARK  = @REMARK
+	         , STATUS  = @STATUS
+           , SALE_CODE = @SALE_CODE
+	         , UPDATE_CODE = @UPDATE_CODE
+	         , UPDATE_DATE = @UPDATE_DATE 
+      WHERE IDX = @IDX
+      IF @@ROWCOUNT = 0
+      BEGIN
+	      INSERT INTO T_STORE_RESERVATION
+	      (    STORE_CODE,    REG_DATE,    REQUEST_DATE, NAME,        EMAIL,       PHONE
+	         , PEOPLE_NUMBER, CONTENT,     REMARK,      STATUS,       SALE_CODE
+	         , INSERT_CODE,   INSERT_DATE, UPDATE_CODE, UPDATE_DATE
+	      )
+	      SELECT @STORE_CODE,    @REG_DATE,    @REQUEST_DATE,   @NAME,        @EMAIL,       @PHONE
+	           , @PEOPLE_NUMBER, @CONTENT,     @REMARK,         @STATUS,      @SALE_CODE
+	           , @INSERT_CODE,   @INSERT_DATE, @UPDATE_CODE,    @UPDATE_DATE
+      END
+
+   SET NOCOUNT OFF
+      ]]>
+      </FixedSQL>
+
+    </TemplateSQL>
+  </DBAgentTemplate>
+</DBAgentMultiTemplate>

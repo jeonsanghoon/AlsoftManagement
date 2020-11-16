@@ -1,0 +1,188 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<DBAgentMultiTemplate  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns="http://altsoft.kr/">
+
+  <DBAgentTemplate TemplateID="GetPositionList">
+    <!-- 
+    SqlType : SQL의 형태를 지정합니다.
+      Example 1:<SqlType>FixedSQL</SqlType> 고정적인 SQL을 지원합니다. 
+      Example 2:<SqlType>DynamicSQL</SqlType> 동적인 SQL Type1을 지원합니다.  
+    Description : 해당 SQL의 기능설명을 적습니다.
+    SQLModifier : 해당 SQL의 작성자(수정자)를 적습니다
+    LastModifyDate : 해당 SQL의 마지막 수정일을 적습니다
+    -->
+    <Information>
+      <SqlType>DynamicSQL</SqlType>
+      <Description>직급/직책 조회</Description>
+      <SQLModifier>전상훈</SQLModifier>
+      <LastModifyDate>2017-01-16</LastModifyDate>
+    </Information>
+
+    <TemplateSQL>
+      <!-- FixedSQL : 고정된 SQL이 들어가는 곳입니다. -->
+      <FixedSQL>
+        <![CDATA[ 
+	SET NOCOUNT ON 
+	/*************************************************************/
+	/* 직급/직책테이블 - T_STORE_POSITION 조회 -  SELECT QUERY   */ 
+	/*************************************************************/
+	SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED 
+  DECLARE @STORE_CODE   INT = '{0}'
+         ,@POSITION_TYPE INT = '{1}'
+  SELECT 
+	      A.STORE_CODE
+	    , A.POSITION_CODE
+	    , A.POSITION_TYPE
+	    , B.NAME AS POSITION_TYPE_NAME
+	    , A.SEQ
+	    , A.NAME
+	    , A.HIDE
+	    , A.REMARK
+	    , A.INSERT_CODE
+	    , A.INSERT_DATE
+	    , A.UPDATE_CODE
+	    , C.USER_NAME AS UPDATE_NAME
+	    , A.UPDATE_DATE
+    FROM T_STORE_POSITION A 
+   INNER JOIN T_COMMON B
+      ON B.MAIN_CODE = 'A003'
+     AND B.SUB_CODE = A.POSITION_TYPE
+   INNER JOIN T_MEMBER C
+      ON A.UPDATE_CODE = C.MEMBER_CODE
+ WHERE A.STORE_CODE    = @STORE_CODE
+   #[POSITION_CODE]
+   AND A.POSITION_TYPE = @POSITION_TYPE
+   #[HIDE]
+ ORDER BY A.STORE_CODE, A.POSITION_TYPE, A.SEQ
+	SET NOCOUNT OFF 
+  ]]>
+      </FixedSQL>
+      <DynamicBodys>
+        <Key>POSITION_CODE</Key>
+        <Body>AND A.POSITION_CODE = {0} </Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>HIDE</Key>
+        <Body>AND A.HIDE = {0} </Body>
+      </DynamicBodys>
+    </TemplateSQL>
+  </DBAgentTemplate>
+  <DBAgentTemplate TemplateID="PositionSave">
+    <!-- 
+    SqlType : SQL의 형태를 지정합니다.
+      Example 1:<SqlType>FixedSQL</SqlType> 고정적인 SQL을 지원합니다. 
+      Example 2:<SqlType>DynamicSQL</SqlType> 동적인 SQL Type1을 지원합니다.  
+    Description : 해당 SQL의 기능설명을 적습니다.
+    SQLModifier : 해당 SQL의 작성자(수정자)를 적습니다
+    LastModifyDate : 해당 SQL의 마지막 수정일을 적습니다
+    -->
+    <Information>
+      <SqlType>DynamicSQL</SqlType>
+      <Description>부서저장</Description>
+      <SQLModifier>전상훈</SQLModifier>
+      <LastModifyDate>2017-01-16</LastModifyDate>
+    </Information>
+
+    <TemplateSQL>
+      <!-- FixedSQL : 고정된 SQL이 들어가는 곳입니다. -->
+      <FixedSQL>
+        <![CDATA[ 
+	SET NOCOUNT ON 
+	/**********************************************************/
+	/* 직급/직책테이블 - T_STORE_POSITION 저장 -  SAVE QUERY */ 
+	/**********************************************************/
+	DECLARE @STORE_CODE                     INT                  = N'{0}'
+			  , @POSITION_CODE                  INT                  = N'{1}'
+			  , @POSITION_TYPE                  INT                  = CONVERT(INT, CASE WHEN ISNUMERIC('{2}') = 1 THEN '{2}' ELSE '0' END )
+			  , @SEQ                            INT                  = CONVERT(INT, CASE WHEN ISNUMERIC('{3}') = 1 THEN '{3}' ELSE '0' END )
+			  , @NAME                           NVARCHAR(30)         = N'{4}'
+			  , @HIDE                           BIT                  = CONVERT(BIT, CASE WHEN ISNUMERIC('{5}') = 1 THEN '{5}' ELSE '0' END )
+			  , @REMARK                         NVARCHAR(200)        = N'{6}'
+			  , @INSERT_CODE                    INT                  = {7}
+			  , @INSERT_DATE                    DATETIME             = GETDATE() 
+			  , @UPDATE_CODE                    INT                  = {7}
+			  , @UPDATE_DATE                    DATETIME             = GETDATE() 
+
+	UPDATE A 
+	SET  	  POSITION_TYPE                  = @POSITION_TYPE                 		 ,  SEQ                            = @SEQ                           
+			 ,  NAME                           = @NAME                          		 ,  HIDE                           = @HIDE                          
+			 ,  REMARK                         = @REMARK                        		 ,  UPDATE_CODE                    = @UPDATE_CODE                   
+			 ,  UPDATE_DATE                    = @UPDATE_DATE                   
+	FROM T_STORE_POSITION A 
+	WHERE STORE_CODE= @STORE_CODE	  AND POSITION_CODE= @POSITION_CODE
+	IF @@ROWCOUNT = 0
+	BEGIN
+      SELECT @POSITION_CODE = ISNULL(MAX(POSITION_CODE),0) + 1
+        FROM T_STORE_POSITION 
+       WHERE STORE_CODE= @STORE_CODE	
+		
+      INSERT INTO T_STORE_POSITION
+		  (		STORE_CODE                    		, POSITION_CODE                 		, POSITION_TYPE                 		, SEQ                           		
+			  , NAME                          		, HIDE                          		, REMARK                        		, INSERT_CODE                   		
+			  , INSERT_DATE                   		, UPDATE_CODE                   		, UPDATE_DATE                   		
+		  )
+		  SELECT @STORE_CODE                   		, @POSITION_CODE                		, @POSITION_TYPE                	
+				  , @SEQ                          		, @NAME                         		, @HIDE                         	
+				  , @REMARK                       		, @INSERT_CODE                  		, @INSERT_DATE                  	
+				  , @UPDATE_CODE                  		, @UPDATE_DATE                  	
+	 END
+SET NOCOUNT OFF
+
+  ]]>
+      </FixedSQL>
+    </TemplateSQL>
+  </DBAgentTemplate>
+
+  <DBAgentTemplate TemplateID="PositionDelete">
+    <!-- 
+    SqlType : SQL의 형태를 지정합니다.
+      Example 1:<SqlType>FixedSQL</SqlType> 고정적인 SQL을 지원합니다. 
+      Example 2:<SqlType>DynamicSQL</SqlType> 동적인 SQL Type1을 지원합니다.  
+    Description : 해당 SQL의 기능설명을 적습니다.
+    SQLModifier : 해당 SQL의 작성자(수정자)를 적습니다
+    LastModifyDate : 해당 SQL의 마지막 수정일을 적습니다
+    -->
+    <Information>
+      <SqlType>DynamicSQL</SqlType>
+      <Description>직급/직책 삭제</Description>
+      <SQLModifier>전상훈</SQLModifier>
+      <LastModifyDate>2017-01-16</LastModifyDate>
+    </Information>
+
+    <TemplateSQL>
+      <!-- FixedSQL : 고정된 SQL이 들어가는 곳입니다. -->
+      <FixedSQL>
+        <![CDATA[ 
+	SET NOCOUNT ON 
+	/******************************************************/
+	/* 매장별 직위/직책 테이블 - T_STORE_POSITION 삭제 -  SAVE QUERY */ 
+	/******************************************************/
+	DECLARE @STORE_CODE   INT = N'{0}'
+			  , @POSITION_CODE    INT = N'{1}'
+        , @POSITION_TYPE    INT = N'{2}'
+        , @UPDATE_CODE  INT = N'{3}'
+   
+   IF EXISTS ( SELECT * FROM T_MEMBER_EMPLOYEE 
+                WHERE STORE_CODE = @STORE_CODE 
+                  AND (CASE WHEN  @POSITION_TYPE  = 1 THEN COMP_POSITION ELSE COMP_TITLE END = @POSITION_CODE)
+                  )
+   BEGIN
+      UPDATE T_STORE_POSITION
+         SET HIDE = 1
+           , UPDATE_CODE = @UPDATE_CODE
+           , UPDATE_DATE = GETDATE()
+      WHERE STORE_CODE = @STORE_CODE
+        AND POSITION_CODE  = @POSITION_CODE
+   END
+   ELSE
+   BEGIN
+      DELETE  T_STORE_POSITION
+       WHERE STORE_CODE = @STORE_CODE
+         AND POSITION_CODE  = @POSITION_CODE
+   END
+   
+   SET NOCOUNT OFF
+  ]]>
+      </FixedSQL>
+    </TemplateSQL>
+  </DBAgentTemplate>
+</DBAgentMultiTemplate>

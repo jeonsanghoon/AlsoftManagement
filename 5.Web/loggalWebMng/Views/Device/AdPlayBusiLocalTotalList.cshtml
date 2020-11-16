@@ -1,0 +1,209 @@
+﻿@section scripts{
+
+    <script type="text/javascript">
+
+        $(document).ready(function () {
+
+
+            var pageCount = ($(window).height() - $(".column.schedule").height() - $(".cd-main-header").outerHeight() + $(".ui.header").outerHeight() + $(".ui.table.search").outerHeight() + $(".ui.footer").outerHeight() - $(".ui.table.search").height() - 420) / 30;
+            if (pageCount != NaN) PARAM_DATA.PAGE_COUNT = Number(Math.floor(pageCount));
+            doQuery();
+
+            ComponentInit();
+        }); //End document.ready
+
+        function ComponentInit() {
+            $('#FR_DATE').datetimepicker({
+                timepicker: false,
+                format: 'Y.m.d'
+            });
+
+            $('#TO_DATE').datetimepicker({
+                timepicker: false,
+                format: 'Y.m.d'
+            });
+            $("#SEARCH_TEXT").attr("placeholder", Input.ComboBox.GetText("#cboGubun"));
+            $("#cboGubun").change(function () {
+                $("#SEARCH_TEXT").attr("placeholder", Input.ComboBox.GetText("#cboGubun"));
+            });
+
+
+        }
+        var PARAM_DATA = {
+            PAGE_SIZE: ($("window").width() < 768 ? 5 : 10)
+            , PAGE_COUNT: 15
+            , PAGE: 1
+            , SORT_ORDER: ""
+        }
+        function doQuery(page, order) {
+            if (page == undefined || page == null || page < 1) page = 1;
+            PARAM_DATA.PAGE = page;
+
+            var param = BaseCommon.FormInfo.serializeJson(".ui.form");
+
+            param.PAGE_COUNT = PARAM_DATA.PAGE_COUNT;
+            param.PAGE = PARAM_DATA.PAGE;
+
+            param[$("#cboGubun").val()] = $("#SEARCH_TEXT").val();
+
+
+            if (order != undefined) {
+                PARAM_DATA.SORT_ORDER = order;
+                param.SORT_ORDER = order;
+            }
+            else if (order == undefined) {
+                param.SORT_ORDER = PARAM_DATA.SORT_ORDER;
+            }
+            param = JSON.stringify(param);
+            ajax.GetAjax("/device/pv_AdPlayBusiLocalTotalList", param, "html", function (result) {
+                $("#dvTable table tbody").html(result);
+                $.mrc_table.Init(".mrc-table", false, order);
+                $("#dvpagination").show();
+
+
+                $("#idTotal").text($("#total").val()).number(true, 0, ",");
+                $("#dvpagination").pagination({
+                    total: Number($("#total").val()), page: PARAM_DATA.PAGE, pagesize: PARAM_DATA.PAGE_SIZE, perpage: PARAM_DATA.PAGE_COUNT
+                    , onPageClick: function (item, page) {
+                        doQuery(page);
+                    }
+                })
+                $("#dvpagination").css("display", "");
+            });
+        }
+
+        function mrcGrid_Sort(objName, datasort, orderType) {
+            if (datasort == "" || orderType == "") doQuery(1, "");
+            else doQuery(1, datasort + " " + orderType);
+        }
+
+        function ExcelDown() {
+            var params = BaseCommon.FormInfo.serializeJson(".ui.form");
+            var arrData = new Array();
+            $.each(params, function (key, val) {
+                //display the key and value pair
+
+                arrData.push({ name: key, value: val });
+            });
+            BaseCommon.FormInfo.PostSubmit('/device/AdPlayBusiLocalTotalExcelReport', arrData);
+        }
+        function adPlayDetail(obj, storeCode) {
+            $.mrc_table.SetActiveIndex(".mrc-table", $(obj).closest("tr").index() - 1);
+            var params = $.mrc_table.GetActiveRowData(".mrc-table")[0];
+            var arrData = new Array();
+            $.each(params, function (key, val) {
+                //display the key and value pair
+                arrData.push({ name: key, value: val });
+            });
+            params.REG_DAY = moment(params.REG_DAY, "YYYYMMDD").format("YYYY.MM.DD");
+            arrData.push({ name: "FR_DATE", value: $("#FR_DATE").val() });
+            arrData.push({ name: "TO_DATE", value: $("#TO_DATE").val() });
+            arrData.push({ name: "STORE_CODE", value: storeCode });
+            BaseCommon.FormInfo.PostSubmit('/device/adplaydailylocalboxtotallist', arrData);
+        }
+    </script>
+}
+<style>
+    .ui.checkbox {
+        margin-top: 0.5em;
+    }
+
+    #dvpagination {
+        margin-top: 1em;
+    }
+
+    .ui.table td.title {
+        width: 120px;
+    }
+
+    @@media (min-width:768px) and (max-width:1023px) {
+        .ui.table td.frtodate {
+            width: 39.5%;
+        }
+    }
+
+    @@media only screen and (min-width:1024px) {
+        .ui.table td.frtodate {
+            width: 23.5%;
+        }
+    }
+</style>
+<div class="ui vertical stripe segment">
+    @Html.TitleNavigation()
+    <form class="ui form">
+        <div class="ui stackable grid fields">
+            <div class="one column row">
+                <div class="column">
+                    <table class="ui table search">
+                        <tbody>
+                            <tr>
+                                <td class="title">
+                                    @Html.Semantic_TITLE2("조회일자")
+                                </td>
+                                <td class="content frtodate">
+                                    @Html.Semantic_TextBox("FR_DATE", DateTime.Now.ToString("yyyy.MM.01"), SemanticUIHelper.Size.mini, new { @style = "text-align:center;", @class = "size100", @placeholder = "시작일자" })@Html.Semantic_TextBox("TO_DATE", DateTime.Now.ToString("yyyy.MM.dd"), SemanticUIHelper.Size.mini, new { @style = "text-align:center;", @class = "size100", @placeholder = "종료일자" })
+                                </td>
+
+                                <td class="title">
+
+                                    @{
+                                        List<SelectListItem> comboList = new List<SelectListItem>();
+                                        comboList.Add(new SelectListItem { Value = "STORE_NAME", Text = "사업지점" });
+                                        comboList.Add(new SelectListItem { Value = "STORE_CODE", Text = "지점코드" });
+
+                                    }
+                                    @Html.DropDownList("cboGubun", comboList)
+                                </td>
+                                <td class="content">
+                                    @Html.Semantic_TextBox("SEARCH_TEXT", "", SemanticUIHelper.Size.mini, new { @placeholder = "", @class = "size200" })
+                                </td>
+                                <td class="conetent buttons">
+                                    <span class="spTotText">
+                                        총 <span style="font-weight:bold;color:red;" id="idTotal">0</span>건
+                                    </span>
+                                    @Html.Semantic_Button2("btnSearch", "조회", SemanticUIHelper.enButtonType.ToList, SemanticUIHelper.Size.medium, new { onclick = "doQuery();" })
+                                    @Html.Semantic_Button2("btnExcel", "엑셀", SemanticUIHelper.enButtonType.Excel, SemanticUIHelper.Size.medium, new { @onclick = "ExcelDown();" })
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                </div>
+            </div>
+            <div class="one column row">
+                <div class="column schedule right" style="font-weight:bold;"><span style="color:red">기준일자  : </span> @SessionHelper.ScheduleInfo.MONGODB_BASE_DATE.ToFormatDate() &nbsp; <span style="color:blue">적용시간</span> : @SessionHelper.ScheduleInfo.MONGODB_APPLY_TIME </div>
+                <div class="column" id="dvTable">
+                    <table class="mrc-table" id="tbList">
+                        <thead>
+                            <tr>
+                                <th column_name="ROW_IDX" style="width:8em">순번</th>
+                                <th column_name="STORE_NAME" class="sort">사업주</th>
+                                <th column_name="DEVICE_CNT" data-sort="DEVICE_CNT" class="sort">로컬박스수</th>
+                                <th column_name="BANNER_KIND_NAME" class="sort" >배너구분</th>
+                                <th column_name="IMAGE1_PLAY_QTY" class="sort" display_size="tablet">이미지-1(건)</th>
+                                <th column_name="IMAGE1_PLAY_TIME" data-sort="IMAGE1_PLAY_TIME" class="sort" display_size="pc">이미지-1(초)</th>
+                                <th column_name="IMAGE6_PLAY_QTY" class="sort" display_size="tablet">이미지-6(건)</th>
+                                <th column_name="IMAGE6_PLAY_TIME" data-sort="IMAGE1_PLAY_TIME" class="sort" display_size="pc">이미지-6(초)</th>
+                                <th column_name="IMAGE12_PLAY_QTY" data-sort="IMAGE12_PLAY_QTY" class="sort" display_size="tablet">이미지-12(건)</th>
+                                <th column_name="IMAGE12_PLAY_TIME" class="sort" display_size="pc">이미지-12(초)</th>
+                                <th column_name="CLICK_PLAY_QTY" class="sort" display_size="tablet">클릭(건)</th>
+                                <th column_name="CLICK_TIME" class="sort" display_size="pc">클릭(초)</th>
+                                <th column_name="VIDEO_PLAY_QTY" class="sort" display_size="tablet">비디오(건)</th>
+                                <th column_name="VIDEO_PLAY_TIME" class="sort" display_size="pc">비디오(초)</th>
+                                <th column_name="YOUTUBE_PLAY_QTY" class="sort" data-sort="YOUTUBE_PLAY_QTY" display_size="pc">유튜브(건)</th>
+                                <th column_name="YOUTUBE_PLAY_TIME" class="sort" data-sort="YOUTUBE_PLAY_TIME" display_size="pc">유튜브(초)</th>
+                                <th column_nmae="TOT_QTY" class="sort" data-sort="TOT_QTY">총건수</th>
+                                <th column_nmae="TOT_PLAY_TIME" data-sort="TOT_PLAY_TIME" display_size="pc">총시간</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="one column row">
+                <div id="dvpagination" class="ui floated pagination menu"></div>
+            </div>
+        </div>
+    </form>
+</div>
+

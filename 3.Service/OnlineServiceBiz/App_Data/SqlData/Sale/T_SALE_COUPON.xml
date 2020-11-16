@@ -1,0 +1,213 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<DBAgentMultiTemplate  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns="http://altsoft.kr/">
+
+  <DBAgentTemplate TemplateID="GetCouponList">
+    <!-- 
+    SqlType : SQL의 형태를 지정합니다.
+      Example 1:<SqlType>FixedSQL</SqlType> 고정적인 SQL을 지원합니다. 
+      Example 2:<SqlType>DynamicSQL</SqlType> 동적인 SQL Type1을 지원합니다.  
+    Description : 해당 SQL의 기능설명을 적습니다.
+    SQLModifier : 해당 SQL의 작성자(수정자)를 적습니다
+    LastModifyDate : 해당 SQL의 마지막 수정일을 적습니다
+    -->
+    <Information>
+      <SqlType>DynamicSQL</SqlType>
+      <Description>쿠폰정보 조회</Description>
+      <SQLModifier>전상훈</SQLModifier>
+      <LastModifyDate>2016-06-23</LastModifyDate>
+    </Information>
+
+    <TemplateSQL>
+      <!-- FixedSQL : 고정된 SQL이 들어가는 곳입니다. -->
+      <FixedSQL>
+        <![CDATA[ 
+ 	SET NOCOUNT ON 
+	/******************************************************/
+	/* 쿠폰테이블 - T_SALE_COUPON 조회 -  SELECT QUERY    */ 
+	/******************************************************/
+	SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED 
+	SELECT
+  		A.COUPON_CODE
+		, A.COUPON_NO
+		, A.COUPON_DESC
+		, A.COUPON_TYPE
+		, A.USE_DATE
+		, A.FR_DATE
+		, A.TO_DATE
+		, A.MEMBER_CODE
+		, A.COMPANY_CODE
+    , B.COMPANY_NAME
+		, A.STORE_CODE
+    , C.STORE_NAME
+		, A.ITEM_GROUP_CODE
+    , C.GROUP_NAME AS ITEM_GROUP_NAME
+		, A.ITEM_CODE
+    , D.ITEM_NAME
+		, A.DISCOUNT_RATE
+		, A.DISCOUNT_AMT
+		, A.MIN_PAY_AMT
+		, A.USE_DISCOUNT_AMT
+		, A.USE_YN
+		, A.SALE_CODE
+		, A.SALE_ITEM_SEQ
+		, A.REMARK
+		, A.INSERT_CODE
+		, A.INSERT_DATE
+		, A.UPDATE_CODE
+		, A.UPDATE_DATE
+	FROM T_SALE_COUPON A 
+  LEFT JOIN T_COMPANY B
+    ON A.COMPANY_CODE = B.COMPANY_CODE
+  LEFT T_STORE C
+    ON A.STORE_CODE = C.STORE_CODE
+  LEFT JOIN T_ITEM_GROUP C
+    ON A.ITEM_GROUP_CODE = C.GROUP_CODE 
+  LEFT JOIN T_ITEM D
+    ON A.ITEM_CODE = D.ITEM_CODE
+ 
+ WHERE 1=1 
+    #[COUPON_CODE]
+    #[COUPON_NO]
+    #[COUPON_TYPE]
+    #[AVAILABLE_DATE]
+    #[STORE_CODE]
+    #[FR_USE_DATE]
+    #[TO_USE_DATE]
+  ORDER BY A.COUPON_CODE
+	SET NOCOUNT OFF 
+
+      ]]>
+      </FixedSQL>
+      <DynamicBodys>
+        <Key>COUPON_CODE</Key>
+        <Body>AND A.COUPON_CODE = {0} </Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>COUPON_NO</Key>
+        <Body>AND A.COUPON_NO = N'{0}' </Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>COUPON_NO</Key>
+        <Body>AND A.COUPON_TYPE = {0} </Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>AVAILABLE_DATE</Key>
+        <Body>
+          <![CDATA[ AND (A.FR_DATE >= '{0}' AND A.TO_DATE <= '{0}')  ]]>
+       </Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>STORE_CODE</Key>
+        <Body>
+          <![CDATA[ AND A.STORE_CODE = '{0}'  ]]>
+        </Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>FR_USE_DATE</Key>
+        <Body>
+          <![CDATA[ AND A.USE_DATE >= '{0}'  ]]>
+        </Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>TO_USE_DATE</Key>
+        <Body>
+          <![CDATA[ AND A.USE_DATE <= '{0}'  ]]>
+        </Body>
+      </DynamicBodys>
+  </TemplateSQL>
+  </DBAgentTemplate>
+
+
+  <DBAgentTemplate TemplateID="SaleCouponSave">
+    <!-- 
+    SqlType : SQL의 형태를 지정합니다.
+      Example 1:<SqlType>FixedSQL</SqlType> 고정적인 SQL을 지원합니다. 
+      Example 2:<SqlType>DynamicSQL</SqlType> 동적인 SQL Type1을 지원합니다.  
+    Description : 해당 SQL의 기능설명을 적습니다.
+    SQLModifier : 해당 SQL의 작성자(수정자)를 적습니다
+    LastModifyDate : 해당 SQL의 마지막 수정일을 적습니다
+    -->
+    <Information>
+      <SqlType>DynamicSQL</SqlType>
+      <Description>쿠폰정보 저장</Description>
+      <SQLModifier>전상훈</SQLModifier>
+      <LastModifyDate>2016-06-23</LastModifyDate>
+    </Information>
+
+    <TemplateSQL>
+      <!-- FixedSQL : 고정된 SQL이 들어가는 곳입니다. -->
+      <FixedSQL>
+        <![CDATA[ 
+	SET NOCOUNT ON 
+	/***************************************************/
+	/* 쿠폰테이블 - T_SALE_COUPON 저장 -  SAVE QUERY */ 
+	/***************************************************/
+	DECLARE @COUPON_CODE          BIGINT               = N'{0}'
+			  , @COUPON_NO            VARCHAR(200)         = N'{1}'
+			  , @COUPON_DESC          NVARCHAR(1000)       = N'{2}'
+			  , @COUPON_TYPE          INT                  = CASE WHEN ISNUMERIC('{3}') = 1 THEN '{3}' ELSE 0 END
+			  , @USE_DATE             VARCHAR(8)           = N'{4}'
+			  , @FR_DATE              VARCHAR(8)           = N'{5}'
+			  , @TO_DATE              VARCHAR(8)           = N'{6}'
+			  , @MEMBER_CODE          INT                  = CASE WHEN ISNUMERIC('{7}') = 1 THEN '{7}' ELSE NULL END
+			  , @COMPANY_CODE         INT                  = CASE WHEN ISNUMERIC('{8}') = 1 THEN '{8}' ELSE NULL END
+			  , @STORE_CODE           INT                  = CASE WHEN ISNUMERIC('{9}') = 1 THEN '{9}' ELSE NULL END
+			  , @ITEM_GROUP_CODE      BIGINT               = CASE WHEN ISNUMERIC('{10}') = 1 THEN '{10}' ELSE NULL END
+			  , @ITEM_CODE            BIGINT               = CASE WHEN ISNUMERIC('{11}') = 1 THEN '{11}' ELSE NULL END
+			  , @DISCOUNT_RATE        NUMERIC(30,6)        = CONVERT(NUMERIC(30,6), CASE WHEN ISNUMERIC('{12}') = 1 THEN '{12}' ELSE NULL END)
+			  , @DISCOUNT_AMT         NUMERIC(30,6)        = CONVERT(NUMERIC(30,6), CASE WHEN ISNUMERIC('{13}') = 1 THEN '{13}' ELSE '0' END)
+			  , @MIN_PAY_AMT          NUMERIC(30,6)        = CONVERT(NUMERIC(30,6), CASE WHEN ISNUMERIC('{14}') = 1 THEN '{14}' ELSE '0' END)
+			  , @USE_DISCOUNT_AMT     NUMERIC(30,6)        = CONVERT(NUMERIC(30,6), CASE WHEN ISNUMERIC('{15}') = 1 THEN '{15}' ELSE '0' END)
+			  , @USE_YN               BIT                  = CASE WHEN ISNUMERIC('{16}') = 1 THEN '{16}' ELSE 0 END
+			  , @SALE_CODE            BIGINT               = CASE WHEN ISNUMERIC('{17}') = 1 THEN '{17}' ELSE NULL END
+			  , @SALE_ITEM_SEQ        INT                  = CASE WHEN ISNUMERIC('{18}') = 1 THEN '{18}' ELSE NULL END
+			  , @REMARK               NVARCHAR(200)        = N'{19}'
+			  , @INSERT_CODE          INT                  = {20}
+			  , @INSERT_DATE          DATETIME             = GETDATE() 
+			  , @UPDATE_CODE          INT                  = {20}
+			  , @UPDATE_DATE          DATETIME             = GETDATE() 
+
+	UPDATE A 
+	SET  	  COUPON_CODE               = @COUPON_CODE              		 ,  COUPON_NO                 = @COUPON_NO                
+			 ,  COUPON_DESC               = @COUPON_DESC              		 ,  COUPON_TYPE               = @COUPON_TYPE              
+			 ,  USE_DATE                  = @USE_DATE                 		 ,  FR_DATE                   = @FR_DATE                  
+			 ,  TO_DATE                   = @TO_DATE                  		 ,  MEMBER_CODE               = @MEMBER_CODE              
+			 ,  COMPANY_CODE              = @COMPANY_CODE             		 ,  STORE_CODE                = @STORE_CODE               
+			 ,  ITEM_GROUP_CODE           = @ITEM_GROUP_CODE          		 ,  ITEM_CODE                 = @ITEM_CODE                
+			 ,  DISCOUNT_RATE             = @DISCOUNT_RATE            		 ,  DISCOUNT_AMT              = @DISCOUNT_AMT             
+			 ,  MIN_PAY_AMT               = @MIN_PAY_AMT              		 ,  USE_DISCOUNT_AMT          = @USE_DISCOUNT_AMT         
+			 ,  USE_YN                    = @USE_YN                   		 ,  SALE_CODE                 = @SALE_CODE                
+			 ,  SALE_ITEM_SEQ             = @SALE_ITEM_SEQ            		 ,  REMARK                    = @REMARK                   
+			 ,  UPDATE_CODE               = @UPDATE_CODE              		 ,  UPDATE_DATE               = @UPDATE_DATE              
+	
+	FROM T_SALE_COUPON A 
+	WHERE COUPON_CODE= @COUPON_CODE
+	IF @@ROWCOUNT = 0
+	BEGIN
+		INSERT INTO T_SALE_COUPON
+		(		COUPON_NO           		, COUPON_DESC         		, COUPON_TYPE         		
+			, USE_DATE            		, FR_DATE             		, TO_DATE             		, MEMBER_CODE         		
+			, COMPANY_CODE        		, STORE_CODE          		, ITEM_GROUP_CODE     		, ITEM_CODE           		
+			, DISCOUNT_RATE       		, DISCOUNT_AMT        		, MIN_PAY_AMT         		, USE_DISCOUNT_AMT    		
+			, USE_YN              		, SALE_CODE           		, SALE_ITEM_SEQ       		, REMARK              		
+			, INSERT_CODE         		, INSERT_DATE         		, UPDATE_CODE         		, UPDATE_DATE         		
+			
+		)
+		SELECT @COUPON_NO          		, @COUPON_DESC        	
+				, @COUPON_TYPE        		, @USE_DATE           		, @FR_DATE            	
+				, @TO_DATE            		, @MEMBER_CODE        		, @COMPANY_CODE       	
+				, @STORE_CODE         		, @ITEM_GROUP_CODE    		, @ITEM_CODE          	
+				, @DISCOUNT_RATE      		, @DISCOUNT_AMT       		, @MIN_PAY_AMT        	
+				, @USE_DISCOUNT_AMT   		, @USE_YN             		, @SALE_CODE          	
+				, @SALE_ITEM_SEQ      		, @REMARK             		, @INSERT_CODE        	
+				, @INSERT_DATE        		, @UPDATE_CODE        		, @UPDATE_DATE        	
+			
+	 END
+SET NOCOUNT OFF
+
+
+      ]]>
+      </FixedSQL>
+    </TemplateSQL>
+  </DBAgentTemplate>
+</DBAgentMultiTemplate>

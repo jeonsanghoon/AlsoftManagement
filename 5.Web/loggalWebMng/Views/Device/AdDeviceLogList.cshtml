@@ -1,0 +1,240 @@
+﻿@{
+	var comboList = Service.commoneService.GetCommon(new T_COMMON_COND { ADD_COND = "AND MAIN_CODE IN('A009')", HIDE = false });
+	string empPopID = "emp";
+	ViewBag.title = "배너공유승인진행로그";
+}
+@section scripts{
+
+	<script type="text/javascript">
+		var PARAM_DATA = {
+            PAGE_SIZE: 5
+          , PAGE_COUNT: 10
+          , PAGE: 1
+          , SORT_ORDER:""
+        }
+        $(document).ready(function () {
+			ComponentInit();
+			doQuery();
+		});
+		
+        function ComponentInit() {
+            $('#FR_DATE').datetimepicker({
+                timepicker: false,
+                format: 'Y.m.d'
+            });
+
+            $('#TO_DATE').datetimepicker({
+                timepicker: false,
+                format: 'Y.m.d'
+            });
+            $(".ui.form input").keyup(function (e) {
+                var code = (e.keyCode ? e.keyCode : e.which);
+                if (code == 13) {
+                    doQuery();
+                }
+			})
+			PARAM_DATA = $.mrc_table.SetPageSizeObject({ pageParam :PARAM_DATA, searchObjName:".ui.table.search"});	
+        }
+
+		
+        function doQuery(page, order) {
+            if (page == undefined || page == null || page < 1) page = 1;
+			PARAM_DATA.PAGE = page;
+			
+			$("#FR_DATE").val(BaseCommon.StringInfo.replaceAll($("#FR_DATE").val(), ".", "-"));
+			$("#TO_DATE").val(BaseCommon.StringInfo.replaceAll($("#TO_DATE").val(), ".", "-")); 
+
+            var param = BaseCommon.FormInfo.serializeJson(".ui.form");
+
+            param.PAGE_COUNT = PARAM_DATA.PAGE_COUNT;
+            param.PAGE = PARAM_DATA.PAGE;
+
+            if (order != undefined) {
+                PARAM_DATA.SORT_ORDER = order;
+                param.SORT_ORDER = order;
+            }
+            else if (order == undefined) {
+                param.SORT_ORDER = PARAM_DATA.SORT_ORDER;
+            }
+
+			param.USER_ID = param.emp_ID;
+            param.USER_NAME = param.USER_NAME;
+
+			param = JSON.stringify(param);
+            ajax.GetAjax("/device/pv_AdDeviceLogList", param, "html", function (result) {
+                $("#dvTable table tbody").html(result);
+                $.mrc_table.Init(".mrc-table", false, order);
+                $("#dvpagination").show();
+                $("#dvpagination").pagination({
+                    total: Number($("#total").val()), page: PARAM_DATA.PAGE, pagesize: PARAM_DATA.PAGE_SIZE, perpage: PARAM_DATA.PAGE_COUNT
+                    , onPageClick:function(item, page) {
+                        doQuery(page);
+                    }
+                })
+                $("#dvpagination").css("display", "");
+            });
+        }
+
+        function mrcGrid_Sort(objName, datasort, orderType) {
+            if (datasort == "" || orderType == "") doQuery(1,"");
+            else doQuery(1, datasort + " " + orderType);
+        }
+
+		function ExcelDown() {
+            if (!chkStore()) return;
+            var params = BaseCommon.FormInfo.serializeJson(".ui.form");
+            var arrData = new Array();
+            $.each(params, function (key, val) {
+                //display the key and value pair
+
+                arrData.push({ name: key, value: val });
+            });
+            BaseCommon.FormInfo.PostSubmit('/Device/AdDeviceLogExcelReport', arrData);
+		}
+
+		function chkStore() {
+			var len = $('#tbList tr').length;
+            if (1 >= len) {
+				alert("none data");
+                return false;
+            }
+            else {         
+                return true;
+            }
+		}
+
+		function EmployeePConfirm_@(empPopID)_callBack(obj)
+        {
+            doQuery(1);
+		}
+
+		function statusChange() {
+            doQuery(1);
+        }
+	</script>
+}
+
+<style>
+	.ui.checkbox {
+		margin-top: 0.5em;
+	}
+
+	#dvpagination {
+		margin-top: 1em;
+	}
+
+	@@media (min-width:768px) and (max-width:1024px) {
+		.ui.table td.frtodate {
+			width: 39.5%;
+		}
+	}
+</style>
+<div class="ui vertical stripe segment">
+	@Html.TitleNavigation()
+	<form class="ui form">
+		<div class="one column row">
+			<div class="column">
+				<table class="ui table search">
+					<tbody>
+						<tr>
+							<td class="title">
+								@Html.Semantic_TITLE2("조회일자")
+							</td>
+							<td class="content frtodate">
+								@Html.Semantic_TextBox("FR_DATE", DateTime.Now.AddDays(-200).ToString("yyyy.MM.dd"), SemanticUIHelper.Size.mini, new { @style = "text-align:center;", @placeholder = "시작일자", @class = "size100" })
+								@Html.Semantic_TextBox("TO_DATE", DateTime.Now.ToString("yyyy.MM.dd"), SemanticUIHelper.Size.mini, new { @style = "text-align:center;", @placeholder = "종료일자", @class = "size100" })
+							</td>
+
+							<td class="title">
+								@Html.Semantic_TITLE2("배너코드")
+							</td>
+							<td class="content">
+								@Html.Semantic_TextBox("AD_CODE", "", SemanticUIHelper.Size.medium, new { @placeholder = "배너코드", @class = "size100" })
+
+							</td>
+							<td class="title">
+								@Html.Semantic_TITLE2("제목")
+							</td>
+							<td class="content">
+								@Html.Semantic_TextBox("TITLE", "", SemanticUIHelper.Size.medium, new { @placeholder = "제목", @class = "size180" })
+
+							</td>
+							
+						</tr>
+						<tr>
+							<td class="title">
+								@Html.Semantic_TITLE2("로컬박스")
+							</td>
+							<td class="content">
+								@Html.Semantic_TextBox("DEVICE_CODE", "", SemanticUIHelper.Size.medium, new { @placeholder = "코드", @class = "size60" })
+								@Html.Semantic_TextBox("DEVICE_NAME", "", SemanticUIHelper.Size.medium, new { @placeholder = "로컬박스명", @class = "size160" })
+							</td>
+							<td class="title">
+								@Html.Semantic_TITLE2("상태")
+							</td>
+							<td class="content">
+								@Html.CommonCombo("STATUS", new T_COMMON_COND { MAIN_CODE = "A009" }, "", "선택-", new { @class = "size100", @onchange = "statusChange();" } )
+							</td>
+							<td class="title" >
+								@Html.Semantic_TITLE2("수정자")
+							</td>
+							<td class="content">
+								@Html.EditorFor(model => new EditTempleateModel().Employee_Popup, new { id = empPopID })
+								
+							</td>
+						</tr>
+						<tr>
+							<td class="title">
+								@Html.Semantic_TITLE2("배너업체")
+							</td>
+							<td class="content">
+								@Html.StoreCombo("AD_STORE_CODE", new T_STORE_COND { }, "", "-선택-", new { @class = "size100", @onchange = "doQuery(1);" })
+							</td>
+							<td class="title">
+								@Html.Semantic_TITLE2("로컬박스업체")
+							</td>
+							<td class="content">
+								@Html.StoreCombo("DEVICE_STORE_CODE", new T_STORE_COND { enDisplay = enDisplayMode.Total }, "", "-선택-", new { @class = "size100", @onchange = "doQuery(1);" })
+							</td>
+							<td class="buttons" colspan="2">
+								@Html.Semantic_Button2("btnSearch", "조회", SemanticUIHelper.enButtonType.ToList, SemanticUIHelper.Size.medium, new { onclick = "doQuery();" })
+								@Html.Semantic_Button2("btnExcel", "엑셀", SemanticUIHelper.enButtonType.Excel, SemanticUIHelper.Size.mini, new { @onclick = "ExcelDown();" })
+							</td>
+						</tr>
+					</tbody>
+
+				</table>
+
+			</div>
+		</div>
+		<div class="one column row">
+			<div class="column" id="dvTable">
+				<table class="mrc-table search" id="tbList">
+					<thead>
+						<tr>
+							<th class="sort" column_name="UPDATE_DATE" data-sort="A.UPDATE_DATE" style="width:1.2em;">일자</th>
+							<th class="sort" column_name="AD_CODE" data-sort="A.AD_CODE" display_size="pc">배너코드</th>
+							<th class="sort" column_name="TITLE" data-sort="A.TITLE">제목</th>
+							<th class="sort" column_name="FR_DATE" data-sort="A.FR_DATE" display_size="tablet">시작일자</th>
+							<th class="sort" column_name="TO_DATE" data-sort="A.TO_DATE" display_size="tablet">종료일자</th>
+							<th class="sort" column_name="AD_FRAME_TYPE" data-sort="A.AD_FRAME_TYPE" display_size="tablet">프레임</th>
+							<th class="sort" column_name="DEVICE_NAME " data-sort="A.DEVICE_NAME" display_size="tablet">로컬박스명</th>
+							<th class="sort" column_name="STATUS" data-sort="A.STATUS" display_size="pc">상태</th>
+							
+							<th column_name="AD_STORE_NAME " display_size="detail">배너업체</th>
+							<th column_name="DEVICE_STORE_NAME " display_size="detail">로컬박스업체</th>
+							<th column_name="CLICK_CNT " display_size="detail">클릭횟수</th>
+							<th column_name="REMARK " display_size="detail">비고</th>
+							<th column_name="REMARK2 " display_size="detail">메모</th>
+
+						</tr>
+					</thead>
+					<tbody></tbody>
+				</table>
+			</div>
+		</div>
+		<div class="one column row">
+			<div id="dvpagination" class="ui floated pagination menu"></div>
+		</div>
+	</form>
+</div>

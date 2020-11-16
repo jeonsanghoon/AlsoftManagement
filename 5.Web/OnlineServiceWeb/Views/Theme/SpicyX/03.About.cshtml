@@ -1,0 +1,64 @@
+﻿    <!-- Start About us -->
+@{
+
+    List<T_STORE_IMAGE> list = SessionHelper.LoginInfo.StoreImageList.Where(w => w.IMAGE_TYPE == 3).ToList();
+    string sContent = "";
+    if (list.Count() > 0) { sContent = list.First().DATA3; }
+
+  
+}
+<section id="mu-about-us">
+    <div class="container">
+        <div class="row">
+            <div class="col-md-12">
+                <div class="mu-about-us-area">
+                    <div class="mu-title">
+                        <span class="mu-subtitle">Discover</span>
+                        <h2>ABOUT US</h2><div class="container">
+             
+                        </div>
+                    </div><!-- /card-container -->
+                </div><!-- /container -->
+                <i class="fa fa-spoon"></i>
+                <span class="mu-title-bar"></span>
+            </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mu-about-us-left">
+                                @Html.Raw(sContent)
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mu-about-us-right">
+                                <ul class="mu-abtus-slider">
+                                    @foreach (T_STORE_IMAGE data in list)
+                                    {
+                                        <li><img src="@data.IMAGE_URL" alt="img"></li>
+                                    }
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+<!-- End About us -->
+<script type="text/javascript">
+    $("document").ready(function () {
+        /* ----------------------------------------------------------- */
+        /*  3. ABOUT US (SLICK SLIDER)
+        /* ----------------------------------------------------------- */
+
+        jQuery('.mu-abtus-slider').slick({
+            dots: false,
+            infinite: true,
+            arrows: false,
+            speed: 500,
+            autoplay: true,
+            fade: true,
+            cssEase: 'linear'
+        });
+    })
+</script>

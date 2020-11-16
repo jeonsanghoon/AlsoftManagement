@@ -1,0 +1,108 @@
+﻿
+<style>
+    .dvAddForm {
+        width: 100%;
+        min-height: 200px;
+        background-color: #f1f1f1;
+        vertical-align: middle;
+        text-align: center;
+        font-size: 1.4em;
+        background-image: url(/common/images/imageinsert.png);
+    }
+
+        /* Rounded Corner */
+    input[type=text] {
+        border: 2px solid #456879;
+        border-radius: 10px;
+        height: 35px;
+        width: 230px;
+        font-size:1.5em;
+        padding:0.5em;
+    }
+   
+    .dvPhone{
+        margin-top:1em;
+        text-align:center;
+    }
+    .myButton {
+        vertical-align:bottom;
+        cursor:pointer;
+    }
+</style>
+<div class="dvAddForm">
+</div>
+
+<div class="dvPhone">
+    <input type="text" id="Phone" />&nbsp;<img src="/Common/images/phonereceive.png"  class="myButton"/>
+</div>
+    <script type="text/javascript">
+        $("document").ready(function () {
+            $("#Phone").change(function () {
+                if(BaseCommon.validation.MobilePhoneValidate("#Phone") == false)
+                {
+                    $.MessageBox("휴대폰번호 형식이 아닙니다.").done(function (data, button) {
+                        // Check data and button values
+                        $("#Phone").select();
+                    });
+                }
+            })
+
+           
+
+            $(".myButton").click(function () {
+                if (BaseCommon.validation.MobilePhoneValidate("#Phone") == false) {
+                    $.MessageBox("휴대폰번호 형식이 아닙니다.").done(function (data, button) {
+                        // Check data and button values
+                        $("#Phone").select();
+                    });
+                    return;
+                }
+                doSaveAdFavorite($("#Phone").val());
+            })
+
+            if (String(location.href).toLowerCase().indexOf("altsoft") < 0
+               && String(location.href).toLowerCase().indexOf("localhost") < 0
+              && String(location.href).toLowerCase().indexOf("106.246.255.132") < 0
+            ) {
+                $(".social").hide();
+                $(".dvPhone").hide();
+            }
+            document.title = "광고";
+        })
+        var _mobileNumer = "";
+        function doSaveAdFavorite(MobileNumber, snsType) {
+
+            var params = new Object();
+            params.MOBILE = MobileNumber;
+            _mobileNumer = MobileNumber;
+            params.DEVICE_CODE = ($("#DEVICE_CODE").val() == undefined ? "" : $("#DEVICE_CODE").val());
+            params.DEVICE_SEQ = ($("#DEVICE_SEQ").val() == undefined ? "" : $("#DEVICE_SEQ").val());
+            params.SNS_TYPE = (snsType == undefined) ? null : snsType;
+            params.FAV_TYPE = 1
+            try {
+                if (Number(params.DEVICE_CODE) > 0) params.FAV_TYPE =2
+            }
+            catch (e) { }
+                
+            
+            params = JSON.stringify(params);
+            ajax.GetAjax("/Basic/AdFavoriteSave/", params, "json", function (result) {
+                if (result.ERROR_MESSAGE != "") {
+                    $.MessageBox(result.ERROR_MESSAGE);
+                    
+                }
+                else {
+                    if (_mobileNumer != "") {
+                        $.MessageBox("전화번호로 등록이 완료되었습니다").done(function (data, button) {
+                            // Check data and button values
+                            $("#Phone").val("");
+                        });
+                        
+                    }
+
+                }
+            });
+        }
+        
+    </script>
+

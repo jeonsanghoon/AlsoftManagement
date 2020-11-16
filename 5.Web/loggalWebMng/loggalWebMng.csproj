@@ -1,0 +1,734 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="12.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="..\..\packages\Microsoft.CodeDom.Providers.DotNetCompilerPlatform.2.0.0\build\net46\Microsoft.CodeDom.Providers.DotNetCompilerPlatform.props" Condition="Exists('..\..\packages\Microsoft.CodeDom.Providers.DotNetCompilerPlatform.2.0.0\build\net46\Microsoft.CodeDom.Providers.DotNetCompilerPlatform.props')" />
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProductVersion>
+    </ProductVersion>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectGuid>{15CBB437-F43E-4B10-99E1-7315CC024A08}</ProjectGuid>
+    <ProjectTypeGuids>{349c5851-65df-11da-9384-00065b846f21};{fae04ec0-301f-11d3-bf4b-00c04f79efbc}</ProjectTypeGuids>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>loggalWebMng</RootNamespace>
+    <AssemblyName>loggalWebMng</AssemblyName>
+    <TargetFrameworkVersion>v4.7.2</TargetFrameworkVersion>
+    <UseIISExpress>true</UseIISExpress>
+    <IISExpressSSLPort>44333</IISExpressSSLPort>
+    <IISExpressAnonymousAuthentication>enabled</IISExpressAnonymousAuthentication>
+    <IISExpressWindowsAuthentication>disabled</IISExpressWindowsAuthentication>
+    <IISExpressUseClassicPipelineMode />
+    <UseGlobalApplicationHostFile />
+    <NuGetPackageImportStamp>
+    </NuGetPackageImportStamp>
+    <Use64BitIISExpress />
+    <TargetFrameworkProfile />
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="Antlr3.Runtime, Version=3.5.0.2, Culture=neutral, PublicKeyToken=eb42632606e9261f, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\Antlr.3.5.0.2\lib\Antlr3.Runtime.dll</HintPath>
+    </Reference>
+    <Reference Include="AutoMapper, Version=9.0.0.0, Culture=neutral, PublicKeyToken=be96cd2c38ef1005, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\AutoMapper.9.0.0\lib\net461\AutoMapper.dll</HintPath>
+    </Reference>
+    <Reference Include="Crc32C.NET, Version=1.0.5.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\Crc32C.NET.1.0.5.0\lib\net20\Crc32C.NET.dll</HintPath>
+    </Reference>
+    <Reference Include="DnsClient, Version=1.2.0.0, Culture=neutral, PublicKeyToken=4574bb5573c51424, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\DnsClient.1.2.0\lib\net471\DnsClient.dll</HintPath>
+    </Reference>
+    <Reference Include="EPPlus, Version=4.5.3.2, Culture=neutral, PublicKeyToken=ea159fdaa78159a1, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\EPPlus.4.5.3.2\lib\net40\EPPlus.dll</HintPath>
+    </Reference>
+    <Reference Include="log4net, Version=2.0.8.0, Culture=neutral, PublicKeyToken=669e0ddf0bb1aa2a, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\log4net.2.0.8\lib\net45-full\log4net.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.AI.Agent.Intercept, Version=2.4.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\Microsoft.ApplicationInsights.Agent.Intercept.2.4.0\lib\net45\Microsoft.AI.Agent.Intercept.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.AI.DependencyCollector, Version=2.10.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\Microsoft.ApplicationInsights.DependencyCollector.2.10.0\lib\net45\Microsoft.AI.DependencyCollector.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.AI.PerfCounterCollector, Version=2.10.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\Microsoft.ApplicationInsights.PerfCounterCollector.2.10.0\lib\net45\Microsoft.AI.PerfCounterCollector.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.AI.ServerTelemetryChannel, Version=2.10.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\Microsoft.ApplicationInsights.WindowsServer.TelemetryChannel.2.10.0\lib\net45\Microsoft.AI.ServerTelemetryChannel.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.AI.Web, Version=2.10.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\Microsoft.ApplicationInsights.Web.2.10.0\lib\net45\Microsoft.AI.Web.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.AI.WindowsServer, Version=2.10.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\Microsoft.ApplicationInsights.WindowsServer.2.10.0\lib\net45\Microsoft.AI.WindowsServer.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.ApplicationInsights, Version=2.10.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\Microsoft.ApplicationInsights.2.10.0\lib\net46\Microsoft.ApplicationInsights.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.AspNet.TelemetryCorrelation, Version=1.0.5.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\Microsoft.AspNet.TelemetryCorrelation.1.0.5\lib\net45\Microsoft.AspNet.TelemetryCorrelation.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.CodeDom.Providers.DotNetCompilerPlatform, Version=2.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\Microsoft.CodeDom.Providers.DotNetCompilerPlatform.2.0.0\lib\net45\Microsoft.CodeDom.Providers.DotNetCompilerPlatform.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="Microsoft.Web.Infrastructure, Version=1.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\Microsoft.Web.Infrastructure.1.0.0.0\lib\net40\Microsoft.Web.Infrastructure.dll</HintPath>
+    </Reference>
+    <Reference Include="MongoDB.Bson, Version=2.9.1.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\MongoDB.Bson.2.9.1\lib\net452\MongoDB.Bson.dll</HintPath>
+    </Reference>
+    <Reference Include="MongoDB.Driver, Version=2.9.1.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\MongoDB.Driver.2.9.1\lib\net452\MongoDB.Driver.dll</HintPath>
+    </Reference>
+    <Reference Include="MongoDB.Driver.Core, Version=2.9.1.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\MongoDB.Driver.Core.2.9.1\lib\net452\MongoDB.Driver.Core.dll</HintPath>
+    </Reference>
+    <Reference Include="Newtonsoft.Json, Version=11.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\Newtonsoft.Json.11.0.1\lib\net45\Newtonsoft.Json.dll</HintPath>
+    </Reference>
+    <Reference Include="PresentationCore" />
+    <Reference Include="SharpCompress, Version=0.24.0.0, Culture=neutral, PublicKeyToken=afb0a02973931d96, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\SharpCompress.0.24.0\lib\net45\SharpCompress.dll</HintPath>
+    </Reference>
+    <Reference Include="Snappy.NET, Version=1.1.1.8, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\Snappy.NET.1.1.1.8\lib\net45\Snappy.NET.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Buffers, Version=4.0.3.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\System.Buffers.4.5.0\lib\netstandard2.0\System.Buffers.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="System.Diagnostics.DiagnosticSource, Version=4.0.3.1, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\System.Diagnostics.DiagnosticSource.4.5.1\lib\net46\System.Diagnostics.DiagnosticSource.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Management" />
+    <Reference Include="System.Net.Http" />
+    <Reference Include="System.Runtime" />
+    <Reference Include="System.Runtime.Caching" />
+    <Reference Include="System.Runtime.InteropServices" />
+    <Reference Include="System.Runtime.InteropServices.RuntimeInformation, Version=4.0.1.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\System.Runtime.InteropServices.RuntimeInformation.4.3.0\lib\net45\System.Runtime.InteropServices.RuntimeInformation.dll</HintPath>
+      <Private>True</Private>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="System.Runtime.Serialization" />
+    <Reference Include="System.Security" />
+    <Reference Include="System.Threading.Thread" />
+    <Reference Include="System.Web.DynamicData" />
+    <Reference Include="System.Web.Entity" />
+    <Reference Include="System.Web.ApplicationServices" />
+    <Reference Include="System.ComponentModel.DataAnnotations" />
+    <Reference Include="System" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Web.Extensions" />
+    <Reference Include="System.Drawing" />
+    <Reference Include="System.Web" />
+    <Reference Include="System.Web.Helpers, Version=3.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\Microsoft.AspNet.WebPages.3.2.7\lib\net45\System.Web.Helpers.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Web.Mvc, Version=5.2.7.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\Microsoft.AspNet.Mvc.5.2.7\lib\net45\System.Web.Mvc.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Web.Optimization, Version=1.1.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\Microsoft.AspNet.Web.Optimization.1.1.3\lib\net40\System.Web.Optimization.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Web.Razor, Version=3.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\Microsoft.AspNet.Razor.3.2.7\lib\net45\System.Web.Razor.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Web.WebPages, Version=3.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\Microsoft.AspNet.WebPages.3.2.7\lib\net45\System.Web.WebPages.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Web.WebPages.Deployment, Version=3.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\Microsoft.AspNet.WebPages.3.2.7\lib\net45\System.Web.WebPages.Deployment.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Web.WebPages.Razor, Version=3.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\Microsoft.AspNet.WebPages.3.2.7\lib\net45\System.Web.WebPages.Razor.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Xml" />
+    <Reference Include="System.Configuration" />
+    <Reference Include="System.Web.Services" />
+    <Reference Include="System.EnterpriseServices" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="WebGrease, Version=1.6.5135.21930, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\WebGrease.1.6.0\lib\WebGrease.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="Common\css\email.css" />
+    <Content Include="Common\css\style.css" />
+    <Content Include="Common\fonts\icons.svg" />
+    <Content Include="Common\HtmlTempleate\adv1Temp.html" />
+    <Content Include="Common\HtmlTempleate\adv3Temp.html" />
+    <Content Include="Common\HtmlTempleate\adv2Temp.html" />
+    <Content Include="Common\images\deviceShare.png" />
+    <Content Include="Common\images\deviceShare2_3.png" />
+    <Content Include="Common\images\deviceshare3_1.png" />
+    <Content Include="Common\images\Favicon\android-icon-144x144.png" />
+    <Content Include="Common\images\Favicon\android-icon-192x192.png" />
+    <Content Include="Common\images\Favicon\android-icon-36x36.png" />
+    <Content Include="Common\images\Favicon\android-icon-48x48.png" />
+    <Content Include="Common\images\Favicon\android-icon-72x72.png" />
+    <Content Include="Common\images\Favicon\android-icon-96x96.png" />
+    <Content Include="Common\images\Favicon\apple-icon-114x114.png" />
+    <Content Include="Common\images\Favicon\apple-icon-120x120.png" />
+    <Content Include="Common\images\Favicon\apple-icon-144x144.png" />
+    <Content Include="Common\images\Favicon\apple-icon-152x152.png" />
+    <Content Include="Common\images\Favicon\apple-icon-180x180.png" />
+    <Content Include="Common\images\Favicon\apple-icon-57x57.png" />
+    <Content Include="Common\images\Favicon\apple-icon-60x60.png" />
+    <Content Include="Common\images\Favicon\apple-icon-72x72.png" />
+    <Content Include="Common\images\Favicon\apple-icon-76x76.png" />
+    <Content Include="Common\images\Favicon\apple-icon-precomposed.png" />
+    <Content Include="Common\images\Favicon\apple-icon.png" />
+    <Content Include="Common\images\Favicon\browserconfig.xml" />
+    <Content Include="Common\images\Favicon\favicon-16x16.png" />
+    <Content Include="Common\images\Favicon\favicon-32x32.png" />
+    <Content Include="Common\images\Favicon\favicon-96x96.png" />
+    <Content Include="Common\images\Favicon\favicon.ico" />
+    <Content Include="Common\images\Favicon\ms-icon-144x144.png" />
+    <Content Include="Common\images\Favicon\ms-icon-150x150.png" />
+    <Content Include="Common\images\Favicon\ms-icon-310x310.png" />
+    <Content Include="Common\images\Favicon\ms-icon-70x70.png" />
+    <Content Include="Common\images\logo.png" />
+    <Content Include="Common\images\imageinsert.png" />
+    <Content Include="Common\images\maker_black.png" />
+    <Content Include="Common\images\no-image.png" />
+    <Content Include="Common\images\ondaji.png" />
+    <Content Include="Common\images\phonereceive.png" />
+    <Content Include="Common\images\stationmarker.png">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Common\images\social\linkedin.png" />
+    <Content Include="Common\images\social\naver_square_40x40.png" />
+    <Content Include="Common\images\social\pinterest_share_button.png" />
+    <Content Include="Common\images\stationmarker2.png" />
+    <Content Include="Common\js\Base\jquery.min.js" />
+    <Content Include="Common\js\Common.min.js" />
+    <Content Include="Common\js\Common.js" />
+    <Content Include="Common\js\jquery.fullscreen-min.js" />
+    <Content Include="Common\plugin\css\easy-autocomplete\easy-autocomplete.css" />
+    <Content Include="Common\plugin\css\easy-autocomplete\easy-autocomplete.min.css" />
+    <Content Include="Common\plugin\css\easy-autocomplete\easy-autocomplete.themes.css" />
+    <Content Include="Common\plugin\css\easy-autocomplete\easy-autocomplete.themes.min.css" />
+    <Content Include="Common\plugin\css\googleFont.css" />
+    <Content Include="Common\plugin\css\jquery-tokeninput\token-input-facebook.css" />
+    <Content Include="Common\plugin\css\jquery-tokeninput\token-input-mac.css" />
+    <Content Include="Common\plugin\css\jquery-tokeninput\token-input.css" />
+    <Content Include="Common\plugin\css\jquery.datetimepicker.min.css" />
+    <Content Include="Common\plugin\css\messagebox.css" />
+    <Content Include="Common\plugin\css\MrcUI\Mrc.DataGrid.css" />
+    <Content Include="Common\plugin\css\responsive-sidebar-navigation\reset.css" />
+    <Content Include="Common\plugin\css\responsive-sidebar-navigation\style.css" />
+    <Content Include="Common\plugin\css\semantic.min.css" />
+    <Content Include="Common\plugin\css\tinymce\tinymce_common.css">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Common\plugin\css\uploadfile.css" />
+    <Content Include="Common\plugin\images\responsive-sidebar-navigation\cd-arrow.svg" />
+    <Content Include="Common\plugin\images\responsive-sidebar-navigation\cd-avatar.png" />
+    <Content Include="Common\plugin\images\responsive-sidebar-navigation\cd-logo.svg" />
+    <Content Include="Common\plugin\images\responsive-sidebar-navigation\cd-nav-icons.svg" />
+    <Content Include="Common\plugin\images\responsive-sidebar-navigation\cd-search.svg" />
+    <Content Include="Common\images\social\facebook.png" />
+    <Content Include="Common\images\social\google.png" />
+    <Content Include="Common\images\social\kakaostory.png" />
+    <Content Include="Common\images\social\kakaotalk.png" />
+    <Content Include="Common\images\social\naverband.png" />
+    <Content Include="Common\images\social\naverblog.png" />
+    <Content Include="Common\images\social\naverline.png" />
+    <Content Include="Common\images\social\twitter.png" />
+    <Content Include="Common\plugin\js\DaumApi\DaumCommon.js" />
+    <Content Include="Common\plugin\js\GoogleAPI\GoogleCommon.js" />
+    <Content Include="Common\plugin\js\jquery-tokeninput\jquery.tokeninput.js" />
+    <Content Include="Common\plugin\js\jquery-tokeninput\jquery.tokeninput_Common.js" />
+    <Content Include="Common\plugin\js\jquery.datetimepicker\jquery.datetimepicker.full.min.js" />
+    <Content Include="Common\plugin\js\jquery.datetimepicker\jquery.datetimepicker_Common.min.js" />
+    <Content Include="Common\plugin\js\jquery.number.min.js" />
+    <Content Include="Common\plugin\js\jquery.tokeninput.js" />
+    <Content Include="Common\plugin\js\jquery.ui.touch.js" />
+    <Content Include="Common\plugin\js\jquery.uploadfile.min.js" />
+    <Content Include="Common\plugin\js\jquery.uploadfile_Common.min.js" />
+    <Content Include="Common\plugin\js\jquery.uploadfile_Common.js" />
+    <Content Include="Common\plugin\js\json3.js" />
+    <Content Include="Common\plugin\js\messagebox.min.js" />
+    <Content Include="Common\plugin\js\moment.js" />
+    <Content Include="Common\plugin\js\MrcUI\freeze-table.js" />
+    <Content Include="Common\plugin\js\MrcUI\Mrc.DataGrid.min.js" />
+    <Content Include="Common\plugin\js\MrcUI\Mrc.DataGrid.js" />
+    <Content Include="Common\plugin\js\responsive-sidebar-navigation\jquery.menu-aim.js" />
+    <Content Include="Common\plugin\js\responsive-sidebar-navigation\main.js" />
+    <Content Include="Common\plugin\js\security\crypto-js.min.js" />
+    <Content Include="Common\plugin\js\semantic.min.js" />
+    <Content Include="Common\plugin\js\tinymce\jquery.tinymce.min.js" />
+    <Content Include="Common\plugin\js\tinymce\langs\ko.js" />
+    <Content Include="Common\plugin\js\tinymce\license.txt" />
+    <Content Include="Common\plugin\js\tinymce\plugins\advlist\plugin.min.js" />
+    <Content Include="Common\plugin\js\tinymce\plugins\anchor\plugin.min.js" />
+    <Content Include="Common\plugin\js\tinymce\plugins\autolink\plugin.min.js" />
+    <Content Include="Common\plugin\js\tinymce\plugins\autoresize\plugin.min.js" />
+    <Content Include="Common\plugin\js\tinymce\plugins\autosave\plugin.min.js" />
+    <Content Include="Common\plugin\js\tinymce\plugins\bbcode\plugin.min.js" />
+    <Content Include="Common\plugin\js\tinymce\plugins\charmap\plugin.min.js" />
+    <Content Include="Common\plugin\js\tinymce\plugins\codesample\css\prism.css" />
+    <Content Include="Common\plugin\js\tinymce\plugins\codesample\plugin.min.js" />
+    <Content Include="Common\plugin\js\tinymce\plugins\code\plugin.min.js" />
+    <Content Include="Common\plugin\js\tinymce\plugins\colorpicker\plugin.min.js" />
+    <Content Include="Common\plugin\js\tinymce\plugins\contextmenu\plugin.min.js" />
+    <Content Include="Common\plugin\js\tinymce\plugins\directionality\plugin.min.js" />
+    <Content Include="Common\plugin\js\tinymce\plugins\emoticons\img\smiley-cool.gif" />
+    <Content Include="Common\plugin\js\tinymce\plugins\emoticons\img\smiley-cry.gif" />
+    <Content Include="Common\plugin\js\tinymce\plugins\emoticons\img\smiley-embarassed.gif" />
+    <Content Include="Common\plugin\js\tinymce\plugins\emoticons\img\smiley-foot-in-mouth.gif" />
+    <Content Include="Common\plugin\js\tinymce\plugins\emoticons\img\smiley-frown.gif" />
+    <Content Include="Common\plugin\js\tinymce\plugins\emoticons\img\smiley-innocent.gif" />
+    <Content Include="Common\plugin\js\tinymce\plugins\emoticons\img\smiley-kiss.gif" />
+    <Content Include="Common\plugin\js\tinymce\plugins\emoticons\img\smiley-laughing.gif" />
+    <Content Include="Common\plugin\js\tinymce\plugins\emoticons\img\smiley-money-mouth.gif" />
+    <Content Include="Common\plugin\js\tinymce\plugins\emoticons\img\smiley-sealed.gif" />
+    <Content Include="Common\plugin\js\tinymce\plugins\emoticons\img\smiley-smile.gif" />
+    <Content Include="Common\plugin\js\tinymce\plugins\emoticons\img\smiley-surprised.gif" />
+    <Content Include="Common\plugin\js\tinymce\plugins\emoticons\img\smiley-tongue-out.gif" />
+    <Content Include="Common\plugin\js\tinymce\plugins\emoticons\img\smiley-undecided.gif" />
+    <Content Include="Common\plugin\js\tinymce\plugins\emoticons\img\smiley-wink.gif" />
+    <Content Include="Common\plugin\js\tinymce\plugins\emoticons\img\smiley-yell.gif" />
+    <Content Include="Common\plugin\js\tinymce\plugins\emoticons\plugin.min.js" />
+    <Content Include="Common\plugin\js\tinymce\plugins\example\dialog.html" />
+    <Content Include="Common\plugin\js\tinymce\plugins\example\plugin.min.js" />
+    <Content Include="Common\plugin\js\tinymce\plugins\example_dependency\plugin.min.js" />
+    <Content Include="Common\plugin\js\tinymce\plugins\fullpage\plugin.min.js" />
+    <Content Include="Common\plugin\js\tinymce\plugins\fullscreen\plugin.min.js" />
+    <Content Include="Common\plugin\js\tinymce\plugins\hr\plugin.min.js" />
+    <Content Include="Common\plugin\js\tinymce\plugins\imagetools\plugin.min.js" />
+    <Content Include="Common\plugin\js\tinymce\plugins\image\plugin.min.js" />
+    <Content Include="Common\plugin\js\tinymce\plugins\importcss\plugin.min.js" />
+    <Content Include="Common\plugin\js\tinymce\plugins\insertdatetime\plugin.min.js" />
+    <Content Include="Common\plugin\js\tinymce\plugins\layer\plugin.min.js" />
+    <Content Include="Common\plugin\js\tinymce\plugins\legacyoutput\plugin.min.js" />
+    <Content Include="Common\plugin\js\tinymce\plugins\link\plugin.min.js" />
+    <Content Include="Common\plugin\js\tinymce\plugins\lists\plugin.min.js" />
+    <Content Include="Common\plugin\js\tinymce\plugins\media\moxieplayer.swf" />
+    <Content Include="Common\plugin\js\tinymce\plugins\media\plugin.min.js" />
+    <Content Include="Common\plugin\js\tinymce\plugins\nonbreaking\plugin.min.js" />
+    <Content Include="Common\plugin\js\tinymce\plugins\noneditable\plugin.min.js" />
+    <Content Include="Common\plugin\js\tinymce\plugins\pagebreak\plugin.min.js" />
+    <Content Include="Common\plugin\js\tinymce\plugins\paste\plugin.min.js" />
+    <Content Include="Common\plugin\js\tinymce\plugins\preview\plugin.min.js" />
+    <Content Include="Common\plugin\js\tinymce\plugins\print\plugin.min.js" />
+    <Content Include="Common\plugin\js\tinymce\plugins\save\plugin.min.js" />
+    <Content Include="Common\plugin\js\tinymce\plugins\searchreplace\plugin.min.js" />
+    <Content Include="Common\plugin\js\tinymce\plugins\spellchecker\plugin.min.js" />
+    <Content Include="Common\plugin\js\tinymce\plugins\tabfocus\plugin.min.js" />
+    <Content Include="Common\plugin\js\tinymce\plugins\table\plugin.min.js" />
+    <Content Include="Common\plugin\js\tinymce\plugins\template\plugin.min.js" />
+    <Content Include="Common\plugin\js\tinymce\plugins\textcolor\plugin.min.js" />
+    <Content Include="Common\plugin\js\tinymce\plugins\textpattern\plugin.min.js" />
+    <Content Include="Common\plugin\js\tinymce\plugins\visualblocks\css\visualblocks.css" />
+    <Content Include="Common\plugin\js\tinymce\plugins\visualblocks\plugin.min.js" />
+    <Content Include="Common\plugin\js\tinymce\plugins\visualchars\plugin.min.js" />
+    <Content Include="Common\plugin\js\tinymce\plugins\wordcount\plugin.min.js" />
+    <Content Include="Common\plugin\js\tinymce\skins\lightgray\content.inline.min.css" />
+    <Content Include="Common\plugin\js\tinymce\skins\lightgray\content.min.css" />
+    <Content Include="Common\plugin\js\tinymce\skins\lightgray\fonts\tinymce-small.svg" />
+    <Content Include="Common\plugin\js\tinymce\skins\lightgray\fonts\tinymce.svg" />
+    <Content Include="Common\plugin\js\tinymce\skins\lightgray\img\anchor.gif" />
+    <Content Include="Common\plugin\js\tinymce\skins\lightgray\img\loader.gif" />
+    <Content Include="Common\plugin\js\tinymce\skins\lightgray\img\object.gif" />
+    <Content Include="Common\plugin\js\tinymce\skins\lightgray\img\trans.gif" />
+    <Content Include="Common\plugin\js\tinymce\skins\lightgray\skin.ie7.min.css" />
+    <Content Include="Common\plugin\js\tinymce\skins\lightgray\skin.min.css" />
+    <Content Include="Common\plugin\js\tinymce\themes\inlite\theme.min.js" />
+    <Content Include="Common\plugin\js\tinymce\themes\modern\theme.min.js" />
+    <Content Include="Common\plugin\js\tinymce\tinymce.min.js" />
+    <Content Include="Common\plugin\semantic-ui\semantic-common-wazard.css" />
+    <Content Include="Common\plugin\semantic-ui\semantic-common.css" />
+    <Content Include="Common\plugin\semantic-ui\semantic.pagination.js" />
+    <Content Include="Common\plugin\semantic-ui\semantic.pagination.min.js" />
+    <Content Include="Common\plugin\semantic-ui\Semantic_Common.min.js" />
+    <Content Include="Common\plugin\semantic-ui\Semantic_Common.js" />
+    <Content Include="Common\errorpage\ErrorPage2.htm" />
+    <Content Include="Global.asax" />
+    <Content Include="Common\errorpage\ErrorPage.htm" />
+    <Content Include="googlee4e8217912e7ae26.html" />
+    <Content Include="naver7831e5514a621cf86b28e76ddaa04dea.html" />
+    <Content Include="robots.txt" />
+    <Content Include="sitemap.xml" />
+    <Content Include="Views\Common\Partial\pv_policy1.cshtml" />
+    <Content Include="Web.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="App_Start\BundleConfig.cs" />
+    <Compile Include="App_Start\RouteConfig.cs" />
+    <Compile Include="CommonCS\AltloggalAuthorizationAttribute.cs" />
+    <Compile Include="CommonCS\BizService.cs" />
+    <Compile Include="CommonCS\HtmlHelper2.cs" />
+    <Compile Include="CommonCS\SemanticUIHelper.cs" />
+    <Compile Include="CommonCS\SessionHelper.cs" />
+    <Compile Include="Controllers\AccountController.cs" />
+    <Compile Include="Controllers\AdvertiseController.cs" />
+    <Compile Include="Controllers\BaseController.cs" />
+    <Compile Include="Controllers\Basic2Controller.cs" />
+    <Compile Include="Controllers\Basic1Controller.cs" />
+    <Compile Include="Controllers\BeaconController.cs" />
+    <Compile Include="Controllers\CommonController.cs" />
+    <Compile Include="Controllers\CompController.cs" />
+    <Compile Include="Controllers\DeviceController.cs" />
+    <Compile Include="Controllers\EmployeeController.cs" />
+    <Compile Include="Controllers\HomeController.cs" />
+    <Compile Include="Controllers\ErrorController.cs" />
+    <Compile Include="Controllers\PopupController.cs" />
+    <Compile Include="Controllers\ShareController.cs" />
+    <Compile Include="Controllers\StoreController.cs" />
+    <Compile Include="Controllers\TempController.cs" />
+    <Compile Include="Global.asax.cs">
+      <DependentUpon>Global.asax</DependentUpon>
+    </Compile>
+    <Compile Include="Properties\AssemblyInfo.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="Views\web.config" />
+    <Content Include="Views\_ViewStart.cshtml" />
+    <Content Include="Views\Shared\_Layout.cshtml" />
+    <Content Include="Views\Home\Index.cshtml" />
+    <Content Include="Common\fonts\icons.eot" />
+    <Content Include="Common\fonts\icons.ttf" />
+    <Content Include="Common\fonts\icons.woff" />
+    <Content Include="Common\fonts\icons.woff2" />
+    <Content Include="Common\plugin\js\tinymce\langs\readme.md" />
+    <Content Include="Common\plugin\js\tinymce\skins\lightgray\fonts\tinymce-small.eot" />
+    <Content Include="Common\plugin\js\tinymce\skins\lightgray\fonts\tinymce-small.ttf" />
+    <Content Include="Common\plugin\js\tinymce\skins\lightgray\fonts\tinymce-small.woff" />
+    <Content Include="Common\plugin\js\tinymce\skins\lightgray\fonts\tinymce.eot" />
+    <Content Include="Common\plugin\js\tinymce\skins\lightgray\fonts\tinymce.ttf" />
+    <Content Include="Common\plugin\js\tinymce\skins\lightgray\fonts\tinymce.woff" />
+    <Content Include="Views\Shared\Error.cshtml" />
+    <Content Include="Views\Shared\_Layout_blank.cshtml" />
+    <Content Include="Views\Home\Login.cshtml" />
+    <Content Include="Views\Shared\Partial\Footer.cshtml" />
+    <Content Include="Views\Shared\Partial\Header.cshtml" />
+    <Content Include="Views\Shared\Partial\loader.cshtml" />
+    <Content Include="Views\Shared\Partial\Script.cshtml" />
+    <Content Include="Views\Shared\Partial\Side.cshtml" />
+    <Content Include="Views\Shared\Partial\Top.cshtml" />
+    <Content Include="Views\Shared\Partial\TopMenu.cshtml" />
+    <Content Include="Views\Shared\EditorTemplates\tinymce_default.cshtml" />
+    <Content Include="Views\Basic\deviceList.cshtml" />
+    <Content Include="Views\Basic\deviceReg.cshtml" />
+    <Content Include="Views\Shared\EditorTemplates\Daum_address.cshtml" />
+    <Content Include="Views\Basic\Partial\PV_LocalNameList.cshtml" />
+    <Content Include="Views\Basic\Partial\PV_RegionList.cshtml" />
+    <Content Include="Views\Basic\Partial\PV_devicelist.cshtml" />
+    <Content Include="Views\Basic\Partial\PV_DeviceMainList.cshtml" />
+    <Content Include="Views\Basic\Partial\PV_AuthNumberApply.cshtml" />
+    <Content Include="Common\plugin\css\MrcUI\Mrc.DataGrid.fixedHeader.css" />
+    <Content Include="Common\plugin\js\jquery.datetimepicker\jquery.datetimepicker_Common.js" />
+    <Content Include="Common\images\Favicon\manifest.json" />
+    <Content Include="Common\plugin\js\security\crypto-js.min.js.map" />
+    <None Include="packages.config" />
+    <Content Include="Views\Account\PasswordFind.cshtml" />
+    <Content Include="Views\Account\Partial\PV_PasswordFindMail.cshtml" />
+    <Content Include="Views\Account\PasswordChange.cshtml" />
+    <Content Include="Views\Account\MemberModify.cshtml" />
+    <Content Include="Views\Common\GroupMemberReg.cshtml" />
+    <Content Include="Views\Common\MemberMenuReg.cshtml" />
+    <Content Include="Views\Common\menuGroupRegList.cshtml" />
+    <Content Include="Views\Common\StoreWebMenuRegList.cshtml" />
+    <Content Include="Views\Common\Partial\pv_GroupMemberRegList.cshtml" />
+    <Content Include="Views\Common\Partial\pv_GroupMemberRegList2.cshtml" />
+    <Content Include="Views\Common\Partial\PV_MemberMenuRegList.cshtml" />
+    <Content Include="Views\Common\Partial\PV_MemberMenuRegList2.cshtml" />
+    <Content Include="Views\Common\Partial\pv_menuGroupRegList.cshtml" />
+    <Content Include="Views\Common\Partial\pv_menuGroupRegList2.cshtml" />
+    <Content Include="Views\Common\Partial\pv_StoreWebMenuRegList.cshtml" />
+    <Content Include="Views\Employee\EmployeeList.cshtml" />
+    <Content Include="Views\Employee\Partial\PV_EmployeeList.cshtml" />
+    <Content Include="Views\Base\Partial\PV_Combo.cshtml" />
+    <Content Include="Views\Common\Partial\PV_LogList.cshtml" />
+    <Content Include="Views\Common\LogList.cshtml">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Views\Shared\Partial\SNS.cshtml" />
+    <Content Include="Views\Basic\deviceMainDetail.cshtml" />
+    <Content Include="Views\Common\Adfavorite.cshtml" />
+    <Content Include="Views\Common\Partial\pv_AdfavoriteList.cshtml" />
+    <Content Include="Views\Basic\AdDevice.cshtml" />
+    <Content Include="Views\Common\Partial\PV_KeywordAutoList.cshtml" />
+    <Content Include="Views\Common\Partial\PV_LocalNameList.cshtml" />
+    <Content Include="Views\Basic\Partial\pv_AdDevicelist.cshtml" />
+    <Content Include="Views\Basic\Partial\pv_AdDevicelist2.cshtml" />
+    <Content Include="Views\Advertise\index.cshtml" />
+    <Content Include="Views\Advertise\AdReg.cshtml" />
+    <Content Include="Views\Advertise\Partial\PV_Ad_PageList.cshtml" />
+    <Content Include="Views\Advertise\AdOnDevice.cshtml" />
+    <Content Include="Views\Advertise\Partial\PV_AdOnDevicelist.cshtml" />
+    <Content Include="Views\Advertise\Partial\PV_AdOnDevicelist2.cshtml" />
+    <Content Include="Views\Advertise\Partial\PV_AdRegRegionList.cshtml" />
+    <Content Include="Views\Comp\CompList.cshtml" />
+    <Content Include="Views\Comp\CompReg.cshtml" />
+    <Content Include="Views\Comp\Partial\PV_CompList.cshtml" />
+    <Content Include="Views\Comp\Partial\PV_StoreList.cshtml" />
+    <Content Include="Views\Comp\StoreList.cshtml" />
+    <Content Include="Views\Comp\StoreReg.cshtml" />
+    <Content Include="Views\Common\Partial\pv_PositionReg.cshtml" />
+    <Content Include="Views\Comp\StoreDeptRegList.cshtml" />
+    <Content Include="Views\Comp\Partial\pv_StoreDeptRegList.cshtml" />
+    <Content Include="Views\Comp\StorePositionRegList.cshtml" />
+    <Content Include="Views\Comp\Partial\pv_StorePositionRegList.cshtml" />
+    <Content Include="Views\Common\Partial\PV_CommonRegList.cshtml" />
+    <Content Include="Views\Common\CommonRegList.cshtml" />
+    <Content Include="Views\Common\WebMenuRegList.cshtml" />
+    <Content Include="Views\Common\Partial\pv_WebMenuRegList.cshtml" />
+    <Content Include="Views\Basic\CategoryRegList.cshtml" />
+    <Content Include="Views\Basic\Partial\pv_CategoryRegList.cshtml" />
+    <Content Include="Views\Basic\Partial\pv_CategoryRegList2.cshtml" />
+    <Content Include="Views\Basic\Partial\PV_Pop_Synonym.cshtml" />
+    <Content Include="Views\Basic\CategoryRegionRegList.cshtml" />
+    <Content Include="Views\Basic\CategoryHotPlaceRegList.cshtml" />
+    <Content Include="Views\Error\ErrorPage.cshtml" />
+    <Content Include="Views\Account\MemberJoin.cshtml" />
+    <Content Include="Views\Common\Partial\PV_StoreGroupRegPopup.cshtml" />
+    <Content Include="Views\Common\Partial\PV_StoreGroupList.cshtml" />
+    <Content Include="Views\Employee\Partial\PV_EmployeeP.cshtml" />
+    <Content Include="Views\Employee\Partial\PV_EmployeePList.cshtml" />
+    <Content Include="Views\Home\test.cshtml" />
+    <Content Include="Views\Home\index2.cshtml" />
+    <Content Include="Views\Shared\_Layout_blank2.cshtml" />
+    <Content Include="Views\Temp\DaumMap.cshtml" />
+    <Content Include="Views\Temp\GoogleMap.cshtml" />
+    <Content Include="Views\Popup\daummapmakerpopup.cshtml" />
+    <Content Include="Views\Shared\EditorTemplates\Daum_MapMarker.cshtml" />
+    <Content Include="Views\Temp\index.cshtml" />
+    <Content Include="Views\Advertise\Partial\PV_AdplaceList.cshtml" />
+    <Content Include="Views\Temp\DaumMap2.cshtml" />
+    <Content Include="Views\Basic\Partial\PV_DeviceMainList2.cshtml" />
+    <Content Include="Views\Basic\Partial\pv_MyBannerRegP.cshtml" />
+    <Content Include="Views\Temp\KakaoLogin.cshtml" />
+    <Content Include="Views\Temp\NaverLogin.cshtml" />
+    <Content Include="Views\Temp\NaverLogincallback.cshtml" />
+    <Content Include="Views\Temp\FacebookLogin.cshtml" />
+    <Content Include="Views\Temp\GoogleLogin.cshtml" />
+    <Content Include="Views\Shared\Partial\Analytics.cshtml" />
+    <Content Include="Views\Advertise\AdSub.cshtml" />
+    <Content Include="Views\Advertise\Partial\PV_AdSubList.cshtml" />
+    <Content Include="Views\Shared\_Layout_webview.cshtml" />
+    <Content Include="Views\Basic\Partial\PV_DevicePlaceList.cshtml" />
+    <Content Include="Views\Employee\Partial\PV_MemberList.cshtml" />
+    <Content Include="Views\Employee\EmployeeReg.cshtml" />
+    <Content Include="Views\Account\MemberList.cshtml" />
+    <Content Include="Views\Account\MemberReg.cshtml" />
+    <Content Include="Views\Account\Partial\PV_MemberList.cshtml" />
+    <Content Include="Views\Basic\deviceMainShareReq.cshtml" />
+    <Content Include="Views\Basic\Partial\pv_DeviceMainShareList.cshtml" />
+    <Content Include="Views\Basic\DeviceMainShareApprovalList.cshtml" />
+    <Content Include="Views\Basic\Partial\PV_DeviceMainShareApprovalList.cshtml" />
+    <Content Include="Views\Basic\Partial\PV_DeviceMainApproval.cshtml" />
+    <Content Include="Views\Basic\Partial\PV_DeviceMainShareTotalList.cshtml" />
+    <Content Include="Views\Basic\DeviceMainShareTotalList.cshtml" />
+    <Content Include="Views\Common\BookmarkList.cshtml" />
+    <Content Include="Views\Popup\DeviceListP.cshtml" />
+    <Content Include="Views\Basic\Partial\PV_DeviceMainShareRequestList.cshtml" />
+    <Content Include="Views\Basic\DeviceMainShareRequestList.cshtml" />
+    <Content Include="Views\Basic\deviceTotList.cshtml" />
+    <Content Include="Views\Basic\Partial\PV_deviceTotlist.cshtml" />
+    <Content Include="Views\Account\MemberBookList.cshtml" />
+    <Content Include="Views\Account\Partial\pv_memberbookmark_adlist.cshtml" />
+    <Content Include="Views\Account\Partial\pv_memberbookmark_boxlist.cshtml" />
+    <Content Include="Views\Advertise\Partial\pv_AdShareDevicelist.cshtml" />
+    <Content Include="Views\Advertise\Partial\pv_AdShareDevicePopup.cshtml" />
+    <Content Include="Views\Shared\Partial\Header_view.cshtml" />
+    <Content Include="Views\Shared\Partial\Script_view.cshtml" />
+    <Content Include="Views\Basic\deviceStationList.cshtml" />
+    <Content Include="Views\Basic\Partial\PV_deviceStationList.cshtml" />
+    <Content Include="Views\Basic\deviceStationReg.cshtml" />
+    <Content Include="Views\Popup\deviceStationP.cshtml" />
+    <Content Include="Views\Popup\AdSignInfoP.cshtml" />
+    <Content Include="Views\Basic\Partial\PV_DeviceStationPlaceList.cshtml" />
+    <Content Include="Views\Shared\EditorTemplates\Kakao_MapDrawing.cshtml" />
+    <Content Include="Views\Temp\KakaoMap.cshtml" />
+    <Content Include="Views\Shared\EditorTemplates\Kakao_MapMakerCircle.cshtml" />
+    <Content Include="Views\Temp\KakaoMap2.cshtml" />
+    <Content Include="Views\Shared\EditorTemplates\Kakao_address.cshtml" />
+    <Content Include="Views\Popup\kakaomapmakerpopop.cshtml" />
+    <Content Include="Views\Shared\EditorTemplates\Kakao_MapMakerCircle_Range.cshtml" />
+    <Content Include="Views\Temp\DaumMapPolyGon.cshtml" />
+    <Content Include="Views\Basic\SignageReg.cshtml" />
+    <Content Include="Views\Basic\SignageList.cshtml" />
+    <Content Include="Views\Basic\Partial\pv_SignageList.cshtml" />
+    <Content Include="Views\Basic\Partial\pv_AdSigninfoLIst.cshtml" />
+    <Content Include="Views\Popup\PreviewP.cshtml" />
+    <Content Include="Views\Basic\Partial\pv_AdSigninfoSignageCard.cshtml" />
+    <Content Include="Views\Advertise\AdSignInfo.cshtml" />
+    <Content Include="Views\Basic\Partial\PV_SignagePlaceList.cshtml" />
+    <Content Include="Views\Beacon\BeaconList.cshtml" />
+    <Content Include="Views\Beacon\Partial\pv_BeaconList.cshtml" />
+    <Content Include="Views\Beacon\BeaconReg.cshtml" />
+    <Content Include="Views\Basic\SignageControl.cshtml" />
+    <Content Include="Views\Basic\SignageControlList.cshtml" />
+    <Content Include="Views\Basic\Partial\PV_SignageControlList.cshtml" />
+    <Content Include="Views\Basic\Partial\pv_AdDeviceShareList.cshtml" />
+    <Content Include="Views\Basic\deviceReg2.cshtml" />
+    <Content Include="Views\Basic\Partial\pv_DeviceMainGroupList.cshtml" />
+    <Content Include="Views\Device\localboxView.cshtml" />
+    <Content Include="Views\Device\Partial\localboxleftMenu.cshtml" />
+    <Content Include="Views\Advertise\Partial\pv_adShareSignagePopup.cshtml" />
+    <Content Include="Views\Advertise\Partial\PV_AdShareSignageList.cshtml" />
+    <Content Include="Views\Basic\Partial\pv_devicelist_tab.cshtml" />
+    <Content Include="Views\Advertise\Partial\pv_adApprovalPopup.cshtml" />
+    <Content Include="Views\Device\Partial\PV_HardwareList.cshtml" />
+    <Content Include="Views\Device\HardwareList.cshtml" />
+    <Content Include="Views\Device\HardwareReg.cshtml" />
+    <Content Include="Views\Popup\HardwareListP.cshtml" />
+    <Content Include="Views\Shared\EditorTemplates\kakaoCustomOverlay.cshtml" />
+    <Content Include="Views\Popup\OriImageP.cshtml" />
+    <Content Include="Views\Device\AdplaylogList.cshtml" />
+    <Content Include="Views\Device\Partial\pv_AdplaylogList.cshtml" />
+    <Content Include="Views\Device\AdplaylogMongoList.cshtml" />
+    <Content Include="Views\Device\Partial\pv_AdplaylogMongoList.cshtml" />
+    <Content Include="Views\Device\AdPlayDailyTotalList.cshtml" />
+    <Content Include="Views\Device\Partial\pv_AdPlayDailyTotalList.cshtml" />
+    <Content Include="Views\Device\Partial\pv_AdPlayDailyLocalboxTotalList.cshtml" />
+    <Content Include="Views\Device\AdPlayDailyLocalboxTotalList.cshtml" />
+    <Content Include="Views\Device\AdPlayBusiTotalList.cshtml" />
+    <Content Include="Views\Device\Partial\pv_AdPlayBusiTotalList.cshtml" />
+    <Content Include="Views\Device\AdPlayBusiLocalTotalList.cshtml" />
+    <Content Include="Views\Device\Partial\pv_AdPlayBusiLocalTotalList.cshtml" />
+    <Content Include="Views\Device\Partial\pv_AdPlayMonthTotalList.cshtml" />
+    <Content Include="Views\Device\AdPlayMonthTotalList.cshtml" />
+    <Content Include="Views\Account\MemberFavoriteList.cshtml" />
+    <Content Include="Views\Advertise\ContentView.cshtml" />
+    <Content Include="Views\Popup\PasswordConfirmP.cshtml" />
+    <Content Include="Views\Shared\EditorTemplates\Employee_Popup.cshtml" />
+    <Content Include="Views\Basic\deviceReg3.cshtml" />
+    <Content Include="Views\Common\Policy.cshtml" />
+    <Content Include="Views\Common\Partial\pv_policy2.cshtml" />
+    <Content Include="Views\Store\StoreStatisticsList.cshtml" />
+    <Content Include="Views\Store\Partial\pv_StoreStatisticsList.cshtml" />
+    <Content Include="Views\Advertise\AdReg2.cshtml" />
+    <Content Include="Views\Advertise\adDeviceShareTotList.cshtml" />
+    <Content Include="Views\Advertise\Partial\PV_AdShareTotalList.cshtml" />
+    <Content Include="Views\Account\MemberBookBannerList.cshtml" />
+    <Content Include="Views\Account\MemberBookLocalboxList.cshtml" />
+    <Content Include="Views\Basic\deviceAdShareRequest.cshtml" />
+    <Content Include="Views\Basic\deviceAdShareReceive.cshtml" />
+    <Content Include="Views\Basic\Partial\pv_deviceAdShareRequest.cshtml" />
+    <Content Include="Views\Share\ShareList.cshtml" />
+    <Content Include="Views\Share\Partial\pv_sharelist.cshtml" />
+    <Content Include="Views\Device\Partial\pv_AdDeviceLogList.cshtml" />
+    <Content Include="Views\Device\AdDeviceLogList.cshtml" />
+    <Content Include="Views\Temp\TableDesc.cshtml" />
+    <Content Include="Views\Basic\Partial\pv_PlaceItemGroupRegList.cshtml" />
+    <Content Include="Views\Basic\PlaceItemGroupRegList.cshtml" />
+    <Content Include="Views\Device\localboxView2.cshtml" />
+    <Content Include="Views\Basic\Partial\pv_RelativeDevice.cshtml" />
+    <Content Include="Views\Popup\RelativeDeviceListP.cshtml" />
+    <Content Include="Views\Device\Partial\pv_RelativeDevice.cshtml" />
+    <Content Include="Views\Temp\ShoppingCart.cshtml" />
+    <Content Include="Views\Basic\deviceVirtualReg.cshtml" />
+    <Content Include="Views\Shared\EditorTemplates\Kakao_MapMakerCircle_Range_PlaceItem.cshtml" />
+    <None Include="Web.Debug.config">
+      <DependentUpon>Web.config</DependentUpon>
+    </None>
+    <None Include="Web.Release.config">
+      <DependentUpon>Web.config</DependentUpon>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="App_Data\" />
+    <Folder Include="Common\plugin\js\easy-autocomplete\" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\2.Framework\ALT.Framework.MVC\ALT.Framework.MVC.csproj">
+      <Project>{a33c1ff2-8fa9-4b01-8f64-36e5263b34b8}</Project>
+      <Name>ALT.Framework.MVC</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\2.Framework\ALT.Framework\ALT.Framework.csproj">
+      <Project>{b09020b4-4077-428b-bd75-2ab5838d9eaa}</Project>
+      <Name>ALT.Framework</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\3.Service\ALT.BizService\ALT.BizService.csproj">
+      <Project>{673d4da0-ed3d-4131-9a70-7f9cc1960609}</Project>
+      <Name>ALT.BizService</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\3.Service\loggalServiceBiz\loggalServiceBiz.csproj">
+      <Project>{558fe777-ae5c-4844-86cc-8f3fa66fe19b}</Project>
+      <Name>loggalServiceBiz</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\3.Service\OnlineServiceBiz\OnlineServiceBiz.csproj">
+      <Project>{4877D44D-5C0F-4771-84D1-3A060397C34A}</Project>
+      <Name>OnlineServiceBiz</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\4.Vo\ALT.VO.Common\ALT.VO.Common.csproj">
+      <Project>{54388f82-34d2-4fab-9a40-0eeec151df66}</Project>
+      <Name>ALT.VO.Common</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\4.Vo\ALT.VO.Loggal\ALT.VO.loggal.csproj">
+      <Project>{cd580826-af2d-4469-aa99-b8e1476c670d}</Project>
+      <Name>ALT.VO.loggal</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <PropertyGroup>
+    <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">10.0</VisualStudioVersion>
+    <VSToolsPath Condition="'$(VSToolsPath)' == ''">$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)</VSToolsPath>
+  </PropertyGroup>
+  <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
+  <Import Project="$(VSToolsPath)\WebApplications\Microsoft.WebApplication.targets" Condition="'$(VSToolsPath)' != ''" />
+  <Import Project="$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v10.0\WebApplications\Microsoft.WebApplication.targets" Condition="false" />
+  <ProjectExtensions>
+    <VisualStudio>
+      <FlavorProperties GUID="{349c5851-65df-11da-9384-00065b846f21}">
+        <WebProjectProperties>
+          <UseIIS>True</UseIIS>
+          <AutoAssignPort>True</AutoAssignPort>
+          <DevelopmentServerPort>58113</DevelopmentServerPort>
+          <DevelopmentServerVPath>/</DevelopmentServerVPath>
+          <IISUrl>http://localhost:58114/</IISUrl>
+          <NTLMAuthentication>False</NTLMAuthentication>
+          <UseCustomServer>False</UseCustomServer>
+          <CustomServerUrl>
+          </CustomServerUrl>
+          <SaveServerSettingsInUserFile>False</SaveServerSettingsInUserFile>
+        </WebProjectProperties>
+      </FlavorProperties>
+    </VisualStudio>
+  </ProjectExtensions>
+  <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
+    <PropertyGroup>
+      <ErrorText>이 프로젝트는 이 컴퓨터에 없는 NuGet 패키지를 참조합니다. 해당 패키지를 다운로드하려면 NuGet 패키지 복원을 사용하십시오. 자세한 내용은 http://go.microsoft.com/fwlink/?LinkID=322105를 참조하십시오. 누락된 파일은 {0}입니다.</ErrorText>
+    </PropertyGroup>
+    <Error Condition="!Exists('..\..\packages\Microsoft.ApplicationInsights.DependencyCollector.2.10.0\build\Microsoft.ApplicationInsights.DependencyCollector.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\..\packages\Microsoft.ApplicationInsights.DependencyCollector.2.10.0\build\Microsoft.ApplicationInsights.DependencyCollector.targets'))" />
+    <Error Condition="!Exists('..\..\packages\Microsoft.ApplicationInsights.PerfCounterCollector.2.10.0\build\Microsoft.ApplicationInsights.PerfCounterCollector.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\..\packages\Microsoft.ApplicationInsights.PerfCounterCollector.2.10.0\build\Microsoft.ApplicationInsights.PerfCounterCollector.targets'))" />
+    <Error Condition="!Exists('..\..\packages\Microsoft.ApplicationInsights.WindowsServer.TelemetryChannel.2.10.0\build\Microsoft.ApplicationInsights.WindowsServer.TelemetryChannel.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\..\packages\Microsoft.ApplicationInsights.WindowsServer.TelemetryChannel.2.10.0\build\Microsoft.ApplicationInsights.WindowsServer.TelemetryChannel.targets'))" />
+    <Error Condition="!Exists('..\..\packages\Microsoft.ApplicationInsights.WindowsServer.2.10.0\build\Microsoft.ApplicationInsights.WindowsServer.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\..\packages\Microsoft.ApplicationInsights.WindowsServer.2.10.0\build\Microsoft.ApplicationInsights.WindowsServer.targets'))" />
+    <Error Condition="!Exists('..\..\packages\Microsoft.ApplicationInsights.Web.2.10.0\build\Microsoft.ApplicationInsights.Web.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\..\packages\Microsoft.ApplicationInsights.Web.2.10.0\build\Microsoft.ApplicationInsights.Web.targets'))" />
+    <Error Condition="!Exists('..\..\packages\Microsoft.CodeDom.Providers.DotNetCompilerPlatform.2.0.0\build\net46\Microsoft.CodeDom.Providers.DotNetCompilerPlatform.props')" Text="$([System.String]::Format('$(ErrorText)', '..\..\packages\Microsoft.CodeDom.Providers.DotNetCompilerPlatform.2.0.0\build\net46\Microsoft.CodeDom.Providers.DotNetCompilerPlatform.props'))" />
+  </Target>
+  <Import Project="..\..\packages\Microsoft.ApplicationInsights.DependencyCollector.2.10.0\build\Microsoft.ApplicationInsights.DependencyCollector.targets" Condition="Exists('..\..\packages\Microsoft.ApplicationInsights.DependencyCollector.2.10.0\build\Microsoft.ApplicationInsights.DependencyCollector.targets')" />
+  <Import Project="..\..\packages\Microsoft.ApplicationInsights.PerfCounterCollector.2.10.0\build\Microsoft.ApplicationInsights.PerfCounterCollector.targets" Condition="Exists('..\..\packages\Microsoft.ApplicationInsights.PerfCounterCollector.2.10.0\build\Microsoft.ApplicationInsights.PerfCounterCollector.targets')" />
+  <Import Project="..\..\packages\Microsoft.ApplicationInsights.WindowsServer.TelemetryChannel.2.10.0\build\Microsoft.ApplicationInsights.WindowsServer.TelemetryChannel.targets" Condition="Exists('..\..\packages\Microsoft.ApplicationInsights.WindowsServer.TelemetryChannel.2.10.0\build\Microsoft.ApplicationInsights.WindowsServer.TelemetryChannel.targets')" />
+  <Import Project="..\..\packages\Microsoft.ApplicationInsights.WindowsServer.2.10.0\build\Microsoft.ApplicationInsights.WindowsServer.targets" Condition="Exists('..\..\packages\Microsoft.ApplicationInsights.WindowsServer.2.10.0\build\Microsoft.ApplicationInsights.WindowsServer.targets')" />
+  <Import Project="..\..\packages\Microsoft.ApplicationInsights.Web.2.10.0\build\Microsoft.ApplicationInsights.Web.targets" Condition="Exists('..\..\packages\Microsoft.ApplicationInsights.Web.2.10.0\build\Microsoft.ApplicationInsights.Web.targets')" />
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+       Other similar extension points exist, see Microsoft.Common.targets.
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+  -->
+</Project>

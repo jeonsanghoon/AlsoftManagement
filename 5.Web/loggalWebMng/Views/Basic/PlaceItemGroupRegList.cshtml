@@ -1,0 +1,231 @@
+﻿@{
+
+}
+@section scripts{
+
+	<script type="text/javascript">
+		var PARAM_DATA = {
+            PAGE_SIZE: 5
+          , PAGE_COUNT: 10
+          , PAGE: 1
+          , SORT_ORDER:"GROUP_SEQ"
+		}
+
+        $(document).ready(function () {
+			ComponentInit();
+			doQuery();
+		});
+
+        function ComponentInit() {
+            $(".ui.form input").keyup(function (e) {
+                var code = (e.keyCode ? e.keyCode : e.which);
+                if (code == 13) {
+                    doQuery();
+                }
+			})
+			PARAM_DATA = $.mrc_table.SetPageSizeObject({ pageParam :PARAM_DATA, searchObjName:".ui.table.search"});
+		}
+
+        function doQuery(order) {
+			var param = BaseCommon.FormInfo.serializeJson(".ui.form");
+
+            if (order != undefined) {
+                PARAM_DATA.SORT_ORDER = order;
+                param.SORT_ORDER = order;
+            }
+            else if (order == undefined) {
+                param.SORT_ORDER = PARAM_DATA.SORT_ORDER;
+            }
+
+            param = JSON.stringify(param);
+
+			ajax.GetAjax("/basic/pv_PlaceItemGroupRegList", param, "html", function (result) {
+				$("#dvTable table tbody").html(result);
+
+				$.mrc_table.InitObject({
+					objName: ".mrc-table"
+					, isDrag: true
+					, bEdit: true
+					, sort: order
+				}, function (response) {
+						setSeqOrder();
+				});
+
+				setSeqOrder();
+			});
+		}
+
+		function setSeqOrder() {
+			var tr = $('#tbList .ui-sortable tr');
+			var len = tr.length;
+
+			var seqArr = new Array();
+
+			if (len > 0) {
+				for (var i = 0; i < len; i++) {
+					tr.eq(i).find('#groupSeq').text(i);
+
+					param = new Object();
+
+					param.GROUP_CODE = Number(tr.eq(i).find('#groupCode').text());
+					param.GROUP_SEQ = Number(tr.eq(i).find('#groupSeq').text());
+
+					seqArr.push(param);
+				}
+
+				doSaveGroupSeq(seqArr);
+			}
+		}
+
+		function doSaveGroupSeq(seqArr) {
+			var param = JSON.stringify(seqArr);
+
+			ajax.GetAjax("/basic/PlaceItemGroupSeqSave", param, "json", function (result) {
+				if (result.ERROR_MESSAGE != "") {
+					$.MessageBox(result.ERROR_MESSAGE);
+				}
+            });
+		}
+
+        function mrcGrid_Sort(objName, datasort, orderType) {
+            if (datasort == "" || orderType == "") doQuery("");
+            else doQuery(datasort + " " + orderType);
+		}
+
+		function doSave() {
+            var arrSaveData = $.mrc_table.GetSaveData("#tbList");
+            if (arrSaveData.length==0)
+            {
+                $.MessageBox("저장할 데이터가 없습니다.");
+                return;
+            }
+
+			for (var i = 0; i < arrSaveData.length; i++) {
+				var groupName = arrSaveData[i].GROUP_NAME;
+				var groupSeq = arrSaveData[i].GROUP_SEQ;
+				var groupType = arrSaveData[i].GROUP_TYPE;
+				var saleType = arrSaveData[i].SALE_TYPE
+
+				if (groupName == "" || groupSeq == "" || groupType == "" || saleType == "") {
+					$.MessageBox("데이터 값이 유효하지 않습니다.")
+					return;
+				}
+			}
+
+            var param = JSON.stringify(arrSaveData);
+
+			ajax.GetAjax("/basic/PlaceItemGroupSave", param, "json", function (result) {
+				if (result.ERROR_MESSAGE != "") {
+					$.MessageBox(result.ERROR_MESSAGE);
+				}
+				else
+					doQuery();
+            });
+		}
+
+		function doAdd() {
+			var seq = $('#tbList .ui-sortable tr').length;
+			
+            var addHtml = '';
+            addHtml += '  <tr class="mrcrow new">';
+            addHtml += '        <td></td>';
+            addHtml += '        <td id="groupCode"><input type="text" value="" placeholder="" maxlength="100"/></td>';
+			addHtml += '        <td id="groupSeq" class="number" type="text" style="text-align:center;" value="">' + seq + '</td>';
+			addHtml += '        <td>@Html.Raw(@Html.CommonCombo("GROUP_TYPE", new T_COMMON_COND { MAIN_CODE = "B007" }, "", null, new { @class = "size100 field" }).ToHtmlString().Replace("\r\n", "").Trim())</td> ';
+			addHtml += '        <td>@Html.Raw(@Html.CommonCombo("SALE_TYPE", new T_COMMON_COND { MAIN_CODE = "M004" }, "", null, new { @class = "size100 field" }).ToHtmlString().Replace("\r\n", "").Trim())</td> ';
+			addHtml += '		<td class="center" style="width:1em"><input type="checkbox" /></td> ';
+			addHtml += '        <td><input type="text" value=""  maxlength="100"/></td>';
+			addHtml += '        <td class="center">@DateTime.Now</td>';
+		    addHtml += '        <td class="center">@SessionHelper.LoginInfo.MEMBER.USER_NAME</td>';
+            addHtml += '        <td class="center">@DateTime.Now</td>';
+            addHtml += '        <td class="center">@SessionHelper.LoginInfo.MEMBER.USER_NAME</td>';
+			addHtml += '  </tr> ';
+
+            $.mrc_table.AddRowHtml(".mrc-table", addHtml);
+
+			$.mrc_table.Init(".mrc-table", true, "", "new");
+
+			Input.TextBox.onlyNumber(".mrc-table .number");
+		}
+
+        function doDel() {
+
+            var arrDel = $.mrc_table.GetCheckedData("#tbList", "D");
+            if (arrDel.length == 0)
+            {
+                $.MessageBox("삭제할 데이터가 없습니다.");
+                return;
+            }
+			$.MessageBox({
+                buttonDone: "예",
+                buttonFail: "아니오",
+                message: "정말로 삭제하시겠습니까?"
+            }).done(function () {
+                var param = JSON.stringify(arrDel);
+
+				ajax.GetAjax("/basic/PlaceItemGroupSave", param, "json", function (result) {
+					$.MessageBox(result.MESSAGE);
+					doQuery();
+                });
+            }).fail(function () {
+
+            });
+		}
+	</script>
+}
+<style>
+	.ui.checkbox {
+		margin-top: 0.5em;
+	}
+
+	@@media only screen and (max-width: 767px) {
+		.ui.table:not(.unstackable) tr {
+			padding-top: 0em;
+			padding-bottom: 0em;
+			box-shadow: 0 0px 0 0 rgba(0,0,0,.1) inset !important;
+		}
+	}
+</style>
+<div class="ui vertical stripe segment">
+	@Html.TitleNavigation()
+	<form class="ui form">
+		<div class="one column row search">
+			<div class="column">
+				<table class="ui table search">
+					<tbody>
+						<tr>
+							<td class="buttons" colspan="3">
+								@Html.Semantic_Button2("btnClear", "삭제", SemanticUIHelper.enButtonType.Del, SemanticUIHelper.Size.mini, new { onclick = "doDel();" })
+								@Html.Semantic_Button2("btnAdd", "추가", SemanticUIHelper.enButtonType.New, SemanticUIHelper.Size.mini, new { onclick = "doAdd();" })
+								@Html.Semantic_Button2("btnSave", "저장", SemanticUIHelper.enButtonType.Save, SemanticUIHelper.Size.mini, new { onclick = "doSave();" })
+							</td>
+						</tr>
+					</tbody>
+				</table>
+
+			</div>
+		</div>
+		<div class="one column row">
+			<div class="column" id="dvTable">
+				<table class="mrc-table search" id="tbList">
+					<thead>
+						<tr>
+							<th class="sort" column_name="GROUP_CODE" data-sort="A.GROUP_CODE" style="width:1em">코드</th>
+							<th column_name="GROUP_NAME">그룹명</th>
+							<th display_size="tablet" column_name="GROUP_SEQ" style="width:5em">순번</th>
+							<th display_size="tablet" column_name="GROUP_TYPE" style="width:10em">유형</th>
+							<th display_size="pc" column_name="SALE_TYPE" style="width:10em">판매유형</th>
+							<th display_size="pc" column_name="HIDE"><div class="th-text">숨김</div></th>
+							<th display_size="pc" column_name="REMARK">비고</th>
+							<th display_size="pc" column_name="UPDATE_DATE" style="width:20em">최종수정일</th>
+							<th display_size="detail" column_name="INSERT_NAME">등록자</th>
+							<th display_size="detail" column_name="INSERT_DATE">등록시간</th>
+							<th display_size="detail" column_name="UPDATE_NAME">수정자</th>
+						</tr>
+					</thead>
+					<tbody></tbody>
+				</table>
+			</div>
+		</div>
+	</form>
+</div>

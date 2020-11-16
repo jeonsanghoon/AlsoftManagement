@@ -1,0 +1,50 @@
+﻿@using ALT.VO.loggal;
+@{
+    List<T_KEYWORD> list = ViewBag.list;
+    string totCnt = (list.Count() == 0 ? "0" : list.First().TOTAL_ROWCOUNT.ToString());
+    <input type="hidden" id="@(ViewBag.TABLE_NAME)_TOTAL" value="@totCnt" />
+    foreach (T_KEYWORD data in list)
+    {
+        string sStype = data.IS_CATEGORY == true ? "class=TRkeywordActive" : "";
+        @:<tr @(sStype)>
+            <td>
+                <input type="text" value="@data.KEYWORD_NAME" />
+            </td>
+            <td class="hide">
+                @data.BASE_CODE
+            </td>
+            <td class="hide">
+                @data.KEYWORD_TYPE
+            </td>
+            <td class="hide">
+                @data.KEYWORD_CODE
+            </td>
+            <td class="hide" >
+                <input type="checkbox" @(data.IS_SYNONYM == true ? "checked" :"") />
+            </td>
+            <td class="center">
+                <a href="javascript:void(0);" onclick = "popSynonymOpen('@data.BASE_CODE', '@data.KEYWORD_NAME');" > @(string.IsNullOrEmpty(data.SYNONYM_NAMES) ? "미등록" : data.SYNONYM_NAMES)</a>
+                @*@Html.Semantic_Button2("btnI_SYNONYM",  (string.IsNullOrEmpty(data.SYNONYM_NAMES ) ? "등록" : data.SYNONYM_NAMES), SemanticUIHelper.enButtonType.Normal, new { @style="float:left", @onclick = "fnAddsynoym('" + data.BASE_CODE + "');" })*@
+            </td>
+            
+            <td >
+                <input type="text" class="LATITUDE" value="@data.LATITUDE" />
+            </td>
+            <td >
+                <input type="text" class="LONGITUDE" value="@data.LONGITUDE" />
+            </td>
+            <td>
+                @Html.CommonCombo("STATUS1", new T_COMMON_COND { MAIN_CODE="K001", HIDE=false }, data.STATUS.ToString(""), null, new { @class = "size100 field" })
+            </td>
+            <td class="center">
+                @data.UPDATE_NAME
+            </td>
+            <td class="center">
+                @data.UPDATE_DATE
+            </td>
+        @:</tr>
+    }
+}
+
+
+

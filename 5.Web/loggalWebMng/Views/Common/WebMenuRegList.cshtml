@@ -1,0 +1,291 @@
+﻿@{
+    List<SelectListItem> combo_MENU_TYPE = new ALT.BizService.CommonService().GetCommon(new T_COMMON_COND { MAIN_CODE = "M001", HIDE = false }).Select(s => new SelectListItem { Value = s.SUB_CODE.ToString(), Text = s.NAME }).ToList();
+    List<SelectListItem> combo_MENU_AUTH = new ALT.BizService.CommonService().GetCommon(new T_COMMON_COND { MAIN_CODE = "U002", HIDE = false }).Select(s => new SelectListItem { Value = s.SUB_CODE.ToString(), Text = s.NAME }).ToList();
+    List<SelectListItem> combo_USER_AUTH = new ALT.BizService.CommonService().GetCommon(new T_COMMON_COND { MAIN_CODE = "U003", HIDE = false }).Select(s => new SelectListItem { Value = s.SUB_CODE.ToString(), Text = s.NAME }).ToList();
+}
+
+@section scripts{
+
+    <script type="text/javascript">
+        var _pageSize = 10;
+        var _perPage = 5;
+        var _page = 1;
+        $(document).ready(function () {
+            doQuery();
+            ComponentInit();
+        }); //End document.ready
+
+        function ComponentInit() {
+            $("#SEARCH_CODE,#NAME").keyup(function (e) {
+                var code = (e.keyCode ? e.keyCode : e.which);
+                if (code == 13) {/* 13 == enter key@ascii */
+                    doQuery();
+                }
+            })
+
+            $("#HIDE").change(function () { doQuery(); })
+
+            gridAutoHeight();
+            $(window).resize(function () {
+                gridAutoHeight();
+			})
+
+		
+        }
+
+        function gridAutoHeight() {
+            if ($(window).width() < 768) {
+                $(".mrc-fixed-table-container").css("height", "100%");
+            }
+            else {
+                $(".mrc-fixed-table-container").css("height", $(window).height() - ($(".ui.form .search").height() + 200 + $(".ui.footer").height()));
+            }
+        }
+        function doQuery() {
+
+            var param = new Object();
+            param.NAME = $("#NAME").val();
+            param.SEARCH_CODE = $("#SEARCH_CODE").val();
+            param.HIDE = $("#HIDE:checked").length == 0 ? false : $("#HIDE:checked") ? null : false;
+            param = JSON.stringify(param);
+
+            ajax.GetAjax("/common/pv_WebMenuRegList", param, "html", function (result) {
+				//$("#dvTable table tbody").html(result);
+				BaseCommon.SetHtml(document.all.tbList_tbody, result);
+				$.mrc_table.InitObject({
+					objName: "#tbList"
+					, bEdit: true
+					, sort: ""
+					, fixedHeader: {
+						isActive: true
+						, height: "100%"
+
+					}, editInfo: {
+                        isAllCheck:true
+                        ,column_name : "HIDE2"
+					}, callback: function (res) {
+
+					}
+                });
+            });
+        }
+
+        function SemanticUI_ComboChange(obj) {
+            if ($(obj)[0].id == "MENU_AUTH") {
+                if ($(obj).val() == "1" || $(obj).val() == "2") {
+                    SemanticUI.ComboBox.SetVal($(obj).closest("tr").find("#MENU_COMPANY_CODE"), "");
+                    SemanticUI.ComboBox.SetVal($(obj).closest("tr").find("#MENU_STORE_CODE"), "");
+
+                    SemanticUI.ComboBox.Disable($(obj).closest("tr").find("#MENU_COMPANY_CODE"), true);
+                    SemanticUI.ComboBox.Disable($(obj).closest("tr").find("#MENU_STORE_CODE"), true);
+                }
+                else if ($(obj).val() == "3") {
+                    SemanticUI.ComboBox.Disable($(obj).closest("tr").find("#MENU_COMPANY_CODE"), false);
+                    SemanticUI.ComboBox.SetVal($(obj).closest("tr").find("#MENU_STORE_CODE"), "");
+                    SemanticUI.ComboBox.Disable($(obj).closest("tr").find("#MENU_STORE_CODE"), true);
+                }
+                else if ($(obj).val() == "4") {
+                    SemanticUI.ComboBox.Disable($(obj).closest("tr").find("#MENU_COMPANY_CODE"), false);
+                    SemanticUI.ComboBox.Disable($(obj).closest("tr").find("#MENU_STORE_CODE"), false);
+
+                    if ($(obj).closest("tr").find("#MENU_COMPANY_CODE").val() != "") {
+                        SetStore($(obj).closest("tr").find("#MENU_COMPANY_CODE"));
+                    }
+                }
+            }
+            if ($(obj)[0].id == "MENU_COMPANY_CODE") {
+                if ($(obj).closest("tr").find("#MENU_AUTH").val() == "4") {
+                    SetStore(obj);
+                }
+            }
+        }
+        var objStore;
+        function SetStore(obj) {
+            objStore = obj;
+
+            var params = new Object();
+            var htmlattribute = new Object();
+            htmlattribute.class = "mini size150";
+            params.name = "MENU_STORE_CODE";
+            params.optionLabel = "-선택-";
+            params.COMPANY_CODE = (($(obj).val() == "") ? "-1" : $(obj).val());
+            params.selectedValue = $(obj).closest("tr").find("#MENU_STORE_CODE").val();
+            params.htmlAttributes = JSON.stringify(htmlattribute);
+            params = JSON.stringify(params);
+            ajax.GetAjax("/common/StoreCombo", params, "html", function (result) {
+
+                var tdObj = $(obj).closest("tr").find("#MENU_STORE_CODE").closest("td");
+                tdObj.html(result);
+                SemanticUI.ComponentInit(tdObj);
+            })
+        }
+        function doSave() {
+
+            var arrSaveData = $.mrc_table.GetSaveData("#tbList");
+
+            if (arrSaveData.length == 0) {
+                $.MessageBox("저장할 데이터가 없습니다.");
+                return;
+            }
+
+            var param = JSON.stringify(arrSaveData);
+
+            ajax.GetAjax("/common/WebMenuSave", param, "json", function (result) {
+                if (result.ERROR_MESSAGE != "") {
+                    $.MessageBox(result.ERROR_MESSAGE);
+                }
+                else
+                    doQuery();
+            });
+        }
+        function doAdd() {
+
+            var addHtml = '<tr class="mrcrow new">                                       ';
+            addHtml += '    <td><input type="text" class="number size100" value=""  placeholder="상위코드 + 자신의코드(2자리)로 입력" maxlength=6/></td>   ';
+            addHtml += '    <td><input type="text" value="" /></td>   ';
+            addHtml += '    <td class="center"><input type="checkbox" /></td> ';
+            addHtml += '    <td class="hide">1</td>';
+            addHtml += '    <td><input type="text" value="" /></td>   ';
+            addHtml += '    <td><input type="text" value="" /></td>   ';
+            addHtml += '    <td class="center"></td>                ';
+            addHtml += '        <td>@Html.Raw(Html.CommonComboNormal("MENU_AUTH", combo_MENU_AUTH, "1", "-선택-", new { @class = "size120 field" }).ToHtmlString().Replace("\r\n", "").Trim())</td>                              ';
+            addHtml += '        <td>@Html.Raw(Html.CompCombo("MENU_COMPANY_CODE", new T_COMPANY_COND(), "", "-선택", new { @class = "size150 disabled field" }).ToHtmlString().Replace("\r\n","").Trim())</td>             ';
+            addHtml += '        <td>@Html.Raw(Html.StoreCombo("MENU_STORE_CODE", new T_STORE_COND (), "", "-선택", new { @class = "size150 disabled field" }).ToHtmlString().Replace("\r\n", "").Trim())</td>                   ';
+            addHtml += '        <td>@Html.Raw(Html.DropDownList("USER_AUTH", combo_USER_AUTH, new { @placeholder = "사용자권한", @multiple = "" }).ToHtmlString().Replace("\r\n", "").Trim())</td>                   ';
+
+
+
+            addHtml += '    <td class="center"></td>                  ';
+            addHtml += '    <td class="center"></td>                  ';
+            addHtml += '    <td class="hide center">0</td>                  ';
+            addHtml += '</tr>                                                          ';
+
+            $.mrc_table.AddRowHtml("#tbList", addHtml);
+
+            $.mrc_table.InitObject({
+                objName: "#tbList"
+                , bEdit: true
+                , sort: ""
+                , addClass: "new"
+				, fixedHeader: {
+					isActive: true
+					, callback: function () {
+					}
+				}
+            });
+        }
+        function doDel() {
+
+            var arrDel = $.mrc_table.GetCheckedData("#tbList", "D");
+            if (arrDel.length == 0) {
+                $.MessageBox("삭제할 데이터가 없습니다.");
+                return;
+            }
+            $.MessageBox({
+                buttonDone: "예",
+                buttonFail: "아니오",
+                message: "정말로 삭제하시겠습니까?"
+            }).done(function () {
+                var param = JSON.stringify(arrDel);
+
+                ajax.GetAjax("/common/WebMenuSave", param, "json", function (result) {
+                    if (result.ERROR_MESSAGE != "") {
+                        $.MessageBox(result.ERROR_MESSAGE);
+                    }
+                    else
+                        doQuery();
+                });
+            }).fail(function () {
+
+            });
+        }
+
+        function ExcelDown() {
+            var params = BaseCommon.FormInfo.serializeJson(".ui.form");
+            var arrData = new Array();
+            $.each(params, function (key, val) {
+                //display the key and value pair
+
+                arrData.push({ name: key, value: val });
+            });
+            BaseCommon.FormInfo.PostSubmit('/common/WebMenuExcelReport', arrData);
+        }
+    </script>
+}
+<style>
+    .ui.checkbox {
+        margin-top: 3px;
+    }
+</style>
+
+<div class="ui vertical stripe segment">
+    @Html.TitleNavigation()
+    <form class="ui form">
+        <div class="ui grid " style="height:100%;">
+            <div class="one column row">
+                <div class="column">
+                    <table class="ui table">
+                        <tbody>
+                            <tr>
+                                <td class="title">
+                                    @Html.Semantic_TITLE2("메뉴코드")
+                                </td>
+                                <td class="content">
+                                    @Html.Semantic_TextBox("SEARCH_CODE")
+                                </td>
+                                <td class="title">
+                                    @Html.Semantic_TITLE2("메뉴명")
+                                </td>
+                                <td class="content">
+                                    @Html.Semantic_TextBox("NAME")
+                                </td>
+                                <td class="title">
+                                    @Html.Semantic_TITLE2("미포함")
+                                </td>
+                                <td class="content">
+                                    @Html.Semantic_CheckBox("HIDE", "", "1") &nbsp;
+                                </td>
+                                <td class="content buttons">
+                                    @Html.Semantic_Button2("btnSearch", "조회", SemanticUIHelper.enButtonType.ToList, SemanticUIHelper.Size.mini, new { onclick = "doQuery();" })
+                                    @Html.Semantic_Button2("btnClear", "삭제", SemanticUIHelper.enButtonType.Del, SemanticUIHelper.Size.mini, new { onclick = "doDel();" })
+                                    @Html.Semantic_Button2("btnAdd", "추가", SemanticUIHelper.enButtonType.New, SemanticUIHelper.Size.mini, new { onclick = "doAdd();" })
+                                    @Html.Semantic_Button2("btnSave", "저장", SemanticUIHelper.enButtonType.Save, SemanticUIHelper.Size.mini, new { onclick = "doSave();" })
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="one column row">
+                <div class="column" id="dvTable">
+            
+                            <table class="mrc-table" id="tbList">
+								<thead>
+								
+									<tr>
+										<th column_name="SEARCH_CODE" style="width:10em;">메뉴코드</th>
+										<th column_name="NAME" style="width:20em;">메뉴명</th>
+										<th column_name="HIDE" style="width:5em">미사용</th>
+										<th column_name="MENU_TYPE" style="width:5em" class="hide">메뉴유형</th>
+										<th column_name="MENU_URL" display_size="tablet" style="width:25em">페이지주소</th>
+										<th column_name="MENU_CLASS" display_size="detail" style="width:10em">메뉴클래스</th>
+										<th column_name="LEVEL" display_size="pc" style="width:5em">레벨</th>
+										<th column_name="MENU_AUTH" display_size="pc" style="width:15em;">메뉴권한</th>
+										<th column_name="MENU_COMPANY_CODE" display_size="pc" style="width:15em;">업체</th>
+										<th column_name="MENU_STORE_CODE" display_size="pc" style="width:15em;">지점</th>
+										@*<th column_name="USER_AUTH" display_size="detail" style="width:15em;">사용자권한</th>*@
+										<th display_size="detail" style="width:8em">수정자</th>
+										<th display_size="detail" style="width:12em">수정시간</th>
+										<th class="hide" column_name="MENU_CODE" style="min-width:5em;">코드</th>
+
+									</tr>
+								</thead>
+                                <tbody id="tbList_tbody"></tbody>
+                            </table>
+                        </div>
+                 
+            </div>
+        </div>
+    </form>
+</div>

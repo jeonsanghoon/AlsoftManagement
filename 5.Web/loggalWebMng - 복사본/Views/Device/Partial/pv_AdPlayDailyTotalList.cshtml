@@ -1,0 +1,23 @@
+﻿
+@{
+    List<AdPlayTotalList> list = ViewBag.list;
+    string totCnt = (list.Count() == 0 ? "0" : list.First().TOTAL_ROWCOUNT.ToString());
+    <input type="hidden" id="total" value="@totCnt" />
+
+    foreach (AdPlayTotalList data in list)
+    {
+<tr>
+    <td class="center">@data.ROW_IDX</td>
+    <td class="center">@data.REG_DAY.ToFormatDate("yyyy.MM.dd")</td>
+    <td class="center">@data.DEVICE_KIND_NAME</td>
+    <td style="cursor:pointer" onclick="location.href='/advertise/adreg/@data.AD_CODE'"><a>@(data.TITLE)</a></td>
+    <td class="center">@data.BANNER_TYPE2_NAME</td>
+    <td class="center">@data.PLAY_TYPE_NAME</td>
+    <td class="center">@data.FRAME_TYPE_NAME</td>
+    <td class="right">@data.SUB_PLAY_TIME.ToString("#,##0.##")</td>
+    <td class="right">@Html.Semantic_Button("btnQty", data.SUB_QTY.ToString("#,##0.##"), SemanticUIHelper.enButtonType.Normal, new { @onclick = "adPlayDetail( this," + data.REG_DAY + "," + data.AD_CODE.ToString() + " )" , @class="size100 right"})</td>
+    <td class="left" style="cursor:pointer" onclick="location.href='/comp/storereg/@data.STORE_CODE'"><a>@data.STORE_NAME</a></td>
+</tr>
+    }   
+
+}

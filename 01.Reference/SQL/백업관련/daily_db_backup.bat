@@ -1,0 +1,1 @@
+SQLCMD -S WIN-28US9O2FU19 -i "G:\Backup\Database\backup.sql"

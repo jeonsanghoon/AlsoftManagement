@@ -1,0 +1,280 @@
+﻿
+@{
+    if (SessionHelper.LoginInfo.MEMBER.MEMBER_CODE != null)
+    {
+        Layout = "~/Views/Shared/_Layout.cshtml";
+    }
+    else {
+        Layout = "~/Views/Shared/_Layout_blank.cshtml";
+    }
+
+    if (ViewBag.data == null)
+    {
+        <text>
+            <script type="text/javascript">
+                $("document").ready(function () {
+                    $.MessageBox("사이니지를 제어할 수 없습니다.").done(function () {
+                    });
+                });
+            </script>
+        </text>
+        return;
+    }
+    T_SIGNAGE_CONTROL data = ViewBag.data;
+    T_MEMBER loginmember = new T_MEMBER();
+    try
+    {
+        if (ViewBag.login != null)
+        {
+            loginmember = (T_MEMBER)ViewBag.login;
+            data.REQUEST_NAME = loginmember.USER_NAME;
+        }
+        else
+        {
+            loginmember = SessionHelper.LoginInfo.MEMBER;
+            data.REQUEST_NAME = loginmember.USER_NAME;
+        }
+    }
+    catch (Exception) { }
+    }
+            <style>
+    .ui.form .field.error, .ui.form img.error {
+        background: #FFF6F6;
+        border-color: #E0B4B4;
+        color: #9F3A38;
+        box-shadow: none;
+    }
+    .ui.vertical.segment {
+        border-bottom:0px;
+    }
+    @@media only screen and (max-width: 767px) {
+        .ui.table:not(.unstackable) tr > td.padding0 {
+            padding: 0em !important;
+        }
+
+         #imgPreview {
+             margin-top: 0.5em !important;
+         }
+
+        .ui.table:not(.unstackable) {
+            padding-top: 1em;
+            padding-bottom: 1em;
+        }
+    }
+            </style>
+@section scripts{
+<script type="text/javascript">
+        $("document").ready(function () {
+            validationinit();
+            $(".ui.form").submit(function (event) {
+                if ($(".ui.error.message").css("display") == "none" ) { doSave(); }
+                event.preventDefault();
+            });
+            FileUpload();
+
+            $('#PLAY_REQ_TIME').datetimepicker({
+                datepicker: true,
+                //allowTimes: ['12:00', '13:00', '15:00', '17:00', '17:05', '17:20', '19:00', '20:00'],
+                step: 30,
+                value:"@(DateTime.Now.ToDefaultMinute())",
+                format: 'Y.m.d G:i',
+
+                onShow: function (db, $input) {
+
+                },
+                onChangeDateTime: function (dp, $input) {
+                    if ($('#PLAY_REQ_TIME').val() != "") $('#PLAY_REQ_TIME').parent().removeClass("error");
+                }
+                , maxDate: moment(new Date()).add(10000, 'minute').format("YYYY.MM.DD HH:mm")
+
+                , minDate: moment(new Date()).format("YYYY.MM.DD HH:mm")
+                //, minTime: "@(DateTime.Now.ToDefaultMinute())" //moment(new Date()).format("YYYY.MM.DD HH:mm")
+            });
+
+
+        })
+
+        function FileUpload() {
+            var params = new Object();
+            params.FolderName = $("#FolderName").val();
+            //uploadfile_Common.js id CHECK_MENU 체크박스 값확인 이벤트있음
+            uploadFile.init("fileuploader", "/Base/FileUpload", params, false, function (result, resultType) {
+                if (resultType == undefined) {
+                    if (result.return_msg != "") {
+                        alert(result.return_msg);
+                    } else {
+                        //$("#spurl").val(result.URL);
+                        $("#CONTENT_URL").val(result.FULL_URL);
+                        $("#imgPreview").attr("src", result.FULL_URL);
+                        $("#CONTENT_URL").closest("td").find(".ajax-upload-dragdrop").removeClass("field").removeClass("error");
+                        $("#CONTENT_URL").trigger("change");
+                    }
+                }
+           },"image");
+        }
+        //// 체크
+        function validationinit() {
+
+            $('.ui.form').form({
+                on: 'change',
+                focusInvalid: true,
+                fields: {
+                    REQUEST_EMAIL: {
+                        identifier: 'REQUEST_EMAIL',
+                       // optional: true,
+                        rules: [
+                            {
+                                type: 'email',
+                                prompt: '이메일 형식이 아닙니다.'
+                            }
+                        ]
+                    }
+                    ,USER_ID: {
+                        identifier: 'RETUEST_NAME',
+                        rules: [
+                            {
+                                type: 'empty',
+                                prompt: '요청자를 입력하여 주시기 바랍니다.' // Please enter a first name
+                            }
+                        ]
+                    },
+                    CONTENT_URL: {
+                        identifier: 'CONTENT_URL',
+                        rules: [
+                            {
+                                type: 'empty',
+                                prompt: '이미지를 등록하여 주시기 바랍니다.' // Please enter a first name
+                            }
+                        ]
+                    }
+                    , PLAY_REQ_TIME: {
+                        identifier: 'PLAY_REQ_TIME',
+                        rules: [
+                            {
+                                type: 'empty',
+                                prompt: '요청시간을 등록하여 주시기 바랍니다.'
+                            }
+
+                        ]
+                    }
+                }
+                , onSuccess: function (event, fields) { $(".ui.error.message").html(""); $(".ui.error.message").hide(); }
+                , onFailure: function (event, fields) {
+
+                    //실패후 첫번재 에러 태그에 포커스
+                    SemanticUI.Form.Invalidation.ErrorFocus();
+                }, onInvalid: function (event) {
+                    //
+                    if ($("#CONTENT_URL").val() == "") {
+                        $("#CONTENT_URL").closest("td").find(".ajax-upload-dragdrop").addClass("field").addClass("error");
+
+                    }
+                    else {
+                        $("#CONTENT_URL").closest("td").find(".ajax-upload-dragdrop").removeClass("field").removeClass("error");
+                    }
+                    SemanticUI.Form.addErrorMessage(event);
+                }
+            });
+        }
+        function doSave() {
+            var params = BaseCommon.FormInfo.serializeJson(".ui.form");
+            
+            params = JSON.stringify(params);
+            
+            ajax.GetAjax("/basic/SignageControlSave/", params, "json", function (result) {
+                if (result.ERROR_MESSAGE != "") {
+                    $.MessageBox(result.ERROR_MESSAGE).done(function () {
+
+                    });
+                }
+                else {
+                    $.MessageBox("등록이 완료되었습니다.").done(function () {
+                        @{
+                            if (SessionHelper.LoginInfo.MEMBER.MEMBER_CODE == null)
+                            {
+                                @:location.href = "about:blank";
+                            }
+                            else {
+                                @:location.href = "/basic/signagecontrollist";
+                            }
+                        }
+                    })
+                }
+            });
+        }
+</script>
+}
+<div class="ui vertical stripe segment">
+    @{ ViewBag.Title = "사이니지제어";}
+    @Html.TitleNavigation()
+    <form class="ui form" onSubmit="return false;" action="/Base/FileUpload" data-ajax="true" data-ajax-mode="replace" data-ajax-update="#dc_goal_placeholder" enctype="multipart/form-data" id="frmUpload" method="post">
+        @Html.Hidden("SIGN_CODE", data.SIGN_CODE)
+        @Html.Hidden("IDX", data.IDX)
+        <div class="ui stackable grid  fields">
+            <div class="one column row">
+                <table class="ui celled table signInfo">
+                    <tbody>
+                        <tr>
+                            <td class="title">@Html.Semantic_TITLE2("사이니지명")</td>
+                            <td class="content">@Html.Semantic_TextBox("SIGN_NAME", data.SIGN_NAME, new { @readonly = "readonly" })</td>
+                            <td class="title">@Html.Semantic_TITLE2("이메일", true)</td>
+                            <td class="content">@Html.Semantic_TextBox("REQUEST_EMAIL", data.REQUEST_EMAIL.ToString(loginmember.USER_ID))</td>
+                        </tr>
+                        <tr>
+                            <td class="title" rowspan="3">@Html.Semantic_TITLE2("등록", true)</td>
+                            <td class="content file1" rowspan="3">
+                                <table css="ui table">
+                                    <tr>
+                                        <td class="padding0">
+                                            <div id="fileuploader">파일</div>
+                                            @Html.Hidden("FolderName")
+                                            @Html.Hidden("CONTENT_URL", data.CONTENT_URL)
+                                        </td>
+                                        <td class="padding0">
+                                            @{
+                                                if (data.PLAY_TYPE == 1)
+                                                {
+                                                    <img id="imgPreview" src="@data.CONTENT_URL" style="height:100px;width:auto;min-width: 120px;border: 1px dotted #d4d4d4;" />
+                                                }
+                                            }
+                                        </td>
+                                    </tr>
+                                </table>
+                            </td>
+                            <td class="title">@Html.Semantic_TITLE2("요청자", true)</td>
+                            <td class="content">@Html.Semantic_TextBox("REQUEST_NAME", data.REQUEST_NAME)</td>
+                        </tr>
+                        <tr>
+                            <td class="title">
+                                @Html.Semantic_TITLE2("요청시간", true)
+                            </td>
+                            <td class="content">
+                                @Html.Semantic_TextBox("PLAY_REQ_TIME", Convert.ToDateTime(data.PLAY_REQ_TIME == null ? DateTime.Now : data.PLAY_REQ_TIME).ToDefaultMinute(), SemanticUIHelper.Size.mini, new { @placeholder = "요청시간", @style = "text-align:center;", @class = "datetime" })
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="title">
+                                @Html.Semantic_TITLE2("완료시간")
+                            </td>
+                            <td class="content">
+                                @Html.Semantic_TextBox("COMPLEATED_DATE", data.COMPLEATED_DATE == null ? "" : data.COMPLEATED_DATE.ToString("yyyy.MM.dd HH:mm"), SemanticUIHelper.Size.mini, new { @placeholder = "미완료", @style = "text-align:center;", @readonly = "readonly" })
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="title">@Html.Semantic_TITLE2("내용")</td>
+                            <td class="content" colspan="3">@Html.Semantic_TextBox("CONTENT", data.CONTENT, new { @class = "size100Percent" })</td>
+                        </tr>
+                        <tr class="hide">
+                            <td class="title">@Html.Semantic_TITLE2("등록자")</td>
+                            <td class="content">@Html.Semantic_TextBox("SIGN_INSERT", data.INSERT_NAME, new { @readonly = "readonly", @class = "size250" })</td>
+                            <td class="title">@Html.Semantic_TITLE2("수정자")</td>
+                            <td class="content">@Html.Semantic_TextBox("SIGN_UPDATE", data.UPDATE_NAME, new { @readonly = "readonly", @class = "size250" })</td>
+                        </tr>
+
+                </table>
+                <div class="ui error message" style="display:none;width:100%;"></div>
+                <center style="width:100%;">@Html.Semantic_Button2("btnSave", "등록하기", SemanticUIHelper.enButtonType.Request, SemanticUIHelper.Size.large, new { @type = "submit", @style = (SessionHelper.LoginInfo.MEMBER.MEMBER_CODE != null ? "float:right" : "") })</center>
+            </div>
+        </div>
+    </form>
+</div>

@@ -1,0 +1,34 @@
+﻿@{
+	List<DEVICE_LIST> list = (ViewBag.list == null) ? new List<DEVICE_LIST>() : ViewBag.list;
+	string totCnt = (list.Count() == 0 ? "0" : list.First().TOTAL_ROWCOUNT.ToString());
+	<input type="hidden" id="total" value="@totCnt" />
+	foreach (DEVICE_LIST data in list)
+	{
+<tr>
+	<td class="left">@data.DEVICE_NAME</td>
+	<td class="left">@data.STORE_NAME</td>
+	<td class="center">
+		@{
+			string strStatusColor = "blue";
+			if (data.STATUS == "대기")
+			{
+				strStatusColor = "green";
+			}
+			else if (data.STATUS == "정지")
+			{
+				strStatusColor = "#ffd800";
+			}
+			else if (data.STATUS == "폐기")
+			{
+				strStatusColor = "#808080";
+			}
+			<span style="color:@strStatusColor">
+				@data.STATUS
+			</span>
+		}
+	</td>
+	<td class="center">@data.JIBUN_ADDRESS</td>
+	<td class="hide">@data.DEVICE_CODE</td>
+</tr>
+		}
+	}

@@ -1,0 +1,133 @@
+﻿@{
+
+}
+<style>
+    #popHardware .column.row {
+        padding: 0.25em;
+    }
+
+    .ui.form.modal .mrc-table {
+        font-size: 1.1em;
+    }
+</style>
+<div class="ui tiny modal form" id="popHardware">
+    <div class="header">하드웨어</div>
+    <div class="content">
+        <div class="ui grid">
+            <div class="one column row">
+                <div class="column buttons">
+                    @Html.Semantic_TextBox("HARDWARE_NAME_POP", "", new { @placeholder = "하드웨어명" })
+                    @Html.Semantic_Button2("btnHardwareSelectQuery", "조회", SemanticUIHelper.enButtonType.Normal, SemanticUIHelper.Size.mini, new { onclick = "doQuery_HardwarePop();" })
+                </div>
+            </div>
+            <div class="one column row">
+                <div class="column">
+                    <div id="dvHardwarePop">
+                        <table id="tbHardwarePopList" class="mrc-table">
+                            <thead>
+                                <tr>
+                                    <th column_name="HARDWARE_CODE" data-sort="A.HARDWARE_CODE" class="sort" style="width:4em;" display_size="pc">번호</th>
+                                    <th column_name="HARDWARE_NAME" data-sort="A.HARDWARE_NAME" style="min-width:50px;" class="sort">이름</th>
+
+                                    <th column_name="BRAND_NAME" data-sort="A.BRAND" display_size="detail" class="sort">브랜드</th>
+                                    <th column_name="MODEL_NAME" data-sort="A.BRAND_NAME" display_size="tablet" class="sort">모델</th>
+                                    <th column_name="DISPLAY_RESOLUTION_NAME" data-sort="A.DISPLAY_RESOLUTION" display_size="detail" class="sort">해상도</th>
+
+                                </tr>
+                            </thead>
+                            <tbody style="min-height:4em"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <div class="one column row">
+                <div id="dvpagination_hardwarePop" class="ui floated pagination menu"></div>
+            </div>
+        </div>
+        <div class="ui error message hardwarePopup" style="display:none;"><ul></ul></div>
+    </div>
+    <div class="actions">
+        <button class="ui teal button selectbutton" onclick="PopHardwareSelect();">선택</button>
+        @Html.Semantic_Button2("btnPopHardwareClose", "취소", SemanticUIHelper.enButtonType.Normal, new { @onclick = "PopHardwareClose();" })
+    </div>
+</div>
+<script type="text/javascript">
+    var PARAM_DATA_HARDWARE_POP = {
+        PAGE_SIZE: 10
+         , PAGE_COUNT: 15
+        , PAGE: 1
+         ,SORT : "A.HARDWARE_NAME"
+    }
+    
+
+    var _pop_bEdit;
+
+    function HardwareViewPopOpen() {
+        
+        _pop_bEdit = false;
+        $('#popHardware').modal("show");
+        doQuery_HardwarePop(1);
+
+    }
+    function PopHardwareClose() {
+        $('#popHardware').modal("hide");
+    }
+    function errormessageClear() {
+        $(".ui.error.message.hardwarePopup").hide();
+        $(".ui.error.message.hardwarePopup ul").html("");
+    }
+
+    function doQuery_HardwarePop(page) {
+        $("#HARDWARE_NAME_POP").unbind("click");
+        $("#HARDWARE_NAME_POP").keyup(function (e) {
+            if (e.keyCode == 13) {
+                doQuery_HardwarePop();
+            }
+        })
+
+        if (page == undefined || page < 1) page = 1;
+        PARAM_DATA_HARDWARE_POP.PAGE = page;
+        var params = new Object();
+        params.HARDWARE_NAME = $("#HARDWARE_NAME_POP").val();
+        params.PAGE_COUNT = PARAM_DATA_HARDWARE_POP.PAGE_COUNT;
+        params.PAGE = PARAM_DATA_HARDWARE_POP.PAGE;
+        params.DISPLAY_MODE = "Popup";
+        params.HIDE = false;
+        params = JSON.stringify(params);
+        ajax.GetAjax("/device/PV_hardwarelist", params, "html", function (result) {
+            $("#dvHardwarePop tbody").html(result);
+            $.mrc_table.Init("#dvHardwarePop #tbHardwarePopList", _pop_bEdit, PARAM_DATA_HARDWARE_POP.SORT);
+
+            $("#dvpagination_hardwarePop").show();
+
+            $("#dvpagination_hardwarePop").pagination({
+                total: Number($("#dvHardwarePop #tbHardwarePopList #total").val()), page: PARAM_DATA_HARDWARE_POP.PAGE, pagesize: PARAM_DATA_HARDWARE_POP.PAGE_SIZE, perpage: PARAM_DATA_HARDWARE_POP.PAGE_COUNT
+                , onPageClick: function (item, page) {
+                    doQuery_HardwarePop(page);
+                }
+            })
+            $("#dvpagination_hardwarePop").css("display", "");
+            //SemanticUI.Modal.CenterShow("#popHardware");
+        });
+     }
+
+
+    function PopHardwareSelect() {
+
+        if ($.mrc_table.GetActiveRowData("#dvHardwarePop table").lenth == 0) {
+            $.MessageBox("선택된 데이터가 없습니다.");
+            return; 
+        }
+        // Confirm
+        $.MessageBox({
+            buttonDone: "예",
+            buttonFail: "아니오",
+            message: "선택된 로컬박스를 적용하시겠습니까?"
+        }).done(function () {
+            try {
+                PopHardwareCallback($.mrc_table.GetActiveRowData("#dvHardwarePop table"));
+            } catch (e) { }
+            PopHardwareClose();
+        });
+    }
+</script>

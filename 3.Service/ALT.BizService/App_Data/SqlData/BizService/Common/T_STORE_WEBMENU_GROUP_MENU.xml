@@ -1,0 +1,306 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<DBAgentMultiTemplate  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns="http://altsoft.kr/">
+
+  <DBAgentTemplate TemplateID="GetGroupMenuList">
+    <!-- 
+    SqlType : SQL의 형태를 지정합니다.
+      Example 1:<SqlType>FixedSQL</SqlType> 고정적인 SQL을 지원합니다. 
+      Example 2:<SqlType>DynamicSQL</SqlType> 동적인 SQL Type1을 지원합니다.  
+    Description : 해당 SQL의 기능설명을 적습니다.
+    SQLModifier : 해당 SQL의 작성자(수정자)를 적습니다
+    LastModifyDate : 해당 SQL의 마지막 수정일을 적습니다
+    -->
+    <Information>
+      <SqlType>DynamicSQL</SqlType>
+      <Description>웹메뉴 그룹별 메뉴권한 테이블 조회</Description>
+      <SQLModifier>전상훈</SQLModifier>
+      <LastModifyDate>2016-10-09</LastModifyDate>
+    </Information>
+
+    <TemplateSQL>
+      <!-- FixedSQL : 고정된 SQL이 들어가는 곳입니다. -->
+      <FixedSQL>
+        <![CDATA[ 
+ 		SET NOCOUNT ON 
+	/*******************************************************************/
+	/* 웹메뉴 그룹별 메뉴권한 테이블 - T_STORE_WEBMENU_GROUP_MENU 조회 */
+  /* - SELECT QUERY                                                  */ 
+	/*******************************************************************/
+	SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED 
+  DECLARE @PROJECT_SITE INT = {0}
+        , @STORE_CODE INT = {1}
+        , @GROUP_CODE INT = {2}
+
+  SELECT A.PROJECT_SITE  
+      , A.STORE_CODE
+      , @GROUP_CODE GROUP_CODE
+      , A.MENU_CODE
+      , A.SEARCH_CODE
+      , A.NAME AS MENU_NAME
+      , CONVERT(BIT, ISNULL(B.INSERT_AUTH, 1)) AS INSERT_AUTH
+      , CONVERT(BIT, ISNULL(B.UPDATE_AUTH, 1)) AS UPDATE_AUTH
+      , CONVERT(BIT, ISNULL(B.EXCEL_AUTH,1)) AS EXCEL_AUTH
+      , CONVERT(BIT, ISNULL(B.PRINT_AUTH, 1)) AS PRINT_AUTH
+      , CONVERT(BIT, ISNULL(B.HIDE, 1)) AS HIDE
+      , B.REMARK
+      
+      , B.INSERT_CODE
+      , B.INSERT_DATE
+      , B.UPDATE_CODE
+      , B.UPDATE_DATE 
+      , C.USER_NAME AS UPDATE_NAME
+      , A.MENU_URL
+    FROM V_STORE_MENU A
+    LEFT JOIN T_STORE_WEBMENU_GROUP_MENU B
+      ON B.PROJECT_SITE = A.PROJECT_SITE
+     AND B.STORE_CODE   = A.STORE_CODE 
+     AND B.GROUP_CODE   = @GROUP_CODE
+     AND B.MENU_CODE    = A.MENU_CODE
+   --AND B.HIDE = 0
+    LEFT JOIN T_MEMBER C
+      ON B.UPDATE_CODE  = C.MEMBER_CODE
+   WHERE A.PROJECT_SITE = @PROJECT_SITE
+     AND A.STORE_CODE   = @STORE_CODE
+     AND A.HIDE=0
+   ORDER BY A.SEARCH_CODE
+    ]]>
+      </FixedSQL>
+    </TemplateSQL>
+  </DBAgentTemplate>
+
+
+
+  <DBAgentTemplate TemplateID="GroupMenuSave">
+    <!-- 
+    SqlType : SQL의 형태를 지정합니다.
+      Example 1:<SqlType>FixedSQL</SqlType> 고정적인 SQL을 지원합니다. 
+      Example 2:<SqlType>DynamicSQL</SqlType> 동적인 SQL Type1을 지원합니다.  
+    Description : 해당 SQL의 기능설명을 적습니다.
+    SQLModifier : 해당 SQL의 작성자(수정자)를 적습니다
+    LastModifyDate : 해당 SQL의 마지막 수정일을 적습니다
+    -->
+    <Information>
+      <SqlType>DynamicSQL</SqlType>
+      <Description>웹메뉴 그룹별 메뉴권한 테이블저장</Description>
+      <SQLModifier>전상훈</SQLModifier>
+      <LastModifyDate>2016-10-09</LastModifyDate>
+    </Information>
+
+    <TemplateSQL>
+      <!-- FixedSQL : 고정된 SQL이 들어가는 곳입니다. -->
+      <FixedSQL>
+        <![CDATA[ 
+	SET NOCOUNT ON 
+	/*******************************************************************/
+	/* 웹메뉴 그룹별 메뉴권한 테이블 - T_STORE_WEBMENU_GROUP_MENU 저장 */
+  /* - SAVE QUERY                                                    */ 
+	/*******************************************************************/
+	DECLARE @PROJECT_SITE                   INT                  = N'{0}'
+			  , @STORE_CODE                     INT                  = N'{1}'
+			  , @GROUP_CODE                     INT                  = N'{2}'
+			  , @MENU_CODE                      INT                  = N'{3}'
+			  , @INSERT_AUTH                    BIT                  = CONVERT(BIT, CASE WHEN ISNUMERIC('{4}') = 1 THEN '{4}' ELSE NULL END )
+			  , @UPDATE_AUTH                    BIT                  = CONVERT(BIT, CASE WHEN ISNUMERIC('{5}') = 1 THEN '{5}' ELSE NULL END )
+			  , @EXCEL_AUTH                     BIT                  = CONVERT(BIT, CASE WHEN ISNUMERIC('{6}') = 1 THEN '{6}' ELSE NULL END )
+			  , @PRINT_AUTH                     BIT                  = CONVERT(BIT, CASE WHEN ISNUMERIC('{7}') = 1 THEN '{7}' ELSE NULL END )
+			  , @HIDE                           BIT                  = CONVERT(BIT, CASE WHEN ISNUMERIC('{8}') = 1 THEN '{8}' ELSE NULL END )
+			  , @REMARK                         NVARCHAR(200)        = N'{9}'
+			  , @INSERT_CODE                    INT                  = {10}
+			  , @INSERT_DATE                    DATETIME             = GETDATE() 
+			  , @UPDATE_CODE                    INT                  = {10}
+			  , @UPDATE_DATE                    DATETIME             = GETDATE() 
+
+	UPDATE A 
+	SET  	  INSERT_AUTH                    = @INSERT_AUTH                   		 ,  UPDATE_AUTH                    = @UPDATE_AUTH                   
+			 ,  EXCEL_AUTH                     = @EXCEL_AUTH                    		 ,  PRINT_AUTH                     = @PRINT_AUTH                    
+			 ,  HIDE                           = @HIDE                          		 ,  REMARK                         = @REMARK                        
+			 ,  UPDATE_CODE                    = @UPDATE_CODE                   		 ,  UPDATE_DATE                    = @UPDATE_DATE                   
+	
+	FROM T_STORE_WEBMENU_GROUP_MENU A 
+	WHERE PROJECT_SITE= @PROJECT_SITE	  AND STORE_CODE= @STORE_CODE	  AND GROUP_CODE= @GROUP_CODE	  AND MENU_CODE= @MENU_CODE
+	IF @@ROWCOUNT = 0
+	BEGIN
+    
+        EXEC [dbo].[SP_ADD_STORE_WEBMENU]  @PROJECT_SITE , @STORE_CODE, @MENU_CODE, @INSERT_CODE     
+		INSERT INTO T_STORE_WEBMENU_GROUP_MENU
+		(		PROJECT_SITE                  		, STORE_CODE                    		, GROUP_CODE                    		, MENU_CODE                     		
+			, INSERT_AUTH                   		, UPDATE_AUTH                   		, EXCEL_AUTH                    		, PRINT_AUTH                    		
+			, HIDE                          		, REMARK                        		, INSERT_CODE                   		, INSERT_DATE                   		
+			, UPDATE_CODE                   		, UPDATE_DATE                   		
+		)
+		SELECT @PROJECT_SITE                 		, @STORE_CODE                   		, @GROUP_CODE                   	
+				, @MENU_CODE                    		, @INSERT_AUTH                  		, @UPDATE_AUTH                  	
+				, @EXCEL_AUTH                   		, @PRINT_AUTH                   		, @HIDE                         	
+				, @REMARK                       		, @INSERT_CODE                  		, @INSERT_DATE                  	
+				, @UPDATE_CODE                  		, @UPDATE_DATE                  	
+	 END
+   
+   
+DECLARE @PARENT_CODE  INT
+	    , @SEARCH_CODE  VARCHAR(20)
+	    , @nShowCnt     INT = 0   
+      
+SELECT @SEARCH_CODE = SEARCH_CODE FROM T_STORE_WEBMENU
+WHERE PROJECT_SITE = @PROJECT_SITE
+  AND STORE_CODE   = @STORE_CODE
+  AND MENU_CODE    = @MENU_CODE
+  
+IF @HIDE = 1
+BEGIN
+  UPDATE B
+	 SET HIDE = 1
+	    ,UPDATE_CODE = 1
+		,UPDATE_DATE = GETDATE()
+    FROM 
+	(
+		SELECT A.PROJECT_SITE
+        ,A.STORE_CODE
+        ,A.MENU_CODE
+			  ,@HIDE HIDE
+		  FROM T_STORE_WEBMENU A
+ 		 WHERE A.PROJECT_SITE = @PROJECT_SITE
+       AND A.STORE_CODE = @STORE_CODE
+       AND A.SEARCH_CODE LIKE  @SEARCH_CODE + '%'
+	 ) A
+	 INNER JOIN T_STORE_WEBMENU_GROUP_MENU B
+	    ON A.PROJECT_SITE = B.PROJECT_SITE
+     AND A.STORE_CODE   = B.STORE_CODE
+     AND A.MENU_CODE    = B.MENU_CODE
+    WHERE B.PROJECT_SITE = @PROJECT_SITE
+	    AND B.STORE_CODE   = @STORE_CODE
+	    AND B.GROUP_CODE  = @GROUP_CODE
+END
+SELECT @PARENT_CODE = PARENT_CODE
+	FROM T_STORE_WEBMENU A
+ 	WHERE A.PROJECT_SITE = @PROJECT_SITE 
+	AND A.STORE_CODE = @STORE_CODE
+	AND A.SEARCH_CODE =  @SEARCH_CODE 
+
+WHILE 1=1
+BEGIN
+	SELECT @PARENT_CODE = PARENT_CODE
+		    , @SEARCH_CODE = SEARCH_CODE
+			, @MENU_CODE   = MENU_CODE
+	FROM T_STORE_WEBMENU A
+ 		WHERE A.PROJECT_SITE = @PROJECT_SITE 
+      AND A.STORE_CODE = @STORE_CODE
+		  AND A.MENU_CODE  = @PARENT_CODE
+	   
+
+	
+		SELECT @nShowCnt = COUNT(*)
+			FROM T_STORE_WEBMENU A
+		 INNER JOIN T_STORE_WEBMENU_GROUP_MENU B
+				ON A.PROJECT_SITE = B.PROJECT_SITE
+		 	 AND A.STORE_CODE   = B.STORE_CODE
+			 AND A.MENU_CODE    = B.MENU_CODE
+		 WHERE A.PROJECT_SITE = @PROJECT_SITE
+		   AND A.STORE_CODE   = @STORE_CODE
+			 AND B.GROUP_CODE   = @GROUP_CODE
+			 AND (A.SEARCH_CODE <> @SEARCH_CODE AND A.SEARCH_CODE LIKE @SEARCH_CODE + '%')
+			 AND B.HIDE = 0
+
+		
+			UPDATE T_STORE_WEBMENU_GROUP_MENU
+				SET HIDE = CASE WHEN @nShowCnt = 0 THEN  1 ELSE 0 END
+				, UPDATE_CODE = @UPDATE_CODE
+				, UPDATE_DATE = GETDATE()
+			WHERE PROJECT_SITE = @PROJECT_SITE
+				AND STORE_CODE   = @STORE_CODE
+				AND MENU_CODE    = @MENU_CODE
+				AND GROUP_CODE  = @GROUP_CODE
+       IF @@ROWCOUNT = 0 
+		   BEGIN
+		   EXEC [dbo].[SP_ADD_STORE_WEBMENU]  @PROJECT_SITE , @STORE_CODE, @MENU_CODE, @INSERT_CODE 
+           INSERT INTO T_STORE_WEBMENU_GROUP_MENU
+				  (    PROJECT_SITE, STORE_CODE,  MENU_CODE,   GROUP_CODE
+				     , INSERT_AUTH, UPDATE_AUTH, EXCEL_AUTH,  PRINT_AUTH
+				     , HIDE       , REMARK,      INSERT_CODE, INSERT_DATE
+				     , UPDATE_CODE, UPDATE_DATE
+			     )
+				  SELECT @PROJECT_SITE, @STORE_CODE,  @MENU_CODE,   @GROUP_CODE, 1,1,1,1,  CASE WHEN @nShowCnt = 0 THEN  1 ELSE 0 END
+				  ,'', @INSERT_CODE, GETDATE(), @UPDATE_CODE, GETDATE()
+			END
+  
+	    IF @PARENT_CODE IS NULL GOTO EXCEPTION
+		 
+  END
+EXCEPTION:
+
+SET NOCOUNT OFF
+
+
+  ]]>
+      </FixedSQL>
+    </TemplateSQL>
+  </DBAgentTemplate>
+
+  <DBAgentTemplate TemplateID="groupMemberSave">
+    <!-- 
+    SqlType : SQL의 형태를 지정합니다.
+      Example 1:<SqlType>FixedSQL</SqlType> 고정적인 SQL을 지원합니다. 
+      Example 2:<SqlType>DynamicSQL</SqlType> 동적인 SQL Type1을 지원합니다.  
+    Description : 해당 SQL의 기능설명을 적습니다.
+    SQLModifier : 해당 SQL의 작성자(수정자)를 적습니다
+    LastModifyDate : 해당 SQL의 마지막 수정일을 적습니다
+    -->
+    <Information>
+      <SqlType>DynamicSQL</SqlType>
+      <Description>그룹권한 회원에 부여</Description>
+      <SQLModifier>전상훈</SQLModifier>
+      <LastModifyDate>2016-10-17</LastModifyDate>
+    </Information>
+
+    <TemplateSQL>
+      <!-- FixedSQL : 고정된 SQL이 들어가는 곳입니다. -->
+      <FixedSQL>
+        <![CDATA[ 
+	SET NOCOUNT ON 
+	/********************************************************************/
+	/* 그룹권한 회원에 부여 - T_STORE_WEBMENU_GROUP_MENU 저장 -  groupMemberSave SAVE QUERY */ 
+	/********************************************************************/
+	DECLARE @PROJECT_SITE INT  = {0}
+         ,@STORE_CODE INT = {1}
+         ,@GROUP_CODE INT = {2}
+         ,@REG_CODE INT = {4}
+
+
+    DELETE FROM T_STORE_WEBMENU_EMPLOYEE_MENU
+    WHERE STORE_CODE = @STORE_CODE
+      AND MEMBER_CODE IN ({3})
+ 
+
+    INSERT INTO T_STORE_WEBMENU_EMPLOYEE_MENU
+    (  PROJECT_SITE, STORE_CODE, MEMBER_CODE, MENU_CODE, INSERT_AUTH, UPDATE_AUTH, EXCEL_AUTH, PRINT_AUTH, HIDE, REMARK
+      , INSERT_CODE, INSERT_DATE, UPDATE_CODE, UPDATE_DATE
+    )
+    SELECT  @PROJECT_SITE, B.STORE_CODE, A.MEMBER_CODE, C.MENU_CODE, C.INSERT_AUTH, C.UPDATE_AUTH, C.EXCEL_AUTH, C.PRINT_AUTH 
+         , 0 HIDE, N'그룹권한 일괄적용', @REG_CODE, GETDATE(), @REG_CODE, GETDATE()
+    FROM T_MEMBER A
+    INNER JOIN T_STORE_WEBMENU_GROUP B
+       ON B.PROJECT_SITE = @PROJECT_SITE
+      AND B.STORE_CODE   = @STORE_CODE
+      AND B.GROUP_CODE   = @GROUP_CODE
+    INNER JOIN T_STORE_WEBMENU_GROUP_MENU C
+       ON B.PROJECT_SITE   = C.PROJECT_SITE
+      AND B.STORE_CODE   = C.STORE_CODE
+      AND B.GROUP_CODE   = C.GROUP_CODE
+      AND C.HIDE = 0
+    INNER JOIN T_STORE_WEBMENU D
+       ON C.PROJECT_SITE = D.PROJECT_SITE
+      AND C.STORE_CODE   = D.STORE_CODE
+      AND C.MENU_CODE    = D.MENU_CODE
+    WHERE A.MEMBER_CODE IN ({3})
+    
+    
+	UPDATE T_MEMBER_EMPLOYEE
+	   SET MENU_GROUP = @GROUP_CODE
+	 WHERE MEMBER_CODE IN ({3})
+SET NOCOUNT OFF
+
+
+  ]]>
+      </FixedSQL>
+    </TemplateSQL>
+  </DBAgentTemplate>
+</DBAgentMultiTemplate>

@@ -1,0 +1,61 @@
+﻿<link href="~/Common/plugin/css/easy-autocomplete/easy-autocomplete.min.css?ver=20180404" rel='stylesheet' type='text/css'>
+<link href="~/Common/plugin/css/easy-autocomplete/easy-autocomplete.themes.min.css" rel='stylesheet' type='text/css'>
+@*<link href="https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.2.10/semantic.min.css" rel='stylesheet' type='text/css'>*@
+<link href="https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.4.1/semantic.min.css" rel='stylesheet' type='text/css'>
+@*<link href="https://semantic-ui.com/dist/semantic.min.css" rel='stylesheet' type='text/css'>*@
+<link href="~/Common/plugin/css/jquery.datetimepicker.min.css?ver=20180124" rel='stylesheet' type='text/css'>
+<link href="~/Common/plugin/css/messagebox.css" rel='stylesheet' type='text/css'>
+
+<link href="~/Common/plugin/css/uploadfile.css?ver=20160827" rel='stylesheet' type='text/css'>
+@{
+    string controller = this.ViewContext.RouteData.Values["controller"].ToString().ToLower();
+    string action = this.ViewContext.RouteData.Values["action"].ToString().ToLower();
+
+    if (!(controller == "home" && action == "login"))
+    {
+        <link rel="stylesheet" href="~/Common/plugin/css/responsive-sidebar-navigation/reset.css?ver=20190722">
+        <link rel="stylesheet" href="~/Common/plugin/css/responsive-sidebar-navigation/style.css?ver=20190809">
+    }
+}
+<link href="~/Common/css/style.css?ver=20190813_1" rel='stylesheet' type='text/css'>
+<link href="~/Common/plugin/semantic-ui/semantic-common.css?ver=201907023_3" rel='stylesheet' type='text/css'>
+<!--Favicon-->
+<link rel="apple-touch-icon" sizes="57x57" href="~/Common/images/Favicon/apple-icon-57x57.png">
+<link rel="apple-touch-icon" sizes="60x60" href="/Common/images/Favicon/apple-icon-60x60.png">
+<link rel="apple-touch-icon" sizes="72x72" href="/Common/images/Favicon/apple-icon-72x72.png">
+<link rel="apple-touch-icon" sizes="76x76" href="/Common/images/Favicon/apple-icon-76x76.png">
+<link rel="apple-touch-icon" sizes="114x114" href="/Common/images/Favicon/apple-icon-114x114.png">
+<link rel="apple-touch-icon" sizes="120x120" href="/Common/images/Favicon/apple-icon-120x120.png">
+
+<link rel="apple-touch-icon" sizes="144x144" href="/Common/images/Favicon/apple-icon-144x144.png">
+<link rel="apple-touch-icon" sizes="152x152" href="/Common/images/Favicon/apple-icon-152x152.png">
+<link rel="apple-touch-icon" sizes="180x180" href="/Common/images/Favicon/apple-icon-180x180.png">
+<link rel="icon" type="image/png" sizes="192x192" href="/Common/images/Favicon/android-icon-192x192.png">
+<link rel="icon" type="image/png" sizes="32x32" href="/Common/images/Favicon/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="96x96" href="/Common/images/Favicon/favicon-96x96.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/Common/images/Favicon/favicon-16x16.png">
+<link rel="manifest" href="/Common/images/Favicon/manifest.json">
+<meta name="msapplication-TileColor" content="#ffffff">
+<meta name="msapplication-TileImage" content="/ms-icon-144x144.png">
+<meta name="theme-color" content="#ffffff">
+
+<!--jquery.number-->
+<!--jquery.tokeninput-->
+<link href="~/Common/plugin/css/jquery-tokeninput/token-input.css" rel='stylesheet' type='text/css'>
+<link href="~/Common/plugin/css/jquery-tokeninput/token-input-mac.css" rel='stylesheet' type='text/css'>
+<link href="~/Common/plugin/css/jquery-tokeninput/token-input-facebook.css?ver=20161229" rel='stylesheet' type='text/css'>
+
+
+<!-- Kendo UI -->
+@*<script src="http://kendo.cdn.telerik.com/2016.3.1028/styles/kendo.common.min.css"></script>*@
+
+<!-- mrc Datagrid-->
+<link rel="stylesheet" href="~/Common/plugin/css/MrcUI/Mrc.DataGrid.css?ver=20190710">
+<link rel="stylesheet" href="~/Common/plugin/css/MrcUI/Mrc.DataGrid.fixedHeader.css?ver=20190222" />
+<link href="https://use.fontawesome.com/releases/v5.0.6/css/all.css?ver=20180315" rel="stylesheet">
+
+<link rel="stylesheet" href="~/Common/plugin/css/tinymce/tinymce_common.css">
+
+<script src="https://code.jquery.com/jquery-2.2.4.min.js" integrity="sha256-BbhdlvQf/xTY9gja0Dq3HiwQF8LaCRTXxZKRutelT44=" crossorigin="anonymous"></script>
+<!--<script src="https://code.jquery.com/jquery-3.3.1.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script>-->
+@*<script type="text/javascript" src="//dapi.kakao.com/v2/maps/sdk.js?appkey=@Global.ConfigInfo.KakaoAppKey&libraries=services,clusterer,drawing"></script>*@

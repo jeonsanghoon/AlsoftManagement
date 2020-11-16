@@ -1,0 +1,625 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<DBAgentMultiTemplate  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns="http://altsoft.kr/">
+  <DBAgentTemplate TemplateID="GetAdPlayDailyTotalList">
+    <!-- 
+    SqlType : SQL의 형태를 지정합니다.
+      Example 1:<SqlType>FixedSQL</SqlType> 고정적인 SQL을 지원합니다. 
+      Example 2:<SqlType>DynamicSQL</SqlType> 동적인 SQL Type1을 지원합니다.  
+    Description : 해당 SQL의 기능설명을 적습니다.
+    SQLModifier : 해당 SQL의 작성자(수정자)를 적습니다
+    LastModifyDate : 해당 SQL의 마지막 수정일을 적습니다
+    -->
+    <Information>
+      <SqlType>DynamicSQL</SqlType>
+      <Description>일자별 배너재생 집계리스트 </Description>
+      <SQLModifier>전상훈</SQLModifier>
+      <LastModifyDate>2019-05-23</LastModifyDate>
+    </Information>
+
+    <TemplateSQL>
+      <!-- FixedSQL : 고정된 SQL이 들어가는 곳입니다. -->
+      <FixedSQL>
+        <![CDATA[ 
+  SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED 
+	SET NOCOUNT ON 
+	/**************************************************************/
+	/* 일자별 배너재생 집계리스트 - T_AD_PLAY_LOG_MONGO_DAY 조회  */
+  /* -  GetAdPlayDailyTotalList                               */ 
+	/**************************************************************/
+	SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED 
+    DECLARE @PAGE INT = {0}
+           ,@PAGE_COUNT INT = {1};
+
+    	   
+    
+    WITH T_TABLE 
+    AS (
+    SELECT ROW_NUMBER() OVER(ORDER BY {2}) AS ROW_IDX
+          ,A.REG_DAY 
+          ,C1.NAME AS DEVICE_KIND_NAME
+    	    ,B.AD_CODE
+    	    ,B.TITLE
+    	    ,C2.NAME AS BANNER_TYPE2_NAME
+    	    ,C3.NAME AS PLAY_TYPE_NAME
+    	    ,C4.NAME AS FRAME_TYPE_NAME
+          ,C5.NAME AS BANNER_KIND_NAME
+    	    ,SUM(A.TOT_PLAY_TIME / A.FRAME_TYPE) AS SUB_PLAY_TIME
+    	    ,SUM(TOT_QTY) AS SUB_QTY
+          ,S.STORE_CODE
+	        ,S.STORE_NAME 
+      FROM T_AD_PLAY_LOG_MONGO_DAY A
+     INNER JOIN T_AD B 
+        ON A.AD_CODE    = B.AD_CODE
+     INNER JOIN T_COMMON C1 
+        ON C1.MAIN_CODE = 'L003'
+       AND C1.SUB_CODE  = A.DEVICE_KIND
+     INNER JOIN T_COMMON C2
+        ON C2.MAIN_CODE = 'A010'
+       AND C2.SUB_CODE  = A.BANNER_TYPE2
+     INNER JOIN T_COMMON C3
+        ON C3.MAIN_CODE = 'P004'
+       AND C3.SUB_CODE  = A.PLAY_TYPE
+      INNER JOIN T_COMMON C4
+        ON C4.MAIN_CODE = 'H002'
+       AND C4.SUB_CODE  = A.FRAME_TYPE
+     INNER JOIN T_COMMON C5
+        ON C5.MAIN_CODE = 'B008'
+       AND C5.SUB_CODE  = A.BANNER_KIND
+     INNER JOIN T_STORE S
+        ON B.STORE_CODE = S.STORE_CODE      
+     WHERE 1=1
+         #[FR_DATE]
+         #[TO_DATE]
+         #[AD_CODE]
+         #[TITLE]
+         #[BANNER_KIND]
+         #[DEVICE_KIND]
+         #[BANNER_TYPE2]
+         #[PLAY_TYPE]
+         #[FRAME_TYPE]
+         #[STORE_CODE]
+         #[STORE_NAME]
+     GROUP BY A.REG_DAY 
+              ,C1.NAME 
+      	      ,B.AD_CODE
+      	      ,B.TITLE
+              ,A.DEVICE_KIND
+              ,A.BANNER_TYPE2
+              ,A.PLAY_TYPE
+              ,A.FRAME_TYPE
+              ,A.BANNER_KIND
+      	      ,C2.NAME 
+      	      ,C3.NAME 
+      	      ,C4.NAME 
+              ,C5.NAME
+	            ,S.STORE_CODE
+	            ,S.STORE_NAME               
+    ) SELECT * 
+        FROM T_TABLE A
+    	INNER JOIN (SELECT SUM(SUB_QTY) AS TOT_QTY
+    	                 , SUM(SUB_PLAY_TIME ) AS TOT_PLAY_TIME
+    	                 , COUNT(*) AS TOTAL_ROWCOUNT 
+    	              FROM T_TABLE) B
+    	        ON 1=1
+       WHERE A.ROW_IDX > (@PAGE -1) * @PAGE_COUNT
+    	 AND A.ROW_IDX <= @PAGE * @PAGE_COUNT
+      SET NOCOUNT OFF 
+    
+
+ 
+      ]]>
+      </FixedSQL>
+      <DynamicBodys>
+        <Key>FR_DATE</Key>
+        <Body> AND A.REG_DAY >= CONVERT(DATETIME, '{0}')</Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>TO_DATE</Key>
+        <Body>
+          <![CDATA[  AND A.REG_DAY < DATEADD(DAY, 1, CONVERT(DATETIME, '{0}')) ]]>
+        </Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>AD_CODE</Key>
+        <Body> AND A.AD_CODE = {0}</Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>TITLE</Key>
+        <Body> AND B.TITLE LIKE N'%{0}%'</Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>BANNER_TYPE2</Key>
+        <Body> AND A.BANNER_TYPE2 = {0}</Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>BANNER_KIND</Key>
+        <Body> AND A.BANNER_KIND = {0}</Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>DEVICE_KIND</Key>
+        <Body> AND A.DEVICE_KIND = {0}</Body>
+      </DynamicBodys>
+     
+      <DynamicBodys>
+        <Key>PLAY_TYPE</Key>
+        <Body> AND A.PLAY_TYPE = {0}</Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>FRAME_TYPE</Key>
+        <Body> AND A.FRAME_TYPE = {0}</Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>STORE_CODE</Key>
+        <Body> AND S.STORE_CODE = {0}</Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>STORE_NAME</Key>
+        <Body> AND S.STORE_NAME LIKE N'%{0}%'</Body>
+      </DynamicBodys>
+    </TemplateSQL>
+  </DBAgentTemplate>
+  <DBAgentTemplate TemplateID="GetAdPlayDailyLocalboxTotalList">
+    <!-- 
+    SqlType : SQL의 형태를 지정합니다.
+      Example 1:<SqlType>FixedSQL</SqlType> 고정적인 SQL을 지원합니다. 
+      Example 2:<SqlType>DynamicSQL</SqlType> 동적인 SQL Type1을 지원합니다.  
+    Description : 해당 SQL의 기능설명을 적습니다.
+    SQLModifier : 해당 SQL의 작성자(수정자)를 적습니다
+    LastModifyDate : 해당 SQL의 마지막 수정일을 적습니다
+    -->
+    <Information>
+      <SqlType>DynamicSQL</SqlType>
+      <Description>일자별 로컬박스 재생집계</Description>
+      <SQLModifier>전상훈</SQLModifier>
+      <LastModifyDate>2019-05-23</LastModifyDate>
+    </Information>
+
+    <TemplateSQL>
+      <!-- FixedSQL : 고정된 SQL이 들어가는 곳입니다. -->
+      <FixedSQL>
+        <![CDATA[ 
+ 
+  SET NOCOUNT ON 
+	/***********************************************************/
+	/* 일자별 로컬박스 재생집계 - T_AD_PLAY_LOG_MONGO_DAY 조회 */
+  /* -  GetAdPlayDailyLocalboxTotalList                      */ 
+	/***********************************************************/
+	SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED 
+    DECLARE @PAGE INT = {0}
+           ,@PAGE_COUNT INT = {1};
+
+/*A.REG_DAY,C.DEVICE_NAME, A.DEVICE_CODE,  A.BANNER_KIND*/
+ WITH T_TABLE 
+ AS(
+   
+   SELECT ROW_NUMBER() OVER(ORDER BY {2}) AS ROW_IDX
+	         ,*
+     FROM (
+    	  SELECT  A.REG_DAY
+    	         ,A.DEVICE_CODE 
+    			     ,ISNULL(C.DEVICE_NAME,'>> 모바일') AS DEVICE_NAME
+    			     ,A.BANNER_KIND
+    			     ,B.NAME AS BANNER_KIND_NAME
+    			     ,C.STORE_CODE
+    			     ,D.STORE_NAME
+    			     ,SUM(CASE WHEN A.FRAME_TYPE = 1 AND A.BANNER_TYPE2 = 1 AND PLAY_TYPE <> 2 THEN A.TOT_PLAY_TIME ELSE 0 END) AS IMAGE1_PLAY_TIME
+               ,SUM(CASE WHEN A.FRAME_TYPE = 6 AND A.BANNER_TYPE2 = 1 AND PLAY_TYPE <> 2 THEN A.TOT_PLAY_TIME / A.FRAME_TYPE ELSE 0 END) AS IMAGE6_PLAY_TIME
+    			     ,SUM(CASE WHEN A.FRAME_TYPE = 12 AND A.BANNER_TYPE2 = 1 AND PLAY_TYPE <> 2 THEN A.TOT_PLAY_TIME / A.FRAME_TYPE ELSE 0 END) AS IMAGE12_PLAY_TIME
+    			     ,SUM(CASE WHEN A.FRAME_TYPE = 1 AND A.BANNER_TYPE2 = 1 AND PLAY_TYPE = 2 THEN A.TOT_PLAY_TIME ELSE 0 END) AS CLICK_PLAY_TIME
+    			     ,SUM(CASE WHEN A.FRAME_TYPE = 1 AND A.BANNER_TYPE2 = 2 THEN A.TOT_PLAY_TIME ELSE 0 END) AS VIDEO_PLAY_TIME
+    			     ,SUM(CASE WHEN A.FRAME_TYPE = 1 AND A.BANNER_TYPE2 = 3 THEN A.TOT_PLAY_TIME ELSE 0 END) AS YOUTUBE_PLAY_TIME
+    			     ,SUM(CASE WHEN A.FRAME_TYPE = 1 AND A.BANNER_TYPE2 = 1 THEN A.TOT_QTY ELSE 0 END) AS IMAGE1_PLAY_QTY
+               ,SUM(CASE WHEN A.FRAME_TYPE = 6 AND A.BANNER_TYPE2 = 1 THEN A.TOT_QTY ELSE 0 END) AS IMAGE6_PLAY_QTY
+    			     ,SUM(CASE WHEN A.FRAME_TYPE = 12 AND A.BANNER_TYPE2 = 1 THEN A.TOT_QTY ELSE 0 END) AS IMAGE12_PLAY_QTY
+    			     ,SUM(CASE WHEN A.FRAME_TYPE = 1 AND A.BANNER_TYPE2 = 1 AND PLAY_TYPE = 2 THEN A.TOT_QTY ELSE 0 END) AS CLICK_PLAY_QTY
+    			     ,SUM(CASE WHEN A.FRAME_TYPE = 1 AND A.BANNER_TYPE2 = 2 THEN A.TOT_QTY ELSE 0 END) AS VIDEO_PLAY_QTY
+    			     ,SUM(CASE WHEN A.FRAME_TYPE = 1 AND A.BANNER_TYPE2 = 3 THEN A.TOT_QTY ELSE 0 END) AS YOUTUBE_PLAY_QTY
+               ,SUM(TOT_QTY) AS TOT_QTY
+    			     ,SUM(TOT_PLAY_TIME / A.FRAME_TYPE ) AS TOT_PLAY_TIME
+    	    FROM T_AD_PLAY_LOG_MONGO_DAY A
+    	   INNER JOIN T_COMMON B
+    	      ON B.MAIN_CODE = 'B008'
+    		   AND B.SUB_CODE  = A.BANNER_KIND 
+    	   INNER JOIN T_DEVICE C
+    		    ON A.DEVICE_CODE = C.DEVICE_CODE
+    	   INNER JOIN T_STORE D
+    		    ON C.STORE_CODE = D.STORE_CODE
+         WHERE 1=1
+           #[FR_DATE]
+           #[TO_DATE]
+           #[DEVICE_CODE]
+           #[DEVICE_NAME]
+           #[STORE_CODE]
+           #[STORE_NAME]
+    	  GROUP BY A.REG_DAY
+    	          ,A.DEVICE_CODE
+    			      ,C.DEVICE_NAME
+    			      ,C.STORE_CODE
+    			      ,D.STORE_NAME
+    			      ,A.BANNER_KIND
+    			      ,B.NAME
+      ) A
+            
+) SELECT *,(SELECT COUNT(*) FROM T_TABLE) AS TOTAL_ROWCOUNT 
+     FROM T_TABLE
+	WHERE ROW_IDX > (@PAGE -1) * @PAGE_COUNT
+	  AND ROW_IDX <= @PAGE * @PAGE_COUNT
+      SET NOCOUNT OFF 
+    
+
+ 
+      ]]>
+      </FixedSQL>
+      <DynamicBodys>
+        <Key>FR_DATE</Key>
+        <Body> AND A.REG_DAY >= CONVERT(DATETIME, '{0}')</Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>TO_DATE</Key>
+        <Body>
+          <![CDATA[  AND A.REG_DAY < DATEADD(DAY, 1, CONVERT(DATETIME, '{0}')) ]]>
+        </Body>
+      </DynamicBodys>
+     
+      <DynamicBodys>
+        <Key>DEVICE_CODE</Key>
+        <Body>  AND A.DEVICE_CODE = {0} </Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>DEVICE_NAME</Key>
+        <Body>  AND C.DEVICE_NAME LIKE N'%{0}%' </Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>STORE_CODE</Key>
+        <Body>  AND C.STORE_CODE = {0} </Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>STORE_NAME</Key>
+        <Body>  AND D.STORE_NAME LIKE N'%{0}%' </Body>
+      </DynamicBodys>
+    
+    </TemplateSQL>
+  </DBAgentTemplate>
+
+  <DBAgentTemplate TemplateID="GetAdPlayBusiTotalList">
+    <!-- 
+    SqlType : SQL의 형태를 지정합니다.
+      Example 1:<SqlType>FixedSQL</SqlType> 고정적인 SQL을 지원합니다. 
+      Example 2:<SqlType>DynamicSQL</SqlType> 동적인 SQL Type1을 지원합니다.  
+    Description : 해당 SQL의 기능설명을 적습니다.
+    SQLModifier : 해당 SQL의 작성자(수정자)를 적습니다
+    LastModifyDate : 해당 SQL의 마지막 수정일을 적습니다
+    -->
+    <Information>
+      <SqlType>DynamicSQL</SqlType>
+      <Description>광고주별 배너 재생 집계리스트</Description>
+      <SQLModifier>전상훈</SQLModifier>
+      <LastModifyDate>2019-05-24</LastModifyDate>
+    </Information>
+
+    <TemplateSQL>
+      <!-- FixedSQL : 고정된 SQL이 들어가는 곳입니다. -->
+      <FixedSQL>
+        <![CDATA[ 
+
+	SET NOCOUNT ON 
+	/****************************************************************/
+	/* 광고주별 배너재생집계 - T_AD_PLAY_LOG_MONGO_DAY 조회 */
+  /* - GetAdPlayBusiTotalList                                */ 
+	/****************************************************************/
+	SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED 
+    DECLARE @PAGE INT = {0}
+           ,@PAGE_COUNT INT = {1};
+
+/*A.REG_DAY,C.DEVICE_NAME, A.DEVICE_CODE,  A.BANNER_KIND*/
+ WITH T_TABLE 
+ AS(
+    SELECT ROW_NUMBER() OVER(ORDER BY {2}) AS ROW_IDX, * 
+      FROM (
+            SELECT 
+                  -- A.REG_DAY,
+                  
+            	      COUNT(DISTINCT A.AD_CODE) AS AD_CNT
+            	     ,A.BANNER_KIND
+            	     ,B.NAME AS BANNER_KIND_NAME
+            	     ,C.STORE_CODE
+            	     ,D.STORE_NAME
+            	     ,SUM(CASE WHEN A.FRAME_TYPE = 1 AND A.BANNER_TYPE2 = 1 AND PLAY_TYPE <> 2 THEN A.TOT_PLAY_TIME ELSE 0 END) AS IMAGE1_PLAY_TIME
+                   ,SUM(CASE WHEN A.FRAME_TYPE = 6 AND A.BANNER_TYPE2 = 1 AND PLAY_TYPE <> 2 THEN A.TOT_PLAY_TIME  / A.FRAME_TYPE ELSE 0 END) AS IMAGE6_PLAY_TIME
+            	     ,SUM(CASE WHEN A.FRAME_TYPE = 12 AND A.BANNER_TYPE2 = 1 AND PLAY_TYPE <> 2 THEN A.TOT_PLAY_TIME  / A.FRAME_TYPE ELSE 0 END) AS IMAGE12_PLAY_TIME
+            	     ,SUM(CASE WHEN A.FRAME_TYPE = 1 AND A.BANNER_TYPE2 = 1 AND PLAY_TYPE = 2 THEN A.TOT_PLAY_TIME ELSE 0 END) AS CLICK_PLAY_TIME
+            	     ,SUM(CASE WHEN A.FRAME_TYPE = 1 AND A.BANNER_TYPE2 = 2 THEN A.TOT_PLAY_TIME ELSE 0 END) AS VIDEO_PLAY_TIME
+            	     ,SUM(CASE WHEN A.FRAME_TYPE = 1 AND A.BANNER_TYPE2 = 3 THEN A.TOT_PLAY_TIME ELSE 0 END) AS YOUTUBE_PLAY_TIME
+            	     ,SUM(CASE WHEN A.FRAME_TYPE = 1 AND A.BANNER_TYPE2 = 1 THEN A.TOT_QTY ELSE 0 END) AS IMAGE1_PLAY_QTY
+                   ,SUM(CASE WHEN A.FRAME_TYPE = 6 AND A.BANNER_TYPE2 = 1 THEN A.TOT_QTY ELSE 0 END) AS IMAGE6_PLAY_QTY
+            	     ,SUM(CASE WHEN A.FRAME_TYPE = 12 AND A.BANNER_TYPE2 = 1 THEN A.TOT_QTY ELSE 0 END) AS IMAGE12_PLAY_QTY
+            	     ,SUM(CASE WHEN A.FRAME_TYPE = 1 AND A.BANNER_TYPE2 = 1 AND PLAY_TYPE = 2 THEN A.TOT_QTY ELSE 0 END) AS CLICK_PLAY_QTY
+            	     ,SUM(CASE WHEN A.FRAME_TYPE = 1 AND A.BANNER_TYPE2 = 2 THEN A.TOT_QTY ELSE 0 END) AS VIDEO_PLAY_QTY
+            	     ,SUM(CASE WHEN A.FRAME_TYPE = 1 AND A.BANNER_TYPE2 = 3 THEN A.TOT_QTY ELSE 0 END) AS YOUTUBE_PLAY_QTY
+                   ,SUM(TOT_QTY) AS TOT_QTY
+            	     ,SUM(TOT_PLAY_TIME / A.FRAME_TYPE ) AS TOT_PLAY_TIME
+              FROM T_AD_PLAY_LOG_MONGO_DAY A
+             INNER JOIN T_COMMON B
+                ON B.MAIN_CODE = 'B008'
+               AND B.SUB_CODE  = A.BANNER_KIND 
+             INNER JOIN T_AD C
+                ON A.AD_CODE = C.AD_CODE
+             INNER JOIN T_STORE D
+                ON C.STORE_CODE = D.STORE_CODE
+             WHERE 1=1
+               #[FR_DATE]
+               #[TO_DATE]
+               #[STORE_CODE]
+               #[STORE_NAME]
+            GROUP BY 
+                    --A.REG_DAY,
+                     C.STORE_CODE
+            	      ,D.STORE_NAME
+            	      ,A.BANNER_KIND
+            	      ,B.NAME
+  ) A            
+) SELECT *,(SELECT COUNT(*) FROM T_TABLE) AS TOTAL_ROWCOUNT 
+     FROM T_TABLE
+	WHERE ROW_IDX > (@PAGE -1) * @PAGE_COUNT
+	  AND ROW_IDX <= @PAGE * @PAGE_COUNT
+      SET NOCOUNT OFF 
+    
+
+ 
+      ]]>
+      </FixedSQL>
+      <DynamicBodys>
+        <Key>FR_DATE</Key>
+        <Body> AND A.REG_DAY >= CONVERT(DATETIME, '{0}')</Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>TO_DATE</Key>
+        <Body>
+          <![CDATA[  AND A.REG_DAY < DATEADD(DAY, 1, CONVERT(DATETIME, '{0}')) ]]>
+        </Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>STORE_CODE</Key>
+        <Body> AND C.STORE_CODE = {0}</Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>STORE_NAME</Key>
+        <Body> AND D.STORE_NAME LIKE N'%{0}%'</Body>
+      </DynamicBodys>
+    </TemplateSQL>
+  </DBAgentTemplate>
+
+  
+  <DBAgentTemplate TemplateID="GetAdPlayBusiLocalTotalList">
+    <!-- 
+    SqlType : SQL의 형태를 지정합니다.
+      Example 1:<SqlType>FixedSQL</SqlType> 고정적인 SQL을 지원합니다. 
+      Example 2:<SqlType>DynamicSQL</SqlType> 동적인 SQL Type1을 지원합니다.  
+    Description : 해당 SQL의 기능설명을 적습니다.
+    SQLModifier : 해당 SQL의 작성자(수정자)를 적습니다
+    LastModifyDate : 해당 SQL의 마지막 수정일을 적습니다
+    -->
+    <Information>
+      <SqlType>DynamicSQL</SqlType>
+      <Description>사업주별 광고 플레이 집계</Description>
+      <SQLModifier>전상훈</SQLModifier>
+      <LastModifyDate>2019-05-24</LastModifyDate>
+    </Information>
+
+    <TemplateSQL>
+      <!-- FixedSQL : 고정된 SQL이 들어가는 곳입니다. -->
+      <FixedSQL>
+        <![CDATA[ 
+ 
+	SET NOCOUNT ON 
+	/******************************************************************/
+	/* 사업주별 광고 플레이 집계리스트 - T_AD_PLAY_LOG_MONGO_DAY 조회 */
+  /* -  GetAdPlayBusiLocalTotalList                               */ 
+	/******************************************************************/
+	SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED 
+    DECLARE @PAGE INT = {0}
+           ,@PAGE_COUNT INT = {1};
+
+/*A.REG_DAY,C.DEVICE_NAME, A.DEVICE_CODE,  A.BANNER_KIND*/
+ WITH T_TABLE 
+ AS(
+
+   SELECT *, ROW_NUMBER() OVER(ORDER BY {2}) AS ROW_IDX FROM (
+       	  SELECT  
+       	         --,A.REG_DAY,
+       	        
+       			     COUNT(DISTINCT A.DEVICE_CODE) AS DEVICE_CNT
+       			     ,A.BANNER_KIND
+       			     ,B.NAME AS BANNER_KIND_NAME
+       			     ,C.STORE_CODE
+       			     ,D.STORE_NAME
+       			     ,SUM(CASE WHEN A.FRAME_TYPE = 1 AND A.BANNER_TYPE2 = 1 AND PLAY_TYPE <> 2 THEN A.TOT_PLAY_TIME ELSE 0 END) AS IMAGE1_PLAY_TIME
+                 ,SUM(CASE WHEN A.FRAME_TYPE = 6 AND A.BANNER_TYPE2 = 1 AND PLAY_TYPE <> 2 THEN A.TOT_PLAY_TIME  / A.FRAME_TYPE ELSE 0 END) AS IMAGE6_PLAY_TIME
+       			     ,SUM(CASE WHEN A.FRAME_TYPE = 12 AND A.BANNER_TYPE2 = 1 AND PLAY_TYPE <> 2 THEN A.TOT_PLAY_TIME  / A.FRAME_TYPE ELSE 0 END) AS IMAGE12_PLAY_TIME
+       			     ,SUM(CASE WHEN A.FRAME_TYPE = 1 AND A.BANNER_TYPE2 = 1 AND PLAY_TYPE = 2 THEN A.TOT_PLAY_TIME ELSE 0 END) AS CLICK_PLAY_TIME
+       			     ,SUM(CASE WHEN A.FRAME_TYPE = 1 AND A.BANNER_TYPE2 = 2 THEN A.TOT_PLAY_TIME ELSE 0 END) AS VIDEO_PLAY_TIME
+       			     ,SUM(CASE WHEN A.FRAME_TYPE = 1 AND A.BANNER_TYPE2 = 3 THEN A.TOT_PLAY_TIME ELSE 0 END) AS YOUTUBE_PLAY_TIME
+       			     ,SUM(CASE WHEN A.FRAME_TYPE = 1 AND A.BANNER_TYPE2 = 1 THEN A.TOT_QTY ELSE 0 END) AS IMAGE1_PLAY_QTY
+                 ,SUM(CASE WHEN A.FRAME_TYPE = 6 AND A.BANNER_TYPE2 = 1 THEN A.TOT_QTY ELSE 0 END) AS IMAGE6_PLAY_QTY
+       			     ,SUM(CASE WHEN A.FRAME_TYPE = 12 AND A.BANNER_TYPE2 = 1 THEN A.TOT_QTY ELSE 0 END) AS IMAGE12_PLAY_QTY
+       			     ,SUM(CASE WHEN A.FRAME_TYPE = 1 AND A.BANNER_TYPE2 = 1 AND PLAY_TYPE = 2 THEN A.TOT_QTY ELSE 0 END) AS CLICK_PLAY_QTY
+       			     ,SUM(CASE WHEN A.FRAME_TYPE = 1 AND A.BANNER_TYPE2 = 2 THEN A.TOT_QTY ELSE 0 END) AS VIDEO_PLAY_QTY
+       			     ,SUM(CASE WHEN A.FRAME_TYPE = 1 AND A.BANNER_TYPE2 = 3 THEN A.TOT_QTY ELSE 0 END) AS YOUTUBE_PLAY_QTY
+                  ,SUM(TOT_QTY) AS TOT_QTY
+       			     ,SUM(TOT_PLAY_TIME / A.FRAME_TYPE  ) AS TOT_PLAY_TIME
+       	    FROM T_AD_PLAY_LOG_MONGO_DAY A
+       	   INNER JOIN T_COMMON B
+       	      ON B.MAIN_CODE = 'B008'
+       		   AND B.SUB_CODE  = A.BANNER_KIND 
+       	   INNER JOIN T_DEVICE C
+       		    ON A.DEVICE_CODE = C.DEVICE_CODE
+       	   INNER JOIN T_STORE D
+       		    ON C.STORE_CODE = D.STORE_CODE
+            WHERE 1=1
+              #[FR_DATE]
+              #[TO_DATE]
+              #[STORE_CODE]
+              #[STORE_NAME]
+       	  GROUP BY 
+       	        --A.REG_DAY,
+       			      C.STORE_CODE
+       			      ,D.STORE_NAME
+       			      ,A.BANNER_KIND
+       			      ,B.NAME
+        ) A                  
+) SELECT *,(SELECT COUNT(*) FROM T_TABLE) AS TOTAL_ROWCOUNT 
+     FROM T_TABLE
+	WHERE ROW_IDX > (@PAGE -1) * @PAGE_COUNT
+	  AND ROW_IDX <= @PAGE * @PAGE_COUNT
+      SET NOCOUNT OFF 
+    
+
+ 
+      ]]>
+      </FixedSQL>
+      <DynamicBodys>
+        <Key>FR_DATE</Key>
+        <Body> AND A.REG_DAY >= CONVERT(DATETIME, '{0}')</Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>TO_DATE</Key>
+        <Body>
+          <![CDATA[  AND A.REG_DAY < DATEADD(DAY, 1, CONVERT(DATETIME, '{0}')) ]]>
+        </Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>STORE_CODE</Key>
+        <Body> AND C.STORE_CODE = {0}</Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>STORE_NAME</Key>
+        <Body> AND D.STORE_NAME LIKE N'%{0}%'</Body>
+      </DynamicBodys>
+    </TemplateSQL>
+  </DBAgentTemplate>
+
+  <DBAgentTemplate TemplateID="GetAdPlayMonthTotalList">
+    <!-- 
+    SqlType : SQL의 형태를 지정합니다.
+      Example 1:<SqlType>FixedSQL</SqlType> 고정적인 SQL을 지원합니다. 
+      Example 2:<SqlType>DynamicSQL</SqlType> 동적인 SQL Type1을 지원합니다.  
+    Description : 해당 SQL의 기능설명을 적습니다.
+    SQLModifier : 해당 SQL의 작성자(수정자)를 적습니다
+    LastModifyDate : 해당 SQL의 마지막 수정일을 적습니다
+    -->
+    <Information>
+      <SqlType>DynamicSQL</SqlType>
+      <Description>광고 플레이 집계</Description>
+      <SQLModifier>전상훈</SQLModifier>
+      <LastModifyDate>2019-05-24</LastModifyDate>
+    </Information>
+
+    <TemplateSQL>
+      <!-- FixedSQL : 고정된 SQL이 들어가는 곳입니다. -->
+      <FixedSQL>
+        <![CDATA[ 
+
+	SET NOCOUNT ON 
+	/**************************************************************/
+	/* 월별 광고 플레이 집계리스트 - T_AD_PLAY_LOG_MONGO_DAY 조회 */
+  /* -  GetAdPlayMonthTotalList                                 */ 
+	/**************************************************************/
+	SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED 
+    DECLARE @PAGE INT = {0}
+           ,@PAGE_COUNT INT = {1};
+
+/*A.REG_DAY,C.DEVICE_NAME, A.DEVICE_CODE,  A.BANNER_KIND*/
+ WITH T_TABLE 
+ AS(
+
+	  SELECT  ROW_NUMBER() OVER(ORDER BY {2}) AS ROW_IDX
+	         --,LEFT(A.REG_DAY,6) AS REG_DAY
+           ,COUNT(DISTINCT A.AD_CODE) AS AD_CNT
+	         ,COUNT(DISTINCT A.DEVICE_CODE) AS DEVICE_CNT
+			     ,SUM(CASE WHEN A.FRAME_TYPE = 1 AND A.BANNER_TYPE2 = 1 AND PLAY_TYPE <> 2 THEN A.TOT_PLAY_TIME ELSE 0 END) AS IMAGE1_PLAY_TIME
+           ,SUM(CASE WHEN A.FRAME_TYPE = 6 AND A.BANNER_TYPE2 = 1 AND PLAY_TYPE <> 2 THEN A.TOT_PLAY_TIME  / A.FRAME_TYPE ELSE 0 END) AS IMAGE6_PLAY_TIME
+			     ,SUM(CASE WHEN A.FRAME_TYPE = 12 AND A.BANNER_TYPE2 = 1 AND PLAY_TYPE <> 2 THEN A.TOT_PLAY_TIME  / A.FRAME_TYPE ELSE 0 END) AS IMAGE12_PLAY_TIME
+			     ,SUM(CASE WHEN A.FRAME_TYPE = 1 AND A.BANNER_TYPE2 = 1 AND PLAY_TYPE = 2 THEN A.TOT_PLAY_TIME ELSE 0 END) AS CLICK_PLAY_TIME
+			     ,SUM(CASE WHEN A.FRAME_TYPE = 1 AND A.BANNER_TYPE2 = 2 THEN A.TOT_PLAY_TIME ELSE 0 END) AS VIDEO_PLAY_TIME
+			     ,SUM(CASE WHEN A.FRAME_TYPE = 1 AND A.BANNER_TYPE2 = 3 THEN A.TOT_PLAY_TIME ELSE 0 END) AS YOUTUBE_PLAY_TIME
+			     ,SUM(CASE WHEN A.FRAME_TYPE = 1 AND A.BANNER_TYPE2 = 1 THEN A.TOT_QTY ELSE 0 END) AS IMAGE1_PLAY_QTY
+           ,SUM(CASE WHEN A.FRAME_TYPE = 6 AND A.BANNER_TYPE2 = 1 THEN A.TOT_QTY ELSE 0 END) AS IMAGE6_PLAY_QTY
+			     ,SUM(CASE WHEN A.FRAME_TYPE = 12 AND A.BANNER_TYPE2 = 1 THEN A.TOT_QTY ELSE 0 END) AS IMAGE12_PLAY_QTY
+			     ,SUM(CASE WHEN A.FRAME_TYPE = 1 AND A.BANNER_TYPE2 = 1 AND PLAY_TYPE = 2 THEN A.TOT_QTY ELSE 0 END) AS CLICK_PLAY_QTY
+			     ,SUM(CASE WHEN A.FRAME_TYPE = 1 AND A.BANNER_TYPE2 = 2 THEN A.TOT_QTY ELSE 0 END) AS VIDEO_PLAY_QTY
+			     ,SUM(CASE WHEN A.FRAME_TYPE = 1 AND A.BANNER_TYPE2 = 3 THEN A.TOT_QTY ELSE 0 END) AS YOUTUBE_PLAY_QTY
+           ,SUM(TOT_QTY) AS TOT_QTY
+			     ,SUM(TOT_PLAY_TIME / A.FRAME_TYPE ) AS TOT_PLAY_TIME
+	    FROM T_AD_PLAY_LOG_MONGO_DAY A
+	  
+     WHERE 1=1
+         #[FR_DATE]
+         #[TO_DATE]
+	  --GROUP BY LEFT(A.REG_DAY,6)
+) SELECT *,(SELECT COUNT(*) FROM T_TABLE) AS TOTAL_ROWCOUNT 
+     FROM T_TABLE
+	WHERE AD_CNT > 0 
+    AND ROW_IDX > (@PAGE -1) * @PAGE_COUNT
+	  AND ROW_IDX <= @PAGE * @PAGE_COUNT
+      SET NOCOUNT OFF 
+      SET NOCOUNT OFF 
+    
+
+ 
+      ]]>
+      </FixedSQL>
+      <DynamicBodys>
+        <Key>FR_DATE</Key>
+        <Body> AND A.REG_DAY >= CONVERT(DATETIME, '{0}')</Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>TO_DATE</Key>
+        <Body>
+          <![CDATA[  AND A.REG_DAY < DATEADD(DAY, 1, CONVERT(DATETIME, '{0}')) ]]>
+        </Body>
+      </DynamicBodys>
+
+    </TemplateSQL>
+  </DBAgentTemplate>
+
+ <DBAgentTemplate TemplateID="GetAdPlayShedulerInfo">
+    <!-- 
+    SqlType : SQL의 형태를 지정합니다.
+      Example 1:<SqlType>FixedSQL</SqlType> 고정적인 SQL을 지원합니다. 
+      Example 2:<SqlType>DynamicSQL</SqlType> 동적인 SQL Type1을 지원합니다.  
+    Description : 해당 SQL의 기능설명을 적습니다.
+    SQLModifier : 해당 SQL의 작성자(수정자)를 적습니다
+    LastModifyDate : 해당 SQL의 마지막 수정일을 적습니다
+    -->
+    <Information>
+      <SqlType>DynamicSQL</SqlType>
+      <Description>몽고DB 윈도우즈 스케쥴링 시간</Description>
+      <SQLModifier>전상훈</SQLModifier>
+      <LastModifyDate>2019-06-03</LastModifyDate>
+    </Information>
+
+    <TemplateSQL>
+      <!-- FixedSQL : 고정된 SQL이 들어가는 곳입니다. -->
+      <FixedSQL>
+        <![CDATA[ 
+
+	SET NOCOUNT ON 
+	/****************************************************************/
+	/* 몽고DB 윈도우즈 스케쥴링 시간 - T_AD_PLAY_LOG_MONGO_DAY 조회 */
+  /* - GetAdPlayShedulerInfo                                      */ 
+	/****************************************************************/
+	SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED 
+   SELECT MAX(REG_DAY) AS MONGODB_BASE_DATE
+        , MAX(INSERT_DATE) AS MONGODB_APPLY_TIME 
+     FROM T_AD_PLAY_LOG_MONGO_DAY
+   
+      SET NOCOUNT OFF 
+    
+
+ 
+      ]]>
+      </FixedSQL>
+    
+    </TemplateSQL>
+  </DBAgentTemplate>
+</DBAgentMultiTemplate>

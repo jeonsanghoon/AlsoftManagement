@@ -1,0 +1,264 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<DBAgentMultiTemplate  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns="http://altsoft.kr/">
+  <DBAgentTemplate TemplateID="GetDeviceMainGroupList">
+    <!-- 
+    SqlType : SQL의 형태를 지정합니다.
+      Example 1:<SqlType>FixedSQL</SqlType> 고정적인 SQL을 지원합니다. 
+      Example 2:<SqlType>DynamicSQL</SqlType> 동적인 SQL Type1을 지원합니다.  
+    Description : 해당 SQL의 기능설명을 적습니다.
+    SQLModifier : 해당 SQL의 작성자(수정자)를 적습니다
+    LastModifyDate : 해당 SQL의 마지막 수정일을 적습니다
+    -->
+    <Information>
+      <SqlType>DynamicSQL</SqlType>
+      <Description>내배너그룹테이블 조회</Description>
+      <SQLModifier>전상훈</SQLModifier>
+      <LastModifyDate>2018-10-19</LastModifyDate>
+    </Information>
+
+    <TemplateSQL>
+      <!-- FixedSQL : 고정된 SQL이 들어가는 곳입니다. -->
+      <FixedSQL>
+        <![CDATA[ 
+ 
+	SET NOCOUNT ON 
+	/****************************************************************/
+	/* 내배너그룹테이블 - T_DEVICE_MAIN_GROUP 조회 -  SELECT QUERY */ 
+	/****************************************************************/
+	SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED 
+  DECLARE @DEVICE_CODE BIGINT = {0}
+	SELECT 
+		 A.DEVICE_CODE
+		, A.GROUP_SEQ
+		, A.GROUP_NAME
+		, A.FRAME_TYPE
+    , B.NAME AS FRAME_TYPE_NAME
+    , A.CONTENT_TYPE
+    , E.NAME AS CONTENT_TYPE_NAME
+    , A.PLAY_TIME
+    , F.NAME AS PLAY_TIME_NAME
+		, A.REMARK
+		, A.HIDE
+		, A.INSERT_CODE
+    , C.USER_NAME AS INSERT_NAME
+		, A.INSERT_DATE
+		, A.UPDATE_CODE
+    , D.USER_NAME AS UPDATE_NAME
+		, A.UPDATE_DATE
+		, (SELECT COUNT(*) FROM T_DEVICE_MAIN WHERE DEVICE_CODE = A.DEVICE_CODE AND GROUP_SEQ = A.GROUP_SEQ) AS MAIN_CNT    
+	FROM T_DEVICE_MAIN_GROUP A 
+ INNER JOIN T_COMMON B
+    ON B.MAIN_CODE = 'H002'
+   AND B.SUB_CODE  = A.FRAME_TYPE
+ INNER JOIN T_MEMBER C
+    ON A.INSERT_CODE = C.MEMBER_CODE
+ INNER JOIN T_MEMBER D
+    ON A.UPDATE_CODE = D.MEMBER_CODE
+ INNER JOIN T_COMMON E
+    ON E.MAIN_CODE = 'A010'
+   AND E.SUB_CODE = A.CONTENT_TYPE
+ INNER JOIN T_COMMON F
+    ON F.MAIN_CODE = 'U006'
+   AND F.SUB_CODE  = A.PLAY_TIME
+  
+	WHERE A.DEVICE_CODE = @DEVICE_CODE
+  #[GROUP_SEQ]
+  #[HIDE]
+  ORDER BY A.GROUP_SEQ
+
+	SET NOCOUNT OFF 
+    ]]>
+      </FixedSQL>
+      <DynamicBodys>
+        <Key>GROUP_SEQ</Key>
+        <Body>
+          <![CDATA[   AND A.GROUP_SEQ = {0} ]]>
+        </Body>
+      </DynamicBodys>
+      <DynamicBodys>
+        <Key>HIDE</Key>
+        <Body>
+          <![CDATA[   AND A.HIDE = {0} ]]>
+        </Body>
+      </DynamicBodys>
+    </TemplateSQL>
+  </DBAgentTemplate>
+
+  <DBAgentTemplate TemplateID="DeviceMainGroupSave">
+    <!-- 
+    SqlType : SQL의 형태를 지정합니다.
+      Example 1:<SqlType>FixedSQL</SqlType> 고정적인 SQL을 지원합니다. 
+      Example 2:<SqlType>DynamicSQL</SqlType> 동적인 SQL Type1을 지원합니다.  
+    Description : 해당 SQL의 기능설명을 적습니다.
+    SQLModifier : 해당 SQL의 작성자(수정자)를 적습니다
+    LastModifyDate : 해당 SQL의 마지막 수정일을 적습니다
+    -->
+    <Information>
+      <SqlType>DynamicSQL</SqlType>
+      <Description>내배너그룹테이블 저장</Description>
+      <SQLModifier>전상훈</SQLModifier>
+      <LastModifyDate>2018-10-19</LastModifyDate>
+    </Information>
+
+    <TemplateSQL>
+      <!-- FixedSQL : 고정된 SQL이 들어가는 곳입니다. -->
+      <FixedSQL>
+        <![CDATA[ 
+ 
+	SET NOCOUNT ON 
+	/**************************************************************/
+	/* 내배너그룹테이블 - T_DEVICE_MAIN_GROUP 저장 -  SAVE QUERY */ 
+	/**************************************************************/
+	DECLARE @DEVICE_CODE                    BIGINT               = N'{0}'
+			  , @GROUP_SEQ                      INT                  = N'{1}'
+			  , @GROUP_NAME                     NVARCHAR(100)        = N'{2}'
+			  , @FRAME_TYPE                     INT                  = CONVERT(INT, CASE WHEN ISNUMERIC('{3}') = 1 THEN '{3}' ELSE NULL END )
+			  , @CONTENT_TYPE                   INT                  = CONVERT(INT, CASE WHEN ISNUMERIC('{4}') = 1 THEN '{4}' ELSE NULL END )
+			  , @PLAY_TIME                      INT                  = CONVERT(INT, CASE WHEN ISNUMERIC('{5}') = 1 THEN '{5}' ELSE NULL END )
+			  , @REMARK                         NVARCHAR(200)        = N'{6}'
+			  , @HIDE                           BIT                  = CONVERT(BIT, CASE WHEN ISNUMERIC('{7}') = 1 THEN '{7}' ELSE NULL END )
+			  , @INSERT_CODE                    INT                  = {8}
+			  , @INSERT_DATE                    DATETIME             = GETDATE() 
+			  , @UPDATE_CODE                    INT                  = {8}
+			  , @UPDATE_DATE                    DATETIME             = GETDATE() 
+
+  SELECT @FRAME_TYPE  = CASE WHEN DEVICE_TYPE IN (1,2) THEN 12 ELSE 1 END FROM T_DEVICE
+  WHERE DEVICE_CODE = @DEVICE_CODE
+	UPDATE A 
+	   SET  GROUP_NAME    = @GROUP_NAME    ,  FRAME_TYPE  = @FRAME_TYPE                    
+			 ,  CONTENT_TYPE  = @CONTENT_TYPE  ,  PLAY_TIME   = @PLAY_TIME                     
+			 ,  REMARK        = @REMARK        ,  HIDE        = @HIDE                          
+			 ,  UPDATE_CODE   = @UPDATE_CODE   ,  UPDATE_DATE = @UPDATE_DATE                   
+	
+	FROM T_DEVICE_MAIN_GROUP A 
+	WHERE DEVICE_CODE= @DEVICE_CODE	  AND GROUP_SEQ= @GROUP_SEQ
+	IF @@ROWCOUNT = 0
+	BEGIN
+		INSERT INTO T_DEVICE_MAIN_GROUP
+		(		DEVICE_CODE                   		, GROUP_SEQ                     		, GROUP_NAME                    		, FRAME_TYPE                    		
+			, CONTENT_TYPE                  		, PLAY_TIME                     		, REMARK                        		, HIDE                          		
+			, INSERT_CODE                   		, INSERT_DATE                   		, UPDATE_CODE                   		, UPDATE_DATE                   		
+			
+		)
+		SELECT @DEVICE_CODE                  		, @GROUP_SEQ                    		, @GROUP_NAME                   	
+				, @FRAME_TYPE                   		, @CONTENT_TYPE                 		, @PLAY_TIME                    	
+				, @REMARK                       		, @HIDE                         		, @INSERT_CODE                  	
+				, @INSERT_DATE                  		, @UPDATE_CODE                  		, @UPDATE_DATE                  	
+			
+	 END
+	SET NOCOUNT OFF
+
+    ]]>
+      </FixedSQL>
+    
+    </TemplateSQL>
+  </DBAgentTemplate>
+
+  <DBAgentTemplate TemplateID="DeviceMainGroupDelete">
+    <!-- 
+    SqlType : SQL의 형태를 지정합니다.
+      Example 1:<SqlType>FixedSQL</SqlType> 고정적인 SQL을 지원합니다. 
+      Example 2:<SqlType>DynamicSQL</SqlType> 동적인 SQL Type1을 지원합니다.  
+    Description : 해당 SQL의 기능설명을 적습니다.
+    SQLModifier : 해당 SQL의 작성자(수정자)를 적습니다
+    LastModifyDate : 해당 SQL의 마지막 수정일을 적습니다
+    -->
+    <Information>
+      <SqlType>DynamicSQL</SqlType>
+      <Description>내배너그룹테이블 삭제</Description>
+      <SQLModifier>전상훈</SQLModifier>
+      <LastModifyDate>2018-10-19</LastModifyDate>
+    </Information>
+
+    <TemplateSQL>
+      <!-- FixedSQL : 고정된 SQL이 들어가는 곳입니다. -->
+      <FixedSQL>
+        <![CDATA[ 
+ 
+	SET NOCOUNT ON 
+	/*************************************************************/
+	/* 내배너그룹테이블 - T_DEVICE_MAIN_GROUP 삭제 -  DeviceMainDelete */ 
+	/*************************************************************/
+	DECLARE @DEVICE_CODE                    BIGINT               = N'{0}'
+			  , @GROUP_SEQ                      INT                  = N'{1}'
+        , @UPDATE_CODE                    INT                  = CASE WHEN ISNUMERIC('{2}') = 1 THEN '{2}' ELSE 0 END
+  
+  IF EXISTS (SELECT * FROM T_DEVICE_MAIN
+             WHERE DEVICE_CODE= @DEVICE_CODE	  AND GROUP_SEQ= @GROUP_SEQ
+            )
+  BEGIN
+    UPDATE T_DEVICE_MAIN_GROUP
+       SET HIDE = 1
+          ,UPDATE_CODE = @UPDATE_CODE
+          ,UPDATE_DATE = GETDATE()
+	   WHERE DEVICE_CODE= @DEVICE_CODE 
+       AND GROUP_SEQ= @GROUP_SEQ
+  END
+  ELSE
+  BEGIN
+       DELETE T_DEVICE_MAIN_GROUP
+  
+	   WHERE DEVICE_CODE= @DEVICE_CODE 
+       AND GROUP_SEQ= @GROUP_SEQ
+	
+  
+  END
+  
+	
+SET NOCOUNT OFF
+    ]]>
+      </FixedSQL>
+    </TemplateSQL>
+  </DBAgentTemplate>
+
+  <DBAgentTemplate TemplateID="DeviceMainGroupSeqChange">
+    <!-- 
+    SqlType : SQL의 형태를 지정합니다.
+      Example 1:<SqlType>FixedSQL</SqlType> 고정적인 SQL을 지원합니다. 
+      Example 2:<SqlType>DynamicSQL</SqlType> 동적인 SQL Type1을 지원합니다.  
+    Description : 해당 SQL의 기능설명을 적습니다.
+    SQLModifier : 해당 SQL의 작성자(수정자)를 적습니다
+    LastModifyDate : 해당 SQL의 마지막 수정일을 적습니다
+    -->
+    <Information>
+      <SqlType>DynamicSQL</SqlType>
+      <Description>로컬박스 내배너 그룹 순번 업데이트</Description>
+      <SQLModifier>전상훈</SQLModifier>
+      <LastModifyDate>2018-11-20</LastModifyDate>
+    </Information>
+
+    <TemplateSQL>
+      <!-- FixedSQL : 고정된 SQL이 들어가는 곳입니다. -->
+      <FixedSQL>
+        <![CDATA[ 
+ 
+  /***************************************/
+  /* 로컬박스 내배너 그룹 순번 업데이트  */ 
+  /* -DeviceMainGroupSeqChange           */
+  /***************************************/
+	SET NOCOUNT ON 
+	DECLARE @DEVICE_CODE BIGINT = {0}
+     ,@PRE_SEQ         INT    = {1}
+	   ,@SEQ             INT    = {2}
+	   ,@REG_CODE        INT    = {3}
+
+  UPDATE T_DEVICE_MAIN_GROUP
+   SET GROUP_SEQ = CASE WHEN GROUP_SEQ = @PRE_SEQ THEN @SEQ  ELSE @PRE_SEQ END
+      ,UPDATE_CODE = @REG_CODE
+      ,UPDATE_DATE = GETDATE()
+ WHERE DEVICE_CODE = @DEVICE_CODE
+   AND GROUP_SEQ IN (@PRE_SEQ,@SEQ)
+   
+  UPDATE T_DEVICE_MAIN
+   SET GROUP_SEQ = CASE WHEN GROUP_SEQ = @PRE_SEQ THEN @SEQ  ELSE @PRE_SEQ END
+      ,UPDATE_CODE = @REG_CODE
+      ,UPDATE_DATE = GETDATE()
+ WHERE DEVICE_CODE = @DEVICE_CODE
+   AND GROUP_SEQ IN (@PRE_SEQ,@SEQ)
+
+  SET NOCOUNT OFF
+    ]]>
+      </FixedSQL>
+    </TemplateSQL>
+  </DBAgentTemplate>
+</DBAgentMultiTemplate>  

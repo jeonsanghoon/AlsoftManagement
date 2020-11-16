@@ -1,0 +1,175 @@
+﻿@{
+
+}
+@section scripts{
+
+    <script type="text/javascript">
+
+        $(document).ready(function () {
+            doQuery();
+            ComponentInit();
+        }); //End document.ready
+
+        function ComponentInit() {
+            $(".ui.form input").keyup(function (e) {
+                var code = (e.keyCode ? e.keyCode : e.which);
+                if (code == 13) {
+                    doQuery();
+                }
+            })
+        }
+
+
+        var PARAM_DATA = {
+            PAGE_SIZE: ($("window").width() < 768 ? 5 : 10)
+          , PAGE_COUNT: 10
+          , PAGE: 1
+          , SORT_ORDER:""
+        }
+        function doQuery(page, order) {
+            if (page == undefined || page == null || page < 1) page = 1;
+            PARAM_DATA.PAGE = page;
+
+            var param = BaseCommon.FormInfo.serializeJson(".ui.form");
+
+            param.PAGE_COUNT = PARAM_DATA.PAGE_COUNT;
+            param.PAGE = PARAM_DATA.PAGE;
+
+            if (order != undefined) {
+                PARAM_DATA.SORT_ORDER = order;
+                param.SORT_ORDER = order;
+            }
+            else if (order == undefined) {
+                param.SORT_ORDER = PARAM_DATA.SORT_ORDER;
+            }
+
+
+            param = JSON.stringify(param);
+            ajax.GetAjax("/device/PV_HardwareList", param, "html", function (result) {
+                $("#dvTable table tbody").html(result);
+                $.mrc_table.Init(".mrc-table", false, order);
+                $("#dvpagination").show();
+                $("#dvpagination").pagination({
+                    total: Number($("#total").val()), page: PARAM_DATA.PAGE, pagesize: PARAM_DATA.PAGE_SIZE, perpage: PARAM_DATA.PAGE_COUNT
+                    , onPageClick:function(item, page) {
+                        doQuery(page);
+                    }
+                })
+                $("#dvpagination").css("display", "");
+            });
+        }
+
+        function mrcGrid_Sort(objName, datasort, orderType) {
+            //_sortColumn = datasort;
+            //_sortOrder = orderType;
+
+            //        _page = 1;
+
+            if (datasort == "" || orderType == "") doQuery(1,"");
+            else doQuery(1, datasort + " " + orderType);
+        }
+
+        function ExcelDown() {
+            var params = BaseCommon.FormInfo.serializeJson(".ui.form");
+            var arrData = new Array();
+            $.each(params, function (key, val) {
+                //display the key and value pair
+
+                arrData.push({ name: key, value: val });
+            });
+            BaseCommon.FormInfo.PostSubmit('/device/hardwareExcelReport', arrData);
+        }
+        function doNew() {
+            location.href = "/device/hardwarereg";
+        }
+    </script>
+}
+<style>
+    .ui.checkbox {
+        margin-top: 0.5em;
+    }
+
+    #dvpagination {
+        margin-top: 1em;
+    }
+
+    @@media (min-width:768px) and (max-width:1024px) {
+        .ui.table td.frtodate {
+            width: 39.5%;
+        }
+    }
+</style>
+<div class="ui vertical stripe segment">
+    @Html.TitleNavigation()
+    <form class="ui form">
+        <div class="one column row">
+            <div class="column">
+                <table class="ui  table .search">
+                    <tbody>
+                        <tr>
+                            <td class="title">
+                                @Html.Semantic_TITLE2("구매일자")
+                            </td>
+                            <td class="content frtodate">
+                                @Html.Semantic_TextBox("FR_DATE", DateTime.Now.AddMonths(-12).ToString("yyyy.MM.dd"), SemanticUIHelper.Size.mini, new { @style = "text-align:center;", @placeholder = "시작일자", @class = "size100" })@Html.Semantic_TextBox("TO_DATE", DateTime.Now.ToString("yyyy.MM.dd"), SemanticUIHelper.Size.mini, new { @style = "text-align:center;", @placeholder = "종료일자", @class = "size100" })
+                            </td>
+                            <td class="title">
+                                @Html.Semantic_TITLE2("하드웨어명")
+                            </td>
+                            <td class="content">
+                                @Html.Semantic_TextBox("HARDWARE_NAME", "", SemanticUIHelper.Size.mini, new { @placeholder = "하드웨어명", @class="size150" })
+
+                            </td>
+                            <td class="title">
+                                @Html.Semantic_TITLE2("모델명")
+                            </td>
+                            <td class="content">
+                                @Html.Semantic_TextBox("MODEL_NAME", "", SemanticUIHelper.Size.mini, new { @placeholder = "모델명", @class="size150" })
+                            </td>
+
+                        </tr>
+                        <tr>
+                            <td class="title">
+                                @Html.Semantic_TITLE2("담당자")
+                            </td>
+                            <td class="content">
+                                @Html.Semantic_TextBox("CONTACT_EMPLOYEE_NAME", "", SemanticUIHelper.Size.mini, new { @placeholder = "담당자", @class="size150" })
+                            </td>
+                            <td class="buttons" colspan="4" style="text-align:right;">
+                                @Html.Semantic_Button2("btnSearch", "조회", SemanticUIHelper.enButtonType.ToList, SemanticUIHelper.Size.mini, new { onclick = "doQuery();", @class = " floated " })
+                                @Html.Semantic_Button2("btnExcel", "엑셀", SemanticUIHelper.enButtonType.Excel, SemanticUIHelper.Size.medium, new { @onclick = "ExcelDown();" })
+                                @Html.Semantic_Button2("btnAdd", "신규", SemanticUIHelper.enButtonType.New, SemanticUIHelper.Size.mini, new { @onclick= "doNew();", @class = " floated " })
+
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+
+            </div>
+        </div>
+        <div class="one column row">
+            <div class="column" id="dvTable">
+                <table class="mrc-table search" id="tbList">
+                    <thead>
+                        <tr>
+                            <th class="sort" column_name="HARDWARE_CODE" data-sort="A.HARDWARE_CODE">번호</th>
+                            <th class="sort" column_name="HARDWARE_NAME" data-sort="A.HARDWARE_NAME">이름</th>
+                            <th display_size="tablet" class="sort" column_name="PURCHASE_DATE" data-sort="A.PURCHASE_DATE">구매일자</th>
+                            <th display_size="tablet" class="sort" data-sort="A.BRAND">브랜드</th>
+                            <th display_size="tablet" class="sort" data-sort="A.MODEL_NAME">모델</th>
+                            <th display_size="tablet" class="sort" column_name="DISPLAY_RESOLUTION" data-sort="A.DISPLAY_RESOLUTION">해상도</th>
+                            <th display_size="pc" class="sort" data-sort="F1.USER_NAME">수정자</th>
+                            <th display_size="tablet" class="sort" data-sort="A.UPDATE_NAME">수정시간</th>
+                            <th class="sort" data-sort="A.HIDE">상태</th>
+                            <th class="sort" data-sort="DE.DEVICE_NAME">로컬박스</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+        <div class="one column row">
+            <div id="dvpagination" class="ui floated pagination menu"></div>
+        </div>
+    </form>
+</div>

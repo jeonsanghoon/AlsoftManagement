@@ -1,0 +1,150 @@
+﻿@{
+
+}
+<style>
+    #popMyDevice .column.row {
+        padding: 0.25em;
+    }
+    .ui.form.modal .mrc-table {
+        font-size: 1.1em;
+    }
+</style>
+<div class="ui tiny modal form" id="popMyDevice">
+    <div class="header">로컬박스</div>
+    <div class="content">
+        <div class="ui grid">
+            <div class="one column row">
+                <div class="column buttons">
+                    @Html.Semantic_TextBox("DEVICE_NAME_POP", "", new { @placeholder="기기명" })
+                    @Html.Semantic_Button2("btnDeviceSelectQuery", "조회", SemanticUIHelper.enButtonType.Normal, SemanticUIHelper.Size.mini, new { onclick = "doQuery_DevicePop();" })
+                </div>
+            </div>
+            <div class="one column row">
+                <div class="column">
+                    <div id="dvDevicePop">
+                        <table id="tbDevicePopList" class="mrc-table">
+                            <thead>
+                                <tr>
+                                    <th column_name="DEVICE_NAME" data-sort="A.DEVICE_NAME" style="min-width:50px;" class="sort">기기명</th>
+                                    <th column_name="STORE_NAME" data-sort="B.STORE_NAME" class="sort @(SessionHelper.LoginInfo.STORE_CODE != 1 ? "hide" : "")">지점명</th>
+                                    <th column_name="ADDRESS" data-sort="A.ADDRESS1, A.ADDRESS2" display_size="detail" class="sort">주소</th>
+                                    <th column_name="DEVICE_CODE" data-sort="A.DEVICE_CODE" class="hide sort" display_size="pc">기기코드</th>
+                                </tr>
+                            </thead>
+                            <tbody style="min-height:4em"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <div class="one column row">
+                <div id="dvpagination_devicePop" class="ui floated pagination menu"></div>
+            </div>
+        </div>
+        <div class="ui error message devicePopup" style="display:none;"><ul></ul></div>
+    </div>
+    <div class="actions">
+        <button class="ui teal button selectbutton" onclick = "PopDeviceSelect();">선택</button>
+        @Html.Semantic_Button2("btnPopDeviceClose", "취소", SemanticUIHelper.enButtonType.Normal, new { @onclick = "PopDeviceClose();" })
+    </div>
+</div>
+<script type="text/javascript">
+    var PARAM_DATA_DEVICE_POP = {
+        PAGE_SIZE: 10
+         , PAGE_COUNT: 15
+         , PAGE: 1
+    }
+    var _pop_deviceCode = 0;
+    var _isVirtualDevice = "";
+    var _pop_adCode = null;
+    var _pop_bEdit = true;
+    var _pop_deviceContainAdCode = null;
+    function DeviceSelectPopOpen(deviceCode, isVirtualDevice, adCode) {
+
+        if ($("window").width() < 767) {
+            PARAM_DATA_DEVICE_POP.PAGE_COUNT = 10;
+        }
+
+        _pop_deviceCode = deviceCode;
+        _isVirtualDevice = (isVirtualDevice == undefined ? "" : isVirtualDevice);
+        _pop_adCode = (adCode == undefined ? null : adCode);
+        $(".selectbutton").show();
+        $("#btnPopDeviceClose").text("취소");
+        $('#popMyDevice').modal("show");
+        //$("#popMyDevice .header").text("공유 박스리스트");
+        
+        doQuery_DevicePop();
+    }
+
+    function DeviceViewPopOpen(DeviceContainadCode) {
+        _pop_bEdit = false;
+        $(".selectbutton").hide();
+        $("#btnPopDeviceClose").text("확인");
+        $('#popMyDevice').modal("show");
+        _pop_deviceContainAdCode = DeviceContainadCode;
+        doQuery_DevicePop(1, null);
+
+    }
+    function PopDeviceClose() {
+        $('#popMyDevice').modal("hide");
+    }
+    function errormessageClear() {
+        $(".ui.error.message.devicePopup").hide();
+        $(".ui.error.message.devicePopup ul").html("");
+    }
+
+   
+
+    function doQuery_DevicePop(page, sort) {
+        $("#DEVICE_NAME_POP").unbind("click");
+        $("#DEVICE_NAME_POP").keyup(function (e) {
+            if (e.keyCode == 13) {
+                doQuery_DevicePop();
+            }
+        })
+        
+        if (page == undefined || page < 1) page = 1;
+        PARAM_DATA_DEVICE_POP.PAGE = page;
+        var params = new Object();
+        params.DEVICE_NAME = $("#DEVICE_NAME_POP").val();
+        params.PAGE_COUNT = PARAM_DATA_DEVICE_POP.PAGE_COUNT;
+        params.PAGE = PARAM_DATA_DEVICE_POP.PAGE;
+        params.SORT = sort;
+        params.DISPLAY_MODE = "Popup";
+        params.NOT_DEVICE_CODE = _pop_deviceCode;
+        params.NOT_AD_CODE = _pop_adCode;   
+        params.IS_VIRTUAL_DEVICE = _isVirtualDevice;
+        params.DEVICE_CONTAINING_AD_CODE = _pop_deviceContainAdCode;
+        params = JSON.stringify(params);
+        ajax.GetAjax("/basic/PV_devicelist", params, "html", function (result) {
+            $("#dvDevicePop tbody").html(result);
+            $.mrc_table.Init("#dvDevicePop #tbDevicePopList", _pop_bEdit, sort);
+
+            $("#dvpagination_devicePop").show();
+
+            $("#dvpagination_devicePop").pagination({
+                total: Number($("#dvDevicePop #tbDevicePopList #total").val()), page: PARAM_DATA_DEVICE_POP.PAGE, pagesize: PARAM_DATA_DEVICE_POP.PAGE_SIZE, perpage: PARAM_DATA_DEVICE_POP.PAGE_COUNT
+                , onPageClick: function (item, page) {
+                    doQuery_DevicePop(page);
+                }
+            })
+            $("#dvpagination_devicePop").css("display", "");
+            //SemanticUI.Modal.CenterShow("#popMyDevice");
+        });
+     }
+
+
+    function PopDeviceSelect() {
+        // Confirm
+        $.MessageBox({
+            buttonDone: "예",
+            buttonFail: "아니오",
+            message: "선택된 로컬박스를 적용하시겠습니까?"
+        }).done(function () {
+            try {
+                
+                PopDeviceCallback($.mrc_table.GetCheckedData("#dvDevicePop table"));
+            } catch (e) { }
+            PopDeviceClose();
+        });
+    }
+</script>

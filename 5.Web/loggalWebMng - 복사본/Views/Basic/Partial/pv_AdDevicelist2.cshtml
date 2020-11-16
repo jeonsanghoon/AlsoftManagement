@@ -1,0 +1,43 @@
+﻿@using ALT.VO.loggal;
+@using ALT.Framework;
+@using ALT.Framework.Data;
+
+@{
+    LOGGAL_BOX_COND Cond = ViewBag.cond;
+    List<LOGGAL_BOX_DATA> list = (List<LOGGAL_BOX_DATA>)ViewBag.list;
+    string totCnt = (list.Count() == 0 ? "0" : list.First().TOTAL_ROWCOUNT.ToString());
+
+    <input type="hidden" id="total@(Cond.GUBUN + 1)" value="@totCnt" />
+    foreach (LOGGAL_BOX_DATA data in list)
+    {
+        data.FR_DATE = data.FR_DATE.ToFormatDate();
+        data.TO_DATE = data.TO_DATE.ToFormatDate();
+
+    <tr>
+        <td class="center">
+            <input type="checkbox" name="chkUse" />
+        </td>
+        <td>@data.AD_CODE</td>
+        <td class="hide">@data.DEVICE_CODE</td>
+        <td>
+            @{ 
+        
+            <img src="@data.LOGO_URL" class="ui mini rounded image">
+            }
+        </td>
+        <td class="left">@data.CATEGORY_NAME</td>
+        <td><a href="@Global.ConfigInfo.MANAGEMENT_SITE/advertise/Contentview/@data.AD_CODE" target="_blank">@data.TITLE</a></td>
+        <td class="center">@data.FR_DATE</td>
+        <td class="center">@data.TO_DATE</td>
+        <td class="center">@data.FR_TIME</td>
+        <td class="center">@data.TO_TIME</td>
+        <td class="center @(Cond.GUBUN == 2 ? "hide" : "")" style="@(data.SHARE_STATUS == 1 ? "color:blue;text-decoration:underline;font-weight:bold;cursor:pointer;":"")" onclick="javascript:location.href='/basic/devicemainshareapprovallist/@data.SHARE_STATUS?AD_CODE=@(data.AD_CODE)&GUBUN=2'">@data.SHARE_STATUS_NAME</td>
+        <td class="hide">@(Cond.GUBUN == 2 ? "1" : data.SHARE_STATUS.ToString("1"))</td>
+
+
+
+        @*<td class="center"><input type="checkbox" @(@data.HIDE == true ? "checked" : "") /></td>*@
+    </tr>
+    }
+}
+

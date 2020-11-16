@@ -1,0 +1,156 @@
+﻿@using ALT.VO.loggal;
+@{
+    List<DEVICE_LIST> list = ViewBag.list;
+    string DISPLAY_MODE = (ViewBag.DISPLAY_MODE == null ? "Normal" : ViewBag.DISPLAY_MODE);
+    string totCnt = (list.Count() == 0 ? "0" : list.First().TOTAL_ROWCOUNT.ToString());
+    string DISPLAY_MODE2 = DISPLAY_MODE;
+    if (DISPLAY_MODE == "adreg")
+    {
+        DISPLAY_MODE = "Popup";
+    }
+
+    <input type="hidden" id="total" value="@totCnt" />
+    foreach (DEVICE_LIST data in list)
+                {
+<tr>
+	@if (!(DISPLAY_MODE == "Popup" || DISPLAY_MODE2 == "adreg"))
+	{
+		<td title="수정화면으로 이동"><a href="/basic/devicereg3/@data.DEVICE_CODE">@data.DEVICE_NAME</a></td>
+		<td class="center">@data.AD_FRAME_TYPE_NAME</td>
+		<td class="hide">@data.STATION_NAME</td>
+		if (null != data.VIRTUAL_DEVICE_NAME)
+		{
+			<td title="수정화면으로 이동"><a href="/basic/deviceVirtualReg/@data.PARENT_DEVICE_CODE">@data.VIRTUAL_DEVICE_NAME</a></td>
+		}
+		else
+		{
+			<td title="수정화면으로 이동"></td>	
+		}
+		<td class="center"><img src="@data.LOGO_URL" class="ui mini rounded image"></td>
+	}
+	else if (DISPLAY_MODE2 == "adreg")
+	{
+		<td title="수정화면으로 이동"><a href="/basic/devicereg3/@data.DEVICE_CODE">@data.DEVICE_NAME</a></td>
+		DISPLAY_MODE = "Popup";
+	}
+	else if (DISPLAY_MODE == "Popup")
+	{
+		<td>@data.DEVICE_NAME</td>
+	}
+
+
+	<td data-value="@data.STORE_CODE" class="@(SessionHelper.LoginInfo.STORE_CODE != 1 ? "hide" : "")">@data.STORE_NAME</td>
+	@if (DISPLAY_MODE == "Popup")
+	{
+		<td class="center">
+			@{
+				string strStatusColor = "blue";
+				if (data.STATUS_NAME == "대기")
+				{
+					strStatusColor = "green";
+				}
+				else if (data.STATUS_NAME == "정지")
+				{
+					strStatusColor = "#ffd800";
+				}
+				else if (data.STATUS_NAME == "폐기")
+				{
+					strStatusColor = "#808080";
+				}
+				<span style="color:@strStatusColor">
+					@data.STATUS_NAME
+				</span>
+			}
+		</td>
+	}
+	@if (DISPLAY_MODE != "Popup")
+	{
+		<td class="hide">@data.GROUP_NAME</td>
+
+		<td class="center">@data.DEVICE_TYPE_NAME</td>
+		<td class="hide">@data.BUSI_TYPE_NAME</td>
+		<td class="hide">@data.BUSI_TYPE_NAME2</td>
+		<td>@data.CONTACT_NAME</td>
+		<td>@data.CONTACT_PHONE</td>
+		if (DISPLAY_MODE == "Total" || DISPLAY_MODE == "Normal")
+		{
+			<td class="center">
+				@{
+					string strStatusColor = "blue";
+					if (data.STATUS_NAME == "대기")
+					{
+						strStatusColor = "green";
+					}
+					else if (data.STATUS_NAME == "정지")
+					{
+						strStatusColor = "#ffd800";
+					}
+					else if (data.STATUS_NAME == "폐기")
+					{
+						strStatusColor = "#808080";
+					}
+					<span style="color:@strStatusColor">
+						@data.STATUS_NAME
+					</span>
+				}
+			</td>
+		}
+		if (!(DISPLAY_MODE == "Total" || DISPLAY_MODE == "Station"))
+		{
+			<td class="center  @(data.AUTH_NUMBER == null ? "none" : "")"><a class="authnumberpopup" href="javascript:void(0);" onclick="$('#popAutoNumberApply').modal('show');">@(data.AUTH_NUMBER == null ? "미인증" : (data.AUTH_NUMBER.ToString().Count() >= 4 ? data.AUTH_NUMBER.ToString() : data.AUTH_NUMBER.ToString().PadLeft(4, '0')))</a> </td>
+
+			<td class="center">
+				@{
+					if (data.WORKING_DIFF < 60)
+					{
+						<i class="circle icon blue big"></i>
+					}
+					else
+					{
+						<i class="circle icon lightgrey big"></i>
+					}
+				}
+			</td>
+			<td class="center">@data.WORKING_TIME</td>
+			<td class="center hide">
+				@{
+					if (data.MAIN_CNT > 0)
+					{
+						<i class="circle icon blue big"></i> <!--yellow-->
+					}
+					else
+					{
+						<i class="circle icon lightgrey big"></i>
+					}
+				}
+			</td>
+			<td class="center hide">
+				@{
+					if (!string.IsNullOrEmpty(data.CATEGORY_CODES) && data.PLACE_CNT > 0)
+					{
+						<i class="circle icon blue big"></i> <!--yellow-->
+					}
+					else
+					{
+						<i class="circle icon lightgrey big"></i>
+					}
+				}
+			</td>
+		}
+	}
+	<td>@data.ADDRESS</td>
+	@if (DISPLAY_MODE != "Popup")
+	{
+		<td>@data.UPDATE_NAME</td>
+		<td class="center">@data.UPDATE_DATE</td>
+	}
+
+	<td class="hide">@data.DEVICE_CODE</td>
+	@if (DISPLAY_MODE == "Total" || DISPLAY_MODE == "Normal")
+	{
+		<td><a href="/device/hardwarereg/@data.HARDWARE_CODE">@data.HARDWARE_NAME</a></td>
+		<td><a href="/device/hardwarereg/@data.HARDWARE_CODE">@data.MODEL_NAME</a></td>
+	}
+</tr>
+    }
+}

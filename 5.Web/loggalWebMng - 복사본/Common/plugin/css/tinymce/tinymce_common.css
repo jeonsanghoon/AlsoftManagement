@@ -1,0 +1,28 @@
+﻿.mce-container.mce-panel {
+    max-width:100%;
+}
+
+
+@media screen and (max-width:650px) {
+    .mce-content-body div img, .mce-container-body textarea {
+        max-width: 100%;
+        width:90vw!important;
+    }
+    .mce-foot .mce-btn {
+        left: 90vw !important;
+    }
+    .mce-foot .mce-btn.mce-primary {
+        left: 80vw !important;
+    }
+   
+}
+
+@media screen and (max-width:500px) {
+    .mce-foot .mce-btn {
+        left: 85vw !important;
+    }
+
+    .mce-foot .mce-btn.mce-primary {
+        left: 70vw !important;
+    }
+}

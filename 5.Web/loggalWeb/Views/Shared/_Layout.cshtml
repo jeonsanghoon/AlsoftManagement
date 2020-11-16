@@ -1,0 +1,53 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>@ViewBag.Title - My ASP.NET Application</title>
+    @{Html.RenderPartial("/Views/Shared/Partial/Header.cshtml"); }
+
+
+
+</head>
+<body>
+    @{Html.RenderPartial("/Views/Shared/Partial/Top.cshtml"); }
+    @{Html.RenderPartial("/Views/Shared/Partial/Side.cshtml"); }
+
+
+
+    <!-- Page Contents -->
+    <div class="pusher">
+        <div class="ui inverted vertical masthead center aligned segment">
+            @{Html.RenderPartial("/Views/Shared/Partial/TopMenu.cshtml"); }
+        </div>
+        @RenderBody()
+        @{Html.RenderPartial("/Views/Shared/Partial/Script.cshtml"); }
+        @RenderSection("scripts", required: false)
+
+        @{Html.RenderPartial("/Views/Shared/Partial/Footer.cshtml"); }
+    </div>
+
+
+    <script type="text/javascript">
+        $(document).ready(function() {
+            try{
+            // fix menu when passed
+            $('.masthead')
+              .visibility({
+                  once: false,
+                  onBottomPassed: function() {
+                      $('.fixed.menu').transition('fade in');
+                  },
+                  onBottomPassedReverse: function() {
+                      $('.fixed.menu').transition('fade out');
+                  }
+              });
+
+            // create sidebar and attach to menu open
+            $('.ui.sidebar').sidebar('attach events', '.toc.item');
+        }catch(e){}
+
+    });
+    </script>
+</body>
+</html>

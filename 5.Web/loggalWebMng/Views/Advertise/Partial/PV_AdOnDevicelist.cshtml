@@ -1,0 +1,54 @@
+﻿@using ALT.VO.loggal;
+@{
+    List<AdOnDeviceList> list = (List<AdOnDeviceList>)ViewBag.list;
+    string totCnt = (list.Count() == 0 ? "0" : list.First().TOTAL_ROWCOUNT.ToString());
+
+    <input type="hidden" id="total" value="@totCnt" />
+    foreach (AdOnDeviceList data in list)
+    {
+        data.FR_DATE = data.FR_DATE.ToFormatDate();
+        data.TO_DATE = data.TO_DATE.ToFormatDate();
+        string colorCss = (data.AD_TYPE == 3 ? "disabled" : "");
+
+        <tr>
+            <td class="@colorCss" style="width:6em">@data.AD_FRAME_TYPE_NAME</td>
+            <td class="hide @colorCss" style="width:6em" >@data.AD_FRAME_TYPE</td>
+            <td class="@colorCss" style="width:6em"><a href="/advertise/adreg2/@data.AD_CODE">@data.AD_CODE</a></td>
+            <td class="center @(colorCss)" style="width:8em"><img src="@data.LOGO_URL" class="ui mini rounded image"></td>
+
+            <td class="@colorCss">@data.TITLE</td>
+            <td class="@colorCss">@data.CATEGORY_NAME</td>
+            @{
+                if (data.ORI_DEVICE_CODE != null)
+                {
+                    <td><a href="/basic/devicereg3/@data.ORI_DEVICE_CODE">@(string.IsNullOrEmpty(data.ORI_DEVICE_NAME) ? "" : "내배너-")@data.ORI_DEVICE_NAME</a></td>
+                }
+                else
+                {
+                    <td>&nbsp;</td>
+                }
+            }
+
+            <td class="@colorCss">@data.SUB_TITLE</td>
+            <td class="@colorCss">@data.STORE_NAME</td>
+            <td class="@colorCss">@data.FR_DATE ~ @data.TO_DATE</td>
+            <td class="@colorCss">
+                @{
+                    if (string.IsNullOrEmpty(data.FR_TIME) && string.IsNullOrEmpty(data.TO_TIME))
+                    {
+                        @("전일광고")
+                    }
+                    else
+                    {
+                        @(data.FR_TIME + " ~ " + data.TO_TIME)
+                    }
+                }
+
+            </td>
+            <td class="@colorCss">@data.MEMBER_NAME</td>
+            <td class="hide @colorCss">@data.AD_TYPE</td>
+            <td class="@colorCss">@data.AD_TYPE_NAME</td>
+        </tr>
+    }
+}
+

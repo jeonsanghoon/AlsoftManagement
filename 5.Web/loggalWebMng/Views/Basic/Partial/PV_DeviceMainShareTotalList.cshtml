@@ -1,0 +1,50 @@
+﻿
+@{
+    List<DEVICE_MAIN_SHARE_TOTAL_LIST> list = ViewBag.list;
+    DEVICE_MAIN_SHARE_TOTAL_COND Cond = ViewBag.data;
+    List<T_COMMON> commonList = ViewBag.commonList;
+    string totCnt = (list.Count() == 0 ? "0" : list.First().TOTAL_ROWCOUNT.ToString());
+    var dataTable = list.ConvertToDataTable();
+
+    <input type="hidden" id="total" value="@totCnt" />
+
+    string GUBUN = "1";
+    for (int nRow = 0; nRow < list.Count(); nRow++)
+    {
+
+        DEVICE_MAIN_SHARE_TOTAL_LIST data = list[nRow];
+        <tr>
+
+            @if (SessionHelper.LoginInfo.COMPANY_CODE == 1)
+            {
+                GUBUN = "2";
+                <td>&nbsp;</td>
+            }
+            else if (data.COMPANY_CODE == SessionHelper.LoginInfo.COMPANY_CODE)
+            {
+                GUBUN = "1";
+                <td title="요청한 내역" class="center"><i class="large user icon"></i><i class="large arrow right icon"></i></td>
+            }
+            else
+            {
+
+                GUBUN = "2";
+                <td title="요청받은 내역" class="center"><i class="large arrow right icon"></i><i class="large user icon"></i></td>
+            }
+
+            <td style="max-width:10em;"><a href="/basic/devicereg3/@data.DEVICE_CODE" style="min-width:2em;">@data.DEVICE_NAME</a></td>
+            <td>@data.COMPANY_NAME</td>
+
+            @{
+                for (int i = 0; i < Cond.COLUMN_COUNT; i++)
+                {
+                    <td class="center"><a href="@(commonList[i].REF_DATA2)?DEVICE_CODE=@(data.DEVICE_CODE)&GUBUN=@(GUBUN)" style="min-width:2em;">@dataTable.Rows[nRow]["CNT" + (i + 1).ToString()].ToString("")</a></td>
+                }
+            }
+            <td class="center">@data.TOT_CNT</td>
+            <td class="center">@data.REQ_DATE</td>
+
+            <td>@data.UPDATE_DATE</td>
+        </tr>
+    }
+}
